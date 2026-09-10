@@ -1,0 +1,4 @@
+interface:
+  display_name: "Knowledge Execution Graph"
+  short_description: "Manage work through atomic Markdown graph nodes"
+  default_prompt: "Use $knowledge-execution-graph to manage this engineering task in the local Markdown vault."
