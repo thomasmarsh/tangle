@@ -10,6 +10,7 @@ test:
 	sh tests/worktree-parallel.sh
 	sh tests/kg-foundation.sh
 	sh tests/kg-index.sh
+	sh tests/kg-verification.sh
 	git diff --check
 
 benchmark:
