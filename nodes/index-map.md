@@ -3,10 +3,6 @@ updated: 2026-09-11T12:15:20Z
 summary: Route agents from the durable execution-graph root hub to authoritative queries.
 ---
 
-# Focus
-
-- [[TAS-030-hybrid-markdown-sqlite-migration]]: convert the local graph to the hybrid Markdown/SQLite design.
-
 # Root hubs
 
 - Indexes [[IDX-001-execution-graph]]: durable entry for execution-graph work.
