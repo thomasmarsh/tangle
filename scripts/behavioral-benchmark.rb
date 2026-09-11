@@ -91,7 +91,7 @@ def scan(paths)
 end
 
 def run_scale(scale)
-  Dir.mktmpdir("kg-behavioral-") do |root|
+  Dir.mktmpdir("bt-behavioral-") do |root|
     write_fixture(root, scale)
     paths = Dir.glob(File.join(root, "*", "*.md")).sort
     work = { reads: 0, bytes: 0 }

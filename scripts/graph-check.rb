@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Read-only validator for a Knowledge Execution Graph vault. It deliberately
+# Read-only validator for a Braintree vault. It deliberately
 # keeps no cache or state: use it from a vault root, or pass its nodes directory.
 require "time"
 require "yaml"
@@ -26,7 +26,7 @@ while arguments.first&.start_with?("--")
     allowed_orphans << arguments.shift
   when "-h", "--help"
     puts "usage: ruby scripts/graph-check.rb [--allow-stale] [--allow-orphan NODE] [nodes-directory]"
-    puts "Validate a file-only Knowledge Execution Graph without writing state."
+    puts "Validate a file-only Braintree vault without writing state."
     exit 0
   else
     fail_with(["unknown option"])
@@ -35,7 +35,7 @@ end
 nodes_dir = arguments.fetch(0, "nodes")
 if arguments.length > 1
   puts "usage: ruby scripts/graph-check.rb [--allow-stale] [--allow-orphan NODE] [nodes-directory]"
-  puts "Validate a file-only Knowledge Execution Graph without writing state."
+  puts "Validate a file-only Braintree vault without writing state."
   exit 2
 end
 

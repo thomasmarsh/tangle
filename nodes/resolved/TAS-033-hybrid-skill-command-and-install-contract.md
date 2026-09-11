@@ -23,4 +23,4 @@ SKILL.md, README, benchmark guidance, and Codex/Claude installation paths accura
 
 # Result
 
-The skill exposes `kg` commands rather than SQLite access, documents the Markdown/sidecar authority split, WAL and PostgreSQL boundary, recovery, and deferred status migration. Codex and Claude installers distribute executable `graph-check.rb`, `kg`, and `kg-index.rb`; installation tests verify their contents and modes.
+The skill exposes `bt` commands rather than SQLite access, documents the Markdown/sidecar authority split, WAL and PostgreSQL boundary, recovery, and deferred status migration. Codex and Claude installers distribute executable `graph-check.rb`, `bt`, and `bt-index.rb`; installation tests verify their contents and modes.

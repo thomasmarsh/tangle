@@ -32,9 +32,9 @@ printf '%s\n' "$mutation_check" | grep -F '"fixture_version":"routine-mutation-s
 fake_sessions=$(mktemp -d)
 extra_sessions=$(mktemp -d)
 trap 'rm -rf "$fake_sessions" "$extra_sessions"' EXIT HUP INT TERM
-mutation_record=$(KG_TOKEN_BENCHMARK_CODEX="$repo_root/tests/fixtures/fake-codex-mutation.rb" KG_TOKEN_BENCHMARK_SESSIONS_DIR="$fake_sessions" ruby "$repo_root/scripts/token-benchmark.rb" --record --case routine-mutation --model fake-model --reasoning-effort medium --repetitions 1)
+mutation_record=$(BT_TOKEN_BENCHMARK_CODEX="$repo_root/tests/fixtures/fake-codex-mutation.rb" BT_TOKEN_BENCHMARK_SESSIONS_DIR="$fake_sessions" ruby "$repo_root/scripts/token-benchmark.rb" --record --case routine-mutation --model fake-model --reasoning-effort medium --repetitions 1)
 printf '%s\n' "$mutation_record" | grep -F 'token_benchmark{runs,input_tokens,cached_input_tokens,uncached_input_tokens,output_tokens,reasoning_output_tokens,total_tokens,correct}: 1,11,3,8,5,2,16,true' >/dev/null
-if KG_FAKE_MUTATION_EXTRA_EDIT=1 KG_TOKEN_BENCHMARK_CODEX="$repo_root/tests/fixtures/fake-codex-mutation.rb" KG_TOKEN_BENCHMARK_SESSIONS_DIR="$extra_sessions" ruby "$repo_root/scripts/token-benchmark.rb" --record --case routine-mutation --model fake-model --reasoning-effort medium --repetitions 1 >/dev/null 2>&1; then
+if BT_FAKE_MUTATION_EXTRA_EDIT=1 BT_TOKEN_BENCHMARK_CODEX="$repo_root/tests/fixtures/fake-codex-mutation.rb" BT_TOKEN_BENCHMARK_SESSIONS_DIR="$extra_sessions" ruby "$repo_root/scripts/token-benchmark.rb" --record --case routine-mutation --model fake-model --reasoning-effort medium --repetitions 1 >/dev/null 2>&1; then
   echo "mutation recorder accepted an unrelated fixture edit" >&2
   exit 1
 fi

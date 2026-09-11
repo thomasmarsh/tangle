@@ -10,7 +10,7 @@ Area [[IDX-001-execution-graph]].
 
 # Decision
 
-Adopt a hybrid store. Markdown remains canonical for durable node prose, semantic wikilinks, `context_rev`, and dependency pins. An untracked SQLite sidecar is derived authority for parsed nodes, edges, and FTS, and initial authoritative state for same-host claims, expiring leases, and numeric ID allocation. Expose both through specialized `kg` commands; do not require agents to manipulate database files or SQL directly.
+Adopt a hybrid store. Markdown remains canonical for durable node prose, semantic wikilinks, `context_rev`, and dependency pins. An untracked SQLite sidecar is derived authority for parsed nodes, edges, and FTS, and initial authoritative state for same-host claims, expiring leases, and numeric ID allocation. Expose both through specialized `bt` commands; do not require agents to manipulate database files or SQL directly.
 
 # Rationale
 

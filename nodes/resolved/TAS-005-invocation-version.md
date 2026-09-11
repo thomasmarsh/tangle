@@ -10,4 +10,4 @@ Parent [[TAS-001-distribution]].
 
 # Result
 
-Codex uses `$knowledge-execution-graph`; Claude Code uses `/knowledge-execution-graph`. Only a single `-v`, `-V`, or `--version` exits through the fast path.
+Codex uses `$braintree`; Claude Code uses `/braintree`. Only a single `-v`, `-V`, or `--version` exits through the fast path.

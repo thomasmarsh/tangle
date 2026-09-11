@@ -164,7 +164,7 @@ def index_case(root)
 end
 
 def result_for(name)
-  Dir.mktmpdir("kg-storage-") do |root|
+  Dir.mktmpdir("bt-storage-") do |root|
     git_setup(root)
     send("#{name}_case", root)
   end

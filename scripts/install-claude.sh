@@ -13,4 +13,4 @@ if [ "$#" -eq 1 ]; then
   esac
 fi
 
-KG_INSTALL_PRESENTATION=claude exec "$repo_root/scripts/install.sh" --claude "$@"
+BT_INSTALL_PRESENTATION=claude exec "$repo_root/scripts/install.sh" --claude "$@"

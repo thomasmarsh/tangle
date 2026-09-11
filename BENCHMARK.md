@@ -1,4 +1,4 @@
-# Benchmark: Markdown-canonical hybrid knowledge execution graph
+# Benchmark: Markdown-canonical hybrid Braintree
 
 ## Benchmark objective
 
@@ -260,8 +260,8 @@ requires the active coordinator's execution frontier, current rather than
 superseded decision, every revision-stale dependent, and an actionable orphan.
 The prompt does not contain the answer IDs. For graph runs, the generator copies
 the repository's exact `SKILL.md` to
-`.agents/skills/knowledge-execution-graph/SKILL.md`, records its SHA-256, and
-explicitly requires `$knowledge-execution-graph`; zero-token generation checks
+`.agents/skills/braintree/SKILL.md`, records its SHA-256, and
+explicitly requires `$braintree`; zero-token generation checks
 that copy and runs the copied graph checker while allowing only the named
 intentional orphan and expected stale pins. The graph fixture therefore measures
 the installed project skill rather than merely Markdown-shaped files.
@@ -276,9 +276,9 @@ deliberate treatment differences, so this is evidence about this retrieval task,
 not a universal token ranking.
 
 Every graph fixture installs the same distributable files as the project Codex
-installer: `SKILL.md`, `agents/openai.yaml`, `scripts/graph-check.rb`, `scripts/kg`, and
-`scripts/kg-index.rb` under
-`.agents/skills/knowledge-execution-graph/`; the zero-call check byte-compares
+installer: `SKILL.md`, `agents/openai.yaml`, `scripts/graph-check.rb`, `scripts/bt`, and
+`scripts/bt-index.rb` under
+`.agents/skills/braintree/`; the zero-call check byte-compares
 the copied instructions and metadata with this repository. Every live invocation uses `codex exec --json --ignore-user-config --ignore-rules
 -C GENERATED_FIXTURE` with a fresh session and read-only sandbox. Authentication
 is preserved by the CLI while unrelated user configuration/rules are excluded;

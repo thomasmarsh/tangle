@@ -1,20 +1,20 @@
 ---
-name: knowledge-execution-graph
+name: braintree
 description: Manage engineering work in a local Markdown vault as atomic, wikilink-connected nodes with authoritative status directories and dependency-revision checks. Use when the user invokes this skill or asks to plan, track, or execute work through a Markdown knowledge graph; do not use for ordinary Markdown editing.
 ---
 
-# Knowledge Execution Graph
+# Braintree
 
 Use the vault as a low-overhead execution graph. Keep planning, decisions, definitions, component notes, bug traces, and task state durable without loading unrelated context. Markdown is the durable, human-visible authority: keep it directly editable and Obsidian-compatible.
 
 ## Hybrid sidecar contract
 
-Use the installed `scripts/kg` command for graph indexes and live coordination; do not have workers read or write SQLite directly. Its stdout is compact TOON and its errors are actionable. `kg` keeps an untracked, external SQLite sidecar keyed by the repository's Git common directory, normally under `$XDG_STATE_HOME/kg` or `~/.local/state/kg`; all worktrees of one local repository therefore share it. `KG_SIDECAR_DIR` and `KG_PROJECT_ID` are explicit test or isolated-vault overrides.
+Use the installed `scripts/bt` command for graph indexes and live coordination; do not have workers read or write SQLite directly. Its stdout is compact TOON and its errors are actionable. `bt` keeps an untracked, external SQLite sidecar keyed by the repository's Git common directory, normally under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all worktrees of one local repository therefore share it. `BT_SIDECAR_DIR` and `BT_PROJECT_ID` are explicit test or isolated-vault overrides.
 
 - Markdown remains authoritative for node prose, wikilinks, semantic `context_rev` values and pins, status directories, priorities, and `next`. Preserve its directory layout for Obsidian. Do not introduce a second authority for any field.
-- `kg reindex [nodes]` rebuilds derived SQLite node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown. `kg search`, `kg backlinks`, and `kg stale` reconcile first, so cached graph rows are disposable acceleration rather than durable knowledge.
-- SQLite is authoritative only for local operational coordination: `kg allocate PREFIX` atomically reserves an ID, and `kg claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease. Release with the matching `kg release` command. A claim binds the starting content hash; reread and reconcile Markdown if it no longer matches.
-- Run `kg init` before coordinated work and `kg status` or `kg location` to inspect the local sidecar. Expired leases are discarded. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `kg init` then `kg reindex`.
+- `bt reindex [nodes]` rebuilds derived SQLite node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown. `bt search`, `bt backlinks`, and `bt stale` reconcile first, so cached graph rows are disposable acceleration rather than durable knowledge.
+- SQLite is authoritative only for local operational coordination: `bt allocate PREFIX` atomically reserves an ID, and `bt claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease. Release with the matching `bt release` command. A claim binds the starting content hash; reread and reconcile Markdown if it no longer matches.
+- Run `bt init` before coordinated work and `bt status` or `bt location` to inspect the local sidecar. Expired leases are discarded. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `bt init` then `bt reindex`.
 - This sidecar is for concurrent processes on one host and a local filesystem. It uses SQLite WAL and refuses an apparent network-mounted location unless explicitly overridden. Do not put it in Git, iCloud, Dropbox, NFS, or another synchronized/network filesystem. For multi-host coordination, use a server database such as PostgreSQL behind equivalent specialized commands; SQLite/WAL is not that service.
 - Keep status directories and Markdown pointers for now. A stationary-path/status-in-database migration is deferred and requires measured evidence that status-renames remain material Git churn after claims and serial integration.
 
@@ -97,11 +97,11 @@ Never copy every node's status, priority, timestamp, revision, or summary into t
 
 ### Parallel ID allocation
 
-For parallel creation, use `kg allocate PREFIX` to atomically reserve an ID. Coordinator preallocation or explicitly disjoint numeric ranges remain valid offline alternatives. A local `find` checks for an existing collision only; it is never an ID reservation. Branch-local `owner` or claim metadata is insufficient because separate worktrees can make the same claim without seeing each other.
+For parallel creation, use `bt allocate PREFIX` to atomically reserve an ID. Coordinator preallocation or explicitly disjoint numeric ranges remain valid offline alternatives. A local `find` checks for an existing collision only; it is never an ID reservation. Branch-local `owner` or claim metadata is insufficient because separate worktrees can make the same claim without seeing each other.
 
 ### Worker handoff and serial integration
 
-Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node, and claims it with `kg claim`. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
+Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node, and claims it with `bt claim`. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
 
 The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `ruby scripts/graph-check.rb nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
 
@@ -183,19 +183,19 @@ Prefer counts or bounded results over printing thousands of paths. Direct backli
 
 ## Integrity and sidecar commands
 
-For grooming or CI, an installed copy includes `scripts/graph-check.rb`, a portable read-only Markdown validator. It does not require the sidecar. The installed `scripts/kg` and `scripts/kg-index.rb` provide the optional hybrid index and same-host coordination layer:
+For grooming or CI, an installed copy includes `scripts/graph-check.rb`, a portable read-only Markdown validator. It does not require the sidecar. The installed `scripts/bt` and `scripts/bt-index.rb` provide the optional hybrid index and same-host coordination layer:
 
 ```sh
-ruby .agents/skills/knowledge-execution-graph/scripts/graph-check.rb nodes
-./.agents/skills/knowledge-execution-graph/scripts/kg reindex nodes
-./.agents/skills/knowledge-execution-graph/scripts/kg search 'authentication' --limit 10
+ruby .agents/skills/braintree/scripts/graph-check.rb nodes
+./.agents/skills/braintree/scripts/bt reindex nodes
+./.agents/skills/braintree/scripts/bt search 'authentication' --limit 10
 ```
 
 Run them from the project root, passing the current vault's nodes directory when it is not `nodes`. The checker validates the current status-directory layout: node identity and links, required headers and lifecycle rules, canonical edges and frontiers, dependency-pin syntax and revision mismatch, primary-route reachability, and parent cycles. The sidecar is optional for ordinary serial graph work.
 
 ## Mutation rules
 
-- New nodes start at `context_rev: 1`. For serial or otherwise coordinator-controlled creation, use `find` to check for collisions before choosing an ID. In local parallel work, use `kg allocate PREFIX`; offline coordination may use preallocated IDs or disjoint ranges. A local `find` detects collisions only and never reserves an ID.
+- New nodes start at `context_rev: 1`. For serial or otherwise coordinator-controlled creation, use `find` to check for collisions before choosing an ID. In local parallel work, use `bt allocate PREFIX`; offline coordination may use preallocated IDs or disjoint ranges. A local `find` detects collisions only and never reserves an ID.
 - On every mutation, refresh only that node's `updated`. Increment its `context_rev` only for a consumer-relevant semantic change. Never update unrelated nodes or the index as bookkeeping.
 - Change status by moving the unchanged filename between status directories and updating the same node's current content. Wikilinks use the basename and remain stable.
 - When a distinct subtask or thought emerges, apply the decomposition and admission contracts before creating it, then put its one primary `Parent [[...]]` or `Area [[IDX-...]]` link on that node. Do not also add a `Child` or `Parent of` copy to the parent; its `next` may name only the one deliberate frontier child. Create a root hub only as an `IDX` node reached by `Indexes` from `index-map.md`; it has neither primary link.

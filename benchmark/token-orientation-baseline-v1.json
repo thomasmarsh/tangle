@@ -35,10 +35,10 @@
         "0.154.0"
       ],
       "observed_session_cwd": [
-        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/kg-token-benchmark-20260910-74661-so75of"
+        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/bt-token-benchmark-20260910-74661-so75of"
       ],
       "observed_turn_cwd": [
-        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/kg-token-benchmark-20260910-74661-so75of"
+        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/bt-token-benchmark-20260910-74661-so75of"
       ],
       "observed_model": [
         "gpt-5.6-terra"

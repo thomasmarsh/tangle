@@ -10,68 +10,68 @@ home_root="$test_root/home"
 mkdir -p "$project" "$home_root"
 
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)
-case "$dry_run" in *"$project/.agents/skills/knowledge-execution-graph"*) ;; *) exit 1;; esac
+case "$dry_run" in *"$project/.agents/skills/braintree"*) ;; *) exit 1;; esac
 [ ! -e "$project/.agents" ]
 
 $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$project/.agents/skills/knowledge-execution-graph/SKILL.md"
-cmp -s "$repo_root/agents/openai.yaml" "$project/.agents/skills/knowledge-execution-graph/agents/openai.yaml"
-cmp -s "$repo_root/scripts/graph-check.rb" "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/kg" "$project/.agents/skills/knowledge-execution-graph/scripts/kg"
-cmp -s "$repo_root/scripts/kg-index.rb" "$project/.agents/skills/knowledge-execution-graph/scripts/kg-index.rb"
-[ -x "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
-[ -x "$project/.agents/skills/knowledge-execution-graph/scripts/kg" ]
-[ -x "$project/.agents/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
-ruby "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb" "$repo_root/nodes" >/dev/null
+cmp -s "$repo_root/SKILL.md" "$project/.agents/skills/braintree/SKILL.md"
+cmp -s "$repo_root/agents/openai.yaml" "$project/.agents/skills/braintree/agents/openai.yaml"
+cmp -s "$repo_root/scripts/graph-check.rb" "$project/.agents/skills/braintree/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/bt" "$project/.agents/skills/braintree/scripts/bt"
+cmp -s "$repo_root/scripts/bt-index.rb" "$project/.agents/skills/braintree/scripts/bt-index.rb"
+[ -x "$project/.agents/skills/braintree/scripts/graph-check.rb" ]
+[ -x "$project/.agents/skills/braintree/scripts/bt" ]
+[ -x "$project/.agents/skills/braintree/scripts/bt-index.rb" ]
+ruby "$project/.agents/skills/braintree/scripts/graph-check.rb" "$repo_root/nodes" >/dev/null
 
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 
 $repo_root/scripts/install.sh --codex --home "$home_root" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/knowledge-execution-graph/SKILL.md"
+cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/braintree/SKILL.md"
 
 $repo_root/scripts/install.sh --claude --project "$project" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$project/.claude/skills/knowledge-execution-graph/SKILL.md"
-cmp -s "$repo_root/scripts/graph-check.rb" "$project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/kg" "$project/.claude/skills/knowledge-execution-graph/scripts/kg"
-cmp -s "$repo_root/scripts/kg-index.rb" "$project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb"
-[ -x "$project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
-[ -x "$project/.claude/skills/knowledge-execution-graph/scripts/kg" ]
-[ -x "$project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
+cmp -s "$repo_root/SKILL.md" "$project/.claude/skills/braintree/SKILL.md"
+cmp -s "$repo_root/scripts/graph-check.rb" "$project/.claude/skills/braintree/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/bt" "$project/.claude/skills/braintree/scripts/bt"
+cmp -s "$repo_root/scripts/bt-index.rb" "$project/.claude/skills/braintree/scripts/bt-index.rb"
+[ -x "$project/.claude/skills/braintree/scripts/graph-check.rb" ]
+[ -x "$project/.claude/skills/braintree/scripts/bt" ]
+[ -x "$project/.claude/skills/braintree/scripts/bt-index.rb" ]
 
 $repo_root/scripts/install.sh --claude --home "$home_root" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$home_root/.claude/skills/knowledge-execution-graph/SKILL.md"
-[ ! -e "$home_root/.claude/skills/knowledge-execution-graph/agents" ]
+cmp -s "$repo_root/SKILL.md" "$home_root/.claude/skills/braintree/SKILL.md"
+[ ! -e "$home_root/.claude/skills/braintree/agents" ]
 
 claude_project="$test_root/claude-project"
 claude_home="$test_root/claude-home"
 mkdir -p "$claude_project" "$claude_home"
 
 claude_dry_run=$($repo_root/scripts/install-claude.sh --project "$claude_project" --dry-run)
-case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/knowledge-execution-graph"*) ;; *) exit 1;; esac
+case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/braintree"*) ;; *) exit 1;; esac
 [ ! -e "$claude_project/.claude" ]
 
 $repo_root/scripts/install-claude.sh --project "$claude_project" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$claude_project/.claude/skills/knowledge-execution-graph/SKILL.md"
-cmp -s "$repo_root/scripts/graph-check.rb" "$claude_project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/kg" "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg"
-cmp -s "$repo_root/scripts/kg-index.rb" "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb"
-[ -x "$claude_project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
-[ -x "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg" ]
-[ -x "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
-[ ! -e "$claude_project/.claude/skills/knowledge-execution-graph/agents" ]
+cmp -s "$repo_root/SKILL.md" "$claude_project/.claude/skills/braintree/SKILL.md"
+cmp -s "$repo_root/scripts/graph-check.rb" "$claude_project/.claude/skills/braintree/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/bt" "$claude_project/.claude/skills/braintree/scripts/bt"
+cmp -s "$repo_root/scripts/bt-index.rb" "$claude_project/.claude/skills/braintree/scripts/bt-index.rb"
+[ -x "$claude_project/.claude/skills/braintree/scripts/graph-check.rb" ]
+[ -x "$claude_project/.claude/skills/braintree/scripts/bt" ]
+[ -x "$claude_project/.claude/skills/braintree/scripts/bt-index.rb" ]
+[ ! -e "$claude_project/.claude/skills/braintree/agents" ]
 claude_repeat=$($repo_root/scripts/install-claude.sh --project "$claude_project")
 case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; esac
 
 $repo_root/scripts/install-claude.sh --home "$claude_home" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$claude_home/.claude/skills/knowledge-execution-graph/SKILL.md"
-cmp -s "$repo_root/scripts/graph-check.rb" "$claude_home/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/kg" "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg"
-cmp -s "$repo_root/scripts/kg-index.rb" "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb"
-[ -x "$claude_home/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
-[ -x "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg" ]
-[ -x "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
-[ ! -e "$claude_home/.claude/skills/knowledge-execution-graph/agents" ]
+cmp -s "$repo_root/SKILL.md" "$claude_home/.claude/skills/braintree/SKILL.md"
+cmp -s "$repo_root/scripts/graph-check.rb" "$claude_home/.claude/skills/braintree/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/bt" "$claude_home/.claude/skills/braintree/scripts/bt"
+cmp -s "$repo_root/scripts/bt-index.rb" "$claude_home/.claude/skills/braintree/scripts/bt-index.rb"
+[ -x "$claude_home/.claude/skills/braintree/scripts/graph-check.rb" ]
+[ -x "$claude_home/.claude/skills/braintree/scripts/bt" ]
+[ -x "$claude_home/.claude/skills/braintree/scripts/bt-index.rb" ]
+[ ! -e "$claude_home/.claude/skills/braintree/agents" ]
 
 if $repo_root/scripts/install.sh --codex >/dev/null 2>&1; then exit 1; fi
 if $repo_root/scripts/install.sh --codex --project "$project" --unknown >/dev/null 2>&1; then exit 1; fi

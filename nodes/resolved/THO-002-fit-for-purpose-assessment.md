@@ -8,7 +8,7 @@ summary: The graph is fit for execution memory after several drift and discovery
 
 Area [[IDX-001-execution-graph]].
 
-Can the knowledge execution graph replace recursive plan files and hosted issue trackers as an organic memory index for long-lived project work?
+Can Braintree replace recursive plan files and hosted issue trackers as an organic memory index for long-lived project work?
 
 Reassesses [[TAS-007-competitive-evaluation]] at context_rev 4.
 

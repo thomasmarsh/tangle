@@ -3,12 +3,12 @@
 set -eu
 
 version=0.3.1
-skill_name=knowledge-execution-graph
+skill_name=braintree
 agent=
 scope=
 root=
 dry_run=false
-presentation=${KG_INSTALL_PRESENTATION:-generic}
+presentation=${BT_INSTALL_PRESENTATION:-generic}
 
 if [ "$#" -eq 1 ]; then
   case "$1" in
@@ -26,10 +26,10 @@ field() {
 
 usage() {
   if [ "$presentation" = claude ]; then
-    field description 'Install Knowledge Execution Graph for Claude Code into an explicit project or home-root directory.'
+    field description 'Install Braintree for Claude Code into an explicit project or home-root directory.'
     field usage 'scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run]'
     printf 'options[6]{flag,meaning}:\n'
-    printf '  "--project DIR","install to DIR/.claude/skills/knowledge-execution-graph"\n'
+    printf '  "--project DIR","install to DIR/.claude/skills/braintree"\n'
     printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
     printf '  "--dry-run","report the destination without writing"\n'
     printf '  "--help, -h","show this reference"\n'
@@ -42,12 +42,12 @@ usage() {
     return
   fi
 
-  field description 'Install Knowledge Execution Graph into an explicit project or home-root directory.'
+  field description 'Install Braintree into an explicit project or home-root directory.'
   field usage 'scripts/install.sh (--codex | --claude) (--project DIR | --home DIR) [--dry-run]'
   field claude_wrapper 'scripts/install-claude.sh omits --claude and accepts the same destination flags.'
   printf 'options[8]{flag,meaning}:\n'
-  printf '  "--codex","install to DIR/.agents/skills/knowledge-execution-graph"\n'
-  printf '  "--claude","install to DIR/.claude/skills/knowledge-execution-graph"\n'
+  printf '  "--codex","install to DIR/.agents/skills/braintree"\n'
+  printf '  "--claude","install to DIR/.claude/skills/braintree"\n'
   printf '  "--project DIR","use an explicit project directory"\n'
   printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
   printf '  "--dry-run","report the destination without writing"\n'
@@ -127,7 +127,7 @@ if [ "$agent" = codex ]; then
   fi
 fi
 
-for distributable in graph-check.rb kg kg-index.rb; do
+for distributable in graph-check.rb bt bt-index.rb; do
   source="$repo_root/scripts/$distributable"
   target="$destination/scripts/$distributable"
   if [ -f "$target" ] && cmp -s "$source" "$target"; then

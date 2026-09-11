@@ -21,7 +21,7 @@ Reindex recovery, backlinks, stale-pin discovery, traversal, and FTS queries are
 
 # Result
 
-`kg reindex` rebuilds node, edge, and FTS tables from Markdown; `search`,
+`bt reindex` rebuilds node, edge, and FTS tables from Markdown; `search`,
 `backlinks`, and `stale` reconcile first and return compact TOON. The sidecar
 can be deleted and reconstructed without changing the vault. Isolated-vault
 tests cover FTS, reverse edges, stale and missing pins, strict arguments, and

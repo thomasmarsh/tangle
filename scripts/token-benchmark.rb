@@ -109,14 +109,14 @@ def completed_mutation!(stream, answer_path, root, before)
   raise ArgumentError, "mutation did not preserve its area link" unless node.include?("Area [[IDX-001-import]].")
   raise ArgumentError, "mutation did not preserve its dependency pin" unless node.include?("Depends on [[DEF-020-import-contract]] at context_rev 4.")
   raise ArgumentError, "mutation did not record exact completion evidence" unless node.include?("# Result\n\nValidated the signed schema contract.\n")
-  graph_check = File.join(root, ".agents/skills/knowledge-execution-graph/scripts/graph-check.rb")
+  graph_check = File.join(root, ".agents/skills/braintree/scripts/graph-check.rb")
   raise ArgumentError, "mutated graph is invalid" unless system("ruby", graph_check, File.join(root, "nodes"), out: File::NULL, err: File::NULL)
 end
 
 def fixture_prompt(representation, benchmark_case)
   if benchmark_case == "routine-mutation"
     return <<~PROMPT
-      Complete one routine Markdown execution-graph mutation. First explicitly invoke $knowledge-execution-graph and follow .agents/skills/knowledge-execution-graph/SKILL.md.
+      Complete one routine Markdown execution-graph mutation. First explicitly invoke $braintree and follow .agents/skills/braintree/SKILL.md.
 
       The signed-schema validation task is complete. Move its existing node to resolved and make only the necessary node mutation: set its summary exactly to "Schema validation is complete.", record exactly "Validated the signed schema contract." under # Result, refresh updated to the current UTC ISO-8601 time, and apply the correct semantic context revision behavior. Preserve its Area and dependency pin. Do not modify any other fixture file. Respond exactly: Routine mutation complete.
     PROMPT
@@ -125,7 +125,7 @@ def fixture_prompt(representation, benchmark_case)
     return <<~PROMPT
       You are resuming a cold engineering session. Inspect this repository's Markdown execution graph; do not guess from filenames alone.
 
-      First explicitly invoke $knowledge-execution-graph and follow the project skill at .agents/skills/knowledge-execution-graph/SKILL.md before inspecting the graph.
+      First explicitly invoke $braintree and follow the project skill at .agents/skills/braintree/SKILL.md before inspecting the graph.
 
       Return exactly one compact JSON object with these keys and no others:
       {"frontier":"ID","next":"exact next action"}
@@ -136,7 +136,7 @@ def fixture_prompt(representation, benchmark_case)
   <<~PROMPT
     You have been asked to resume the active data-import hardening work. Inspect this repository's #{representation == "graph" ? "Markdown execution graph" : "conventional plan documents"}; do not guess from filenames alone.
 
-    #{representation == "graph" ? "First explicitly invoke $knowledge-execution-graph and follow the project skill at .agents/skills/knowledge-execution-graph/SKILL.md before inspecting the graph." : "Use the conventional plan as the control representation; it expresses the same current work facts and historical distractors but does not supply graph-skill instructions."}
+    #{representation == "graph" ? "First explicitly invoke $braintree and follow the project skill at .agents/skills/braintree/SKILL.md before inspecting the graph." : "Use the conventional plan as the control representation; it expresses the same current work facts and historical distractors but does not supply graph-skill instructions."}
 
     Return exactly one compact JSON object with these keys and no others:
     {"frontier":"ID","current_decision":"ID","stale_dependents":["ID"],"orphan":"ID"}
@@ -164,10 +164,10 @@ def generate_fixture(root, representation, scale, benchmark_case)
   raise ArgumentError, "could not initialize isolated fixture repository" unless status.success?
   write(File.join(root, ".gitignore"), "*\n!.gitignore\n")
   if representation == "graph"
-    skill_path = File.join(root, ".agents/skills/knowledge-execution-graph/SKILL.md")
+    skill_path = File.join(root, ".agents/skills/braintree/SKILL.md")
     write(skill_path, File.binread(skill_source))
-    write(File.join(root, ".agents/skills/knowledge-execution-graph/agents/openai.yaml"), File.binread(skill_metadata_source))
-    write(File.join(root, ".agents/skills/knowledge-execution-graph/scripts/graph-check.rb"), File.binread(File.expand_path("graph-check.rb", __dir__)))
+    write(File.join(root, ".agents/skills/braintree/agents/openai.yaml"), File.binread(skill_metadata_source))
+    write(File.join(root, ".agents/skills/braintree/scripts/graph-check.rb"), File.binread(File.expand_path("graph-check.rb", __dir__)))
     if benchmark_case == "routine-mutation"
       write(File.join(root, "nodes/index-map.md"), "# Routes\n\n- Indexes [[IDX-001-import]]\n")
       write(File.join(root, "nodes/resolved/IDX-001-import.md"), "---\ncontext_rev: 1\nupdated: 2026-01-01T00:00:00Z\nsummary: Data import hardening area.\n---\n")
@@ -399,11 +399,11 @@ def newest_session(before, fixture_dir)
 end
 
 def session_root
-  File.expand_path(ENV.fetch("KG_TOKEN_BENCHMARK_SESSIONS_DIR", "~/.codex/sessions"))
+  File.expand_path(ENV.fetch("BT_TOKEN_BENCHMARK_SESSIONS_DIR", "~/.codex/sessions"))
 end
 
 def codex_command
-  ENV.fetch("KG_TOKEN_BENCHMARK_CODEX", "codex")
+  ENV.fetch("BT_TOKEN_BENCHMARK_CODEX", "codex")
 end
 
 options = { sessions: [], record: false, representation: "graph", scale: "small", benchmark_case: "composite" }
@@ -446,17 +446,17 @@ begin
     raise ArgumentError, "--check-fixture cannot be combined" unless ARGV.empty? && !options[:record] && options[:sessions].empty?
     representations = %w[cold-resume routine-mutation].include?(options[:benchmark_case]) ? ["graph"] : REPRESENTATIONS
     variants = representations.product(SCALES.keys).map do |representation, scale|
-      Dir.mktmpdir("kg-token-fixture-") do |dir|
+      Dir.mktmpdir("bt-token-fixture-") do |dir|
         metadata = generate_fixture(dir, representation, scale, options[:benchmark_case])
         expected = CASES.fetch(options[:benchmark_case]).fetch(:expected)
         raise ArgumentError, "fixture prompt leaks expected answer" if expected.values.flatten.any? { |value| File.binread(File.join(dir, "TASK.txt")).include?(value) }
         if representation == "graph"
-          graph_check = File.join(dir, ".agents/skills/knowledge-execution-graph/scripts/graph-check.rb")
+          graph_check = File.join(dir, ".agents/skills/braintree/scripts/graph-check.rb")
           graph_args = options[:benchmark_case] == "composite" ? ["--allow-stale", "--allow-orphan", "TAS-060-unrouted-cleanup"] : []
           success = system("ruby", graph_check, *graph_args, File.join(dir, "nodes"), out: File::NULL, err: File::NULL)
           raise ArgumentError, "graph fixture structural check failed" unless success
-          raise ArgumentError, "graph fixture does not copy the exact repository skill" unless File.binread(File.join(dir, ".agents/skills/knowledge-execution-graph/SKILL.md")) == File.binread(skill_source)
-          raise ArgumentError, "graph fixture does not install the exact skill metadata" unless File.binread(File.join(dir, ".agents/skills/knowledge-execution-graph/agents/openai.yaml")) == File.binread(skill_metadata_source)
+          raise ArgumentError, "graph fixture does not copy the exact repository skill" unless File.binread(File.join(dir, ".agents/skills/braintree/SKILL.md")) == File.binread(skill_source)
+          raise ArgumentError, "graph fixture does not install the exact skill metadata" unless File.binread(File.join(dir, ".agents/skills/braintree/agents/openai.yaml")) == File.binread(skill_metadata_source)
           if expected.key?("stale_dependents")
             raise ArgumentError, "graph fixture has unexpected stale dependencies" unless graph_fixture_facts(dir).fetch(:stale_dependents) == expected.fetch("stale_dependents")
           end
@@ -500,7 +500,7 @@ begin
     raise ArgumentError, "timeout must be 1 through 600 seconds" unless timeout_seconds.between?(1, 600)
     runs = repetitions.times.map do
       sessions_before = Dir.glob(File.join(session_root, "**", "*.jsonl"))
-      Dir.mktmpdir("kg-token-benchmark-") do |dir|
+      Dir.mktmpdir("bt-token-benchmark-") do |dir|
         fixture = generate_fixture(dir, options[:representation], options[:scale], options[:benchmark_case])
         answer_path = File.join(dir, "answer.json")
         schema_path = File.join(dir, "answer.schema.json")

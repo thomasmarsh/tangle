@@ -64,18 +64,18 @@ Parent [[IDX-001-root]].
 
 Depends on [[DEF-404-missing]].
 EOF
-export KG_SIDECAR_DIR="$test_root/sidecar" KG_PROJECT_ID=index-test KG_NODES_DIR="$vault"
-kg="$repo_root/scripts/kg"
-output=$("$kg" reindex)
+export BT_SIDECAR_DIR="$test_root/sidecar" BT_PROJECT_ID=index-test BT_NODES_DIR="$vault"
+bt="$repo_root/scripts/bt"
+output=$("$bt" reindex)
 printf '%s\n' "$output" | grep -Fx 'nodes: 4' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'edges: 5' >/dev/null
-"$kg" search durable | grep -F '"DEF-001","resolved","Searchable protocol contract."' >/dev/null
-"$kg" backlinks DEF-001 | grep -F '"TAS-001","active","Depends on","2"' >/dev/null
-stale=$("$kg" stale)
+"$bt" search durable | grep -F '"DEF-001","resolved","Searchable protocol contract."' >/dev/null
+"$bt" backlinks DEF-001 | grep -F '"TAS-001","active","Depends on","2"' >/dev/null
+stale=$("$bt" stale)
 printf '%s\n' "$stale" | grep -F '"TAS-001","active","DEF-001","2","3"' >/dev/null
 printf '%s\n' "$stale" | grep -F '"TAS-002","active","DEF-404-missing","",""' >/dev/null
-rm -f "$KG_SIDECAR_DIR/projects/index-test/graph.sqlite3"
-"$kg" reindex >/dev/null
-"$kg" search protocol | grep -F '"DEF-001"' >/dev/null
-case "$("$kg" search --limit 1 2>/dev/null || true)" in *'error: "search requires QUERY"'*) ;; *) exit 1;; esac
-printf 'kg index tests: passed\n'
+rm -f "$BT_SIDECAR_DIR/projects/index-test/graph.sqlite3"
+"$bt" reindex >/dev/null
+"$bt" search protocol | grep -F '"DEF-001"' >/dev/null
+case "$("$bt" search --limit 1 2>/dev/null || true)" in *'error: "search requires QUERY"'*) ;; *) exit 1;; esac
+printf 'bt index tests: passed\n'

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Knowledge Execution Graph — V3 Benchmark</title>
+  <title>Braintree — V3 Benchmark</title>
   <style>
     :root { color-scheme: light dark; --paper:#fbfaf7; --ink:#1f2933; --muted:#64748b; --line:#d9dde3; --card:#fff; --accent:#0f766e; --warn:#9a6700; --bad:#b42318; }
     * { box-sizing:border-box; } body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.55 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
@@ -15,7 +15,7 @@
     <header>
       <div class="eyebrow">Local file-only benchmark · 100 / 1,000 / 10,000 nodes</div>
       <h1>V3 removes the mutable ledger, not the useful graph.</h1>
-      <p class="lede">A review surface for the evidence behind the knowledge-execution graph migration. It compares synthetic Markdown fixtures only; it is not a performance claim about hosted GitHub Issues or Jira.</p>
+      <p class="lede">A review surface for the evidence behind the Braintree migration. It compares synthetic Markdown fixtures only; it is not a performance claim about hosted GitHub Issues or Jira.</p>
       <div class="decision"><strong>Recommendation:</strong> use status directories as authoritative state, a routing-only index, and local revision pins only for context-bearing dependencies. Do not reintroduce a copied node catalog.</div>
     </header>
 
@@ -54,7 +54,7 @@ next: Add the failing boundary test.
 ---</pre><p>Use <code>Depends on [[DEF-auth]] at rev 7.</code> only for context-bearing edges. Use sparse <code>disposition</code> for deprecated, abandoned, or superseded nodes. Do not duplicate ID, type, status, or empty lifecycle metadata.</p></details>
     <details style="margin-top:12px"><summary>Remaining tradeoffs</summary><p>No database, daemon, custom indexer, or persistent helper was introduced. Numerical IDs can race; broad reverse-link, area, priority, and recency questions remain scans; an advisory Focus can go stale about intent; and timestamps rely on mutation discipline. These are explicit file-only costs, not hidden cache inconsistencies.</p></details>
 
-    <footer>Evidence: independent fixture reports and verification in <span class="mono">/private/tmp/kgbench.kBlk1h/reports/</span>. The repository’s complete written record is <span class="mono">BENCHMARK.md</span>. This HTML intentionally follows the project’s restrained documentation aesthetic and is created only; no Lavish GUI session was opened.</footer>
+    <footer>Evidence: independent fixture reports and verification in <span class="mono">/private/tmp/btbench.kBlk1h/reports/</span>. The repository’s complete written record is <span class="mono">BENCHMARK.md</span>. This HTML intentionally follows the project’s restrained documentation aesthetic and is created only; no Lavish GUI session was opened.</footer>
   </main>
 </body>
 </html>

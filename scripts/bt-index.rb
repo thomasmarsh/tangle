@@ -5,7 +5,7 @@ require 'open3'
 require 'time'
 
 db, command, *args = ARGV
-abort 'kg index helper requires database and command' unless db && command
+abort 'bt index helper requires database and command' unless db && command
 
 def sql(value)
   "'#{value.to_s.gsub("'", "''")}'"

@@ -21,4 +21,4 @@ Commands initialize and locate the sidecar safely, use transactions for allocati
 
 # Result
 
-`scripts/kg` keeps its SQLite WAL database outside the repository under a stable Git-common-directory hash (with isolated `KG_SIDECAR_DIR` and `KG_PROJECT_ID` overrides for tests). It owns only `id_sequences` and expiring `claims`; allocation uses `BEGIN IMMEDIATE`, and claim renewal requires the same agent and base content hash. `tests/kg-foundation.sh` verifies initialization, WAL, monotonic per-prefix allocation, conflicting-hash rejection, release, expiry, and strict argument handling.
+`scripts/bt` keeps its SQLite WAL database outside the repository under a stable Git-common-directory hash (with isolated `BT_SIDECAR_DIR` and `BT_PROJECT_ID` overrides for tests). It owns only `id_sequences` and expiring `claims`; allocation uses `BEGIN IMMEDIATE`, and claim renewal requires the same agent and base content hash. `tests/bt-foundation.sh` verifies initialization, WAL, monotonic per-prefix allocation, conflicting-hash rejection, release, expiry, and strict argument handling.

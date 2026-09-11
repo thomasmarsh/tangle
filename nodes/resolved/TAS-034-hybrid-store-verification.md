@@ -21,4 +21,4 @@ Tests cover contention, expired leases, hash mismatch, duplicate allocation prev
 
 # Result
 
-`tests/kg-verification.sh` covers those cases with disposable sidecars and two real local worktrees; it passes in `make test`. Live initialization, reindex, FTS search, backlinks, stale-pin, and status queries passed using the external sidecar; it reports 47 nodes, 59 edges, zero stale pins, and zero active claims.
+`tests/bt-verification.sh` covers those cases with disposable sidecars and two real local worktrees; it passes in `make test`. Live initialization, reindex, FTS search, backlinks, stale-pin, and status queries passed using the external sidecar; it reports 47 nodes, 59 edges, zero stale pins, and zero active claims.

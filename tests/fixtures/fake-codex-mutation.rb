@@ -24,9 +24,9 @@ text << "\n# Result\n\nValidated the signed schema contract.\n"
 File.binwrite(active, text)
 File.rename(active, resolved)
 File.binwrite(answer, "Routine mutation complete.\n")
-File.binwrite(File.join(root, "unexpected.txt"), "unexpected\n") if ENV["KG_FAKE_MUTATION_EXTRA_EDIT"]
+File.binwrite(File.join(root, "unexpected.txt"), "unexpected\n") if ENV["BT_FAKE_MUTATION_EXTRA_EDIT"]
 
-sessions = ENV.fetch("KG_TOKEN_BENCHMARK_SESSIONS_DIR")
+sessions = ENV.fetch("BT_TOKEN_BENCHMARK_SESSIONS_DIR")
 path = File.join(sessions, "fake", "mutation.jsonl")
 FileUtils.mkdir_p(File.dirname(path))
 File.binwrite(path, [

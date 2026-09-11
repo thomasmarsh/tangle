@@ -13,13 +13,13 @@ Depends on [[DEC-002-hybrid-markdown-sqlite-authority]] at context_rev 1.
 
 # Result
 
-`scripts/kg` is the sole command boundary: Markdown retains prose, links, pins,
+`scripts/bt` is the sole command boundary: Markdown retains prose, links, pins,
 status, priority, and `next`; SQLite holds only rebuildable index/FTS rows and
-local claims/allocation. `kg reindex` rebuilds after database loss, while
-`kg init` repairs the operational sidecar. No database, WAL, or SHM path is
+local claims/allocation. `bt reindex` rebuilds after database loss, while
+`bt init` repairs the operational sidecar. No database, WAL, or SHM path is
 tracked; `.gitignore` also excludes their in-repository forms.
 
-`tests/kg-foundation.sh`, `tests/kg-index.sh`, and `tests/kg-verification.sh`
+`tests/bt-foundation.sh`, `tests/bt-index.sh`, and `tests/bt-verification.sh`
 pass. The verification test proves non-mutating reindex/search/backlinks/stale,
 recovery after deleting the test database, shared Git-common-dir identity and
 claim visibility across worktrees, and network-filesystem refusal. It also
@@ -27,7 +27,7 @@ proves competing claims and allocations serialize correctly. `graph-check` and
 `git diff --check` pass.
 
 The live default sidecar resolves outside the repository at
-`~/.local/state/kg/projects/732e1b1cf1dbb6f3891f/graph.sqlite3`, with zero
+`~/.local/state/braintree/projects/732e1b1cf1dbb6f3891f/graph.sqlite3`, with zero
 claims. This sandbox permits reading it but rejects reindex writes, so its live
 write path was not altered; disposable local sidecars supplied the write and
 recovery evidence. This is an environment restriction, not durable graph state.

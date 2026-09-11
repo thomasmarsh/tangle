@@ -1,6 +1,6 @@
-# Knowledge Execution Graph
+# Braintree
 
-Knowledge Execution Graph is a Markdown-canonical operating model for agents doing long-running engineering work. It keeps decisions, definitions, tasks, blockers, and dependency state visible in an Obsidian-compatible vault while using an optional external SQLite sidecar for fast derived queries and same-host coordination.
+Braintree is a Markdown-canonical operating model for agents doing long-running engineering work. It keeps decisions, definitions, tasks, blockers, and dependency state visible in an Obsidian-compatible vault while using an optional external SQLite sidecar for fast derived queries and same-host coordination.
 
 ## Purpose
 
@@ -20,16 +20,16 @@ It is compatible with both Codex and Claude Code because both consume the standa
 
 ## Hybrid local sidecar
 
-Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `scripts/kg` hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
+Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `scripts/bt` hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
 
 ```sh
-./scripts/kg init
-./scripts/kg reindex nodes
-./scripts/kg search 'authentication' --limit 10
-./scripts/kg allocate TAS
+./scripts/bt init
+./scripts/bt reindex nodes
+./scripts/bt search 'authentication' --limit 10
+./scripts/bt allocate TAS
 ```
 
-The sidecar is external and untracked, keyed by the Git common directory under `$XDG_STATE_HOME/kg` or `~/.local/state/kg`; all local worktrees share it. It is rebuildable: database loss loses only indexes and leases, recovered by `kg init` and `kg reindex`. SQLite WAL is limited to concurrent processes on one host and a local filesystem. Do not place it on a network or synchronization filesystem. Cross-host coordination needs a server database (for example PostgreSQL) behind the same command interface. Status directories remain Markdown-authoritative; a stationary-path migration is deferred pending evidence that status-renames still cause material churn.
+The sidecar is external and untracked, keyed by the Git common directory under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all local worktrees share it. It is rebuildable: database loss loses only indexes and leases, recovered by `bt init` and `bt reindex`. SQLite WAL is limited to concurrent processes on one host and a local filesystem. Do not place it on a network or synchronization filesystem. Cross-host coordination needs a server database (for example PostgreSQL) behind the same command interface. Status directories remain Markdown-authoritative; a stationary-path migration is deferred pending evidence that status-renames still cause material churn.
 
 ## Install
 
@@ -52,13 +52,13 @@ The generic installer retains the equivalent legacy Claude Code entry point:
 ./scripts/install.sh --claude --project /path/to/project
 ```
 
-The destination is `<root>/.agents/skills/knowledge-execution-graph` for Codex or `<root>/.claude/skills/knowledge-execution-graph` for Claude Code. Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
+The destination is `<root>/.agents/skills/braintree` for Codex or `<root>/.claude/skills/braintree` for Claude Code. Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
 
 ```sh
 ./scripts/install.sh --codex --project /path/to/project --dry-run
 ```
 
-Restart the relevant coding-agent session after installing so it discovers the skill. The skill’s own `description` controls automatic selection. To guarantee loading, invoke it as `$knowledge-execution-graph` in Codex or `/knowledge-execution-graph` in Claude Code.
+Restart the relevant coding-agent session after installing so it discovers the skill. The skill’s own `description` controls automatic selection. To guarantee loading, invoke it as `$braintree` in Codex or `/braintree` in Claude Code.
 
 ## Verify
 
@@ -73,17 +73,17 @@ make test
 Installed projects can validate the current graph with the bundled Markdown checker (which needs no sidecar) or use the optional sidecar commands from the project root:
 
 ```sh
-ruby .agents/skills/knowledge-execution-graph/scripts/graph-check.rb
+ruby .agents/skills/braintree/scripts/graph-check.rb
 # or, for a Claude Code installation
-ruby .claude/skills/knowledge-execution-graph/scripts/graph-check.rb nodes
-./.agents/skills/knowledge-execution-graph/scripts/kg reindex nodes
+ruby .claude/skills/braintree/scripts/graph-check.rb nodes
+./.agents/skills/braintree/scripts/bt reindex nodes
 ```
 
 It is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the checker plus `kg` and its Ruby index helper, leaving repository graph state and development files behind.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the checker plus `bt` and its Ruby index helper, leaving repository graph state and development files behind.
 
 A vault uses this shape:
 

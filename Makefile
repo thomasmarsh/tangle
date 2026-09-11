@@ -8,9 +8,9 @@ test:
 	sh tests/token-benchmark.sh
 	sh tests/storage-comparison.sh
 	sh tests/worktree-parallel.sh
-	sh tests/kg-foundation.sh
-	sh tests/kg-index.sh
-	sh tests/kg-verification.sh
+	sh tests/bt-foundation.sh
+	sh tests/bt-index.sh
+	sh tests/bt-verification.sh
 	git diff --check
 
 benchmark:
