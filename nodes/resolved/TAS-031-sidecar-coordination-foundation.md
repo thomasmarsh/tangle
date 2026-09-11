@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P0
-updated: 2026-09-11T12:40:54Z
+updated: 2026-09-11T13:15:00Z
 summary: Implement the external SQLite sidecar identity, schema, atomic claims, leases, and ID allocation.
-next: Design the portable `kg` command and sidecar location contract.
 ---
 
 # Context
@@ -19,3 +18,7 @@ Same-host worktrees share one project-identity-keyed, untracked SQLite sidecar t
 # Done when
 
 Commands initialize and locate the sidecar safely, use transactions for allocation and claims, enforce lease expiry and base-hash checks, and reject unsupported cross-host/network use clearly.
+
+# Result
+
+`scripts/kg` keeps its SQLite WAL database outside the repository under a stable Git-common-directory hash (with isolated `KG_SIDECAR_DIR` and `KG_PROJECT_ID` overrides for tests). It owns only `id_sequences` and expiring `claims`; allocation uses `BEGIN IMMEDIATE`, and claim renewal requires the same agent and base content hash. `tests/kg-foundation.sh` verifies initialization, WAL, monotonic per-prefix allocation, conflicting-hash rejection, release, expiry, and strict argument handling.

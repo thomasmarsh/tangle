@@ -8,6 +8,7 @@ test:
 	sh tests/token-benchmark.sh
 	sh tests/storage-comparison.sh
 	sh tests/worktree-parallel.sh
+	sh tests/kg-foundation.sh
 	git diff --check
 
 benchmark:
