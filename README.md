@@ -14,23 +14,29 @@ This is not a general-purpose note-taking system or a replacement for every coll
 
 Each concern is stored as a small Markdown node. Directory placement is the authoritative workflow status, filenames provide stable identity and type, and wikilinks express relationships. Each relationship has one stored direction: `Parent` lives on the child, `Area` on its assigned node, context dependencies on the consumer, `Superseded by` on obsolete work, and `Indexes` on a deliberate route; inverse child, parent-of, indexed-by, and backlink views are searches. A compact `nodes/index-map.md` routes to durable `IDX` root hubs without duplicating every node. Every non-root node has one primary `Parent` or `Area` link, so unfinished work must reach a hub (or a deliberate Focus route) instead of becoming an orphan. Local semantic `context_rev` values and dependency pins make stale assumptions discoverable without a shared global ledger, without treating every edit as a consumer-visible change. Status is deliberately not stored in stationary node metadata or a symlink/index view: the directory is the one authoritative status representation.
 
-Nodes are an execution-memory admission boundary, not a transcript. Retain durable knowledge and decisions, executable tasks, bugs, debt, blockers, and future features only when they could change a later decision or action. Exclude tool logs, routine narration or status, copied source material, and observations without foreseeable action value. Update the existing node for the same outcome, question, component, decision, or defect; create a node only at an independently resumable outcome, blocker, dependency, or verification boundary.
+Nodes are an execution-memory admission boundary, not a transcript. Retain durable knowledge and decisions, executable tasks, bugs, debt, blockers, and future features only when they could change a later decision or action or materially reduce future resumption cost. Independent resumability is necessary but insufficient for a new node. Agent, write-set, handoff, failed-check, routine-verification, incidental-cleanup, and mechanical-cleanup boundaries alone stay in the current node's `next`, result, evidence, or handoff; a fresh worker may continue that node. Exclude tool logs, routine narration or status, copied source material, and observations without foreseeable action value.
 
 It is compatible with both Codex and Claude Code because both consume the standard `SKILL.md` skill entrypoint. Codex additionally uses the optional `agents/openai.yaml` interface metadata.
 
 ## Install
 
-Clone this repository, then select both an agent and an explicit destination. The installer never writes to `$HOME` implicitly.
+Clone this repository, then select an explicit destination. The installers never write to `$HOME` implicitly.
 
 ```sh
 # Project-scoped Codex skill
 ./scripts/install.sh --codex --project /path/to/project
 
-# Project-scoped Claude Code skill
-./scripts/install.sh --claude --project /path/to/project
+# Recommended: project-scoped Claude Code skill
+./scripts/install-claude.sh --project /path/to/project
 
 # User-scoped install only when deliberately naming the home root
-./scripts/install.sh --claude --home "$HOME"
+./scripts/install-claude.sh --home "$HOME"
+```
+
+The generic installer retains the equivalent legacy Claude Code entry point:
+
+```sh
+./scripts/install.sh --claude --project /path/to/project
 ```
 
 The destination is `<root>/.agents/skills/knowledge-execution-graph` for Codex or `<root>/.claude/skills/knowledge-execution-graph` for Claude Code. Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
@@ -63,7 +69,7 @@ It is read-only and intended for grooming or CI. It checks node identities and l
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is a POSIX-shell, AXI-oriented installer that returns compact TOON-style fields on stdout, including structured errors. It copies only distributable files, including the optional standard-library graph checker, leaving repository graph state and development files behind.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They copy only distributable files, including the optional standard-library graph checker, leaving repository graph state and development files behind.
 
 A vault uses this shape:
 
@@ -80,13 +86,13 @@ The status directory and node filename are authoritative. Node frontmatter store
 
 `DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
 
-Decompose only when work reaches an independently resumable outcome, blocker, dependency, or verification boundary; do not create a speculative child tree. A coordinating task states its own outcome and completion criteria, and its `next` names one current action or direct child frontier rather than cataloging children. Child completion is evidence, not an automatic parent resolution: resolve the parent only when its own criteria and evidence are complete and its created children are resolved or explicitly disposed.
+Decompose only when work reaches an independently resumable outcome, blocker, dependency, or verification boundary that also has durable execution-memory value; do not create a speculative child tree. A coordinating task states its own outcome and completion criteria, and its `next` names one current action or direct child frontier rather than cataloging children. Child completion is evidence, not an automatic parent resolution: resolve the parent only when its own criteria and evidence are complete and its created children are resolved or explicitly disposed.
 
-The same threshold governs admission: do not turn chat, tool output, routine status, copied sources, or inert observations into nodes. Add durable knowledge, decisions, tasks, bugs, debt, blockers, and future features only when they alter a future action; otherwise omit them. Advance the existing node when it is the same thread, and split only at a current independently resumable boundary.
+The same threshold governs admission: do not turn chat, tool output, routine status, copied sources, or inert observations into nodes. Add durable knowledge, decisions, tasks, bugs, debt, blockers, and future features only when they alter a future action or materially reduce later resumption cost; otherwise omit them. Advance the existing node when it is the same thread, and split only at a current independently resumable boundary with that durable value.
 
 ## Coordinated parallel worktrees
 
-Parallel support is conditional: independently assigned agents can safely work on disjoint node paths when a coordinator gives each worker a direct node path and exclusive write set. It is not autonomous claiming, locking, or a guarantee that each worktree is globally current. `# Focus`, `priority`, and `active` are navigation signals, not claims; a worktree is a branch snapshot.
+Parallel support is conditional: independently assigned agents can safely work on disjoint node paths when a coordinator gives each worker a direct node path and exclusive write set. A worktree slice does not imply one node per agent: a fresh worker can continue the assigned node. It is not autonomous claiming, locking, or a guarantee that each worktree is globally current. `# Focus`, `priority`, and `active` are navigation signals, not claims; a worktree is a branch snapshot.
 
 Preallocate IDs or give workers disjoint numeric ranges. A local collision search does not reserve an ID; autonomous creation needs an atomically shared reservation. Serialize changes to shared nodes and their status paths, including parents, definitions, root hubs, and the index. Integrate one worker branch at a time, reconcile dependency changes before dependent execution, and let only the coordinator resolve a parent after all child evidence is integrated.
 

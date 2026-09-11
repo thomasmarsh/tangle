@@ -33,10 +33,15 @@ or action value. Keep a source link or a short evidence conclusion when needed;
 do not copy the source into the graph.
 
 Prefer updating the existing node when new information advances the same
-outcome, question, component, decision, or defect. Create a distinct node only
-when current work needs an independently resumable outcome, blocker, dependency,
-or verification boundary. This is a low-friction judgment, not a capture
-checklist: when no distinct future action exists, leave it out.
+outcome, question, component, decision, or defect. Independent resumability is
+necessary but not sufficient for a distinct node: it must also retain durable
+execution-memory value, likely to change a later decision or action or
+materially reduce future resumption cost. Agent boundaries, exclusive write-set
+boundaries, failed checks, incidental or mechanical cleanup, routine
+verification, and handoffs alone never qualify; keep them in the current node's
+`next`, result, evidence, or handoff. A fresh worker may continue the same graph
+node; agents and nodes are not one-to-one. This is a low-friction judgment, not
+a capture checklist: when no distinct future action exists, leave it out.
 
 Every node begins with compact frontmatter:
 
@@ -85,7 +90,7 @@ For parallel creation, the coordinator preallocates each node ID, or assigns eac
 
 ### Worker handoff and serial integration
 
-Before editing, a worker records the integration base and its assigned node path and write set. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
+Before editing, a worker records the integration base and its assigned node path and write set. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
 
 The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `ruby scripts/graph-check.rb nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
 
@@ -99,7 +104,13 @@ When bootstrapping an empty vault, create `nodes/index-map.md`, a resolved/curre
 
 ## Decomposition and roll-up
 
-Decompose just in time: create a child only when current execution needs an independently resumable outcome, blocker, dependency, or verification boundary. A child must say enough to resume without reopening its parent: its own concise outcome or decision, completion criterion, primary `Parent`/`Area` route, and executable `next` while unfinished. Do not pre-create speculative trees, phase checklists, or child catalogs.
+Decompose just in time only after the node-admission threshold is met: current
+execution needs a distinct independently resumable outcome, blocker, dependency,
+or verification boundary that also retains durable execution-memory value. A
+child must say enough to resume without reopening its parent: its own concise
+outcome or decision, completion criterion, primary `Parent`/`Area` route, and
+executable `next` while unfinished. Do not pre-create speculative trees, phase
+checklists, or child catalogs.
 
 A task that coordinates children states its own outcome and concise `Done when` criteria. Its `next` is one concrete frontier action, or one wikilinked direct child at the current frontier; it is not a progress roll-up or a list of children. Change that frontier deliberately as evidence changes, without adding reciprocal edges or updating every child.
 
@@ -174,7 +185,7 @@ Run it from the project root, passing the current vault's nodes directory when i
 - New nodes start at `context_rev: 1`. For serial or otherwise coordinator-controlled creation, use `find` to check for collisions before choosing an ID. In parallel, use the parallel ID allocation protocol: a local `find` detects collisions only and never reserves an ID.
 - On every mutation, refresh only that node's `updated`. Increment its `context_rev` only for a consumer-relevant semantic change. Never update unrelated nodes or the index as bookkeeping.
 - Change status by moving the unchanged filename between status directories and updating the same node's current content. Wikilinks use the basename and remain stable.
-- When a distinct subtask or thought emerges, apply the decomposition contract: create it only at an independently resumable outcome, blocker, dependency, or verification boundary, then put its one primary `Parent [[...]]` or `Area [[IDX-...]]` link on that node. Do not also add a `Child` or `Parent of` copy to the parent; its `next` may name only the one deliberate frontier child. Create a root hub only as an `IDX` node reached by `Indexes` from `index-map.md`; it has neither primary link.
+- When a distinct subtask or thought emerges, apply the decomposition and admission contracts before creating it, then put its one primary `Parent [[...]]` or `Area [[IDX-...]]` link on that node. Do not also add a `Child` or `Parent of` copy to the parent; its `next` may name only the one deliberate frontier child. Create a root hub only as an `IDX` node reached by `Indexes` from `index-map.md`; it has neither primary link.
 - Use `blocked` only when execution cannot continue without missing input or an external state change. Record `Blocked by` and `Unblocks when` in a short `# Blocked` section; set `next` to a concrete unblock action when one exists.
 - Use `resolved` only when the stated outcome is complete. For a coordinating task, verify its `Done when` criteria, outcome evidence, and created-child dispositions before resolving. Remove `next`, keep concise result evidence, and retain the node as history.
 - For abandonment, deprecation, or supersession, move completed work to `resolved`, set the sparse `disposition`, and record any replacement link. Search for remaining backlinks before considering migration complete.

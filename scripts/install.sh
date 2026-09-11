@@ -2,12 +2,13 @@
 # Install this skill into an explicitly selected Codex or Claude Code location.
 set -eu
 
-version=0.3.0
+version=0.3.1
 skill_name=knowledge-execution-graph
 agent=
 scope=
 root=
 dry_run=false
+presentation=${KG_INSTALL_PRESENTATION:-generic}
 
 if [ "$#" -eq 1 ]; then
   case "$1" in
@@ -24,8 +25,26 @@ field() {
 }
 
 usage() {
+  if [ "$presentation" = claude ]; then
+    field description 'Install Knowledge Execution Graph for Claude Code into an explicit project or home-root directory.'
+    field usage 'scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run]'
+    printf 'options[6]{flag,meaning}:\n'
+    printf '  "--project DIR","install to DIR/.claude/skills/knowledge-execution-graph"\n'
+    printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
+    printf '  "--dry-run","report the destination without writing"\n'
+    printf '  "--help, -h","show this reference"\n'
+    printf '  "--version","print the version only when passed alone"\n'
+    printf '  "-v, -V","aliases for bare --version"\n'
+    printf 'examples[3]{command,purpose}:\n'
+    printf '  "./scripts/install-claude.sh --project /path/to/project --dry-run","inspect a Claude Code project destination"\n'
+    printf '  "./scripts/install-claude.sh --project /path/to/project","install for a Claude Code project"\n'
+    printf '  "./scripts/install-claude.sh --home $HOME","install for Claude Code only with an explicit home root"\n'
+    return
+  fi
+
   field description 'Install Knowledge Execution Graph into an explicit project or home-root directory.'
   field usage 'scripts/install.sh (--codex | --claude) (--project DIR | --home DIR) [--dry-run]'
+  field claude_wrapper 'scripts/install-claude.sh omits --claude and accepts the same destination flags.'
   printf 'options[8]{flag,meaning}:\n'
   printf '  "--codex","install to DIR/.agents/skills/knowledge-execution-graph"\n'
   printf '  "--claude","install to DIR/.claude/skills/knowledge-execution-graph"\n'
@@ -43,7 +62,11 @@ usage() {
 
 usage_error() {
   field error "$1"
-  field help 'scripts/install.sh --codex --project <directory> [--dry-run]'
+  if [ "$presentation" = claude ]; then
+    field help 'scripts/install-claude.sh --project <directory> [--dry-run]'
+  else
+    field help 'scripts/install.sh --codex --project <directory> [--dry-run]'
+  fi
   exit 2
 }
 

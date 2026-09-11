@@ -1,5 +1,5 @@
 ---
-updated: 2026-09-11T11:42:48Z
+updated: 2026-09-11T12:15:20Z
 summary: Route agents from the durable execution-graph root hub to authoritative queries.
 ---
 

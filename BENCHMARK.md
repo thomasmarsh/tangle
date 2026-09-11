@@ -94,12 +94,13 @@ executes; and (6) a coordinating parent is ineligible until evidence from every
 child branch is integrated.
 
 Accordingly, `# Focus`, `priority`, and `active` are advisory rather than
-claims, and each worktree is a branch snapshot. Numeric IDs require coordinator
-preallocation/disjoint ranges or an atomically shared reservation. Shared nodes
-and status paths are serialized. The coordinator integrates one branch at a
-time, reconciles stale dependencies, and alone resolves parents after child
-evidence. Run the screen directly with `sh tests/worktree-parallel.sh`, or as
-part of the full suite with `make test`.
+claims, and each worktree is a branch snapshot. A worktree slice is not a graph
+node boundary: a fresh worker can continue its assigned node. Numeric IDs require
+coordinator preallocation/disjoint ranges or an atomically shared reservation.
+Shared nodes and status paths are serialized. The coordinator integrates one
+branch at a time, reconciles stale dependencies, and alone resolves parents after
+child evidence. Run the screen directly with `sh tests/worktree-parallel.sh`, or
+as part of the full suite with `make test`.
 
 ## Scale and content-cost measurements
 
@@ -174,13 +175,19 @@ colocated route card must never copy node status, priority, revision, timestamp,
 It may contain an advisory Focus pointer, but omit Focus when no active work
 exists.
 
-Admit only durable information that can change a future decision or action:
-useful knowledge, architectural or operational decisions, executable tasks,
+Admit only durable information that can change a future decision or action or
+materially reduce future resumption cost. Independent resumability is necessary
+but insufficient for a new node; an agent, worktree/write-set, handoff,
+failed-check, routine-verification, incidental-cleanup, or mechanical-cleanup
+boundary alone stays in the current node's `next`, result, evidence, or handoff.
+Agents and nodes are not one-to-one. This includes useful knowledge,
+architectural or operational decisions, executable tasks,
 bugs, debt, blockers, and future features. Do not store transcripts, tool-call
 logs, routine narration or status, copied source material, or observations with
 no foreseeable decision or action value. Update an existing node for the same
 outcome, question, component, decision, or defect; create one only at a current
-independently resumable outcome, blocker, dependency, or verification boundary.
+independently resumable outcome, blocker, dependency, or verification boundary
+with durable execution-memory value.
 
 `DEF` nodes record invariants and `DEC` nodes record settled choices with concise
 Decision, Rationale, and Consequences sections. Resolved status means formation
@@ -199,7 +206,7 @@ parent’s `next` can deliberately route to its current child frontier without
 becoming a child catalog.
 
 Decompose only at an independently resumable outcome, blocker, dependency, or
-verification boundary. A coordinating task owns a stated outcome and concise
+verification boundary with durable execution-memory value. A coordinating task owns a stated outcome and concise
 completion criteria; its `next` selects one concrete action or direct child
 frontier, never a child list. Resolve the parent from evidence that its own
 criteria are met, after every child created for that outcome is resolved or
