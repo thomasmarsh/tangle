@@ -2,7 +2,7 @@
 # Install this skill into an explicitly selected Codex or Claude Code location.
 set -eu
 
-version=0.2.0
+version=0.3.0
 skill_name=knowledge-execution-graph
 agent=
 scope=
@@ -102,6 +102,12 @@ if [ "$agent" = codex ]; then
     install -m 0644 "$repo_root/agents/openai.yaml" "$destination/agents/openai.yaml" 2>/dev/null || runtime_error "unable to install Codex metadata at: $destination"
     changed=true
   fi
+fi
+
+if [ ! -f "$destination/scripts/graph-check.rb" ] || ! cmp -s "$repo_root/scripts/graph-check.rb" "$destination/scripts/graph-check.rb"; then
+  mkdir -p "$destination/scripts" 2>/dev/null || runtime_error "unable to create checker directory: $destination/scripts"
+  install -m 0755 "$repo_root/scripts/graph-check.rb" "$destination/scripts/graph-check.rb" 2>/dev/null || runtime_error "unable to install graph checker at: $destination"
+  changed=true
 fi
 
 if [ "$changed" = true ]; then

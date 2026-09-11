@@ -1,0 +1,5 @@
+# name:diff,transition_paths,query_reads,query_entries,merge_conflicts,stale_view,stable_canonical_path
+directory:R100,2,0,25,0,0,0
+stationary:M,1,100,25,0,0,1
+symlink:R100,2,0,25,0,1,1
+index:M,1,1,25,1,1,1

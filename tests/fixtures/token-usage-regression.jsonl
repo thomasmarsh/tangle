@@ -1,0 +1,4 @@
+{"type":"session_meta","payload":{"cli_version":"fixture-cli","cwd":"/fixture","agent_path":"/root/token-benchmark-regression"}}
+{"type":"turn_context","payload":{"cwd":"/fixture","model":"fixture-model","effort":"low"}}
+{"type":"token_usage_record","payload":{"turn_id":"turn-a","turn_token_usage":{"input_tokens":100,"cached_input_tokens":10,"output_tokens":20,"reasoning_output_tokens":8,"total_tokens":120}}}
+{"type":"token_usage_record","payload":{"turn_id":"turn-a","turn_token_usage":{"input_tokens":99,"cached_input_tokens":10,"output_tokens":20,"reasoning_output_tokens":8,"total_tokens":119}}}

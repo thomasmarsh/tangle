@@ -16,6 +16,8 @@ case "$dry_run" in *"$project/.agents/skills/knowledge-execution-graph"*) ;; *) 
 $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$project/.agents/skills/knowledge-execution-graph/SKILL.md"
 cmp -s "$repo_root/agents/openai.yaml" "$project/.agents/skills/knowledge-execution-graph/agents/openai.yaml"
+cmp -s "$repo_root/scripts/graph-check.rb" "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb"
+ruby "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb" "$repo_root/nodes" >/dev/null
 
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
@@ -25,6 +27,7 @@ cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/knowledge-execution-grap
 
 $repo_root/scripts/install.sh --claude --project "$project" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$project/.claude/skills/knowledge-execution-graph/SKILL.md"
+cmp -s "$repo_root/scripts/graph-check.rb" "$project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
 
 $repo_root/scripts/install.sh --claude --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.claude/skills/knowledge-execution-graph/SKILL.md"
@@ -35,7 +38,7 @@ if $repo_root/scripts/install.sh --codex --project "$project" --unknown >/dev/nu
 error=$($repo_root/scripts/install.sh --codex 2>/dev/null || true)
 case "$error" in *'error: "agent and destination scope are required"'*) ;; *) exit 1;; esac
 for flag in --version -v -V; do
-  [ "$($repo_root/scripts/install.sh "$flag")" = 0.2.0 ]
+  [ "$($repo_root/scripts/install.sh "$flag")" = 0.3.0 ]
   if $repo_root/scripts/install.sh "$flag" extra >/dev/null 2>&1; then exit 1; fi
   mixed=$($repo_root/scripts/install.sh "$flag" extra 2>/dev/null || true)
   case "$mixed" in *'error: "unknown argument: '*) ;; *) exit 1;; esac

@@ -1,11 +1,13 @@
 ---
-rev: 3
+context_rev: 4
 priority: P0
-updated: 2026-09-10T11:30:00Z
+updated: 2026-09-10T20:37:41Z
 summary: Finalized V3 with a colocated routing index and authoritative status directories.
 ---
 
 # Context
+
+Area [[IDX-001-execution-graph]].
 
 Preserve existing repository work. Keep generated fixtures outside the repository. The tested V3 layout uses authoritative status directories, a routing-only index, compact executable headers, and local dependency revision pins.
 

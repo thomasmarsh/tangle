@@ -1,0 +1,4 @@
+# scale:nodes,reads,bytes,resume,current,stale,orphan,work_units
+# Timings are deliberately excluded: they are advisory, machine-dependent data.
+100:100,402,110609,1,1,47,1,111011
+1000:1000,4002,1128469,1,1,497,1,1132471

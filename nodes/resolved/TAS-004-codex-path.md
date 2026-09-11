@@ -1,6 +1,6 @@
 ---
-rev: 1
-updated: 2026-09-10T01:30:22Z
+context_rev: 1
+updated: 2026-09-10T20:28:56Z
 summary: Correct the Codex skill destination and AXI behavior.
 ---
 

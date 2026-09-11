@@ -1,0 +1,2 @@
+{"type":"thread.started","thread_id":"fixture-thread"}
+{"type":"token_usage_record","payload":{"turn_id":"fixture-turn","turn_token_usage":{"input_tokens":10,"cached_input_tokens":4,"output_tokens":3,"reasoning_output_tokens":1,"total_tokens":13}}}
