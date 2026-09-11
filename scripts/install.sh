@@ -127,11 +127,16 @@ if [ "$agent" = codex ]; then
   fi
 fi
 
-if [ ! -f "$destination/scripts/graph-check.rb" ] || ! cmp -s "$repo_root/scripts/graph-check.rb" "$destination/scripts/graph-check.rb"; then
+for distributable in graph-check.rb kg kg-index.rb; do
+  source="$repo_root/scripts/$distributable"
+  target="$destination/scripts/$distributable"
+  if [ -f "$target" ] && cmp -s "$source" "$target"; then
+    continue
+  fi
   mkdir -p "$destination/scripts" 2>/dev/null || runtime_error "unable to create checker directory: $destination/scripts"
-  install -m 0755 "$repo_root/scripts/graph-check.rb" "$destination/scripts/graph-check.rb" 2>/dev/null || runtime_error "unable to install graph checker at: $destination"
+  install -m 0755 "$source" "$target" 2>/dev/null || runtime_error "unable to install graph tooling at: $target"
   changed=true
-fi
+done
 
 if [ "$changed" = true ]; then
   field result installed

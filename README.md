@@ -1,6 +1,6 @@
 # Knowledge Execution Graph
 
-Knowledge Execution Graph is a file-only operating model for agents doing long-running engineering work. It keeps decisions, definitions, tasks, blockers, and dependency state inside the repository so an agent can resume work without reconstructing the project from chat history or reading a monolithic plan.
+Knowledge Execution Graph is a Markdown-canonical operating model for agents doing long-running engineering work. It keeps decisions, definitions, tasks, blockers, and dependency state visible in an Obsidian-compatible vault while using an optional external SQLite sidecar for fast derived queries and same-host coordination.
 
 ## Purpose
 
@@ -17,6 +17,19 @@ Each concern is stored as a small Markdown node. Directory placement is the auth
 Nodes are an execution-memory admission boundary, not a transcript. Retain durable knowledge and decisions, executable tasks, bugs, debt, blockers, and future features only when they could change a later decision or action or materially reduce future resumption cost. Independent resumability is necessary but insufficient for a new node. Agent, write-set, handoff, failed-check, routine-verification, incidental-cleanup, and mechanical-cleanup boundaries alone stay in the current node's `next`, result, evidence, or handoff; a fresh worker may continue that node. Exclude tool logs, routine narration or status, copied source material, and observations without foreseeable action value.
 
 It is compatible with both Codex and Claude Code because both consume the standard `SKILL.md` skill entrypoint. Codex additionally uses the optional `agents/openai.yaml` interface metadata.
+
+## Hybrid local sidecar
+
+Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `scripts/kg` hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
+
+```sh
+./scripts/kg init
+./scripts/kg reindex nodes
+./scripts/kg search 'authentication' --limit 10
+./scripts/kg allocate TAS
+```
+
+The sidecar is external and untracked, keyed by the Git common directory under `$XDG_STATE_HOME/kg` or `~/.local/state/kg`; all local worktrees share it. It is rebuildable: database loss loses only indexes and leases, recovered by `kg init` and `kg reindex`. SQLite WAL is limited to concurrent processes on one host and a local filesystem. Do not place it on a network or synchronization filesystem. Cross-host coordination needs a server database (for example PostgreSQL) behind the same command interface. Status directories remain Markdown-authoritative; a stationary-path migration is deferred pending evidence that status-renames still cause material churn.
 
 ## Install
 
@@ -57,19 +70,20 @@ make test
 
 ## Optional graph check
 
-Installed projects can validate the current graph without adding a database, cache, daemon, or generated state. Run the bundled checker from the project root (or pass an explicit `nodes` directory):
+Installed projects can validate the current graph with the bundled Markdown checker (which needs no sidecar) or use the optional sidecar commands from the project root:
 
 ```sh
 ruby .agents/skills/knowledge-execution-graph/scripts/graph-check.rb
 # or, for a Claude Code installation
 ruby .claude/skills/knowledge-execution-graph/scripts/graph-check.rb nodes
+./.agents/skills/knowledge-execution-graph/scripts/kg reindex nodes
 ```
 
 It is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They copy only distributable files, including the optional standard-library graph checker, leaving repository graph state and development files behind.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the checker plus `kg` and its Ruby index helper, leaving repository graph state and development files behind.
 
 A vault uses this shape:
 

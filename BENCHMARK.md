@@ -1,4 +1,4 @@
-# Benchmark: file-only knowledge execution graph
+# Benchmark: Markdown-canonical hybrid knowledge execution graph
 
 ## Benchmark objective
 
@@ -23,15 +23,19 @@ and an absent baseline rather than silently substituting a filesystem metric.
 
 ## Decision
 
-Adopt V3: atomic Markdown nodes in authoritative status directories, a small
-routing-only `nodes/index-map.md`, and local semantic `context_rev` pins only on context-bearing
-dependencies. Do not use a copied global node ledger.
+Adopt V4: atomic Markdown nodes in authoritative status directories, a small
+routing-only `nodes/index-map.md`, local semantic `context_rev` pins only on context-bearing
+dependencies, and an optional external SQLite sidecar. Markdown is the sole durable authority;
+SQLite rebuilds derived indexes, backlinks, stale-pin checks, and FTS, and is authoritative only
+for same-host claims, leases, and atomic ID allocation. Do not use a copied global node ledger.
 
-V3 is hypercompetitive for state discovery and routine mutations: it removes
+The Markdown layer is hypercompetitive for state discovery and routine mutations: it removes
 the mandatory second-file index write and the measured global merge conflict.
 It is not strictly superior for every workflow: reverse links, priority, area,
-and recency still scan node files. The honest file-only tradeoff is a tiny,
-non-authoritative route card plus targeted `rg` scans, not a new cache.
+and recency still scan node files. The hybrid sidecar accelerates derived queries without adding
+a second durable authority. It is untracked, external, rebuildable, and shared only by local
+worktrees on one host; SQLite WAL must not be placed on network or sync filesystems. Cross-host
+coordination requires a server database such as PostgreSQL behind the same specialized commands.
 
 All claims below concern local synthetic Markdown fixtures and local shell
 commands. They do not measure hosted GitHub Issues or Jira, whose indexing,
@@ -272,7 +276,8 @@ deliberate treatment differences, so this is evidence about this retrieval task,
 not a universal token ranking.
 
 Every graph fixture installs the same distributable files as the project Codex
-installer: `SKILL.md`, `agents/openai.yaml`, and `scripts/graph-check.rb` under
+installer: `SKILL.md`, `agents/openai.yaml`, `scripts/graph-check.rb`, `scripts/kg`, and
+`scripts/kg-index.rb` under
 `.agents/skills/knowledge-execution-graph/`; the zero-call check byte-compares
 the copied instructions and metadata with this repository. Every live invocation uses `codex exec --json --ignore-user-config --ignore-rules
 -C GENERATED_FIXTURE` with a fresh session and read-only sandbox. Authentication

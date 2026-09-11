@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-11T12:40:54Z
-summary: Revise the skill, documentation, and installers for specialized hybrid-store commands.
-next: Specify user-facing `kg` workflows that hide SQLite implementation details.
+updated: 2026-09-11T13:15:00Z
+summary: Document and distribute specialized hybrid-store commands without changing Markdown authority.
 ---
 
 # Context
@@ -21,3 +20,7 @@ Agents can claim, allocate, reindex, query, and recover through documented comma
 # Done when
 
 SKILL.md, README, benchmark guidance, and Codex/Claude installation paths accurately define authority, local-host limits, recovery, and deferred status migration.
+
+# Result
+
+The skill exposes `kg` commands rather than SQLite access, documents the Markdown/sidecar authority split, WAL and PostgreSQL boundary, recovery, and deferred status migration. Codex and Claude installers distribute executable `graph-check.rb`, `kg`, and `kg-index.rb`; installation tests verify their contents and modes.

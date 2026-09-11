@@ -17,6 +17,11 @@ $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$project/.agents/skills/knowledge-execution-graph/SKILL.md"
 cmp -s "$repo_root/agents/openai.yaml" "$project/.agents/skills/knowledge-execution-graph/agents/openai.yaml"
 cmp -s "$repo_root/scripts/graph-check.rb" "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/kg" "$project/.agents/skills/knowledge-execution-graph/scripts/kg"
+cmp -s "$repo_root/scripts/kg-index.rb" "$project/.agents/skills/knowledge-execution-graph/scripts/kg-index.rb"
+[ -x "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
+[ -x "$project/.agents/skills/knowledge-execution-graph/scripts/kg" ]
+[ -x "$project/.agents/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
 ruby "$project/.agents/skills/knowledge-execution-graph/scripts/graph-check.rb" "$repo_root/nodes" >/dev/null
 
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
@@ -28,6 +33,11 @@ cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/knowledge-execution-grap
 $repo_root/scripts/install.sh --claude --project "$project" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$project/.claude/skills/knowledge-execution-graph/SKILL.md"
 cmp -s "$repo_root/scripts/graph-check.rb" "$project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/kg" "$project/.claude/skills/knowledge-execution-graph/scripts/kg"
+cmp -s "$repo_root/scripts/kg-index.rb" "$project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb"
+[ -x "$project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
+[ -x "$project/.claude/skills/knowledge-execution-graph/scripts/kg" ]
+[ -x "$project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
 
 $repo_root/scripts/install.sh --claude --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.claude/skills/knowledge-execution-graph/SKILL.md"
@@ -44,6 +54,11 @@ case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/k
 $repo_root/scripts/install-claude.sh --project "$claude_project" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$claude_project/.claude/skills/knowledge-execution-graph/SKILL.md"
 cmp -s "$repo_root/scripts/graph-check.rb" "$claude_project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/kg" "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg"
+cmp -s "$repo_root/scripts/kg-index.rb" "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb"
+[ -x "$claude_project/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
+[ -x "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg" ]
+[ -x "$claude_project/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
 [ ! -e "$claude_project/.claude/skills/knowledge-execution-graph/agents" ]
 claude_repeat=$($repo_root/scripts/install-claude.sh --project "$claude_project")
 case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; esac
@@ -51,6 +66,11 @@ case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; e
 $repo_root/scripts/install-claude.sh --home "$claude_home" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$claude_home/.claude/skills/knowledge-execution-graph/SKILL.md"
 cmp -s "$repo_root/scripts/graph-check.rb" "$claude_home/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb"
+cmp -s "$repo_root/scripts/kg" "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg"
+cmp -s "$repo_root/scripts/kg-index.rb" "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb"
+[ -x "$claude_home/.claude/skills/knowledge-execution-graph/scripts/graph-check.rb" ]
+[ -x "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg" ]
+[ -x "$claude_home/.claude/skills/knowledge-execution-graph/scripts/kg-index.rb" ]
 [ ! -e "$claude_home/.claude/skills/knowledge-execution-graph/agents" ]
 
 if $repo_root/scripts/install.sh --codex >/dev/null 2>&1; then exit 1; fi
