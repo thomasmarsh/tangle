@@ -330,6 +330,25 @@ _INDEX_REMOVED_RECIPES: tuple[str, ...] = (
     "rg -n -F 'Depends on [[DEF-ID]] at context_rev '",
 )
 
+# The capture path gives a client one command that supplies the id, route,
+# timestamp, and required frontmatter it would otherwise hand-author, while the
+# admission threshold stays the caller's decision rather than the command's.
+_NODE_CAPTURE_CONTRACT: tuple[str, ...] = (
+    "## Capturing a node",
+    "`braintree node record`",
+    "creates one routed, correctly-stamped node of a named type from a summary and body",
+    "the way `braintree feedback record` does for `FBK`",
+    "`--type` is one of `THO`, `DEF`, `DEC`, or `TAS`",
+    "allocates the next id from Markdown",
+    "discovers the primary route to the vault's root hub from `index-map.md`",
+    "stamps a positive `context_rev` and the current `updated`",
+    "`--status` names the status directory",
+    "requires `--next` carrying its one action",
+    "a `resolved` node must omit `--next`",
+    "The admission threshold is unchanged",
+    "creates the node the caller has already decided to admit",
+)
+
 _ABSENT_CONTRACT: tuple[str, ...] = (
     "stationary node metadata",
     "sequence ledger",
@@ -498,6 +517,10 @@ def test_skill_verification_evidence_contract() -> None:
 
 def test_skill_slice_primitive_scope_contract() -> None:
     _assert_present(_read(_SKILL), _SLICE_PRIMITIVE_SCOPE_CONTRACT)
+
+
+def test_skill_node_capture_contract() -> None:
+    _assert_present(_read(_SKILL), _NODE_CAPTURE_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:

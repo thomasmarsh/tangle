@@ -19,6 +19,7 @@ from . import (
     feedback_record,
     feedback_scan,
     graph_check,
+    node_record,
     provider,
     quality_benchmark,
     staged_benchmark,
@@ -61,6 +62,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
         "list frontier candidates or cluster them into advisory workstreams",
     ),
     ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
+    (
+        "node record [OPTIONS]",
+        "create one routed, stamped node of a named type",
+    ),
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
@@ -189,6 +194,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if command == "check":
         return graph_check.main(args[1:])
+    # ``node record`` is the capture path beside ``feedback record``; a bare
+    # ``node NODE`` stays with the sidecar/index engine that owns it.
+    if command == "node" and len(args) > 1 and args[1] == "record":
+        return node_record.main(args[2:])
     if command == "feedback":
         return _feedback(args[1:])
     if command == "semantic":

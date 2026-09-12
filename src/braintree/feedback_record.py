@@ -3,20 +3,30 @@
 This is the writing half of the feedback mechanism. It stamps the installed
 Braintree revision, allocates the next ``FBK`` id from Markdown, discovers a
 primary route to the vault's root hub, and writes a valid feedback node in one
-step. It is stdlib-only: it never opens the sidecar, never touches the network,
-and reads the installed revision record through
+step. The id allocation, route discovery, and non-clobbering write are the
+shared Markdown-node primitives of :mod:`braintree.node_record`, so both
+capture paths cannot disagree. It is stdlib-only: it never opens the sidecar,
+never touches the network, and reads the installed revision record through
 :func:`braintree.revision.feedback_revision`.
 """
 
 from __future__ import annotations
 
-import glob
 import os
-import re
 import sys
 from collections.abc import Sequence
-from datetime import UTC, datetime
 
+from .node_record import (
+    discover_route,
+    existing_ids,
+    id_number,
+    next_number,
+    normalize_route,
+    single_line,
+    slugify,
+    utc_now,
+    write_new,
+)
 from .revision import feedback_revision
 from .toon import field
 
@@ -29,14 +39,8 @@ _USAGE = (
     "Write one routed, revision-stamped FBK feedback node without a sidecar."
 )
 
-_FEEDBACK_GLOB = "FBK-*.md"
-_FEEDBACK_ID = re.compile(r"FBK-(\d+)\Z")
-_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\Z")
-_ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
-_NON_SLUG = re.compile(r"[^a-z0-9]+")
-_WHITESPACE = re.compile(r"\s+")
+_FEEDBACK_TYPE = "FBK"
 _SUMMARY_LIMIT = 96
-_SLUG_LIMIT = 48
 _VALUE_OPTIONS = frozenset(
     {
         "--nodes",
@@ -49,48 +53,6 @@ _VALUE_OPTIONS = frozenset(
         "--improvement",
     }
 )
-
-
-def _single_line(value: str) -> str:
-    return _WHITESPACE.sub(" ", value).strip()
-
-
-def _slugify(value: str) -> str:
-    slug = _NON_SLUG.sub("-", value.lower()).strip("-")
-    return slug[:_SLUG_LIMIT].strip("-") or "feedback"
-
-
-def _feedback_files(nodes_dir: str) -> list[tuple[str, str]]:
-    """Return ``(id, path)`` for every ``FBK`` node already on disk."""
-    found: list[tuple[str, str]] = []
-    for path in sorted(glob.glob(os.path.join(nodes_dir, "*", _FEEDBACK_GLOB))):
-        parts = os.path.basename(path)[:-3].split("-", 2)
-        if len(parts) >= 2 and parts[1].isdigit():
-            found.append((f"{parts[0]}-{parts[1]}", path))
-    return found
-
-
-def _existing_feedback(nodes_dir: str) -> dict[str, str]:
-    """Map every ``FBK`` id already on disk to its path, across statuses."""
-    return dict(_feedback_files(nodes_dir))
-
-
-def _next_number(nodes_dir: str) -> int:
-    numbers = [int(node_id.split("-")[1]) for node_id, _ in _feedback_files(nodes_dir)]
-    return max(numbers, default=0) + 1
-
-
-def _discover_route(nodes_dir: str) -> str | None:
-    index_path = os.path.join(nodes_dir, "index-map.md")
-    try:
-        with open(index_path, encoding="utf-8") as handle:
-            text = handle.read()
-    except OSError:
-        return None
-    match = _ROOT_ROUTE.search(text)
-    if match is None:
-        return None
-    return f"Area [[{match.group(1)}]]"
 
 
 def _render(
@@ -118,17 +80,6 @@ def _render(
         f"Friction: {friction}\n"
         f"Improvement: {improvement}\n"
     )
-
-
-def _write_new(path: str, content: str) -> bool:
-    """Create ``path`` without clobbering an existing node."""
-    try:
-        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    except FileExistsError:
-        return False
-    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-        handle.write(content)
-    return True
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -169,9 +120,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(field("error", f"unexpected argument: {argument}"))
             return 2
 
-    attempted = _single_line(content.get("attempted", ""))
-    friction = _single_line(content.get("friction", ""))
-    improvement = _single_line(content.get("improvement", ""))
+    attempted = single_line(content.get("attempted", ""))
+    friction = single_line(content.get("friction", ""))
+    improvement = single_line(content.get("improvement", ""))
     missing = [
         label
         for label, value in (
@@ -196,34 +147,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     if route is None:
-        route = _discover_route(nodes_dir)
-        if route is None:
+        discovered = discover_route(nodes_dir)
+        if discovered is None:
             print(field("error", "unable to discover a root hub in index-map.md"))
             print(field("help", "Pass --route 'Area [[IDX-...]]' to route the node."))
             return 1
-    route = _single_line(route).rstrip(".")
-    if _ROUTE.fullmatch(route) is None:
+        route = discovered
+    normalized = normalize_route(route)
+    if normalized is None:
         print(field("error", "route must be 'Parent [[NODE]]' or 'Area [[NODE]]'"))
         return 2
+    route = normalized
 
-    summary = _single_line(summary) if summary is not None else friction
+    summary = single_line(summary) if summary is not None else friction
     if not summary:
         summary = friction
     summary = summary[:_SUMMARY_LIMIT].strip()
-    slug = _slugify(slug if slug is not None else summary)
+    slug = slugify(slug if slug is not None else summary, "feedback")
 
-    existing = _existing_feedback(nodes_dir)
+    existing = existing_ids(nodes_dir, _FEEDBACK_TYPE)
     if explicit_id is not None:
-        explicit_id = _single_line(explicit_id)
-        if _FEEDBACK_ID.fullmatch(explicit_id) is None:
+        explicit_id = single_line(explicit_id)
+        number = id_number(explicit_id, _FEEDBACK_TYPE)
+        if number is None:
             print(field("error", "id must look like FBK-001"))
             return 2
         if explicit_id in existing:
             print(field("error", f"feedback node already exists: {existing[explicit_id]}"))
             return 1
-        number = int(explicit_id.split("-")[1])
     else:
-        number = _next_number(nodes_dir)
+        number = next_number(nodes_dir, _FEEDBACK_TYPE)
 
     proposed = os.path.join(nodes_dir, "proposed")
     try:
@@ -233,12 +186,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     revision = feedback_revision()
-    updated = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    updated = utc_now()
     for _ in range(100):
-        node_id = f"FBK-{number:03d}"
+        node_id = f"{_FEEDBACK_TYPE}-{number:03d}"
         path = os.path.join(proposed, f"{node_id}-{slug}.md")
         body = _render(route, summary, revision, attempted, friction, improvement, updated)
-        if _write_new(path, body):
+        if write_new(path, body):
             print(field("result", "recorded"))
             print(field("id", node_id))
             print(field("path", path))

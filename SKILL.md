@@ -193,6 +193,24 @@ It reads only `FBK-*.md` frontmatter and prints compact TOON with each node's va
 
 Triage each scanned result into this graph: admit a node only when the friction is likely to change a future decision or action, cite the feedback id and revision in the admitted node, and otherwise dispose the result explicitly rather than dropping it silently.
 
+## Capturing a node
+
+`braintree node record` creates one routed, correctly-stamped node of a named type from a summary and body, the way `braintree feedback record` does for `FBK`:
+
+```sh
+braintree node record --type THO \
+  --summary 'Does a claim survive a worktree move?' \
+  --body 'Question: does a claim survive a move between worktrees?'
+```
+
+- `--type` is one of `THO`, `DEF`, `DEC`, or `TAS`. `FBK` friction is recorded with `braintree feedback record`, and a root `IDX` hub is declared in `index-map.md`, so neither is a capture target.
+- The command allocates the next id from Markdown, discovers the primary route to the vault's root hub from `index-map.md`, and stamps a positive `context_rev` and the current `updated`, so the result is a routed node the checker accepts.
+- `--status` names the status directory and defaults to `proposed`; the caller owns the body the type and status need, so a `blocked` body carries a `# Blocked` section with `Blocked by` and `Unblocks when`.
+- A `TAS` node in an unfinished status requires `--next` carrying its one action, and a `resolved` node must omit `--next`, matching the `next` rule the checker enforces.
+- `--route 'Area [[IDX-...]]'` overrides the discovered route, `--id` and `--slug` override the allocated id and the derived slug, `--summary` overrides the derived summary, and `--nodes` selects a `nodes/` directory other than the current one.
+
+The admission threshold is unchanged: the command creates the node the caller has already decided to admit, and it never admits a note with no foreseeable decision or action value on its own.
+
 ## Node body and status output
 
 Use body headings only for additional information: `# Context` (with `Depends on [[...]] at context_rev N.`), `# Blocked` (`Blocked by`/`Unblocks when`), `# Outcome`, `# Done when`, `# Result`, `# Invariant` for definitions, and `# Feedback` for feedback nodes. A `DEC` node records a settled choice under `# Decision`/`# Rationale`/`# Consequences`. A settled `DEF` or `DEC` is `resolved`; while its invariant or decision is still unsettled it stays `proposed`, so resolving it is the act of settling it. A resolved `DEF` or `DEC` is current knowledge unless its sparse `disposition` says `deprecated` or `superseded`. Index nodes contain pointers, not copied content.
