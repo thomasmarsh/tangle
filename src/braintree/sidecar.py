@@ -305,8 +305,10 @@ def reservations() -> list[tuple[str, str]]:
         return []
 
 
-def claim(node: str, agent: str, base_hash: str, lease_seconds: int) -> tuple[str, str, int]:
-    """Acquire or renew an exclusive lease, returning owner/hash/expiry."""
+def claim(
+    node: str, agent: str, base_hash: str, lease_seconds: int
+) -> tuple[str, str, int, int]:
+    """Acquire or renew an exclusive lease, returning owner/hash/expiry/remaining."""
     now = int(time.time())
     expires = now + lease_seconds
     try:
@@ -336,43 +338,58 @@ def claim(node: str, agent: str, base_hash: str, lease_seconds: int) -> tuple[st
         raise SidecarError("unable to acquire the claim atomically") from exc
     if owner != agent or recorded_hash != base_hash:
         raise ClaimConflict(owner)
-    return owner, recorded_hash, recorded_expiry
+    return owner, recorded_hash, recorded_expiry, recorded_expiry - now
 
 
-def release(node: str, agent: str, base_hash: str) -> str:
-    """Release the matching unexpired lease.
+def release(node: str, agent: str, base_hash: str) -> tuple[str, int]:
+    """Release the matching lease, returning the result and remaining seconds.
 
-    Returns ``"released"`` when the matching lease was removed and ``"no-op"``
-    when the node holds no unexpired lease. Raises :class:`ReleaseConflict`
-    when a lease exists for another agent or records a different base hash, so
-    a stale post-edit hash can never be mistaken for a successful release.
+    Returns ``("released", remaining)`` when the matching unexpired lease was
+    removed, ``("expired", 0)`` when this agent's matching lease had already
+    lapsed, and ``("no-op", 0)`` when the node records no matching claim at
+    all, so a lapsed claim is distinguishable from one never held. Raises
+    :class:`ReleaseConflict` when a live lease exists for another agent or
+    records a different base hash, so a stale post-edit hash can never be
+    mistaken for a successful release.
     """
     now = int(time.time())
     try:
         conn = open_connection()
         try:
-            def body(connection: sqlite3.Connection) -> tuple[str, str, str]:
+            def body(connection: sqlite3.Connection) -> tuple[str, str, str, int]:
+                lapsed = connection.execute(
+                    "SELECT agent_id, base_content_hash FROM claims "
+                    "WHERE node_id = ? AND lease_expires_at <= ?",
+                    (node, now),
+                ).fetchone()
                 connection.execute("DELETE FROM claims WHERE lease_expires_at <= ?", (now,))
                 row = connection.execute(
-                    "SELECT agent_id, base_content_hash FROM claims WHERE node_id = ?",
+                    "SELECT agent_id, base_content_hash, lease_expires_at "
+                    "FROM claims WHERE node_id = ?",
                     (node,),
                 ).fetchone()
                 if row is None:
-                    return ("no-op", "", "")
+                    if (
+                        lapsed is not None
+                        and str(lapsed[0]) == agent
+                        and str(lapsed[1]) == base_hash
+                    ):
+                        return ("expired", agent, base_hash, 0)
+                    return ("no-op", "", "", 0)
                 owner, recorded_hash = str(row[0]), str(row[1])
                 if owner == agent and recorded_hash == base_hash:
                     connection.execute("DELETE FROM claims WHERE node_id = ?", (node,))
-                    return ("released", owner, recorded_hash)
-                return ("conflict", owner, recorded_hash)
+                    return ("released", owner, recorded_hash, int(row[2]) - now)
+                return ("conflict", owner, recorded_hash, 0)
 
-            result, owner, recorded_hash = _run_transaction(conn, body)
+            result, owner, recorded_hash, remaining = _run_transaction(conn, body)
         finally:
             conn.close()
     except sqlite3.Error as exc:
         raise SidecarError("unable to release the claim atomically") from exc
     if result == "conflict":
         raise ReleaseConflict(owner, recorded_hash)
-    return result
+    return result, remaining
 
 
 def status_fields() -> list[tuple[str, str]]:

@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T21:14:39Z
+updated: 2026-09-12T21:30:00Z
 summary: Fix or dispose the round-five Tangle feedback findings in lease lifecycle visibility and the coordinator closeout and verification contract.
-next: "[[TAS-100-lease-lifecycle-visibility]]"
+next: "[[TAS-101-resolution-ownership-clarity]]"
 ---
 
 # Context

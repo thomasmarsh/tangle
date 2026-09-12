@@ -150,6 +150,28 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
     )
     assert "different base hash" in mismatch.stdout
 
+    connection = sqlite3.connect(database)
+    try:
+        connection.execute("UPDATE claims SET lease_expires_at=0 WHERE node_id='TAS-901';")
+        connection.commit()
+    finally:
+        connection.close()
+    lapsed = subprocess.run(
+        [*command, "release", "TAS-901", "agent-b", "--base-hash", "new"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert 'result: "expired"' in lapsed.stdout
+    assert 'lease_remaining_seconds: "0"' in lapsed.stdout
+    never_held = subprocess.run(
+        [*command, "release", "TAS-901", "agent-b", "--base-hash", "new"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert 'result: "no-op"' in never_held.stdout
+
 
 def test_reindex_is_read_only_and_recovers(
     tmp_path: Path, bt_command: BtCommand

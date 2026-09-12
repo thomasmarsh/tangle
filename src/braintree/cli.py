@@ -39,8 +39,14 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("location", "show the stable project identity and database path"),
     ("init", "create or repair the local sidecar"),
     ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
-    ("claim NODE AGENT --base-hash HASH", "acquire or renew an exclusive lease"),
-    ("release NODE AGENT --base-hash HASH", "release the matching unexpired lease"),
+    (
+        "claim NODE AGENT --base-hash HASH [--lease-seconds N]",
+        "acquire or renew an exclusive lease (default 900 seconds)",
+    ),
+    (
+        "release NODE AGENT --base-hash HASH",
+        "release the matching lease or report it expired",
+    ),
     ("index [NODES]", "rebuild derived nodes, edges, and FTS from Markdown"),
     (
         "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
@@ -228,7 +234,7 @@ def _claim(args: list[str]) -> int:
     if _POSITIVE_INTEGER.fullmatch(lease_raw) is None or int(lease_raw) <= 0:
         return _usage_error("--lease-seconds must be a positive integer")
     try:
-        owner, recorded_hash, recorded_expiry = sidecar.claim(
+        owner, recorded_hash, recorded_expiry, remaining = sidecar.claim(
             node, agent, base_hash, int(lease_raw)
         )
     except sidecar.ClaimConflict as exc:
@@ -246,6 +252,7 @@ def _claim(args: list[str]) -> int:
     print(field("agent", agent))
     print(field("base_hash", recorded_hash))
     print(field("lease_expires_at", recorded_expiry))
+    print(field("lease_remaining_seconds", remaining))
     return 0
 
 
@@ -256,7 +263,7 @@ def _release(args: list[str]) -> int:
     if node == "" or agent == "" or base_hash == "":
         return _usage_error("release requires non-empty NODE, AGENT, and HASH")
     try:
-        result = sidecar.release(node, agent, base_hash)
+        result, remaining = sidecar.release(node, agent, base_hash)
     except sidecar.ReleaseConflict as exc:
         if exc.owner != agent:
             print(field("error", f"node is claimed by {exc.owner}; release refused"))
@@ -276,6 +283,7 @@ def _release(args: list[str]) -> int:
         return 1
     print(field("result", result))
     print(field("node", node))
+    print(field("lease_remaining_seconds", remaining))
     return 0
 
 

@@ -184,6 +184,18 @@ _HASH_ADDRESSING_CONTRACT: tuple[str, ...] = (
     "belongs to the claimed edit, not to the handoff",
 )
 
+# A lease is explicit and observable: the default duration and the
+# renew-on-reclaim rule are stated, remaining time is reported, and a lapsed
+# lease is distinguishable from one never held.
+_LEASE_LIFECYCLE_CONTRACT: tuple[str, ...] = (
+    "A lease lasts 900 seconds by default",
+    "`--lease-seconds N` chooses another duration",
+    "renews the lease to a fresh `N` seconds",
+    "report `lease_remaining_seconds` on every call",
+    "`release` distinguishes a lapsed matching lease (`expired`)",
+    "from a node that holds no claim at all (`no-op`)",
+)
+
 _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "mechanical change with no independently resumable outcome",
     "enclosing node's `next` or result",
@@ -428,6 +440,10 @@ def test_skill_gated_dependency_contract() -> None:
 
 def test_skill_hash_addressing_and_operand_contract() -> None:
     _assert_present(_read(_SKILL), _HASH_ADDRESSING_CONTRACT)
+
+
+def test_skill_lease_lifecycle_contract() -> None:
+    _assert_present(_read(_SKILL), _LEASE_LIFECYCLE_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:

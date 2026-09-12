@@ -6,6 +6,7 @@ base-hash conflicts, release idempotence, expiry, and argument validation.
 
 from __future__ import annotations
 
+import re
 import sqlite3
 import subprocess
 from collections.abc import Callable
@@ -42,6 +43,12 @@ def _seed_allocations(vault: Path) -> None:
 
 def _database(tmp_path: Path) -> Path:
     return tmp_path / "sidecar" / "projects" / "test-project" / "graph.sqlite3"
+
+
+def _remaining(stdout: str) -> int:
+    match = re.search(r'^lease_remaining_seconds: "(\d+)"$', stdout, re.MULTILINE)
+    assert match is not None, stdout
+    return int(match.group(1))
 
 
 def test_version_status_and_init(tmp_path: Path, run_bt: RunBt) -> None:
@@ -120,6 +127,58 @@ def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_bt: RunBt) -> None:
     reclaimed = run_bt(
         "claim", "TAS-001", "agent-a", "--base-hash", "ghi", "--lease-seconds", "60", env=env
     )
+    assert 'result: "claimed"' in reclaimed.stdout
+
+
+def test_claim_states_the_default_lease_duration(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    claimed = run_bt("claim", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    assert 'result: "claimed"' in claimed.stdout
+    assert _remaining(claimed.stdout) == 900
+
+
+def test_reclaim_with_the_same_agent_and_hash_renews_the_lease(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    first = run_bt(
+        "claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "60", env=env
+    )
+    assert _remaining(first.stdout) == 60
+    renewed = run_bt(
+        "claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "300",
+        env=env,
+    )
+    assert 'result: "claimed"' in renewed.stdout
+    assert _remaining(renewed.stdout) == 300
+    released = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    assert 'result: "released"' in released.stdout
+    assert 1 <= _remaining(released.stdout) <= 300
+
+
+def test_release_separates_expired_from_never_held(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    never_held = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    assert never_held.returncode == 0
+    assert 'result: "no-op"' in never_held.stdout
+    assert _remaining(never_held.stdout) == 0
+
+    run_bt("claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "1", env=env)
+    database = _database(tmp_path)
+    connection = sqlite3.connect(database)
+    try:
+        connection.execute("UPDATE claims SET lease_expires_at=0 WHERE node_id='TAS-001';")
+        connection.commit()
+    finally:
+        connection.close()
+
+    lapsed = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    assert lapsed.returncode == 0
+    assert 'result: "expired"' in lapsed.stdout
+    assert _remaining(lapsed.stdout) == 0
+
+    # The lapsed claim is cleared, so the node is free for the next writer.
+    reclaimed = run_bt("claim", "TAS-001", "agent-b", "--base-hash", "def", env=env)
     assert 'result: "claimed"' in reclaimed.stdout
 
 

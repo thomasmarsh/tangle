@@ -38,8 +38,14 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("location", "show the stable project identity and state path"),
     ("init", "create or repair local coordination state"),
     ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
-    ("claim NODE AGENT --base-hash HASH", "acquire or renew an exclusive lease"),
-    ("release NODE AGENT --base-hash HASH", "release the matching unexpired lease"),
+    (
+        "claim NODE AGENT --base-hash HASH [--lease-seconds N]",
+        "acquire or renew an exclusive lease (default 900 seconds)",
+    ),
+    (
+        "release NODE AGENT --base-hash HASH",
+        "release the matching lease or report it expired",
+    ),
     ("index [NODES]", "rebuild the derived index from Markdown"),
     (
         "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
