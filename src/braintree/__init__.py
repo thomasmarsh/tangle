@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from importlib.metadata import version as _distribution_version
+
 __all__ = ["__version__"]
 
-__version__ = "0.1.0"
+# The distribution version is declared once in ``pyproject.toml``; read it back
+# from installed metadata so the package and the installer never diverge.
+__version__ = _distribution_version("braintree")

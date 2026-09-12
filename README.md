@@ -16,7 +16,7 @@ Each concern is stored as a small Markdown node. Directory placement is the auth
 
 Nodes are an execution-memory admission boundary, not a transcript. Retain durable knowledge and decisions, executable tasks, bugs, debt, blockers, and future features only when they could change a later decision or action or materially reduce future resumption cost. Independent resumability is necessary but insufficient for a new node. Agent, write-set, handoff, failed-check, routine-verification, incidental-cleanup, and mechanical-cleanup boundaries alone stay in the current node's `next`, result, evidence, or handoff; a fresh worker may continue that node. Exclude tool logs, routine narration or status, copied source material, and observations without foreseeable action value.
 
-It is compatible with both Codex and Claude Code because both consume the standard `SKILL.md` skill entrypoint. Codex additionally uses the optional `agents/openai.yaml` interface metadata.
+It is compatible with Codex, Claude Code, and pi because all consume the standard `SKILL.md` skill entrypoint. Codex additionally uses the optional `agents/openai.yaml` interface metadata.
 
 ## Hybrid local sidecar
 
@@ -42,6 +42,9 @@ Clone this repository, then select an explicit destination. The installers never
 # Recommended: project-scoped Claude Code skill
 ./scripts/install-claude.sh --project /path/to/project
 
+# Project-scoped pi skill
+./scripts/install.sh --pi --project /path/to/project
+
 # User-scoped install only when deliberately naming the home root
 ./scripts/install-claude.sh --home "$HOME"
 ```
@@ -52,13 +55,13 @@ The generic installer retains the equivalent legacy Claude Code entry point:
 ./scripts/install.sh --claude --project /path/to/project
 ```
 
-The destination is `<root>/.agents/skills/braintree` for Codex or `<root>/.claude/skills/braintree` for Claude Code. Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
+The destination is `<root>/.agents/skills/braintree` for Codex, `<root>/.claude/skills/braintree` for Claude Code, or `<root>/.pi/skills/braintree` for a pi project (global pi installs use `<home>/.pi/agent/skills/braintree`). Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
 
 ```sh
 ./scripts/install.sh --codex --project /path/to/project --dry-run
 ```
 
-Restart the relevant coding-agent session after installing so it discovers the skill. The skill’s own `description` controls automatic selection. To guarantee loading, invoke it as `$braintree` in Codex or `/braintree` in Claude Code.
+Restart the relevant coding-agent session after installing so it discovers the skill. The skill’s own `description` controls automatic selection. To guarantee loading, invoke it as `$braintree` in Codex, `/braintree` in Claude Code, or `/skill:braintree` in pi.
 
 ## Verify
 
@@ -76,6 +79,8 @@ Installed projects can validate the current graph with the bundled Markdown chec
 uv run --project .agents/skills/braintree --frozen graph-check nodes
 # or, for a Claude Code installation
 uv run --project .claude/skills/braintree --frozen graph-check nodes
+# or, for a pi installation
+uv run --project .pi/skills/braintree --frozen graph-check nodes
 uv run --project .agents/skills/braintree --frozen bt reindex nodes
 ```
 
@@ -83,7 +88,7 @@ It is read-only and intended for grooming or CI. It checks node identities and l
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt` and `graph-check` console scripts, leaving repository graph state and development files behind.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt` and `graph-check` console scripts, leaving repository graph state and development files behind. The project has one semantic version, declared in `pyproject.toml`; the installer and the installed console scripts all report that same number.
 
 A vault uses this shape:
 

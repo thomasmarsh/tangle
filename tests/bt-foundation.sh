@@ -5,7 +5,8 @@ test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 export BT_SIDECAR_DIR="$test_root/sidecar" BT_PROJECT_ID=test-project
 bt="$repo_root/scripts/bt"
-[ "$("$bt" --version)" = 0.1.0 ]
+expected_version=$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$repo_root/pyproject.toml" | head -n 1)
+[ "$("$bt" --version)" = "$expected_version" ]
 case "$("$bt" status)" in *'initialized: "false"'*) ;; *) exit 1;; esac
 "$bt" init | grep -F 'result: "initialized"' >/dev/null
 [ -f "$BT_SIDECAR_DIR/projects/test-project/graph.sqlite3" ]

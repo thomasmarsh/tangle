@@ -11,6 +11,8 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
+from braintree import __version__
+
 RunBt = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -28,7 +30,7 @@ def _database(tmp_path: Path) -> Path:
 def test_version_status_and_init(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
     version = run_bt("--version", env=env)
-    assert version.stdout.strip() == "0.1.0"
+    assert version.stdout.strip() == __version__
     status = run_bt("status", env=env)
     assert 'initialized: "false"' in status.stdout
     initialized = run_bt("init", env=env)

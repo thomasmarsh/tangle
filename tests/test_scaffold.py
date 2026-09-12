@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import importlib.metadata
+import tomllib
 from pathlib import Path
 
 import pytest
 
 from braintree import __version__, cli, graph_check
+
+_ROOT = Path(__file__).resolve().parents[1]
 
 _COMMANDS = (
     "status",
@@ -25,6 +28,11 @@ _COMMANDS = (
 
 def test_version_matches_installed_metadata() -> None:
     assert importlib.metadata.version("braintree") == __version__
+
+
+def test_declared_version_is_single_sourced() -> None:
+    declared = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert declared["project"]["version"] == __version__
 
 
 def test_bt_version_flag(capsys: pytest.CaptureFixture[str]) -> None:

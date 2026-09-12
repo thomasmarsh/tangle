@@ -1,8 +1,16 @@
 #!/bin/sh
-# Install this skill into an explicitly selected Codex or Claude Code location.
+# Install this skill into an explicitly selected Codex, Claude Code, or pi location.
 set -eu
 
-version=0.3.1
+# The project version is declared once in ``pyproject.toml``. Read it here so
+# the installer and the installed package always report the same number.
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd) || exit 1
+version=$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$repo_root/pyproject.toml" | head -n 1)
+if [ -z "$version" ]; then
+  printf '%s\n' 'error: "unable to read the project version from pyproject.toml"'
+  exit 1
+fi
+
 skill_name=braintree
 agent=
 scope=
@@ -43,20 +51,22 @@ usage() {
   fi
 
   field description 'Install Braintree into an explicit project or home-root directory.'
-  field usage 'scripts/install.sh (--codex | --claude) (--project DIR | --home DIR) [--dry-run]'
+  field usage 'scripts/install.sh (--codex | --claude | --pi) (--project DIR | --home DIR) [--dry-run]'
   field claude_wrapper 'scripts/install-claude.sh omits --claude and accepts the same destination flags.'
-  printf 'options[8]{flag,meaning}:\n'
+  printf 'options[9]{flag,meaning}:\n'
   printf '  "--codex","install to DIR/.agents/skills/braintree"\n'
   printf '  "--claude","install to DIR/.claude/skills/braintree"\n'
+  printf '  "--pi","install to DIR/.pi/skills/braintree (project) or DIR/.pi/agent/skills/braintree (home)"\n'
   printf '  "--project DIR","use an explicit project directory"\n'
   printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
   printf '  "--dry-run","report the destination without writing"\n'
   printf '  "--help, -h","show this reference"\n'
   printf '  "--version","print the version only when passed alone"\n'
   printf '  "-v, -V","aliases for bare --version"\n'
-  printf 'examples[3]{command,purpose}:\n'
+  printf 'examples[4]{command,purpose}:\n'
   printf '  "./scripts/install.sh --codex --project /path/to/project --dry-run","inspect a Codex project destination"\n'
   printf '  "./scripts/install.sh --claude --project /path/to/project","install for a Claude Code project"\n'
+  printf '  "./scripts/install.sh --pi --project /path/to/project","install for a pi project"\n'
   printf '  "./scripts/install.sh --codex --home $HOME","install for Codex only with an explicit home root"\n'
 }
 
@@ -78,8 +88,8 @@ runtime_error() {
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --codex|--claude)
-      [ -z "$agent" ] || usage_error 'select exactly one agent: --codex or --claude'
+    --codex|--claude|--pi)
+      [ -z "$agent" ] || usage_error 'select exactly one agent: --codex, --claude, or --pi'
       agent=${1#--}
       ;;
     --project|--home)
@@ -99,10 +109,17 @@ done
 [ -n "$agent" ] && [ -n "$scope" ] || usage_error 'agent and destination scope are required'
 [ -d "$root" ] || runtime_error "directory does not exist: $root"
 
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd) || runtime_error 'unable to resolve the installer repository'
 case "$agent" in
   codex) destination="$root/.agents/skills/$skill_name" ;;
   claude) destination="$root/.claude/skills/$skill_name" ;;
+  pi)
+    # pi discovers project skills under .pi/skills and global skills under
+    # ~/.pi/agent/skills, so the relative path depends on the destination scope.
+    case "$scope" in
+      home) destination="$root/.pi/agent/skills/$skill_name" ;;
+      *) destination="$root/.pi/skills/$skill_name" ;;
+    esac
+    ;;
 esac
 
 if [ "$dry_run" = true ]; then
