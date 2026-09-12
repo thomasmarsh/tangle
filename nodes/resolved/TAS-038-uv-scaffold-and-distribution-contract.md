@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-11T23:58:50Z
+updated: 2026-09-12T00:07:22Z
 summary: The uv package scaffold is green; installed skills run the `bt`/`graph-check` console scripts through `uv run`, not PEP 723 single files.
-next: Confirm the scaffold checks once more after coordinator integration, then resolve this node.
 ---
 
 # Context
@@ -46,3 +45,7 @@ Installed skills run the `uv`-managed `braintree` package through its console sc
 # Done when
 
 `uv sync` succeeds; `uv run bt --version`, `uv run graph-check --help`, `uv run pytest`, `uv run ruff check`, and strict type checking all pass on the scaffold; and the distribution/execution approach for installed skills is written down in this node or the README.
+
+# Result
+
+Re-confirmed after integration at `updated` time: `uv sync` resolved 14 packages; `uv run bt --version` printed `0.1.0`; `uv run graph-check --help` printed the usage banner; `uv run pytest` passed 8 tests; `uv run ruff check` and `uv run mypy` (strict, 5 source files) reported no issues. Distribution decision recorded under `# Decision`.

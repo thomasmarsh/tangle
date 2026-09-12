@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-11T23:45:12Z
+updated: 2026-09-12T00:07:22Z
 summary: Replace the Ruby Braintree implementation with a fully typed uv-managed Python project while preserving command behavior and Markdown authority.
-next: Resolve [[TAS-038-uv-scaffold-and-distribution-contract]].
+next: Integrate [[TAS-039-port-graph-check-validator-to-python]].
 ---
 
 # Context
