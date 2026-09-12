@@ -56,8 +56,3 @@ def test_bt_known_command_reports_unimplemented(capsys: pytest.CaptureFixture[st
 def test_graph_check_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["--help"]) == 0
     assert "usage: graph-check" in capsys.readouterr().out
-
-
-def test_graph_check_stub_exit_code(capsys: pytest.CaptureFixture[str]) -> None:
-    assert graph_check.main(["nodes"]) == 1
-    assert "not implemented" in capsys.readouterr().err
