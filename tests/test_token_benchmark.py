@@ -12,7 +12,9 @@ _FIXTURES = Path(__file__).parent / "fixtures"
 _FAKE_CODEX = _FIXTURES / "fake-codex-mutation.py"
 _SESSION = _FIXTURES / "token-usage-session.jsonl"
 _COMPLETED_STREAM = _FIXTURES / "codex-stream-complete.jsonl"
+_READING_PREFIX_STREAM = _FIXTURES / "codex-stream-reading-prefix-complete.jsonl"
 _MALFORMED_STREAM = _FIXTURES / "codex-stream-reading-prefix-malformed.jsonl"
+_INCOMPLETE_STREAM = _FIXTURES / "codex-stream-incomplete-with-telemetry.jsonl"
 _COLD_ANSWER = _FIXTURES / "cold-resume-answer.json"
 
 
@@ -28,6 +30,16 @@ def test_check_output_schema_uses_compact_json(capsys: pytest.CaptureFixture[str
     out = capsys.readouterr().out
     assert '"required":["frontier","next"]' in out
     assert '"$schema"' not in out
+
+
+def test_routine_mutation_fixture_shape(capsys: pytest.CaptureFixture[str]) -> None:
+    assert (
+        token_benchmark.main(["--check-fixture", "--case", "routine-mutation", "--scale", "small"])
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert '"benchmark_case":"routine-mutation"' in out
+    assert '"fixture_version":"routine-mutation-status-v1"' in out
 
 
 def test_composite_output_schema_shape(capsys: pytest.CaptureFixture[str]) -> None:
@@ -96,12 +108,50 @@ def test_check_recording_accepts_a_canned_stream(capsys: pytest.CaptureFixture[s
     assert "recording_check{status,live_calls}: valid,0" in capsys.readouterr().out
 
 
+def test_check_recording_accepts_a_reading_prefix_stream(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert (
+        token_benchmark.main(
+            [
+                "--check-recording",
+                str(_READING_PREFIX_STREAM),
+                "--answer",
+                str(_COLD_ANSWER),
+                "--case",
+                "cold-resume",
+            ]
+        )
+        == 0
+    )
+    assert "recording_check{status,live_calls}: valid,0" in capsys.readouterr().out
+
+
 def test_check_recording_rejects_malformed_stream(capsys: pytest.CaptureFixture[str]) -> None:
     assert (
         token_benchmark.main(
             [
                 "--check-recording",
                 str(_MALFORMED_STREAM),
+                "--answer",
+                str(_COLD_ANSWER),
+                "--case",
+                "cold-resume",
+            ]
+        )
+        == 2
+    )
+    assert "error:" in capsys.readouterr().err
+
+
+def test_check_recording_rejects_incomplete_telemetry_stream(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert (
+        token_benchmark.main(
+            [
+                "--check-recording",
+                str(_INCOMPLETE_STREAM),
                 "--answer",
                 str(_COLD_ANSWER),
                 "--case",

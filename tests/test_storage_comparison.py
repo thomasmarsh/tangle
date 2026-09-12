@@ -14,8 +14,14 @@ def test_verify_matches_tracked_baseline(capsys: pytest.CaptureFixture[str]) -> 
     assert "verification: passed" in out
 
 
-def test_default_run_skips_verification(capsys: pytest.CaptureFixture[str]) -> None:
+def test_default_run_skips_verification(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Exercise the flag handling without rebuilding the four disposable Git
+    # fixtures: the default path must print every case and no verification line.
+    result = storage_comparison._CaseResult("M", 1, 0, 25, 0, 0, 0)
+    monkeypatch.setattr(storage_comparison, "_result_for", lambda name: result)
     assert storage_comparison.main([]) == 0
     out = capsys.readouterr().out
     assert "verification: passed" not in out
-    assert "storage{name,diff," in out
+    assert out.count("storage{name,diff,") == 4

@@ -1,19 +1,21 @@
 .PHONY: test benchmark diagnostic-benchmark storage-comparison
 
+# The Python suite and the remaining end-to-end shell screens are independent
+# and process-spawn bound, so run them concurrently. Every job is waited on and
+# any failure fails the target.
 test:
-	uv run pytest -q
-	uv run ruff check
-	uv run mypy
-	sh tests/graph-check.sh
-	sh tests/install.sh
-	sh tests/behavioral-benchmark.sh
-	sh tests/token-benchmark.sh
-	sh tests/storage-comparison.sh
-	sh tests/worktree-parallel.sh
-	sh tests/bt-foundation.sh
-	sh tests/bt-index.sh
-	sh tests/bt-verification.sh
-	git diff --check
+	@set -eu; \
+	uv run ruff check; \
+	uv run mypy; \
+	pids=""; \
+	uv run pytest -q & pids="$$pids $$!"; \
+	for suite in install worktree-parallel; do \
+		sh "tests/$$suite.sh" & pids="$$pids $$!"; \
+	done; \
+	status=0; \
+	for pid in $$pids; do wait "$$pid" || status=1; done; \
+	git diff --check; \
+	exit $$status
 
 benchmark:
 	uv run token-benchmark --protocol
