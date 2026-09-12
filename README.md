@@ -130,6 +130,12 @@ It loads the selected model once per process and embeds in bounded batches, usin
 
 Inference is offline: `HF_HUB_OFFLINE` and `TRANSFORMERS_OFFLINE` are forced on before the runtime loads, and weights are read from the `BT_MODEL_CACHE`/`HF_HOME` cache, so nothing downloads at query time. An unpopulated cache or a missing extra exits non-zero, which the seam reads as capability absent: `braintree similar` falls back to the lexical baseline instead of failing. A malformed, empty, or wrong-width model result is refused the same way, and nothing is written to stdout except the vector array. Fastembed is imported lazily inside the command handler, so a plain install still loads no heavy module.
 
+## Advisory density clustering
+
+`braintree.clustering` is the derived layer above the embedding provider and UMAP reduction. Given the content-hash-keyed vectors `braintree.semantic` returns, it runs HDBSCAN over two spaces — the raw provider vectors and the seed-specific UMAP coordinates — and reports the more stable one. Stability is the mean pairwise Adjusted Rand Index across runs that vary the reduction seed and a seeded subsample draw, so no answer comes from a single fit; it is reported as evidence and never gates or hides a result. The layer is derived and advisory under `DEC-006`, no interactive verb imports it, `similar` is unchanged, and Markdown stays authoritative.
+
+`min_cluster_size` defaults to `max(5, round(0.05 * n))` capped at 20 and `min_samples` to a third of it, so a small or uniform vault cannot shatter into spurious micro-clusters and a large one cannot hide sub-structure behind one giant cluster. Both are exposed on the result, and an explicit non-zero value overrides either. HDBSCAN's `-1` is noise: an unclustered node is named in `noise` and never attached to a nearby cluster. Outliers are a separate view of the members whose GLOSH density score reaches `outlier_threshold`, reported as their own tuple. Each cluster is labeled from its centroid-nearest member and the primary `Parent`/`Area` route its members share, so the label is reproducible and no generative summary is involved. An empty embedding set is the capability-absent path and returns an explicit unavailable result instead of raising. `hdbscan`, `numpy`, and `scikit-learn` are imported lazily inside the fit, so a plain install loads no heavy module.
+
 ## Validate and collect feedback
 
 Installed projects validate the current graph with the bundled Markdown checker (which needs no sidecar) and query the optional index from any project root:
