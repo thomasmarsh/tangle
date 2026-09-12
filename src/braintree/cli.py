@@ -1,6 +1,6 @@
 """The sidecar and index query command group behind ``braintree``.
 
-The eleven command names, their arguments, the TOON field styling, and the
+The command names, their arguments, the TOON field styling, and the
 ``0``/``1``/``2`` exit codes are the internal engine the unified
 ``braintree`` command fronts. Coordination lives in :mod:`braintree.sidecar`
 and the rebuildable Markdown index in :mod:`braintree.index`.
