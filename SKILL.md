@@ -13,7 +13,7 @@ Use the installed `scripts/bt` command for graph indexes and live coordination; 
 
 - Markdown remains authoritative for node prose, wikilinks, semantic `context_rev` values and pins, status directories, priorities, and `next`. Preserve its directory layout for Obsidian. Do not introduce a second authority for any field.
 - `bt reindex [nodes]` rebuilds derived SQLite node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown. `bt search`, `bt backlinks`, and `bt stale` reconcile first, so cached graph rows are disposable acceleration rather than durable knowledge.
-- SQLite is authoritative only for local operational coordination: `bt allocate PREFIX` atomically reserves an ID, and `bt claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease. Release with the matching `bt release` command. A claim binds the starting content hash; reread and reconcile Markdown if it no longer matches.
+- SQLite is authoritative only for local operational coordination: `bt allocate PREFIX` atomically reserves an ID, and `bt claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease. Release with the matching `bt release` command. A claim binds the starting content hash: `HASH` is the SHA-256 hex digest of the node file's raw bytes. Reread and reconcile Markdown if the file no longer matches.
 - Run `bt init` before coordinated work and `bt status` or `bt location` to inspect the local sidecar. Expired leases are discarded. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `bt init` then `bt reindex`.
 - This sidecar is for concurrent processes on one host and a local filesystem. It uses SQLite WAL and refuses an apparent network-mounted location unless explicitly overridden. Do not put it in Git, iCloud, Dropbox, NFS, or another synchronized/network filesystem. For multi-host coordination, use a server database such as PostgreSQL behind equivalent specialized commands; SQLite/WAL is not that service.
 - Keep status directories and Markdown pointers for now. A stationary-path/status-in-database migration is deferred and requires measured evidence that status-renames remain material Git churn after claims and serial integration.
@@ -103,11 +103,13 @@ For parallel creation, use `bt allocate PREFIX` to atomically reserve an ID. Coo
 
 Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node, and claims it with `bt claim`. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
 
+Serial work uses the same discipline without separate branches: a lone worker self-assigns one node and its write set before claiming. Include any deliberate parent-frontier advance in the same commit as the node's content update and status move, then run `ruby scripts/graph-check.rb nodes` and the exact dependency-pin searches. Commit the coherent unit unless the user or project says otherwise; do not leave a resolved status move uncommitted.
+
 The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `ruby scripts/graph-check.rb nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
 
 ## Reachability contract
 
-`index-map.md` routes to a small set of durable `IDX` root hubs with `Indexes` links. A root hub has no `Parent` or `Area` link and describes an area without listing its members. Every other node has exactly one primary, unpinned `Parent` or `Area` link. Following those primary links must terminate at a root hub; an unfinished node may also be entered directly through a deliberate `# Focus` pointer.
+`index-map.md` routes to a small set of durable `IDX` root hubs with `Indexes` links. A root hub has no `Parent` or `Area` link and describes an area without listing its members. Every other node has exactly one primary, unpinned `Parent` or `Area` link. Following those primary links must terminate at a root hub; an unfinished node may also be entered directly through a deliberate `# Focus` pointer. To find the current frontier from a hub, derive its members and follow each coordinating node's `next`; the `next` route, not `# Focus` or `priority`, names the one deliberate frontier child.
 
 Treat an unfinished node that cannot reach a root hub or deliberate focus route as an orphan and a graph-integrity failure. Derive each hub's members with an exact `Parent`/`Area` backlink search; never copy them into a hub or the index. Add a hub only when a durable project or area entry needs one, then route to it from the index.
 
@@ -139,15 +141,18 @@ Do not pin navigation links such as `Parent`, `Indexes`, or casual `Related to` 
 
 A node is derived `Stale` when a dependency is missing, its current `context_rev` differs from the edge's pinned revision, or the dependency link lacks a revision pin. Do not add `stale` to the directory status or frontmatter. A semantic dependency change intentionally leaves dependents' pins unchanged so one exact backlink search identifies reconciliation work.
 
+`Stale` reports revision drift, not unmet dependencies. Before executing, confirm each pinned dependency is `resolved`; a non-resolved dependency blocks the task rather than making it stale. Resolving a dependency does not change its `context_rev`, so consumers detect completion from its status directory, not from `stale`.
+
 ## Read and execute loop
 
 For each immediate micro-step:
 
 1. Read `nodes/index-map.md` only when orienting or when no direct node pointer was supplied.
-2. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`. Read its frontmatter and a short body preview first.
-3. For every context-bearing dependency, read the dependency header and compare its `context_rev` with the pinned revision. Follow only mismatched or context-required pointers.
-4. Groom a stale node before execution: reconcile its assumptions, update dependency pins, increment its local `context_rev` only if that reconciliation changes context its consumers need, and refresh `updated`.
-5. Execute the smallest coherent unit. Update summary, next, evidence, status directory, context revision when applicable, and timestamp as required.
+2. With no supplied pointer, derive a hub's members from `Parent`/`Area` backlinks, then follow each coordinating node's `next` to the current frontier. A node whose `next` names a direct child is a coordinating parent, and that child is the frontier; validate the candidate's status and header exactly as a `# Focus` target. Do not treat `# Focus`, `priority`, or `active` as the frontier.
+3. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`. Read its frontmatter and a short body preview first.
+4. For every context-bearing dependency, read the dependency header, compare its `context_rev` with the pinned revision, and confirm the dependency is `resolved`. Follow only mismatched, context-required, or blocking pointers.
+5. Groom a stale node before execution: reconcile its assumptions, update dependency pins, increment its local `context_rev` only if that reconciliation changes context its consumers need, and refresh `updated`.
+6. Execute the smallest coherent unit. Update summary, next, evidence, status directory, context revision when applicable, and timestamp as required.
 
 Never bulk-dump `nodes/` into context or open every result from a broad query. Filter and count in the shell, then open only the selected node or dependency fragments needed for the decision.
 
@@ -240,4 +245,4 @@ Report graph lists in compact TOON, not JSON or narrative tables. Use only field
 nodes{id,status,priority,context_rev}: TAS-101,active,P1,3 | DEF-auth,resolved,,7
 ```
 
-State zero results explicitly. Add a short `stale:` or `help:` line only when it changes the next action.
+State zero results explicitly. Add a short `stale:` or `help:` line only when it changes the next action. A completion report names the resolved node, its new status, and the advanced frontier in the same compact style; prose may explain code or document changes, but do not restate graph state as narrative.
