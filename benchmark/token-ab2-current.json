@@ -1,0 +1,72 @@
+{
+  "protocol": "codex-session-token-v2",
+  "correctness": true,
+  "samples": [
+    {
+      "input_tokens": 172966,
+      "cached_input_tokens": 151808,
+      "output_tokens": 1618,
+      "reasoning_output_tokens": 759,
+      "total_tokens": 174584,
+      "uncached_input_tokens": 21158
+    },
+    {
+      "input_tokens": 84021,
+      "cached_input_tokens": 69632,
+      "output_tokens": 874,
+      "reasoning_output_tokens": 284,
+      "total_tokens": 84895,
+      "uncached_input_tokens": 14389
+    },
+    {
+      "input_tokens": 127190,
+      "cached_input_tokens": 112128,
+      "output_tokens": 1534,
+      "reasoning_output_tokens": 681,
+      "total_tokens": 128724,
+      "uncached_input_tokens": 15062
+    }
+  ],
+  "median": {
+    "input_tokens": 127190,
+    "cached_input_tokens": 112128,
+    "output_tokens": 1534,
+    "reasoning_output_tokens": 681,
+    "total_tokens": 128724,
+    "uncached_input_tokens": 15062
+  },
+  "metadata": {
+    "requested_model": "gpt-5.6-terra",
+    "requested_reasoning_effort": "medium",
+    "representation": "graph",
+    "scale": "small",
+    "benchmark_case": "composite",
+    "requested_codex_version": "codex-cli 0.154.0",
+    "fixture_version": "graph-retrieval-v3",
+    "fixture_seed": "tas-020-2026-09-10",
+    "fixture_sha256": "2d40d61bbcec50bdd139f7d0e16c72bcafeaecb290b4a126af0c8e2c28177bce",
+    "skill_sha256": "277b9a05269c337d09293ec5795b95016ab9f00904d78d7ab5e9f0328d7fd78d",
+    "observed_session_telemetry": {
+      "observed_agent_path": [],
+      "observed_cli_version": [
+        "0.154.0"
+      ],
+      "observed_session_cwd": [
+        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/bt-token-benchmark-ew9679wi"
+      ],
+      "observed_turn_cwd": [
+        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/bt-token-benchmark-ew9679wi"
+      ],
+      "observed_model": [
+        "gpt-5.6-terra"
+      ],
+      "observed_reasoning_effort": [
+        "medium"
+      ],
+      "token_usage_payload_shapes": {
+        "response_id,root_turn_id,session_id,thread_id,thread_token_usage,turn_id,turn_token_usage,usage": 6
+      }
+    },
+    "source": "fresh-codex-session"
+  }
+}
