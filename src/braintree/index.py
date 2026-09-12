@@ -20,8 +20,11 @@ from .sidecar import SidecarError
 __all__ = [
     "backlinks",
     "ensure_index_schema",
+    "existing_allocations",
     "format_table",
+    "prefix_maxima",
     "reindex",
+    "resolve_node",
     "search",
     "stale",
 ]
@@ -126,6 +129,43 @@ def _read_index_rows(root: str) -> tuple[list[tuple[object, ...]], list[tuple[ob
     return rows, deduped
 
 
+def existing_allocations(root: str) -> dict[str, set[int]]:
+    """Return the numeric suffixes already used per node-ID prefix under ``root``.
+
+    A filename supplies its identity, so allocation can refuse an integer that
+    would collide with an existing node even when the sidecar counter is stale.
+    """
+    taken: dict[str, set[int]] = {}
+    for path in glob.glob(os.path.join(os.path.abspath(root), "*", "*.md")):
+        status = os.path.basename(os.path.dirname(path))
+        if status not in _STATUSES:
+            continue
+        match = _NODE_ID.match(os.path.basename(path)[:-3])
+        if match is None:
+            continue
+        prefix, _, digits = match.group(1).rpartition("-")
+        taken.setdefault(prefix, set()).add(int(digits))
+    return taken
+
+
+def prefix_maxima(root: str) -> dict[str, int]:
+    """Return the highest numeric suffix already used per prefix under ``root``."""
+    return {prefix: max(values) for prefix, values in existing_allocations(root).items()}
+
+
+def _upsert_reservations(
+    conn: sqlite3.Connection, maxima: dict[str, int]
+) -> None:
+    """Raise each prefix reservation above the Markdown maximum."""
+    for prefix, maximum in maxima.items():
+        conn.execute(
+            "INSERT INTO id_sequences(prefix,next_value) VALUES(?, ?) "
+            "ON CONFLICT(prefix) DO UPDATE SET next_value = "
+            "MAX(id_sequences.next_value, excluded.next_value)",
+            (prefix, maximum + 1),
+        )
+
+
 def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
     """Rebuild derived node, edge, and FTS rows from Markdown under ``root``."""
     root = os.path.abspath(root)
@@ -133,6 +173,10 @@ def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
         raise SidecarError(f"nodes directory does not exist: {root}")
     ensure_index_schema(conn)
     rows, edges = _read_index_rows(root)
+    maxima: dict[str, int] = {}
+    for row in rows:
+        prefix, _, digits = str(row[0]).rpartition("-")
+        maxima[prefix] = max(maxima.get(prefix, 0), int(digits))
     conn.execute("BEGIN IMMEDIATE")
     try:
         conn.execute("DELETE FROM edges")
@@ -147,6 +191,7 @@ def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
             [(str(row[0]), row[4], row[8]) for row in rows],
         )
         conn.executemany("INSERT INTO edges VALUES(?,?,?,?)", edges)
+        _upsert_reservations(conn, maxima)
         conn.execute(
             "INSERT INTO graph_meta(key,value) VALUES('nodes_root',?) "
             "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -173,6 +218,17 @@ def search(conn: sqlite3.Connection, query: str, limit: int) -> list[tuple[str, 
             "invalid full-text query; use words, quoted phrases, or AND/OR"
         ) from exc
     return [(str(row[0]), str(row[1]), str(row[2])) for row in cursor.fetchall()]
+
+
+def resolve_node(conn: sqlite3.Connection, node: str) -> str | None:
+    """Resolve a bare ID or full node name to the indexed node ID."""
+    row = conn.execute("SELECT id FROM nodes WHERE id = ?", (node,)).fetchone()
+    if row is not None:
+        return str(row[0])
+    for candidate_id, path in conn.execute("SELECT id, path FROM nodes").fetchall():
+        if os.path.basename(str(path))[:-3] == node:
+            return str(candidate_id)
+    return None
 
 
 def backlinks(conn: sqlite3.Connection, node: str) -> list[tuple[str, str, str, str]]:

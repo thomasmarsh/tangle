@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P3
-updated: 2026-09-12T12:40:14Z
-summary: SKILL.md defines the next direct-child test and contrasts a planned dependency and requested plans with genuinely blocked work.
-next: Define the direct-child test operationally in SKILL.md and add the blocked-versus-proposed example.
+updated: 2026-09-12T12:50:07Z
+summary: SKILL.md defines the direct-child test and next forms, contrasts blocked with a proposed sibling, and permits a requested proposed plan.
 ---
 
 # Context
@@ -31,3 +30,18 @@ permits a user-requested proposed tree subject to resolve-or-dispose.
   decomposition.
 - `make test` passes, including any checker fixture added for the documented
   grammar.
+
+# Result
+
+`SKILL.md` now defines a direct child as a node whose primary `Parent`/`Area` is
+the current node, lists the two accepted `next` forms (a plain action or one
+`direct-child` link), contrasts `blocked` external input with a `proposed`
+sibling gated on an in-graph decision, and allows a user-requested plan to be
+created up front as `proposed` work subject to resolve-or-dispose.
+
+Evidence:
+
+- `SKILL.md` decomposition section carries the direct-child definition, `next`
+  forms, blocked-versus-proposed contrast, and requested-plan allowance.
+- `make test` passes; the TAS-047 trailing-text fixture is the checker fixture
+  for the documented pin grammar.

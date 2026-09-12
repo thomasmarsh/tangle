@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T12:40:14Z
-summary: graph-check names trailing text after a dependency link, and SKILL.md states that a context pin must end its line.
-next: Add a fixture whose pin has trailing prose and assert that the diagnostic names that text.
+updated: 2026-09-12T12:50:07Z
+summary: graph-check names trailing text after a context pin and SKILL.md states that a pin must end its line.
 ---
 
 # Context
@@ -26,3 +25,18 @@ introduces the pin syntax.
   trailing text and shows the offending suffix.
 - `SKILL.md` documents that the pin must terminate the line.
 - A fixture test covers the trailing-text case, and `make test` passes.
+
+# Result
+
+The checker now accepts only a pin that terminates the line and, when a valid
+pin is followed by prose, reports
+`context_rev pin for the target has trailing text: <suffix>`. `SKILL.md` states
+that the pin must terminate its line.
+
+Evidence:
+
+- `test_context_pin_with_trailing_text_names_it` asserts the diagnostic names
+  `and more context.`, while `test_missing_context_rev_pin` still reports the
+  missing-pin case.
+- `SKILL.md` dependency-revision section states the line-termination rule.
+- `make test` passes.

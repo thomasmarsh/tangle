@@ -20,7 +20,24 @@ def _env(tmp_path: Path) -> dict[str, str]:
     return {
         "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
         "BT_PROJECT_ID": "test-project",
+        "BT_NODES_DIR": str(tmp_path / "vault" / "nodes"),
     }
+
+
+_FRONTMATTER = (
+    "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\nsummary: Fixture.\n---\n"
+)
+
+
+def _seed_allocations(vault: Path) -> None:
+    (vault / "active").mkdir(parents=True)
+    (vault / "resolved").mkdir()
+    (vault / "resolved" / "IDX-001-root.md").write_text(_FRONTMATTER, encoding="utf-8")
+    (vault / "resolved" / "THO-003-note.md").write_text(_FRONTMATTER, encoding="utf-8")
+    for number in range(1, 8):
+        (vault / "active" / f"TAS-{number:03d}-existing.md").write_text(
+            _FRONTMATTER, encoding="utf-8"
+        )
 
 
 def _database(tmp_path: Path) -> Path:
@@ -99,3 +116,42 @@ def test_unknown_claim_argument_is_a_usage_error(tmp_path: Path, run_bt: RunBt) 
     result = run_bt("claim", "TAS-002", "agent-a", "--bogus", "x", env=env)
     assert result.returncode == 2
     assert 'error: "unknown argument for claim: --bogus"' in result.stdout
+
+
+def test_init_seeds_reservations_from_markdown(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_allocations(vault)
+    env = _env(tmp_path)
+    env["BT_NODES_DIR"] = str(vault)
+
+    assert run_bt("init", env=env).returncode == 0
+    status = run_bt("status", env=env)
+    assert '"TAS","8"' in status.stdout
+    assert run_bt("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-008"'
+    assert run_bt("allocate", "IDX", env=env).stdout.strip() == 'id: "IDX-002"'
+    assert run_bt("allocate", "THO", env=env).stdout.strip() == 'id: "THO-004"'
+
+
+def test_reindex_seeds_reservations(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_allocations(vault)
+    env = _env(tmp_path)
+    env["BT_NODES_DIR"] = str(vault)
+
+    assert run_bt("reindex", str(vault), env=env).returncode == 0
+    assert run_bt("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-008"'
+
+
+def test_allocate_skips_on_disk_identity_with_empty_sidecar(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_allocations(vault)
+    env = _env(tmp_path)
+    env["BT_NODES_DIR"] = str(vault)
+
+    # No init or reindex: the counter is empty, but allocation must still not
+    # return an identity that already exists on disk.
+    result = run_bt("allocate", "TAS", env=env)
+    assert result.returncode == 0
+    assert result.stdout.strip() == 'id: "TAS-008"'

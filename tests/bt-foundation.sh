@@ -3,7 +3,7 @@ set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
-export BT_SIDECAR_DIR="$test_root/sidecar" BT_PROJECT_ID=test-project
+export BT_SIDECAR_DIR="$test_root/sidecar" BT_PROJECT_ID=test-project BT_NODES_DIR="$test_root/vault/nodes"
 bt="$repo_root/scripts/bt"
 expected_version=$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$repo_root/pyproject.toml" | head -n 1)
 [ "$("$bt" --version)" = "$expected_version" ]

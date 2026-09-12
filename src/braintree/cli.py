@@ -101,7 +101,7 @@ def _allocate(args: list[str]) -> int:
         return _usage_error(
             "PREFIX must contain only uppercase letters, digits, underscores, or hyphens"
         )
-    value = sidecar.allocate(prefix)
+    value = sidecar.allocate(prefix, index.existing_allocations(_nodes_directory()).get(prefix))
     print(field("id", f"{prefix}-{value:03d}"))
     return 0
 
@@ -208,15 +208,22 @@ def _backlinks(args: list[str]) -> int:
         return _usage_error("backlinks requires NODE")
     node = args[1]
 
-    def query_index() -> list[tuple[str, str, str, str]]:
+    def query_index() -> tuple[bool, list[tuple[str, str, str, str]]]:
         conn = sidecar.open_connection()
         try:
             index.reindex(conn, _nodes_directory())
-            return index.backlinks(conn, node)
+            resolved = index.resolve_node(conn, node)
+            if resolved is None:
+                return False, []
+            return True, index.backlinks(conn, resolved)
         finally:
             conn.close()
 
-    rows = _index_guard(query_index)
+    found, rows = _index_guard(query_index)
+    if not found:
+        print(field("error", f"unknown node: {node}"))
+        print(field("help", "Use a bare ID or a full node name from the vault."))
+        return 1
     print(
         index.format_table(
             "backlinks",
@@ -245,7 +252,7 @@ def _stale(args: list[str]) -> int:
         index.format_table(
             "stale",
             "source,status,target,pinned,current",
-            "stale: 0 dependency pins",
+            "stale: 0 stale dependency pins",
             rows,
         )
     )
@@ -257,6 +264,14 @@ def _dispatch(command: str, args: list[str]) -> int:
         if len(args) != 1:
             return _usage_error("status accepts no arguments")
         _print_fields(sidecar.status_fields())
+        print(
+            index.format_table(
+                "reservations",
+                "prefix,next",
+                "reservations: 0 prefixes",
+                sidecar.reservations(),
+            )
+        )
         return 0
     if command == "location":
         if len(args) != 1:
@@ -267,6 +282,7 @@ def _dispatch(command: str, args: list[str]) -> int:
         if len(args) != 1:
             return _usage_error("init accepts no arguments")
         sidecar.ensure_sidecar()
+        sidecar.reconcile_sequences(index.prefix_maxima(_nodes_directory()))
         print(field("result", "initialized"))
         _print_fields(sidecar.location_fields())
         return 0

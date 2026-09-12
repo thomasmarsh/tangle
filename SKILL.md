@@ -21,7 +21,7 @@ Use the installed `bt` command for graph indexes and live coordination: `uv run 
 ## Vault contract
 
 - Root is the directory containing `nodes/index-map.md`.
-- Each node lives in exactly one status directory: `nodes/proposed/`, `nodes/active/`, `nodes/blocked/`, or `nodes/resolved/`.
+- Each node lives in exactly one status directory: `nodes/proposed/`, `nodes/active/`, `nodes/blocked/`, or `nodes/resolved/`. Those four names are fixed, but a status directory is created on demand: it exists only once a node has that status, and no empty directory is required.
 - Names are `<ID>-<short-slug>.md`; `TAS`/`THO`/`DEF`/`IDX` express type. Filename supplies ID/type, directory supplies status; do not duplicate them in frontmatter.
 - Store each relationship in one canonical direction: put `Parent` on the child, `Area` on the assigned node, `Depends on` on the consumer, `Superseded by` on the obsolete node, and `Indexes` on `index-map.md` or another deliberate route. Derive child, parent-of, and backlink views by search; do not store them as reciprocal edges.
 
@@ -75,13 +75,15 @@ The coordinator integrates worker branches one at a time. Never blindly auto-mer
 
 ## Decomposition and roll-up
 
-Decompose just in time, only after the node-admission threshold, at a distinct independently resumable outcome, blocker, dependency, or verification boundary that also retains durable execution-memory value. A child states its outcome or decision, completion criterion, primary `Parent`/`Area` route, and executable `next`. Do not pre-create speculative trees.
+Decompose just in time, only after the node-admission threshold, at a distinct independently resumable outcome, blocker, dependency, or verification boundary that also retains durable execution-memory value. A child states its outcome or decision, completion criterion, primary `Parent`/`Area` route, and executable `next`. Do not pre-create speculative trees. A user-requested plan is not speculative decomposition: create its children up front as `proposed` work and resolve or dispose each as reality arrives.
 
-A coordinating task states its outcome and `Done when` criteria; its `next` is one concrete frontier action, or one wikilinked direct child at the current frontier, never a child list. Roll up from evidence, not child counts; resolve only when its criteria are met and every child is resolved or disposed, since resolving children alone does not complete the parent.
+A direct child is a node whose primary `Parent` or `Area` is the current node. A coordinating task states its outcome and `Done when` criteria; its `next` is either one concrete frontier action or one wikilinked direct child at the current frontier, never a child list. The only accepted `next` forms are a plain action sentence, `Do X.`, or a single `[[direct-child]]` link; naming multiple children or a non-child fails the graph check. Roll up from evidence, not child counts; resolve only when its criteria are met and every child is resolved or disposed, since resolving children alone does not complete the parent.
+
+`blocked` and `proposed` are not interchangeable. Use `blocked` only when the node needs input or state that no node in this vault owns, such as a credential or an external approval; use `proposed` for work that is ready to start but not yet at the frontier, including a child gated on a sibling decision. A proposed sibling is not blocked, because the decision it waits on is in the graph and will resolve there.
 
 ## Dependency revisions and staleness
 
-Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at context_rev 7.` Do not pin navigation links. A node is `Stale` when a dependency is missing, its current `context_rev` differs from the pin, or the link lacks a pin; do not add `stale` to status or frontmatter. A semantic change leaves dependents' pins unchanged so one exact backlink search finds the reconciliation work. Confirm each pinned dependency is `resolved` before executing; resolution does not change `context_rev`, so completion is detected from the status directory.
+Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at context_rev 7.` The pin must terminate its line; trailing text after `at context_rev N.` is invalid. Do not pin navigation links. A node is `Stale` when a dependency is missing, its current `context_rev` differs from the pin, or the link lacks a pin; do not add `stale` to status or frontmatter. A semantic change leaves dependents' pins unchanged so one exact backlink search finds the reconciliation work. Confirm each pinned dependency is `resolved` before executing; resolution does not change `context_rev`, so completion is detected from the status directory.
 
 ## Read and execute loop
 

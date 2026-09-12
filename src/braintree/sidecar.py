@@ -14,7 +14,7 @@ import os
 import sqlite3
 import subprocess
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Container, Mapping
 from pathlib import Path
 
 __all__ = [
@@ -27,7 +27,9 @@ __all__ = [
     "location_fields",
     "open_connection",
     "project_id",
+    "reconcile_sequences",
     "release",
+    "reservations",
     "state_root",
     "status_fields",
 ]
@@ -203,32 +205,84 @@ def _run_transaction[T](conn: sqlite3.Connection, body: Callable[[sqlite3.Connec
     return _retry_busy(operation)
 
 
-def allocate(prefix: str) -> int:
-    """Atomically allocate the next integer for ``prefix``."""
+def allocate(prefix: str, taken: Container[int] | None = None) -> int:
+    """Atomically allocate the next unused integer for ``prefix``.
+
+    ``next_value`` is the integer the next allocation returns. ``taken`` holds
+    the numeric suffixes already present on disk; a candidate that appears there
+    is skipped so allocation never returns an identity that duplicates an
+    existing node filename, even when the counter is behind Markdown.
+    """
+    blocked: Container[int] = () if taken is None else taken
     try:
         conn = open_connection()
         try:
             def body(connection: sqlite3.Connection) -> int:
                 connection.execute(
-                    "INSERT INTO id_sequences(prefix,next_value) VALUES(?, 2) "
+                    "INSERT INTO id_sequences(prefix,next_value) VALUES(?, 1) "
                     "ON CONFLICT(prefix) DO NOTHING",
                     (prefix,),
                 )
-                row = connection.execute(
-                    "SELECT next_value - 1 FROM id_sequences WHERE prefix = ?",
-                    (prefix,),
-                ).fetchone()
-                connection.execute(
-                    "UPDATE id_sequences SET next_value = next_value + 1 WHERE prefix = ?",
-                    (prefix,),
-                )
-                return int(row[0])
+                while True:
+                    row = connection.execute(
+                        "SELECT next_value FROM id_sequences WHERE prefix = ?",
+                        (prefix,),
+                    ).fetchone()
+                    candidate = int(row[0])
+                    connection.execute(
+                        "UPDATE id_sequences SET next_value = next_value + 1 "
+                        "WHERE prefix = ?",
+                        (prefix,),
+                    )
+                    if candidate not in blocked:
+                        return candidate
 
             return _run_transaction(conn, body)
         finally:
             conn.close()
     except sqlite3.Error as exc:
         raise SidecarError("unable to allocate an ID atomically") from exc
+
+
+def reconcile_sequences(maxima: Mapping[str, int]) -> None:
+    """Raise each prefix's next allocation above its Markdown maximum."""
+    if not maxima:
+        return
+    try:
+        conn = open_connection()
+        try:
+            def body(connection: sqlite3.Connection) -> None:
+                for prefix, maximum in maxima.items():
+                    connection.execute(
+                        "INSERT INTO id_sequences(prefix,next_value) VALUES(?, ?) "
+                        "ON CONFLICT(prefix) DO UPDATE SET next_value = "
+                        "MAX(id_sequences.next_value, excluded.next_value)",
+                        (prefix, maximum + 1),
+                    )
+
+            _run_transaction(conn, body)
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise SidecarError("unable to reconcile the id reservations") from exc
+
+
+def reservations() -> list[tuple[str, str]]:
+    """Return reserved prefixes and their next allocation when initialized."""
+    path = database_path()
+    if not path.is_file():
+        return []
+    try:
+        conn = _connect(path)
+        try:
+            cursor = conn.execute(
+                "SELECT prefix, next_value FROM id_sequences ORDER BY prefix"
+            )
+            return [(str(row[0]), str(row[1])) for row in cursor.fetchall()]
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return []
 
 
 def claim(node: str, agent: str, base_hash: str, lease_seconds: int) -> tuple[str, str, int]:

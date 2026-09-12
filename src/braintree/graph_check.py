@@ -40,6 +40,7 @@ _CONTEXT_EDGE_LINE = re.compile(
     re.MULTILINE,
 )
 _CONTEXT_PIN = re.compile(r" at context_rev (\d+)\.")
+_CONTEXT_PIN_LINE = re.compile(r" at context_rev (\d+)\.\s*")
 _PRIMARY_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
 _NODE_ID = re.compile(r"[A-Z]+-\d+")
 _ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
@@ -229,9 +230,19 @@ def _check_context_edges(
 ) -> None:
     for node in nodes:
         for target, suffix in _CONTEXT_EDGE_LINE.findall(node.text):
-            pin_match = _CONTEXT_PIN.fullmatch(suffix)
+            pin_match = _CONTEXT_PIN_LINE.fullmatch(suffix)
             if pin_match is None:
-                errors.append(f"{node.path}: invalid or missing context_rev pin for [[{target}]]")
+                partial = _CONTEXT_PIN.search(suffix)
+                trailing = suffix[partial.end() :].strip() if partial else ""
+                if trailing:
+                    errors.append(
+                        f"{node.path}: context_rev pin for [[{target}]] has "
+                        f"trailing text: {trailing}"
+                    )
+                else:
+                    errors.append(
+                        f"{node.path}: invalid or missing context_rev pin for [[{target}]]"
+                    )
                 continue
             pin = int(pin_match.group(1))
             target_nodes = by_name.get(target)

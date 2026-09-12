@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T12:40:14Z
-summary: Seed and verify id_sequences from Markdown maxima, refuse on-disk collisions, and make reservations auditable.
-next: Add a failing regression test proving a fresh sidecar does not allocate an identity that exists on disk, then reconcile allocation.
+updated: 2026-09-12T12:50:07Z
+summary: Markdown maxima seed id_sequences, allocation skips existing filenames, and bt status reports reservations.
 ---
 
 # Context
@@ -29,4 +28,20 @@ reconcilable with and auditable against Markdown.
   that no allocated identity collides.
 - `bt status` exposes reserved high-water marks, or a reconcile command lets
   reservations be returned.
+- `make test` passes.
+
+# Result
+
+`bt init` and `bt reindex nodes` raise each prefix's reservation to the Markdown
+maximum plus one; `bt allocate` models `next_value` as the value the next call
+returns and skips any candidate already present on disk; `bt status` renders a
+`reservations{prefix,next}` table.
+
+Evidence:
+
+- `test_init_seeds_reservations_from_markdown` proves init seeds TAS/IDX/THO
+  reservations from a vault and that `bt status` reports them.
+- `test_reindex_seeds_reservations` and
+  `test_allocate_skips_on_disk_identity_with_empty_sidecar` prove a fresh
+  sidecar never returns an identity that already exists on disk.
 - `make test` passes.

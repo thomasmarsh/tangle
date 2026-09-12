@@ -285,6 +285,19 @@ def test_missing_context_rev_pin(nodes: Path, capsys: pytest.CaptureFixture[str]
     assert "invalid or missing context_rev pin" in err
 
 
+def test_context_pin_with_trailing_text_names_it(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        " at context_rev 1.",
+        " at context_rev 1. and more context.",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "context_rev pin for [[DEF-001-contract]] has trailing text: and more context." in err
+
+
 def test_stored_reciprocal_edge(nodes: Path, capsys: pytest.CaptureFixture[str]) -> None:
     parent = nodes / "active" / "TAS-001-parent.md"
     parent.write_text(

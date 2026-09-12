@@ -108,3 +108,50 @@ def test_search_requires_query(tmp_path: Path, run_bt: RunBt) -> None:
     result = run_bt("search", "--limit", "1", env=_env(tmp_path, vault))
     assert result.returncode == 2
     assert 'error: "search requires QUERY"' in result.stdout
+
+
+def test_backlinks_resolve_full_name_and_reject_unknown(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed(vault)
+    env = _env(tmp_path, vault)
+
+    bare = run_bt("backlinks", "DEF-001", env=env)
+    named = run_bt("backlinks", "DEF-001-contract", env=env)
+    assert bare.returncode == 0 and named.returncode == 0
+    assert bare.stdout == named.stdout
+    assert '"TAS-001","active","Depends on","2"' in named.stdout
+
+    (vault / "resolved" / "DEF-002-leaf.md").write_text(
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Leaf definition.\n---\n\n# Context\n\nArea [[IDX-001-root]].\n",
+        encoding="utf-8",
+    )
+    zero = run_bt("backlinks", "DEF-002-leaf", env=env)
+    assert zero.returncode == 0
+    assert zero.stdout.strip() == "backlinks: 0 matching edges"
+
+    unknown = run_bt("backlinks", "DEF-999", env=env)
+    assert unknown.returncode == 1
+    assert 'error: "unknown node: DEF-999"' in unknown.stdout
+
+
+def test_stale_without_stale_pins_names_them(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    (vault / "resolved" / "DEF-001-contract.md").write_text(
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Current contract.\n---\n\n# Invariant\n\nCurrent.\n",
+        encoding="utf-8",
+    )
+    (vault / "active" / "TAS-001-consumer.md").write_text(
+        "---\ncontext_rev: 1\npriority: P1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Consume the protocol.\nnext: Reconcile the contract.\n---\n\n"
+        "# Context\n\nDepends on [[DEF-001-contract]] at context_rev 1.\n",
+        encoding="utf-8",
+    )
+    result = run_bt("stale", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert result.stdout.strip() == "stale: 0 stale dependency pins"
