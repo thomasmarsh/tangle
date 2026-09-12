@@ -1,5 +1,6 @@
 .braintree/
 nodes/.obsidian/
+.lavish/
 graph.sqlite3
 graph.sqlite3-wal
 graph.sqlite3-shm
