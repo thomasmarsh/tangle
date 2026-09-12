@@ -159,6 +159,29 @@ for source in "$repo_root"/src/braintree/*; do
   copy_file "src/braintree/$(basename -- "$source")" 0644
 done
 
+# Record the release version and the source revision this install was copied
+# from as generated install data. The installed ``bt`` and ``graph-check`` read
+# it back with `--version`, so a consuming project can name the exact revision
+# in use without network access or the original checkout. The value matches the
+# ``braintree_revision`` convention: ``<version>+g<short-sha>`` when a source
+# revision is available, else ``<version>+unknown``. The semantic version is
+# still declared once in pyproject.toml; this record only stamps it.
+source_revision=unknown
+if command -v git >/dev/null 2>&1; then
+  detected=$(git -C "$repo_root" rev-parse --short=7 HEAD 2>/dev/null || true)
+  case "$detected" in
+    [0-9a-f][0-9a-f]*) source_revision="g$detected" ;;
+  esac
+fi
+record_value="$version+$source_revision"
+record="$destination/src/braintree/installed-revision"
+if [ ! -f "$record" ] || [ "$(cat "$record")" != "$record_value" ]; then
+  mkdir -p "$(dirname -- "$record")" 2>/dev/null || runtime_error "unable to create directory for: $record"
+  printf '%s\n' "$record_value" >"$record" 2>/dev/null || runtime_error "unable to install: $record"
+  chmod 0644 "$record" 2>/dev/null || runtime_error "unable to install: $record"
+  changed=true
+fi
+
 if [ "$changed" = true ]; then
   field result installed
 else

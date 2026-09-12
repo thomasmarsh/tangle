@@ -13,7 +13,8 @@ import re
 import sys
 from collections.abc import Callable, Sequence
 
-from . import __version__, index, sidecar
+from . import index, sidecar
+from .revision import reported_version
 from .toon import escape, field
 
 __all__ = ["main"]
@@ -312,7 +313,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the ``bt`` command and return the process exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
     if len(args) == 1 and args[0] in {"--version", "-v", "-V"}:
-        print(__version__)
+        print(reported_version())
         return 0
     command = args[0] if args else "status"
     if command in {"--help", "-h"}:

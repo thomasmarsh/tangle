@@ -15,10 +15,13 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from .revision import reported_version
+
 __all__ = ["main"]
 
 _USAGE = (
-    "usage: graph-check [--allow-stale] [--allow-orphan NODE] [nodes-directory]\n"
+    "usage: graph-check [--version] [--allow-stale] [--allow-orphan NODE] "
+    "[nodes-directory]\n"
     "Validate a file-only Braintree vault without writing state."
 )
 
@@ -394,6 +397,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             allowed_orphans.append(args.pop(0) if args else None)
         elif option in {"-h", "--help"}:
             print(_USAGE)
+            return 0
+        elif option in {"--version", "-v", "-V"}:
+            print(reported_version())
             return 0
         else:
             print("error: unknown option", file=sys.stderr)

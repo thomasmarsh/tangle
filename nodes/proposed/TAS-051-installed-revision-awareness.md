@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T13:14:11Z
+updated: 2026-09-12T13:32:09Z
 summary: Every project using Braintree can name the exact installed Braintree revision, and migration stays a deliberate future decision.
-next: Start [[TAS-052-install-revision-stamp]].
+next: Start [[TAS-053-version-migration-evaluation]].
 ---
 
 # Context

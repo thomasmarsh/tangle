@@ -9,6 +9,19 @@ project="$test_root/project"
 home_root="$test_root/home"
 mkdir -p "$project" "$home_root"
 
+# The installer stamps the declared version with the source revision it copied
+# from. The test mirrors the installer's detection so it can assert the record.
+expected_version=$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$repo_root/pyproject.toml" | head -n 1)
+[ -n "$expected_version" ]
+expected_revision=unknown
+if command -v git >/dev/null 2>&1; then
+  detected=$(git -C "$repo_root" rev-parse --short=7 HEAD 2>/dev/null || true)
+  case "$detected" in
+    [0-9a-f][0-9a-f]*) expected_revision="g$detected" ;;
+  esac
+fi
+expected_record="$expected_version+$expected_revision"
+
 # Every installed skill is a `uv` project. Compare its copied package tree with
 # the repository sources, then prove the installed console script runs.
 package_files="pyproject.toml uv.lock .python-version README.md"
@@ -25,10 +38,21 @@ check_tree() {
   done
 }
 
+check_record() {
+  destination=$1
+  [ "$(cat "$destination/src/braintree/installed-revision")" = "$expected_record" ]
+}
+
+mtime() {
+  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"
+}
+
 run_installed() {
   destination=$1
   uv run --project "$destination" --frozen --quiet graph-check "$repo_root/nodes" >/dev/null
   uv run --project "$destination" --frozen --quiet feedback-scan "$repo_root/nodes" >/dev/null
+  [ "$(uv run --project "$destination" --frozen --quiet bt --version)" = "$expected_record" ]
+  [ "$(uv run --project "$destination" --frozen --quiet graph-check --version)" = "$expected_record" ]
 }
 
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)
@@ -38,11 +62,22 @@ case "$dry_run" in *"$project/.agents/skills/braintree"*) ;; *) exit 1;; esac
 $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
 codex_destination="$project/.agents/skills/braintree"
 check_tree "$codex_destination"
+check_record "$codex_destination"
 cmp -s "$repo_root/agents/openai.yaml" "$codex_destination/agents/openai.yaml"
 run_installed "$codex_destination"
 
+record_path="$codex_destination/src/braintree/installed-revision"
+record_mtime=$(mtime "$record_path")
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
+[ "$(cat "$record_path")" = "$expected_record" ]
+[ "$(mtime "$record_path")" = "$record_mtime" ]
+
+# A changed installed revision is detected and restamped, not reported no-op.
+printf '%s\n' '0.0.0+gold' >"$record_path"
+upgrade=$($repo_root/scripts/install.sh --codex --project "$project")
+case "$upgrade" in *'result: "installed"'*) ;; *) exit 1;; esac
+check_record "$codex_destination"
 
 $repo_root/scripts/install.sh --codex --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/braintree/SKILL.md"
@@ -54,6 +89,7 @@ case "$pi_dry_run" in *'result: "dry-run"'*"$project/.pi/skills/braintree"*) ;; 
 $repo_root/scripts/install.sh --pi --project "$project" >/dev/null
 pi_destination="$project/.pi/skills/braintree"
 check_tree "$pi_destination"
+check_record "$pi_destination"
 [ ! -e "$pi_destination/agents" ]
 run_installed "$pi_destination"
 
@@ -67,6 +103,7 @@ cmp -s "$repo_root/SKILL.md" "$home_root/.pi/agent/skills/braintree/SKILL.md"
 $repo_root/scripts/install.sh --claude --project "$project" >/dev/null
 claude_destination="$project/.claude/skills/braintree"
 check_tree "$claude_destination"
+check_record "$claude_destination"
 [ ! -e "$claude_destination/agents" ]
 run_installed "$claude_destination"
 
@@ -85,6 +122,7 @@ case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/b
 $repo_root/scripts/install-claude.sh --project "$claude_project" >/dev/null
 wrapper_destination="$claude_project/.claude/skills/braintree"
 check_tree "$wrapper_destination"
+check_record "$wrapper_destination"
 [ ! -e "$wrapper_destination/agents" ]
 run_installed "$wrapper_destination"
 claude_repeat=$($repo_root/scripts/install-claude.sh --project "$claude_project")
@@ -92,14 +130,13 @@ case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; e
 
 $repo_root/scripts/install-claude.sh --home "$claude_home" >/dev/null
 check_tree "$claude_home/.claude/skills/braintree"
+check_record "$claude_home/.claude/skills/braintree"
 [ ! -e "$claude_home/.claude/skills/braintree/agents" ]
 
 if $repo_root/scripts/install.sh --codex >/dev/null 2>&1; then exit 1; fi
 if $repo_root/scripts/install.sh --codex --project "$project" --unknown >/dev/null 2>&1; then exit 1; fi
 error=$($repo_root/scripts/install.sh --codex 2>/dev/null || true)
 case "$error" in *'error: "agent and destination scope are required"'*) ;; *) exit 1;; esac
-expected_version=$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$repo_root/pyproject.toml" | head -n 1)
-[ -n "$expected_version" ]
 for installer in "$repo_root/scripts/install.sh" "$repo_root/scripts/install-claude.sh"; do
   for flag in --version -v -V; do
     [ "$("$installer" "$flag")" = "$expected_version" ]

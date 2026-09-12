@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T13:14:11Z
+updated: 2026-09-12T13:32:09Z
 summary: A consuming project records a struggle or suggested improvement in one documented step that yields a valid feedback node.
 next: Design the recording command or template against the settled feedback contract.
 ---
@@ -10,7 +10,7 @@ next: Design the recording command or template against the settled feedback cont
 
 Parent [[TAS-054-feedback-mechanism]].
 
-Depends on [[TAS-052-install-revision-stamp]] at context_rev 1.
+Depends on [[TAS-052-install-revision-stamp]] at context_rev 2.
 
 # Outcome
 
