@@ -19,6 +19,7 @@ from pathlib import Path
 
 __all__ = [
     "ClaimConflict",
+    "ReleaseConflict",
     "SidecarError",
     "allocate",
     "claim",
@@ -64,6 +65,15 @@ class ClaimConflict(Exception):
     def __init__(self, owner: str) -> None:
         super().__init__(owner)
         self.owner = owner
+
+
+class ReleaseConflict(Exception):
+    """A release did not match the agent or base hash recorded by the claim."""
+
+    def __init__(self, owner: str, recorded_hash: str) -> None:
+        super().__init__(owner)
+        self.owner = owner
+        self.recorded_hash = recorded_hash
 
 
 def project_id() -> str:
@@ -319,26 +329,40 @@ def claim(node: str, agent: str, base_hash: str, lease_seconds: int) -> tuple[st
     return owner, recorded_hash, recorded_expiry
 
 
-def release(node: str, agent: str, base_hash: str) -> bool:
-    """Release the matching unexpired lease, returning whether one was removed."""
+def release(node: str, agent: str, base_hash: str) -> str:
+    """Release the matching unexpired lease.
+
+    Returns ``"released"`` when the matching lease was removed and ``"no-op"``
+    when the node holds no unexpired lease. Raises :class:`ReleaseConflict`
+    when a lease exists for another agent or records a different base hash, so
+    a stale post-edit hash can never be mistaken for a successful release.
+    """
     now = int(time.time())
     try:
         conn = open_connection()
         try:
-            def body(connection: sqlite3.Connection) -> int:
+            def body(connection: sqlite3.Connection) -> tuple[str, str, str]:
                 connection.execute("DELETE FROM claims WHERE lease_expires_at <= ?", (now,))
-                cursor = connection.execute(
-                    "DELETE FROM claims WHERE node_id = ? AND agent_id = ? "
-                    "AND base_content_hash = ?",
-                    (node, agent, base_hash),
-                )
-                return int(cursor.rowcount)
+                row = connection.execute(
+                    "SELECT agent_id, base_content_hash FROM claims WHERE node_id = ?",
+                    (node,),
+                ).fetchone()
+                if row is None:
+                    return ("no-op", "", "")
+                owner, recorded_hash = str(row[0]), str(row[1])
+                if owner == agent and recorded_hash == base_hash:
+                    connection.execute("DELETE FROM claims WHERE node_id = ?", (node,))
+                    return ("released", owner, recorded_hash)
+                return ("conflict", owner, recorded_hash)
 
-            return _run_transaction(conn, body) == 1
+            result, owner, recorded_hash = _run_transaction(conn, body)
         finally:
             conn.close()
     except sqlite3.Error as exc:
         raise SidecarError("unable to release the claim atomically") from exc
+    if result == "conflict":
+        raise ReleaseConflict(owner, recorded_hash)
+    return result
 
 
 def status_fields() -> list[tuple[str, str]]:

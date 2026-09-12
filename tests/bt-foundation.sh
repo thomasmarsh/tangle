@@ -16,6 +16,8 @@ sqlite3 "$BT_SIDECAR_DIR/projects/test-project/graph.sqlite3" 'PRAGMA journal_mo
 "$bt" claim TAS-001 agent-a --base-hash abc --lease-seconds 60 | grep -F 'result: "claimed"' >/dev/null
 case "$("$bt" claim TAS-001 agent-b --base-hash abc 2>/dev/null || true)" in *'error: "node is claimed by agent-a with a different base hash"'*) ;; *) exit 1;; esac
 case "$("$bt" claim TAS-001 agent-a --base-hash def 2>/dev/null || true)" in *'error: "node is claimed by agent-a with a different base hash"'*) ;; *) exit 1;; esac
+case "$("$bt" release TAS-001 agent-a --base-hash def 2>/dev/null || true)" in *'error: "base hash does not match the recorded claim for TAS-001; release refused"'*) ;; *) exit 1;; esac
+case "$("$bt" release TAS-001 agent-b --base-hash abc 2>/dev/null || true)" in *'error: "node is claimed by agent-a; release refused"'*) ;; *) exit 1;; esac
 "$bt" release TAS-001 agent-a --base-hash abc | grep -F 'result: "released"' >/dev/null
 "$bt" release TAS-001 agent-a --base-hash abc | grep -F 'result: "no-op"' >/dev/null
 "$bt" claim TAS-001 agent-b --base-hash def --lease-seconds 1 >/dev/null; sleep 1

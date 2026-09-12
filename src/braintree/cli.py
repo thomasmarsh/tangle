@@ -162,8 +162,26 @@ def _release(args: list[str]) -> int:
     node, agent, base_hash = args[1], args[2], args[4]
     if node == "" or agent == "" or base_hash == "":
         return _usage_error("release requires non-empty NODE, AGENT, and HASH")
-    released = sidecar.release(node, agent, base_hash)
-    print(field("result", "released" if released else "no-op"))
+    try:
+        result = sidecar.release(node, agent, base_hash)
+    except sidecar.ReleaseConflict as exc:
+        if exc.owner != agent:
+            print(field("error", f"node is claimed by {exc.owner}; release refused"))
+        else:
+            print(
+                field(
+                    "error",
+                    f"base hash does not match the recorded claim for {node}; release refused",
+                )
+            )
+        print(
+            field(
+                "help",
+                "Release with the agent and starting hash recorded by `bt claim`.",
+            )
+        )
+        return 1
+    print(field("result", result))
     print(field("node", node))
     return 0
 

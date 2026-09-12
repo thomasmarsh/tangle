@@ -89,6 +89,18 @@ def test_claim_renew_conflict_and_release(tmp_path: Path, run_bt: RunBt) -> None
     assert other_hash.returncode == 1
     assert 'error: "node is claimed by agent-a with a different base hash"' in other_hash.stdout
 
+    wrong_hash = run_bt("release", "TAS-001", "agent-a", "--base-hash", "def", env=env)
+    assert wrong_hash.returncode == 1
+    assert (
+        'error: "base hash does not match the recorded claim for TAS-001; release refused"'
+        in wrong_hash.stdout
+    )
+    wrong_owner = run_bt("release", "TAS-001", "agent-b", "--base-hash", "abc", env=env)
+    assert wrong_owner.returncode == 1
+    assert 'error: "node is claimed by agent-a; release refused"' in wrong_owner.stdout
+    still_held = run_bt("claim", "TAS-001", "agent-b", "--base-hash", "abc", env=env)
+    assert still_held.returncode == 1
+
     released = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
     assert 'result: "released"' in released.stdout
     again = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)

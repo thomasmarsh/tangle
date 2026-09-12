@@ -13,7 +13,7 @@ Use the installed `bt` command for graph indexes and live coordination: `uv run 
 
 - Markdown stays authoritative; SQLite is authoritative only for local operational coordination.
 - `bt reindex [nodes]` rebuilds derived node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown; `bt search`, `bt backlinks`, and `bt stale` reconcile first.
-- `bt allocate PREFIX` atomically reserves an ID; `bt claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease, released with `bt release`.
+- `bt allocate PREFIX` atomically reserves an ID; `bt claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease, and `bt release NODE AGENT --base-hash HASH` releases it. The release hash must be the starting hash recorded by the claim: a hash or owner mismatch fails non-zero and names the cause, while `no-op` means the node holds no unexpired lease.
 - Run `bt init` before coordinated work. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `bt init` then `bt reindex`.
 - The sidecar is for concurrent processes on one host and a local filesystem; it refuses a network-mounted location unless overridden. For multi-host coordination use a server database such as PostgreSQL; SQLite/WAL is not that service.
 - Keep status directories and Markdown pointers. A stationary-path/status-in-database migration is deferred.
