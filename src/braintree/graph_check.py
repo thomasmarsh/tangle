@@ -55,6 +55,7 @@ __all__ = [
     "PROBLEM_UNPINNED",
     "PROBLEM_UNRESOLVED",
     "context_pin_problem",
+    "findings",
     "main",
     "stale_reason",
 ]
@@ -739,6 +740,16 @@ def _validate(
                 )
             )
     return errors, len(nodes)
+
+
+def findings(nodes_dir: str) -> list[Finding]:
+    """Return the findings ``braintree check`` would report for ``nodes_dir``.
+
+    A read-only wrapper over the same validation the command runs, so an
+    orientation packet reports exactly the conflicts the checker would.
+    """
+    errors, _ = _validate(nodes_dir, allow_stale=False, allowed_orphans=[])
+    return errors
 
 
 def _print_toon(findings: list[Finding], node_count: int) -> None:

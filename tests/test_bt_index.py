@@ -651,3 +651,213 @@ def test_impact_unknown_node_is_an_error(tmp_path: Path, run_bt: RunBt) -> None:
     result = run_bt("impact", "TAS-999", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: TAS-999"' in result.stdout
+
+
+def _section_totals(output: str) -> dict[str, int]:
+    """Map each ``orient`` section name to the unbounded ``total`` it reported."""
+    totals: dict[str, int] = {}
+    current: str | None = None
+    for line in output.splitlines():
+        section = re.fullmatch(r'section: "([^"]+)"', line)
+        if section is not None:
+            current = section.group(1)
+            continue
+        total = re.fullmatch(r'total: "([0-9]+)"', line)
+        if current is not None and total is not None:
+            totals[current] = int(total.group(1))
+            current = None
+    return totals
+
+
+def _seed_orientation(vault: Path) -> None:
+    """Seed a vault that populates every orientation section."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    (vault / "blocked").mkdir()
+    _write(
+        vault / "index-map.md",
+        "---\nupdated: 2026-09-11T00:00:00Z\nsummary: Route orientation work.\n---\n\n"
+        "# Focus\n\n- [[TAS-001-consumer]]\n\n"
+        "# Root hubs\n\n- Indexes [[IDX-001-root]].\n",
+    )
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-10T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "resolved" / "DEF-001-contract.md",
+        "---\ncontext_rev: 3\nupdated: 2026-09-10T00:00:00Z\n"
+        "summary: Current contract.\n---\n\n# Context\n\nArea [[IDX-001-root]].\n\n"
+        "# Invariant\n\nCurrent.\n",
+    )
+    _write(
+        vault / "active" / "TAS-001-consumer.md",
+        "---\ncontext_rev: 1\npriority: P1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Consume the contract.\nnext: Reconcile the contract.\n---\n\n"
+        "# Context\n\nParent [[IDX-001-root]].\n\n"
+        "Depends on [[DEF-001-contract]] at context_rev 2.\n",
+    )
+    _write(
+        vault / "blocked" / "TAS-002-blocked.md",
+        "---\ncontext_rev: 1\npriority: P2\nupdated: 2026-09-09T00:00:00Z\n"
+        "summary: Wait on external approval.\nnext: Resume when approval lands.\n---\n\n"
+        "# Context\n\nParent [[IDX-001-root]].\n\n"
+        "# Blocked\n\nBlocked by: External approval.\n\n"
+        "Unblocks when: approval lands.\n",
+    )
+    _write(
+        vault / "active" / "TAS-003-conflict.md",
+        "---\ncontext_rev: 1\npriority: P3\nupdated: 2026-09-08T00:00:00Z\n"
+        "summary: Track a broken link.\nnext: Repair the link.\n---\n\n"
+        "# Context\n\nParent [[IDX-001-root]].\n\nSee [[DEF-404-missing]].\n",
+    )
+
+
+def test_orient_populates_every_section(tmp_path: Path, run_bt: RunBt) -> None:
+    """One call answers focus, frontier, blockers, stale, recent, and conflicts."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_orientation(vault)
+    result = run_bt("orient", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert _section_totals(result.stdout) == {
+        "focus": 1,
+        "frontier": 3,
+        "blockers": 1,
+        "stale": 1,
+        "recent": 5,
+        "conflicts": 2,
+    }
+    assert _toon_rows(result.stdout, "focus") == [["TAS-001-consumer", "active", "true"]]
+    frontier = {row[0]: row for row in _toon_rows(result.stdout, "frontier")}
+    assert set(frontier) == {"TAS-001", "TAS-002", "TAS-003"}
+    assert frontier["TAS-001"][5] == "true"
+    assert frontier["TAS-002"][5] == "false"
+    assert _toon_rows(result.stdout, "blockers") == [
+        ["TAS-002", "P2", "Wait on external approval.", "Resume when approval lands."]
+    ]
+    assert _toon_rows(result.stdout, "stale") == [
+        ["TAS-001", "active", "DEF-001", "2", "3", "Depends on", "context_rev mismatch"]
+    ]
+    assert [row[0] for row in _toon_rows(result.stdout, "recent")] == [
+        "TAS-001",
+        "DEF-001",
+        "IDX-001",
+        "TAS-002",
+        "TAS-003",
+    ]
+
+
+def test_orient_conflicts_match_check(tmp_path: Path, run_bt: RunBt) -> None:
+    """The conflicts section is exactly the findings ``braintree check`` reports."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_orientation(vault)
+    conflicts = _toon_rows(
+        run_bt("orient", "--section", "conflicts", env=_env(tmp_path, vault)).stdout,
+        "conflicts",
+    )
+    checked = run_bt("check", "--format", "toon", str(vault))
+    assert checked.returncode == 1
+    assert {row[0] for row in conflicts} == {
+        "node-broken-link",
+        "context-rev-mismatch",
+    }
+    assert conflicts == _toon_rows(checked.stdout, "findings")
+
+
+def _seed_recent_corpus(vault: Path, count: int) -> None:
+    (vault / "resolved").mkdir(parents=True)
+    _write(
+        vault / "index-map.md",
+        "---\nupdated: 2026-09-11T00:00:00Z\nsummary: Route work.\n---\n\n"
+        "# Root hubs\n\n- Indexes [[IDX-001-root]].\n",
+    )
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-08-31T00:00:00Z\nsummary: Root hub.\n---\n",
+    )
+    for number in range(1, count + 1):
+        _write(
+            vault / "resolved" / f"THO-{number:03d}-note.md",
+            f"---\ncontext_rev: 1\nupdated: 2026-09-{number:02d}T00:00:00Z\n"
+            f"summary: Note {number}.\n---\n\n# Context\n\nArea [[IDX-001-root]].\n",
+        )
+
+
+def test_orient_sections_are_selectable_and_bounded(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """A selected section is bounded by the limit while its total stays unbounded."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_recent_corpus(vault, 12)
+    env = _env(tmp_path, vault)
+    selected = run_bt("orient", "--section", "recent", "--limit", "3", env=env)
+    assert selected.returncode == 0
+    assert "frontier[" not in selected.stdout
+    assert _section_totals(selected.stdout) == {"recent": 13}
+    assert len(_toon_rows(selected.stdout, "recent")) == 3
+    default = run_bt("orient", "--section", "recent", env=env)
+    assert len(_toon_rows(default.stdout, "recent")) == 10
+
+
+def test_orient_keeps_canonical_section_order(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_recent_corpus(vault, 2)
+    result = run_bt(
+        "orient", "--section", "recent", "--section", "blockers", env=_env(tmp_path, vault)
+    )
+    assert re.findall(r'section: "([^"]+)"', result.stdout) == ["blockers", "recent"]
+
+
+def _seed_single_node(vault: Path) -> None:
+    (vault / "resolved").mkdir(parents=True)
+    _write(
+        vault / "index-map.md",
+        "---\nupdated: 2026-09-11T00:00:00Z\nsummary: Route work.\n---\n\n"
+        "# Root hubs\n\n- Indexes [[IDX-001-root]].\n",
+    )
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\nsummary: Root hub.\n---\n",
+    )
+
+
+def test_orient_on_single_node_vault(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_single_node(vault)
+    result = run_bt("orient", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert _section_totals(result.stdout) == {
+        "focus": 0,
+        "frontier": 0,
+        "blockers": 0,
+        "stale": 0,
+        "recent": 1,
+        "conflicts": 0,
+    }
+    assert _toon_rows(result.stdout, "recent") == [
+        ["IDX-001", "resolved", "2026-09-11T00:00:00Z", "Root hub."]
+    ]
+    assert result.stdout.count("conflicts: 0 findings") == 1
+
+
+def test_orient_on_empty_vault(tmp_path: Path, run_bt: RunBt) -> None:
+    """An empty vault yields empty sections and the checker's own finding."""
+    vault = tmp_path / "vault" / "nodes"
+    vault.mkdir(parents=True)
+    result = run_bt("orient", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert result.stdout.count("focus: 0 focus pointers") == 1
+    assert result.stdout.count("frontier: 0 frontier nodes") == 1
+    assert result.stdout.count("blockers: 0 blocked nodes") == 1
+    assert result.stdout.count("stale: 0 stale dependency pins") == 1
+    assert result.stdout.count("recent: 0 nodes") == 1
+    assert "vault-no-nodes" in {row[0] for row in _toon_rows(result.stdout, "conflicts")}
+
+
+def test_orient_requires_an_existing_nodes_directory(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    result = run_bt("orient", env=_env(tmp_path, tmp_path / "missing"))
+    assert result.returncode == 1
+    assert "nodes directory does not exist" in result.stdout

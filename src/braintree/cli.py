@@ -24,7 +24,7 @@ _USAGE = (
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
     "release NODE AGENT --base-hash HASH|index [NODES]|"
     "search QUERY [--limit N]|backlinks NODE|hash NODE|stale|frontier|node NODE|"
-    "impact NODE]"
+    "impact NODE|orient [--section NAME] [--limit N]]"
 )
 
 _COMMANDS: tuple[tuple[str, str], ...] = (
@@ -42,6 +42,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("frontier", "list unfinished nodes whose next is an action"),
     ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
     ("impact NODE", "list direct and transitive dependents of a node"),
+    ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
 )
 
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
@@ -428,6 +429,50 @@ def _impact(args: list[str]) -> int:
     return 0
 
 
+def _orient(args: list[str]) -> int:
+    sections: list[str] = []
+    limit_raw = "10"
+    index_arg = 1
+    while index_arg < len(args):
+        argument = args[index_arg]
+        if argument == "--section":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--section requires a section name")
+            sections.append(args[index_arg])
+        elif argument == "--limit":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--limit requires N")
+            limit_raw = args[index_arg]
+        else:
+            return _usage_error(f"unknown argument for orient: {argument}")
+        index_arg += 1
+    for name in sections:
+        if name not in index.ORIENT_SECTIONS:
+            return _usage_error(
+                f"unknown section: {name}; choose from " + ", ".join(index.ORIENT_SECTIONS)
+            )
+    if _POSITIVE_INTEGER.fullmatch(limit_raw) is None or int(limit_raw) <= 0:
+        return _usage_error("--limit must be a positive integer")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    packet = index.orient(root, sections or None, int(limit_raw))
+    for section in packet.sections:
+        print(field("section", section.name))
+        print(field("total", str(section.total)))
+        print(
+            index.format_table(
+                section.name,
+                section.header,
+                section.empty,
+                section.rows,
+            )
+        )
+    return 0
+
+
 def _dispatch(command: str, args: list[str]) -> int:
     if command == "status":
         if len(args) != 1:
@@ -482,6 +527,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _node(args)
     if command == "impact":
         return _impact(args)
+    if command == "orient":
+        return _orient(args)
     return _stale(args)
 
 

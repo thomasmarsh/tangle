@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T15:38:45Z
+updated: 2026-09-12T15:44:50Z
 summary: Move graph reasoning out of SKILL.md prose into direct `braintree` answers so client agents decide and act in fewer round trips while the always-loaded skill shrinks.
-next: "[[TAS-073-bounded-orientation-packet]]"
+next: "[[TAS-074-shrink-skill-to-commands]]"
 ---
 
 # Context

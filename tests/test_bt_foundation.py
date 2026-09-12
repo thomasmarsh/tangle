@@ -194,3 +194,22 @@ def test_impact_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
     missing = run_bt("impact", env=env)
     assert missing.returncode == 2
     assert 'error: "impact requires NODE"' in missing.stdout
+
+
+def test_orient_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    help_output = run_bt("--help", env=env)
+    assert help_output.returncode == 0
+    assert "orient [--section NAME]" in help_output.stdout
+
+    unknown = run_bt("orient", "--section", "nope", env=env)
+    assert unknown.returncode == 2
+    assert 'error: "unknown section: nope' in unknown.stdout
+
+    bad_limit = run_bt("orient", "--limit", "0", env=env)
+    assert bad_limit.returncode == 2
+    assert 'error: "--limit must be a positive integer"' in bad_limit.stdout
+
+    missing_value = run_bt("orient", "--section", env=env)
+    assert missing_value.returncode == 2
+    assert 'error: "--section requires a section name"' in missing_value.stdout

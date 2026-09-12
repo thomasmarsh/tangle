@@ -3,7 +3,8 @@
 Typed Python implementation of the Markdown index builder. Durable graph state stays in
 Markdown; this module rebuilds the disposable ``nodes``, ``edges``, and FTS
 rows plus the search, backlinks, and stale-pin queries over them, and derives
-the direct ``frontier`` and ``node_view`` answers from the same Markdown.
+the direct ``frontier``, ``node_view``, ``impact``, and ``orient`` answers from
+the same Markdown.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ import os
 import re
 import sqlite3
 from collections import deque
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -21,6 +22,7 @@ from .graph_check import (
     CONTEXT_PIN_LINE,
     CONTEXT_RELATIONS,
     context_pin_problem,
+    findings,
     stale_reason,
 )
 from .sidecar import SidecarError, content_hash
@@ -33,6 +35,9 @@ __all__ = [
     "ImpactEdge",
     "IndexedNode",
     "NodeView",
+    "ORIENT_SECTIONS",
+    "OrientSection",
+    "Orientation",
     "backlinks",
     "ensure_index_schema",
     "existing_allocations",
@@ -41,11 +46,13 @@ __all__ = [
     "impact",
     "node_hash",
     "node_view",
+    "orient",
     "prefix_maxima",
     "reindex",
     "resolve_node",
     "search",
     "stale",
+    "stale_pins",
 ]
 
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
@@ -62,6 +69,22 @@ _CONTEXT_EDGE = re.compile(
     re.MULTILINE,
 )
 _PRIMARY_ROUTE = re.compile(r"^(Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
+# ``# Focus`` is the advisory orientation pointer list in ``index-map.md``; the
+# block ends at the next heading, and the checker validates the same targets.
+_FOCUS_BLOCK = re.compile(r"^# Focus\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
+_WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
+
+# The orientation packet answers the fixed cold-start questions in one bounded
+# call. Output order is this order, and each section is truncated to the
+# requested limit while ``total`` keeps the unbounded count.
+ORIENT_SECTIONS: tuple[str, ...] = (
+    "focus",
+    "frontier",
+    "blockers",
+    "stale",
+    "recent",
+    "conflicts",
+)
 
 _INDEX_SCHEMA = """
 CREATE TABLE IF NOT EXISTS nodes (
@@ -429,6 +452,24 @@ class Impact:
     edges: tuple[ImpactEdge, ...]
 
 
+@dataclass(frozen=True)
+class OrientSection:
+    """One bounded orientation section: its columns, total count, and rows."""
+
+    name: str
+    header: str
+    empty: str
+    total: int
+    rows: tuple[tuple[str, ...], ...]
+
+
+@dataclass(frozen=True)
+class Orientation:
+    """The bounded orientation packet ``braintree orient`` prints."""
+
+    sections: tuple[OrientSection, ...]
+
+
 def _read_nodes(root: str) -> list[IndexedNode]:
     """Read every Markdown node under ``root`` from its status directory."""
     root = os.path.abspath(root)
@@ -620,3 +661,168 @@ def impact(root: str, node: str) -> Impact | None:
         target_context_rev=_context_rev(target.metadata),
         edges=tuple(edges),
     )
+
+
+def stale_pins(root: str) -> list[tuple[str, str, str, str, str, str, str]]:
+    """Return the stale context edges in the shape the sidecar ``stale`` query uses.
+
+    Derived from Markdown alone through the shared per-edge verdict, so
+    ``orient`` and ``stale`` cannot disagree about a pin: a row is emitted only
+    where :func:`_context_edges` already found a missing, unresolved, or
+    mismatched pin.
+    """
+    nodes = _read_nodes(root)
+    by_name = {node.name: node for node in nodes}
+    rows: list[tuple[str, str, str, str, str, str, str]] = []
+    for node in nodes:
+        for edge in _context_edges(node, by_name):
+            if edge.stale == "":
+                continue
+            target = by_name.get(edge.target)
+            rows.append(
+                (
+                    node.id,
+                    node.status,
+                    target.id if target is not None else edge.target,
+                    edge.pinned,
+                    edge.current,
+                    edge.relation,
+                    edge.stale,
+                )
+            )
+    rows.sort()
+    return rows
+
+
+def _focus_targets(root: str) -> list[str]:
+    """Return the ``# Focus`` pointers in ``index-map.md`` in order, deduplicated."""
+    path = os.path.join(os.path.abspath(root), "index-map.md")
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as handle:
+        index_text = handle.read()
+    block = _FOCUS_BLOCK.search(index_text)
+    if block is None:
+        return []
+    return list(dict.fromkeys(_WIKILINK.findall(block.group(1))))
+
+
+def _focus_section(
+    root: str, nodes: list[IndexedNode]
+) -> tuple[str, str, list[tuple[str, ...]]]:
+    """Frame the advisory ``# Focus`` pointers with the status the target has."""
+    by_reference: dict[str, IndexedNode] = {}
+    for node in nodes:
+        by_reference[node.name] = node
+        by_reference[node.id] = node
+    rows: list[tuple[str, ...]] = []
+    for target in _focus_targets(root):
+        target_node = by_reference.get(target)
+        status = target_node.status if target_node is not None else ""
+        rows.append(
+            (
+                target,
+                status,
+                "true" if target_node is not None and status == "active" else "false",
+            )
+        )
+    return ("target,status,active", "focus: 0 focus pointers", rows)
+
+
+def _frontier_section(root: str) -> tuple[str, str, list[tuple[str, ...]]]:
+    rows: list[tuple[str, ...]] = [
+        (
+            entry.id,
+            entry.status,
+            entry.priority,
+            entry.summary,
+            entry.next,
+            "true" if entry.stale else "false",
+        )
+        for entry in frontier(root)
+    ]
+    return ("id,status,priority,summary,next,stale", "frontier: 0 frontier nodes", rows)
+
+
+def _blockers_section(nodes: list[IndexedNode]) -> tuple[str, str, list[tuple[str, ...]]]:
+    rows: list[tuple[str, ...]] = [
+        (
+            node.id,
+            node.metadata.get("priority", ""),
+            node.metadata.get("summary", ""),
+            node.metadata.get("next", ""),
+        )
+        for node in nodes
+        if node.status == "blocked"
+    ]
+    rows.sort(key=lambda row: row[0])
+    return ("id,priority,summary,next", "blockers: 0 blocked nodes", rows)
+
+
+def _stale_section(root: str) -> tuple[str, str, list[tuple[str, ...]]]:
+    rows: list[tuple[str, ...]] = [tuple(row) for row in stale_pins(root)]
+    return (
+        "source,status,target,pinned,current,relation,reason",
+        "stale: 0 stale dependency pins",
+        rows,
+    )
+
+
+def _recent_section(nodes: list[IndexedNode]) -> tuple[str, str, list[tuple[str, ...]]]:
+    ordered = sorted(nodes, key=lambda node: node.id)
+    ordered.sort(key=lambda node: node.metadata.get("updated", ""), reverse=True)
+    rows: list[tuple[str, ...]] = [
+        (
+            node.id,
+            node.status,
+            node.metadata.get("updated", ""),
+            node.metadata.get("summary", ""),
+        )
+        for node in ordered
+    ]
+    return ("id,status,updated,summary", "recent: 0 nodes", rows)
+
+
+def _conflicts_section(root: str) -> tuple[str, str, list[tuple[str, ...]]]:
+    rows: list[tuple[str, ...]] = [
+        (finding.code, finding.node, finding.detail) for finding in findings(root)
+    ]
+    return ("code,node,detail", "conflicts: 0 findings", rows)
+
+
+def orient(
+    root: str, sections: Sequence[str] | None = None, limit: int = 10
+) -> Orientation:
+    """Compose the bounded orientation packet from Markdown-derived answers.
+
+    ``sections`` selects and filters the packet; ``None`` selects every
+    :data:`ORIENT_SECTIONS` entry. Each section is truncated to ``limit`` rows
+    while its ``total`` keeps the unbounded count, so one call answers the
+    cold-start questions without dumping the corpus. Sections come back in the
+    canonical order regardless of the selection order.
+    """
+    nodes = _read_nodes(root)
+    builders: dict[str, Callable[[], tuple[str, str, list[tuple[str, ...]]]]] = {
+        "focus": lambda: _focus_section(root, nodes),
+        "frontier": lambda: _frontier_section(root),
+        "blockers": lambda: _blockers_section(nodes),
+        "stale": lambda: _stale_section(root),
+        "recent": lambda: _recent_section(nodes),
+        "conflicts": lambda: _conflicts_section(root),
+    }
+    selected = set(ORIENT_SECTIONS if sections is None else sections)
+    packet: list[OrientSection] = []
+    for name in ORIENT_SECTIONS:
+        if name not in selected:
+            continue
+        header, empty, rows = builders[name]()
+        packet.append(
+            OrientSection(
+                name=name,
+                header=header,
+                empty=empty,
+                total=len(rows),
+                rows=tuple(rows[:limit]),
+            )
+        )
+    return Orientation(tuple(packet))
