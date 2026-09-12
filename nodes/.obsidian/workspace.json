@@ -11,10 +11,14 @@
             "id": "8f26464d377ce1f7",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "index-map.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "index-map"
             }
           }
         ]
@@ -182,8 +186,25 @@
       "bases:Create new base": false
     }
   },
-  "active": "8f26464d377ce1f7",
+  "active": "6877e55f64f0916f",
   "lastOpenFiles": [
+    "resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+    "resolved/TAS-036-stationary-path-migration-evaluation.md",
+    "resolved/TAS-035-hybrid-store-operational-audit.md",
+    "resolved/TAS-034-hybrid-store-verification.md",
+    "active/TAS-034-hybrid-store-verification.md",
+    "resolved/TAS-033-hybrid-skill-command-and-install-contract.md",
+    "resolved/TAS-032-derived-graph-index-and-search.md",
+    "resolved/TAS-031-sidecar-coordination-foundation.md",
+    "proposed/TAS-036-stationary-path-migration-evaluation.md",
+    "proposed/TAS-035-hybrid-store-operational-audit.md",
+    "proposed/TAS-034-hybrid-store-verification.md",
+    "proposed/TAS-033-hybrid-skill-command-and-install-contract.md",
+    "proposed/TAS-032-derived-graph-index-and-search.md",
+    "proposed/TAS-031-sidecar-coordination-foundation.md",
+    "active/TAS-030-hybrid-markdown-sqlite-migration.md",
+    "resolved/DEF-002-hybrid-store-contract.md",
+    "resolved/DEC-002-hybrid-markdown-sqlite-authority.md",
     "resolved/TAS-002-installer.md",
     "active/TAS-002-installer.md",
     "active",
@@ -194,23 +215,6 @@
     "resolved/TAS-028-bootstrap-whitespace-remediation.md",
     "active/TAS-029-agent-boundary-admission.md",
     "resolved/THO-002-fit-for-purpose-assessment.md",
-    "resolved/TAS-021-parallel-agent-hardening.md",
-    "resolved/TAS-027-parallel-integration-audit.md",
-    "proposed/TAS-028-bootstrap-whitespace-remediation.md",
-    "resolved/TAS-026-parallel-scope-documentation.md",
-    "resolved/TAS-025-parallel-worktree-tests.md",
-    "resolved/TAS-024-serial-integration-protocol.md",
-    "resolved/TAS-022-parallel-worktree-contract.md",
-    "proposed/TAS-027-parallel-integration-audit.md",
-    "proposed/TAS-026-parallel-scope-documentation.md",
-    "proposed/TAS-025-parallel-worktree-tests.md",
-    "proposed/TAS-024-serial-integration-protocol.md",
-    "proposed/TAS-023-parallel-id-allocation.md",
-    "proposed/TAS-022-parallel-worktree-contract.md",
-    "active/TAS-021-parallel-agent-hardening.md",
-    "resolved/THO-003-token-efficiency-audit.md",
-    "resolved/THO-004-orientation-compaction-screen.md",
-    "resolved/THO-005-cold-resume-route-screen.md",
     "proposed",
     "resolved"
   ]
