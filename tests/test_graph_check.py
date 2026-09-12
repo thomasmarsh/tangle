@@ -332,6 +332,39 @@ def test_missing_context_rev_pin(nodes: Path, capsys: pytest.CaptureFixture[str]
     code, err = _run(nodes, capsys)
     assert code == 1
     assert "invalid or missing context_rev pin" in err
+    # The target is resolved, so the gate form does not apply and is not named.
+    assert graph_check.GATED_RELATION not in err
+
+
+def test_missing_pin_to_unresolved_target_names_the_gated_form(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An unpinned edge to a not-yet-resolved target names the sanctioned gate."""
+    source = nodes / "resolved" / "DEF-001-contract.md"
+    source.rename(nodes / "proposed" / source.name)
+    _replace(nodes / "active" / "TAS-001-parent.md", " at context_rev 1.", ".")
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert (
+        "invalid or missing context_rev pin for [[DEF-001-contract]]; "
+        "a not-yet-resolved predecessor is recorded as Gated on "
+        "[[DEF-001-contract]]." in err
+    )
+
+
+def test_gated_dependency_on_unresolved_predecessor_passes(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A gate records a dependency on a not-yet-resolved target without a pin."""
+    source = nodes / "resolved" / "DEF-001-contract.md"
+    source.rename(nodes / "proposed" / source.name)
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Depends on [[DEF-001-contract]] at context_rev 1.",
+        f"{graph_check.GATED_RELATION} [[DEF-001-contract]].",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("relation", graph_check.CONTEXT_RELATIONS)
@@ -432,6 +465,10 @@ def test_pinned_dependency_not_resolved(
     code, err = _run(nodes, capsys)
     assert code == 1
     assert "pinned dependency [[DEF-001-contract]] is proposed, not resolved" in err
+    assert (
+        "a not-yet-resolved predecessor is recorded as Gated on "
+        "[[DEF-001-contract]]." in err
+    )
 
 
 def test_allow_stale_still_rejects_unresolved_pin(

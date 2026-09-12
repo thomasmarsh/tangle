@@ -49,6 +49,7 @@ __all__ = [
     "CONTEXT_PIN_LINE",
     "CONTEXT_RELATIONS",
     "FINDING_CODES",
+    "GATED_RELATION",
     "Finding",
     "PROBLEM_MISMATCH",
     "PROBLEM_MISSING",
@@ -75,13 +76,16 @@ _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
 # ``at context_rev N.`` pin. ``Depends on`` is the common case; ``Implements``,
 # ``Requires``, and ``Governed by`` are equally context-bearing. Navigation
 # relations such as ``Parent``, ``Area``, ``Indexes``, and ``Superseded by`` are
-# deliberately absent.
+# deliberately absent, and so is the gate ``Gated on``: a target that is not yet
+# resolved has no consumable context to pin, so the gate stands in for the
+# pinned edge until the target resolves.
 CONTEXT_RELATIONS: tuple[str, ...] = (
     "Depends on",
     "Implements",
     "Requires",
     "Governed by",
 )
+GATED_RELATION = "Gated on"
 CONTEXT_EDGE_LINE = re.compile(
     r"^(?:" + "|".join(CONTEXT_RELATIONS) + r")\s+\[\[([^\]]+)\]\](.*)$",
     re.MULTILINE,
@@ -266,6 +270,23 @@ class _Node:
     status: str
     text: str
     metadata: dict[str, object]
+
+
+def _gate_hint(target: str, target_status: str | None) -> str:
+    """Name the sanctioned gate form when the target is not yet ``resolved``.
+
+    The gate is the unpinned ``Gated on [[X]].`` line that stands in for a
+    context edge whose target cannot be consumed yet; returning the same clause
+    for both the missing-pin and unresolved-target diagnostics keeps them
+    pointing at that one documented form. A resolved or missing target has no
+    gate to name, so the hint is empty.
+    """
+    if target_status is None or target_status == "resolved":
+        return ""
+    return (
+        f"; a not-yet-resolved predecessor is recorded as "
+        f"{GATED_RELATION} [[{target}]]."
+    )
 
 
 def context_pin_problem(
@@ -595,6 +616,8 @@ def _check_context_edges(
 ) -> None:
     for node in nodes:
         for target, suffix in CONTEXT_EDGE_LINE.findall(node.text):
+            target_nodes = by_name.get(target)
+            target_status = target_nodes[0].status if target_nodes else None
             pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
             if pin_match is None:
                 partial = CONTEXT_PIN.search(suffix)
@@ -613,12 +636,12 @@ def _check_context_edges(
                         Finding(
                             "context-pin-missing",
                             node.path,
-                            f"{node.path}: invalid or missing context_rev pin for [[{target}]]",
+                            f"{node.path}: invalid or missing context_rev pin for "
+                            f"[[{target}]]{_gate_hint(target, target_status)}",
                         )
                     )
                 continue
             pin = int(pin_match.group(1))
-            target_nodes = by_name.get(target)
             if target_nodes is None:
                 continue
             target_node = target_nodes[0]
@@ -634,7 +657,8 @@ def _check_context_edges(
                         "context-unresolved",
                         node.path,
                         f"{node.path}: pinned dependency [[{target}]] is "
-                        f"{target_node.status}, not resolved",
+                        f"{target_node.status}, not resolved"
+                        f"{_gate_hint(target, target_node.status)}",
                     )
                 )
             elif problem == PROBLEM_MISMATCH and not allow_stale:

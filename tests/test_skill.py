@@ -241,6 +241,21 @@ _PLAN_TEXT_GATE_CONTRACT: tuple[str, ...] = (
     "including prerequisite plan text that no node owns",
 )
 
+# A dependency whose target is not yet resolved is a documented, unpinned gate
+# (``Gated on [[X]].``) rather than a context edge, and both the missing-pin and
+# unresolved-target diagnostics name that form.
+_GATED_DEPENDENCY_CONTRACT: tuple[str, ...] = (
+    "A dependency whose target is not yet `resolved` has no consumable context "
+    "to pin",
+    "record it as a gate instead of a context edge, `Gated on "
+    "[[DEF-auth-protocol]].` in `# Context`",
+    "never pin the gate",
+    "rg -n -F 'Gated on [[DEF-auth-protocol]]' nodes",
+    "replace the gate with the pinned `Depends on` edge once the target resolves",
+    "A pinned edge to a target that is not resolved and an unpinned context edge "
+    "both name the gate form in their diagnostic",
+)
+
 # Markdown code is quoted text, not graph syntax: a node may reproduce the
 # skill's own link-shaped grammar in an inline span or a fenced block without
 # the checker reporting a broken link.
@@ -405,6 +420,10 @@ def test_skill_plan_text_gate_status() -> None:
 
 def test_skill_code_masking_status() -> None:
     _assert_present(_read(_SKILL), _CODE_MASKING_CONTRACT)
+
+
+def test_skill_gated_dependency_contract() -> None:
+    _assert_present(_read(_SKILL), _GATED_DEPENDENCY_CONTRACT)
 
 
 def test_skill_hash_addressing_and_operand_contract() -> None:
