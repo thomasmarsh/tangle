@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T14:18:00Z
-summary: Reduce the cold-start cost of locating the current frontier, which now takes a multi-step orientation pass with no direct query.
-next: Add a tested frontier query recipe that resolves coordinating nodes' `next` to the current frontier, and reference it from the Read and execute loop.
+updated: 2026-09-12T14:43:19Z
+summary: Added a tested `Frontier` query recipe that surfaces the current frontier in one command.
 ---
 
 # Context
@@ -31,3 +30,25 @@ hand.
   node's `next` target — the frontier — directly.
 - The recipe is tested so it cannot silently drift as nodes move.
 - `make test` passes.
+
+# Result
+
+`nodes/index-map.md` carries a `Frontier` recipe:
+
+```sh
+rg --files-without-match '^next:.*\[\[' nodes/*/ 2>/dev/null | rg '/(active|proposed|blocked)/'
+```
+
+It lists the unfinished nodes whose `next` is an action rather than a
+wikilinked child route, which is the current frontier: a coordinating node is
+excluded while its `next` target appears. `SKILL.md` names the recipe in Read and
+execute step 2 and in Common queries.
+
+`tests/test_skill.py` covers it twice. One test builds a temporary vault with a
+coordinating node whose `next` is a wikilink to `TAS-102-validate-manifests`, a
+leaf, and a resolved node and asserts the frontier is the child and leaf only.
+The other runs the recipe extracted from `index-map.md` against the live vault
+and compares it with the frontier derived from the Markdown, so it cannot
+silently drift as nodes move.
+
+Evidence: `make test` passes.

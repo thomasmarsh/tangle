@@ -7,6 +7,7 @@ validated with the Python toolchain instead of Ruby.
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 from braintree import graph_check
@@ -188,6 +189,26 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+_FRONTIER_RECIPE = re.compile(r"^- Frontier: `([^`]+)`$", re.MULTILINE)
+
+
+def _frontier_recipe() -> str:
+    match = _FRONTIER_RECIPE.search(_read(_INDEX))
+    assert match is not None, "index-map.md lacks a Frontier query recipe"
+    return match.group(1)
+
+
+def _run_frontier_recipe(root: Path) -> set[str]:
+    result = subprocess.run(
+        ["sh", "-c", _frontier_recipe()],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return set(result.stdout.split())
+
+
 def _frontmatter(text: str) -> str:
     match = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     assert match is not None
@@ -250,6 +271,61 @@ def test_index_is_routing_not_a_catalog() -> None:
         assert re.match(r"IDX-\d+", hub)
         hub_text = _read(_NODES / "resolved" / f"{hub}.md")
         assert not re.search(r"^(?:Parent|Area) \[\[", hub_text, re.MULTILINE)
+
+
+def _write_node(path: Path, body: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body, encoding="utf-8")
+
+
+def _task(summary: str, next_line: str) -> str:
+    return (
+        "---\n"
+        "context_rev: 1\n"
+        "updated: 2026-01-01T00:00:00Z\n"
+        f"summary: {summary}\n"
+        f"next: {next_line}\n"
+        "---\n"
+    )
+
+
+def test_frontier_recipe_resolves_a_coordinating_next(tmp_path: Path) -> None:
+    _write_node(
+        tmp_path / "nodes/active/TAS-101-import-coordinator.md",
+        _task("Coordinate import hardening.", '"[[TAS-102-validate-manifests]]"'),
+    )
+    _write_node(
+        tmp_path / "nodes/active/TAS-102-validate-manifests.md",
+        _task("Validate signed manifests.", "Run the signed-manifest validation."),
+    )
+    _write_node(
+        tmp_path / "nodes/proposed/TAS-103-follow-up-cleanup.md",
+        _task("Plan post-migration cleanup.", "Draft the cleanup plan."),
+    )
+    _write_node(
+        tmp_path / "nodes/resolved/TAS-100-old-work.md",
+        "---\ncontext_rev: 1\nupdated: 2026-01-01T00:00:00Z\nsummary: Old work.\n---\n",
+    )
+
+    frontier = _run_frontier_recipe(tmp_path)
+
+    assert "nodes/active/TAS-102-validate-manifests.md" in frontier
+    assert "nodes/proposed/TAS-103-follow-up-cleanup.md" in frontier
+    assert "nodes/active/TAS-101-import-coordinator.md" not in frontier
+    assert not any(path.startswith("nodes/resolved/") for path in frontier)
+
+
+def test_frontier_recipe_matches_the_live_vault() -> None:
+    expected: set[str] = set()
+    for path in sorted(_NODES.glob("*/*.md")):
+        if path.parent.name not in {"proposed", "active", "blocked"}:
+            continue
+        header = _frontmatter(path.read_text(encoding="utf-8"))
+        next_match = re.search(r"^next:\s*(.+)$", header, re.MULTILINE)
+        if next_match is not None and "[[" in next_match.group(1):
+            continue
+        expected.add(str(path.relative_to(_ROOT)))
+    assert _run_frontier_recipe(_ROOT) == expected
 
 
 def test_decomposition_roll_up() -> None:

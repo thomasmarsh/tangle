@@ -1,5 +1,5 @@
 ---
-updated: 2026-09-11T12:15:20Z
+updated: 2026-09-12T14:43:01Z
 summary: Route agents from the durable execution-graph root hub to authoritative queries.
 ---
 
@@ -9,6 +9,7 @@ summary: Route agents from the durable execution-graph root hub to authoritative
 
 # Queries
 
+- Frontier: `rg --files-without-match '^next:.*\[\[' nodes/*/ 2>/dev/null | rg '/(active|proposed|blocked)/'`
 - Known item: `find nodes -type f -name 'TAS-007-*'`
 - Unfinished: `find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'`
 - Blocked: `find nodes -type f -path '*/blocked/TAS-*.md'`
