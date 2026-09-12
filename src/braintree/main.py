@@ -51,6 +51,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
+    (
+        "reconcile [--base REF] [--head REF ...] [NODES]",
+        "plan duplicate, divergence, and stale-pin repairs from a Git change set",
+    ),
     ("check [OPTIONS] [NODES]", "validate a vault without writing state"),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
@@ -76,6 +80,7 @@ _COORDINATION_COMMANDS = frozenset(
         "impact",
         "orient",
         "next",
+        "reconcile",
     }
 )
 

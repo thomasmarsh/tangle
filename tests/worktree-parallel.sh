@@ -38,9 +38,12 @@ duplicate_acceptance=rejected; [ "$duplicate_acceptance" = rejected ] && [ -z "$
 pass focus-is-not-a-claim
 
 # 3: distinct paths sharing a numeric ID merge, then graph validation rejects identity duplication.
+base3=$(git -C "$repo" rev-parse HEAD)
 da=$(tree duplicate-a); db=$(tree duplicate-b)
 node "$da/nodes/active/TAS-100-alpha.md" 'Duplicate alpha.' 'Finish.' 'Area [[IDX-001-root]].'; commit "$da" duplicate-a
 node "$db/nodes/active/TAS-100-beta.md" 'Duplicate beta.' 'Finish.' 'Area [[IDX-001-root]].'; commit "$db" duplicate-b
+(cd "$repo" && "$checker" reconcile --base "$base3" --head duplicate-a --head duplicate-b nodes) >"$root/duplicate-reconcile.out" || fail 'reconcile failed on duplicate ids'
+grep -q 'duplicate-identity' "$root/duplicate-reconcile.out" && grep -q 'TAS-100' "$root/duplicate-reconcile.out" || fail 'reconcile missed the duplicate identity'
 git -C "$repo" merge -q --no-edit duplicate-a && git -C "$repo" merge -q --no-edit duplicate-b
 [ -f "$repo/nodes/active/TAS-100-alpha.md" ] && [ -f "$repo/nodes/active/TAS-100-beta.md" ] || fail 'Git did not retain duplicate paths'
 if "$checker" check "$repo/nodes" >"$root/duplicate.out" 2>&1; then fail 'checker accepted duplicate numeric ID'; fi
@@ -54,12 +57,19 @@ mv "$renamed/nodes/active/TAS-010-shared.md" "$renamed/nodes/resolved/TAS-010-sh
 sed -i.bak 's/Shared work\./Edited shared work./' "$edited/nodes/active/TAS-010-shared.md"; rm "$edited/nodes/active/TAS-010-shared.md.bak"; commit "$edited" edit
 r=$(git -C "$repo" diff --name-only "$base" rename -- '*TAS-010-shared.md'); e=$(git -C "$repo" diff --name-only "$base" edit -- '*TAS-010-shared.md')
 [ "${r##*/}" = TAS-010-shared.md ] && [ "${e##*/}" = TAS-010-shared.md ] || fail 'same-node divergence not identified'
+(cd "$repo" && "$checker" reconcile --base "$base" --head rename --head edit nodes) >"$root/divergence-reconcile.out" || fail 'reconcile failed on divergence'
+grep -q 'same-node-divergence' "$root/divergence-reconcile.out" && grep -q 'TAS-010-shared' "$root/divergence-reconcile.out" || fail 'reconcile missed the rename-versus-edit divergence'
 git -C "$repo" merge -q --no-edit rename; git -C "$repo" merge --no-edit edit >/dev/null 2>&1 || true; git -C "$repo" merge --abort >/dev/null 2>&1 || true
 pass rename-versus-edit-divergence
 
 # 5: integrated dependency context changes are detected before consumer execution.
 setup; node "$repo/nodes/resolved/DEF-010-contract.md" 'Initial contract.' '' 'Area [[IDX-001-root]].'; node "$repo/nodes/active/TAS-011-consumer.md" 'Consumer.' 'Execute consumer.' 'Area [[IDX-001-root]].'; printf '\nDepends on [[DEF-010-contract]] at context_rev 1.\n' >>"$repo/nodes/active/TAS-011-consumer.md"; git -C "$repo" add . && git -C "$repo" commit -qm consumer
-dep=$(tree dependency); consumer=$(tree consumer); sed -i.bak 's/context_rev: 1/context_rev: 2/' "$dep/nodes/resolved/DEF-010-contract.md"; rm "$dep/nodes/resolved/DEF-010-contract.md.bak"; commit "$dep" dependency; git -C "$repo" merge -q --no-edit dependency
+dep=$(tree dependency); consumer=$(tree consumer); sed -i.bak 's/context_rev: 1/context_rev: 2/' "$dep/nodes/resolved/DEF-010-contract.md"; rm "$dep/nodes/resolved/DEF-010-contract.md.bak"; commit "$dep" dependency
+(cd "$repo" && "$checker" reconcile --base HEAD --head dependency nodes) >"$root/stale-reconcile.out" || fail 'reconcile failed on stale consumer'
+grep -q 'reread-dependency' "$root/stale-reconcile.out" && grep -q 'reconcile-consumer' "$root/stale-reconcile.out" && grep -q 'TAS-011' "$root/stale-reconcile.out" || fail 'reconcile missed the post-integration stale consumer'
+dep_line=$(grep -n 'reread-dependency' "$root/stale-reconcile.out" | head -1 | cut -d: -f1); con_line=$(grep -n 'reconcile-consumer' "$root/stale-reconcile.out" | head -1 | cut -d: -f1)
+[ "$dep_line" -lt "$con_line" ] || fail 'reconcile did not order the dependency before its consumer'
+git -C "$repo" merge -q --no-edit dependency
 if "$checker" check "$repo/nodes" >"$root/stale.out" 2>&1; then fail 'stale consumer passed'; fi
 grep -q 'context_rev mismatch' "$root/stale.out" && [ -z "$(git -C "$consumer" status --porcelain)" ] || fail 'drift was not caught before execution'
 pass dependency-context-drift

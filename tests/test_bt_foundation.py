@@ -248,3 +248,14 @@ def test_next_and_frontier_group_verbs_are_dispatched(tmp_path: Path, run_bt: Ru
     limit_without_group = run_bt("frontier", "--limit", "2", env=env)
     assert limit_without_group.returncode == 2
     assert 'error: "frontier --limit requires --group"' in limit_without_group.stdout
+
+
+def test_reconcile_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    help_output = run_bt("--help", env=env)
+    assert help_output.returncode == 0
+    assert "reconcile [--base REF] [--head REF ...] [NODES]" in help_output.stdout
+
+    unknown = run_bt("reconcile", "--bogus", env=env)
+    assert unknown.returncode == 2
+    assert 'error: "unknown argument for reconcile: --bogus"' in unknown.stdout

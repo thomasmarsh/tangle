@@ -27,7 +27,8 @@ _USAGE = (
     "[--parent REF] [--dependency REF]|"
     "similar TEXT|--file PATH [--limit N]|backlinks NODE|hash NODE|stale|"
     "frontier [--group] [--limit N]|node NODE|impact NODE|"
-    "orient [--section NAME] [--limit N]|next [--rank] [--limit N]]"
+    "orient [--section NAME] [--limit N]|next [--rank] [--limit N]|"
+    "reconcile [--base REF] [--head REF ...] [NODES]]"
 )
 
 _COMMANDS: tuple[tuple[str, str], ...] = (
@@ -52,6 +53,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
+    (
+        "reconcile [--base REF] [--head REF ...] [NODES]",
+        "plan duplicate, divergence, and stale-pin repairs from a Git change set",
+    ),
 )
 
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
@@ -674,6 +679,82 @@ def _orient(args: list[str]) -> int:
     return 0
 
 
+def _reconcile(args: list[str]) -> int:
+    base = "HEAD"
+    heads: list[str] = []
+    nodes_arg: str | None = None
+    index_arg = 1
+    while index_arg < len(args):
+        argument = args[index_arg]
+        if argument == "--base":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--base requires REF")
+            base = args[index_arg]
+        elif argument == "--head":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--head requires REF")
+            heads.append(args[index_arg])
+        elif argument.startswith("-"):
+            return _usage_error(f"unknown argument for reconcile: {argument}")
+        elif nodes_arg is None:
+            nodes_arg = argument
+        else:
+            return _usage_error("reconcile accepts at most one NODES directory")
+        index_arg += 1
+    if nodes_arg is None:
+        root = _require_nodes_directory()
+        if root is None:
+            return 1
+    elif not os.path.isdir(nodes_arg):
+        print(field("error", f"nodes directory does not exist: {os.path.abspath(nodes_arg)}"))
+        print(field("help", "Run from the project root or set BT_NODES_DIR."))
+        return 1
+    else:
+        root = nodes_arg
+    try:
+        plan = index.reconcile(base, heads or ["HEAD"], root)
+    except index.ReconcileError as exc:
+        print(field("error", str(exc)))
+        print(
+            field(
+                "help",
+                "Run inside the vault's Git repository and pass refs it knows.",
+            )
+        )
+        return 1
+    print(field("base", plan.base))
+    print(
+        index.format_table(
+            "head",
+            "ref",
+            "head: 0 refs",
+            [(head,) for head in plan.heads],
+        )
+    )
+    print(
+        index.format_table(
+            "steps",
+            "action,depth,node,path,pinned,current,detail",
+            "reconcile: 0 steps",
+            [
+                (
+                    step.action,
+                    str(step.depth),
+                    step.node,
+                    step.path,
+                    step.pinned,
+                    step.current,
+                    step.detail,
+                )
+                for step in plan.steps
+            ],
+        )
+    )
+    return 0
+
+
 def _dispatch(command: str, args: list[str]) -> int:
     if command == "status":
         if len(args) != 1:
@@ -734,6 +815,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _orient(args)
     if command == "next":
         return _next(args)
+    if command == "reconcile":
+        return _reconcile(args)
     return _stale(args)
 
 

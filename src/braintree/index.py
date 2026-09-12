@@ -8,7 +8,9 @@ the same Markdown. The same derivation also ranks the frontier for ``next``
 and clusters it into advisory workstreams for ``frontier --group``. The
 structured ``search`` filters and the lexical ``similar`` baseline are likewise
 derived from Markdown, so an admission or filter decision never depends on a
-derived sidecar column.
+derived sidecar column. The ``reconcile`` planner reads that same Markdown out
+of Git snapshots to classify the integration hazards a coordinator resolves by
+hand before a merge.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ import math
 import os
 import re
 import sqlite3
+import subprocess
 from collections import Counter, deque
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -47,6 +50,9 @@ __all__ = [
     "OrientSection",
     "Orientation",
     "RankedCandidate",
+    "ReconcileError",
+    "ReconcilePlan",
+    "ReconcileStep",
     "SearchFilters",
     "SimilarCandidate",
     "backlinks",
@@ -61,6 +67,7 @@ __all__ = [
     "node_view",
     "orient",
     "prefix_maxima",
+    "reconcile",
     "reindex",
     "resolve_node",
     "search",
@@ -578,9 +585,45 @@ class SimilarCandidate:
     summary: str
 
 
+class ReconcileError(Exception):
+    """A reconcile input the planner cannot read, such as an unknown Git ref."""
+
+
+@dataclass(frozen=True)
+class ReconcileStep:
+    """One ordered repair step in a ``braintree reconcile`` plan."""
+
+    action: str
+    depth: int
+    node: str
+    path: str
+    pinned: str
+    current: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class ReconcilePlan:
+    """The dependency-ordered repair plan ``braintree reconcile`` prints."""
+
+    base: str
+    heads: tuple[str, ...]
+    steps: tuple[ReconcileStep, ...]
+
+
 # An unset priority ranks after every declared ``P0``-``P3``, so a pinned
 # candidate is always preferred over an unpinned one at equal blocking power.
 _PRIORITY_ORDER = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+
+# Reconcile orders its repair steps by class, then by dependency distance, so a
+# colliding identity is resolved before a bumped dependency is reread and that
+# dependency before the consumers that pin its old revision.
+_RECONCILE_ACTION_ORDER = {
+    "duplicate-identity": 0,
+    "same-node-divergence": 1,
+    "reread-dependency": 2,
+    "reconcile-consumer": 3,
+}
 
 
 def _read_nodes(root: str) -> list[IndexedNode]:
@@ -1207,3 +1250,247 @@ def frontier_groups(root: str, limit: int) -> FrontierGroups:
         for member in members:
             rows.append(GroupedCandidate(group=label, candidate=by_id[member]))
     return FrontierGroups(total=len(groups), rows=tuple(rows[:limit]))
+
+
+def _git_stdout(repo: str, *args: str) -> str | None:
+    """Run a read-only Git command and return its stdout, or ``None`` on failure."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", repo, *args],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:  # pragma: no cover - only when the git binary is absent
+        raise ReconcileError(f"git is unavailable: {exc}") from exc
+    if result.returncode != 0:
+        return None
+    return result.stdout
+
+
+@dataclass(frozen=True)
+class _RefNode:
+    """One Markdown node as it exists in a Git snapshot."""
+
+    id: str
+    name: str
+    path: str
+    status: str
+    context_rev: int
+    body: str
+    text: str
+
+
+def _ref_nodes(repo: str, ref: str, prefix: str) -> dict[str, _RefNode]:
+    """Read every status-directory node under ``prefix`` as it exists at ``ref``."""
+    listing = _git_stdout(repo, "ls-tree", "-r", "--name-only", ref, "--", prefix)
+    if listing is None:
+        raise ReconcileError(f"unknown Git ref: {ref}")
+    nodes: dict[str, _RefNode] = {}
+    for path in listing.splitlines():
+        status = os.path.basename(os.path.dirname(path))
+        basename = os.path.basename(path)
+        if status not in _STATUSES or not basename.endswith(".md"):
+            continue
+        name = basename[:-3]
+        match = _NODE_ID.match(name)
+        if match is None:
+            continue
+        text = _git_stdout(repo, "show", f"{ref}:{path}")
+        if text is None:
+            continue
+        header, body = _frontmatter(text)
+        nodes[path] = _RefNode(
+            id=match.group(1),
+            name=name,
+            path=path,
+            status=status,
+            context_rev=_context_rev(header),
+            body=body,
+            text=text,
+        )
+    return nodes
+
+
+def _nodes_by_id(nodes: dict[str, _RefNode]) -> dict[str, _RefNode]:
+    """Collapse a snapshot to one node per identity, keeping the first path."""
+    by_id: dict[str, _RefNode] = {}
+    for node in nodes.values():
+        by_id.setdefault(node.id, node)
+    return by_id
+
+
+def reconcile(
+    base: str,
+    heads: Sequence[str],
+    nodes_root: str,
+    repo: str | None = None,
+) -> ReconcilePlan:
+    """Return the dependency-ordered repair plan for integrating ``heads`` into ``base``.
+
+    The planner is a read-only report over two authorities: the Git snapshots
+    name which node identities a change set touches, and the Markdown in those
+    snapshots supplies the canonical context edges. It classifies the three
+    integration hazards the parallel-worktree contract assigns to coordinator
+    judgment. An identity created at two different paths across the heads is a
+    duplicate identity. The same node changed by two heads is a same-node
+    divergence, because a rename and an edit of one basename must be reconciled
+    rather than merged blind. A node whose ``context_rev`` changed in a head
+    makes any base node that pins the old revision a stale consumer.
+
+    Steps are ordered duplicate identities, then divergences, then the bumped
+    dependency, then its consumers, so a pinned dependency is reconciled after
+    its target; identity and path break ties within a class. The vault is never
+    mutated. Aborting on an unreadable ref keeps the plan trustworthy rather
+    than silently dropping a snapshot.
+    """
+    working = os.getcwd() if repo is None else repo
+    top = _git_stdout(working, "rev-parse", "--show-toplevel")
+    if top is None:
+        raise ReconcileError("not inside a Git work tree")
+    prefix = os.path.relpath(os.path.abspath(nodes_root), top.strip())
+    if prefix.startswith(".."):
+        raise ReconcileError("nodes directory is outside the Git work tree")
+
+    order: list[str] = []
+    for head in heads:
+        if head not in order:
+            order.append(head)
+    base_nodes = _ref_nodes(working, base, prefix)
+    head_nodes = {head: _ref_nodes(working, head, prefix) for head in order}
+    base_by_id = _nodes_by_id(base_nodes)
+
+    steps: list[ReconcileStep] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def add(
+        action: str,
+        node: str,
+        path: str,
+        detail: str,
+        pinned: str = "",
+        current: str = "",
+        depth: int = 0,
+    ) -> None:
+        key = (action, node, path)
+        if key in seen:
+            return
+        seen.add(key)
+        steps.append(
+            ReconcileStep(
+                action=action,
+                depth=depth,
+                node=node,
+                path=path,
+                pinned=pinned,
+                current=current,
+                detail=detail,
+            )
+        )
+
+    def add_duplicates(nodes: dict[str, _RefNode]) -> None:
+        grouped: dict[str, list[_RefNode]] = {}
+        for node in nodes.values():
+            grouped.setdefault(node.id, []).append(node)
+        for label, members in grouped.items():
+            if len(members) > 1:
+                for member in members:
+                    add(
+                        "duplicate-identity",
+                        label,
+                        member.path,
+                        f"duplicate node identity: {label}",
+                    )
+
+    def changed_relative(nodes: dict[str, _RefNode]) -> dict[str, _RefNode]:
+        changed: dict[str, _RefNode] = {}
+        for node in nodes.values():
+            prior = base_by_id.get(node.id)
+            if prior is None or (
+                prior.name != node.name
+                or prior.path != node.path
+                or prior.text != node.text
+            ):
+                changed[node.id] = node
+        return changed
+
+    add_duplicates(base_nodes)
+    for head in order:
+        add_duplicates(head_nodes[head])
+
+    changed = {head: changed_relative(head_nodes[head]) for head in order}
+    touched: dict[str, list[tuple[str, _RefNode]]] = {}
+    for head in order:
+        for node_id, node in changed[head].items():
+            touched.setdefault(node_id, []).append((head, node))
+
+    bumped: dict[str, _RefNode] = {}
+    for node_id, members in touched.items():
+        names = {node.name for _head, node in members}
+        if len(members) > 1 and len(names) > 1:
+            for _head, node in members:
+                add(
+                    "duplicate-identity",
+                    node_id,
+                    node.path,
+                    f"duplicate node identity: {node_id}",
+                )
+            continue
+        if len(members) > 1:
+            prior = base_by_id.get(node_id)
+            add(
+                "same-node-divergence",
+                members[0][1].name,
+                prior.path if prior is not None else members[0][1].path,
+                "diverged on " + ", ".join(head for head, _node in members),
+            )
+        prior = base_by_id.get(node_id)
+        head_node = members[-1][1]
+        if prior is not None and prior.context_rev != head_node.context_rev:
+            bumped[node_id] = head_node
+
+    base_by_reference: dict[str, _RefNode] = {}
+    for node in base_nodes.values():
+        base_by_reference[node.name] = node
+        base_by_reference[node.id] = node
+
+    for node_id in sorted(bumped):
+        target = bumped[node_id]
+        base_rev = base_by_id[node_id].context_rev
+        add(
+            "reread-dependency",
+            node_id,
+            target.path,
+            f"context_rev changed {base_rev} -> {target.context_rev}",
+            pinned=str(base_rev),
+            current=str(target.context_rev),
+        )
+        for source in sorted(base_nodes.values(), key=lambda node: (node.id, node.path)):
+            for _relation, reference, suffix in _CONTEXT_EDGE.findall(source.body):
+                dependency = base_by_reference.get(reference)
+                if dependency is None or dependency.id != node_id:
+                    continue
+                pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
+                pinned = int(pin_match.group(1)) if pin_match is not None else None
+                problem = context_pin_problem(pinned, target.status, target.context_rev)
+                if problem is None:
+                    continue
+                add(
+                    "reconcile-consumer",
+                    source.id,
+                    source.path,
+                    stale_reason(problem, target.status),
+                    pinned=str(pinned) if pinned is not None else "",
+                    current=str(target.context_rev),
+                    depth=1,
+                )
+
+    steps.sort(
+        key=lambda step: (
+            _RECONCILE_ACTION_ORDER[step.action],
+            step.depth,
+            step.node,
+            step.path,
+        )
+    )
+    return ReconcilePlan(base=base, heads=tuple(order), steps=tuple(steps))
