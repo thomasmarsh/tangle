@@ -28,6 +28,7 @@ check_tree() {
 run_installed() {
   destination=$1
   uv run --project "$destination" --frozen --quiet graph-check "$repo_root/nodes" >/dev/null
+  uv run --project "$destination" --frozen --quiet feedback-scan "$repo_root/nodes" >/dev/null
 }
 
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)

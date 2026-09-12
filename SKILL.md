@@ -109,10 +109,11 @@ Prefer bounded results. Direct backlink search is authoritative for explicit edg
 
 ## Integrity and sidecar commands
 
-`graph-check` is a portable read-only Markdown validator needing no sidecar; `bt` provides the optional hybrid index and same-host coordination:
+`graph-check` is a portable read-only Markdown validator needing no sidecar; `feedback-scan` is a portable read-only collector for external feedback; `bt` provides the optional hybrid index and same-host coordination:
 
 ```sh
 uv run --project .agents/skills/braintree --frozen graph-check nodes
+uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/other-vault
 uv run --project .agents/skills/braintree --frozen bt reindex nodes
 uv run --project .agents/skills/braintree --frozen bt search 'authentication' --limit 10
 ```
@@ -139,6 +140,16 @@ A consuming project records Braintree friction as an `FBK` node. The `FBK` type 
 - State the friction in one `# Feedback` section with an `Attempted:`, a `Friction:`, and an `Improvement:` line.
 
 `graph-check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
+
+To collect feedback from another vault, run the read-only `feedback-scan` command over one or more vault roots:
+
+```sh
+uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/vault
+```
+
+It reads only `FBK-*.md` frontmatter and prints compact TOON with each node's vault, id, status, Braintree revision, and summary; it prints `feedback: 0 nodes` when there is none. It works on a read-only checkout with no sidecar or network, and never writes to the scanned vault.
+
+Triage each scanned result into this graph: admit a node only when the friction is likely to change a future decision or action, cite the feedback id and revision in the admitted node, and otherwise dispose the result explicitly rather than dropping it silently.
 
 ## Node body and status output
 

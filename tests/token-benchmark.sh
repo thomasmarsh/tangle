@@ -21,7 +21,7 @@ printf '%s\n' "$output" | grep -F '"task_path":"/root/token-benchmark-fixture"' 
 "$repo_root/scripts/token-benchmark" --check-fixture | grep -F '"representation":"graph","scale":"small"' >/dev/null
 fixture_check=$("$repo_root/scripts/token-benchmark" --check-fixture)
 printf '%s\n' "$fixture_check" | grep -F '"skill_sha256"' >/dev/null
-printf '%s\n' "$fixture_check" | grep -F '"files":62' >/dev/null
+printf '%s\n' "$fixture_check" | grep -F '"files":63' >/dev/null
 cold_resume_check=$("$repo_root/scripts/token-benchmark" --check-fixture --case cold-resume)
 printf '%s\n' "$cold_resume_check" | grep -F '"benchmark_case":"cold-resume"' >/dev/null
 printf '%s\n' "$cold_resume_check" | grep -F '"fixture_version":"cold-resume-frontier-v1"' >/dev/null

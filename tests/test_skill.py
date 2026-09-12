@@ -122,6 +122,12 @@ _FEEDBACK_CONTRACT: tuple[str, ...] = (
     "one `# Feedback` section",
     "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
     "`graph-check` rejects an `FBK` node that omits or malforms `braintree_revision`",
+    "read-only `feedback-scan` command over one or more vault roots",
+    "feedback: 0 nodes",
+    "no sidecar or network",
+    "Triage each scanned result into this graph",
+    "cite the feedback id and revision in the admitted node",
+    "dispose the result explicitly rather than dropping it silently",
 )
 
 

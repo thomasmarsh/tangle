@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T13:18:31Z
+updated: 2026-09-12T13:25:14Z
 summary: A consuming project records Braintree struggles and improvements as routed nodes that this project can mechanically discover and triage.
-next: Start [[TAS-057-cross-project-feedback-collection]].
+next: Start [[TAS-056-feedback-recording-path]].
 ---
 
 # Context

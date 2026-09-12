@@ -86,9 +86,17 @@ uv run --project .agents/skills/braintree --frozen bt reindex nodes
 
 It is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
 
+The read-only `feedback-scan` collector gathers `FBK` feedback from one or more external vaults without a sidecar or network access, and never writes to the scanned vault:
+
+```sh
+uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/other-vault
+```
+
+It prints compact TOON with each feedback node's vault, id, status, Braintree revision, and summary, and states `feedback: 0 nodes` when there is none.
+
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt` and `graph-check` console scripts, leaving repository graph state and development files behind. The project has one semantic version, declared in `pyproject.toml`; the installer and the installed console scripts all report that same number.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt`, `graph-check`, and `feedback-scan` console scripts, leaving repository graph state and development files behind. The project has one semantic version, declared in `pyproject.toml`; the installer and the installed console scripts all report that same number.
 
 A vault uses this shape:
 
@@ -103,7 +111,7 @@ nodes/
 
 The status directory and node filename are authoritative. Node frontmatter stores only a semantic `context_rev`, update time, a concise summary, and optional priority, next action, or exceptional disposition. `context_rev` changes only when a pinned consumer should reread the node; `updated` changes for every mutation, while Git retains edit history. Context-bearing links pin the dependency context revision they were last reconciled against. `nodes/index-map.md` holds focus, root-hub routes, and query recipes; it is not a copied node catalog and is not rewritten after every mutation. Hubs do not catalog members: `Parent` and `Area` backlinks provide membership, while a parent’s `next` may deliberately route to one child at the current execution frontier.
 
-`DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. `FBK` nodes record Braintree friction for cross-project collection: they carry the installed `braintree_revision` and an `Attempted:`/`Friction:`/`Improvement:` `# Feedback` section, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
+`DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. `FBK` nodes record Braintree friction for cross-project collection: they carry the installed `braintree_revision` and an `Attempted:`/`Friction:`/`Improvement:` `# Feedback` section, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, and the read-only `feedback-scan` collector gathers those nodes from external vaults for triage into this graph. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
 
 Decompose only when work reaches an independently resumable outcome, blocker, dependency, or verification boundary that also has durable execution-memory value; do not create a speculative child tree. A coordinating task states its own outcome and completion criteria, and its `next` names one current action or direct child frontier rather than cataloging children. Child completion is evidence, not an automatic parent resolution: resolve the parent only when its own criteria and evidence are complete and its created children are resolved or explicitly disposed.
 
