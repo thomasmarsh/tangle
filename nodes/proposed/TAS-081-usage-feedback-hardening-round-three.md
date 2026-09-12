@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T16:40:00Z
+updated: 2026-09-12T16:48:09Z
 summary: Fix or dispose the round-three Tangle usage-feedback findings across reversal semantics, frontier determinacy, checker link parsing, node addressing, the hash operand, and unresolved dependency representation.
-next: "[[TAS-083-frontier-determinacy]]"
+next: "[[TAS-084-code-span-link-masking]]"
 ---
 
 # Context

@@ -41,6 +41,30 @@ def _markdown_frontier_ids(root: Path) -> set[str]:
     return ids
 
 
+def _named_frontier_targets(root: Path) -> set[str]:
+    """Resolve the candidate list the contract's way, straight from Markdown.
+
+    The contract narrows the frontier candidates to the ones a coordinating
+    node's ``next`` route names, so a sequenced sibling that no route names
+    stays out of the resolved frontier.
+    """
+    candidates = _markdown_frontier_ids(root)
+    named: set[str] = set()
+    for path in sorted(root.glob("*/*.md")):
+        if path.parent.name not in _FINAL_STATUSES:
+            continue
+        next_match = re.search(
+            r"^next: (.*)$", path.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        if next_match is None:
+            continue
+        for link in re.findall(r"\[\[([^\]]+)\]\]", next_match.group(1)):
+            match = _NODE_ID.match(link)
+            if match is not None:
+                named.add(match.group(1))
+    return named & candidates
+
+
 def _toon_rows(output: str, name: str) -> list[list[str]]:
     """Parse the indented TOON rows that follow a ``name[n]{...}:`` header line."""
     lines = output.splitlines()
@@ -409,6 +433,81 @@ def test_frontier_excludes_resolved_and_child_routes(tmp_path: Path, run_bt: Run
     ids = {row[0] for row in rows}
     assert "TAS-002" not in ids  # next is a [[child]] route
     assert "TAS-004" not in ids  # resolved
+
+
+def _seed_upfront_plan(vault: Path) -> None:
+    """Seed a user-requested plan: children exist up front, one is the frontier."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "proposed").mkdir()
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "proposed" / "TAS-100-plan-coordinator.md",
+        "---\ncontext_rev: 1\npriority: P1\nupdated: 2026-09-05T00:00:00Z\n"
+        "summary: Coordinate the sequenced plan.\n"
+        'next: "[[TAS-101-first-step]]"\n---\n\n'
+        "# Context\n\nArea [[IDX-001-root]].\n",
+    )
+    for name, priority, updated, step in (
+        ("TAS-101-first-step.md", "P1", "2026-09-05T00:00:00Z", "Run the first step."),
+        ("TAS-102-second-step.md", "P2", "2026-09-04T00:00:00Z", "Run the second step."),
+        ("TAS-103-third-step.md", "P3", "2026-09-03T00:00:00Z", "Run the third step."),
+    ):
+        _write(
+            vault / "proposed" / name,
+            f"---\ncontext_rev: 1\npriority: {priority}\nupdated: {updated}\n"
+            f"summary: Execute {name}.\nnext: {step}\n---\n\n"
+            "# Context\n\nParent [[TAS-100-plan-coordinator]].\n",
+        )
+
+
+def test_frontier_reports_sequenced_siblings_as_candidates(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """An up-front plan puts every action-``next`` child in the candidate list."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_upfront_plan(vault)
+    assert _markdown_frontier_ids(vault) == {"TAS-101", "TAS-102", "TAS-103"}
+
+    rows = _toon_rows(run_bt("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
+    assert [row[0] for row in rows] == ["TAS-101", "TAS-102", "TAS-103"]
+    assert "TAS-100" not in {row[0] for row in rows}  # next is a [[child]] route
+
+
+def test_frontier_candidates_resolve_through_the_coordinator(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """The contract narrows the candidates to the coordinator's ``next`` target."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_upfront_plan(vault)
+    rows = _toon_rows(run_bt("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
+    candidates = {row[0] for row in rows}
+    assert candidates == {"TAS-101", "TAS-102", "TAS-103"}
+    assert _named_frontier_targets(vault) == {"TAS-101"}
+    assert _named_frontier_targets(vault) < candidates
+
+
+def test_next_and_orient_report_the_same_frontier_candidates(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """``next --rank`` and ``orient`` share the frontier verb's candidate list."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_upfront_plan(vault)
+    env = _env(tmp_path, vault)
+    expected = {"TAS-101", "TAS-102", "TAS-103"}
+
+    frontier = _toon_rows(run_bt("frontier", env=env).stdout, "frontier")
+    ranked = _toon_rows(run_bt("next", "--rank", "--limit", "3", env=env).stdout, "next")
+    oriented = _toon_rows(
+        run_bt("orient", "--section", "frontier", env=env).stdout, "frontier"
+    )
+    assert {row[0] for row in frontier} == expected
+    assert {row[1] for row in ranked} == expected
+    assert [row[1] for row in ranked] == ["TAS-101", "TAS-102", "TAS-103"]
+    assert {row[0] for row in oriented} == expected
 
 
 def test_frontier_matches_markdown_on_live_vault(run_bt: RunBt) -> None:

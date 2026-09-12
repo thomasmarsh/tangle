@@ -198,6 +198,31 @@ _DIRECT_ANSWER_CONTRACT: tuple[str, ...] = (
     "braintree orient",
 )
 
+# The direct-answer verbs return frontier candidates, not the resolved frontier:
+# an up-front plan pre-creates its children, so sequenced siblings carry their
+# own action `next` and a worker resolves through the coordinator's `next` route
+# before executing.
+_FRONTIER_CANDIDATE_CONTRACT: tuple[str, ...] = (
+    "return frontier candidates",
+    "which is a superset of the frontier",
+    "sequenced sibling carries its own action `next`",
+    "Resolve the candidate list through the coordinator",
+    "its coordinating parent's `next` route names",
+    "not yet at the frontier",
+    "That answer is a candidate list, not the resolved frontier",
+    "Resolve it through the coordinator",
+)
+
+# A gate on prerequisite plan text that no node owns is blocked input waiting on
+# state outside the vault, not a proposed sibling dependency the graph resolves.
+_PLAN_TEXT_GATE_CONTRACT: tuple[str, ...] = (
+    "A gate on prerequisite plan text that no node owns is `blocked`",
+    "state the prerequisite and the unblock condition in `# Blocked`",
+    "Once a node owns that plan text the gate is a sibling dependency "
+    "and the node is `proposed`",
+    "including prerequisite plan text that no node owns",
+)
+
 _SKILL_REMOVED_RECIPES: tuple[str, ...] = (
     r"rg --files-without-match '^next:.*\[\['",
     "rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev ' nodes",
@@ -341,6 +366,14 @@ def test_skill_names_the_direct_answer_verbs() -> None:
     text = _read(_SKILL)
     _assert_present(text, _DIRECT_ANSWER_CONTRACT)
     _assert_absent(text, _SKILL_REMOVED_RECIPES)
+
+
+def test_skill_frontier_candidate_contract() -> None:
+    _assert_present(_read(_SKILL), _FRONTIER_CANDIDATE_CONTRACT)
+
+
+def test_skill_plan_text_gate_status() -> None:
+    _assert_present(_read(_SKILL), _PLAN_TEXT_GATE_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:

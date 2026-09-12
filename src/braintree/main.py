@@ -47,7 +47,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("backlinks NODE", "list derived incoming graph edges"),
     ("hash NODE", "print the raw-content SHA-256 of a node file"),
     ("stale", "find missing or outdated dependency pins"),
-    ("frontier [--group] [--limit N]", "list the frontier or cluster it into advisory workstreams"),
+    (
+        "frontier [--group] [--limit N]",
+        "list frontier candidates or cluster them into advisory workstreams",
+    ),
     ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),

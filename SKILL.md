@@ -74,7 +74,7 @@ The coordinator integrates worker branches one at a time. Never blindly auto-mer
 
 ## Reachability contract
 
-`index-map.md` routes to durable `IDX` root hubs via `Indexes`; a hub has no `Parent`/`Area` and does not list members. Every other node has exactly one primary, unpinned `Parent` or `Area` link that must reach a hub. To find the frontier, derive hub members and follow each coordinating node's `next`; the `next` route, not `# Focus` or `priority`, names the one deliberate frontier child. An unfinished node that cannot reach a hub or a deliberate `# Focus` pointer is an orphan and a graph-integrity failure. Derive hub membership with an exact `Parent`/`Area` backlink search; never copy it into a hub or the index.
+`index-map.md` routes to durable `IDX` root hubs via `Indexes`; a hub has no `Parent`/`Area` and does not list members. Every other node has exactly one primary, unpinned `Parent` or `Area` link that must reach a hub. To find the frontier, derive hub members and follow each coordinating node's `next`; the `next` route, not `# Focus` or `priority`, names the one deliberate frontier child. The direct-answer verbs (`braintree frontier`, `braintree next --rank`, and `braintree orient`) return frontier candidates instead: every unfinished node whose `next` is an action, which is a superset of the frontier. A user-requested plan pre-creates its children up front as `proposed`, so a sequenced sibling carries its own action `next` and is reported beside the deliberate child. Resolve the candidate list through the coordinator before executing: keep only the candidate its coordinating parent's `next` route names, because a candidate whose parent's `next` names a different node is not yet at the frontier. An unfinished node that cannot reach a hub or a deliberate `# Focus` pointer is an orphan and a graph-integrity failure. Derive hub membership with an exact `Parent`/`Area` backlink search; never copy it into a hub or the index.
 
 ## Decomposition and roll-up
 
@@ -82,7 +82,7 @@ Decompose just in time, only after the node-admission threshold, at a distinct i
 
 A direct child is a node whose primary `Parent` or `Area` is the current node. A coordinating task states its outcome and `Done when` criteria; its `next` is either one concrete frontier action or one wikilinked direct child at the current frontier, never a child list. The only accepted `next` forms are a plain action sentence, `Do X.`, or a single `[[direct-child]]` link; naming multiple children or a non-child fails the graph check. Roll up from evidence, not child counts; resolve only when its criteria are met and every child is resolved or disposed, since resolving children alone does not complete the parent.
 
-`blocked` and `proposed` are not interchangeable. Use `blocked` only when the node needs input or state that no node in this vault owns, such as a credential or an external approval; use `proposed` for work that is ready to start but not yet at the frontier, including a child gated on a sibling decision. A proposed sibling is not blocked, because the decision it waits on is in the graph and will resolve there.
+`blocked` and `proposed` are not interchangeable. Use `blocked` only when the node needs input or state that no node in this vault owns, such as a credential or an external approval; use `proposed` for work that is ready to start but not yet at the frontier, including a child gated on a sibling decision. A proposed sibling is not blocked, because the decision it waits on is in the graph and will resolve there. A gate on prerequisite plan text that no node owns is `blocked`, like any other input the vault does not own: no node will resolve the gate, so state the prerequisite and the unblock condition in `# Blocked`. Once a node owns that plan text the gate is a sibling dependency and the node is `proposed`.
 
 ## Dependency revisions and staleness
 
@@ -93,7 +93,7 @@ The bump commit shape: commit the semantic `context_rev` bump with the bumped no
 ## Read and execute loop
 
 1. Read `nodes/index-map.md` when orienting or when no direct node pointer was supplied.
-2. With no pointer, run `braintree frontier` to list the current frontier directly: it returns the unfinished nodes whose `next` is an action rather than a `[[child]]` route, so a coordinating node's `next` target appears instead of the coordinator. Validate the candidate's status and header exactly as a `# Focus` target. `# Focus`, `priority`, and `active` are not the frontier.
+2. With no pointer, run `braintree frontier` for the frontier candidates: it returns every unfinished node whose `next` is an action rather than a `[[child]]` route, so a coordinating node's `next` target appears instead of the coordinator. That answer is a candidate list, not the resolved frontier, because an up-front plan's sequenced siblings also carry an action `next`. Resolve it through the coordinator by keeping only the candidate the coordinating parent's `next` route names. Validate the candidate's status and header exactly as a `# Focus` target. `# Focus`, `priority`, and `active` are not the frontier.
 3. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`.
 4. For each context-bearing dependency, compare its header `context_rev` with the pin and confirm it is `resolved`; follow only mismatched, blocking, or required pointers.
 5. Groom a stale node before execution: reconcile assumptions, update pins, and refresh `updated`.
@@ -137,7 +137,7 @@ Run from the project root. The checker validates links, headers and lifecycle ru
 - Advancing a coordinating parent's `next` after its frontier child is resolved is part of that resolution rather than bookkeeping, so the resolving worker owns that edit; refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation.
 - Change status by moving the unchanged filename between status directories; wikilinks use the basename and stay stable.
 - Give each node one primary `Parent [[...]]` or `Area [[IDX-...]]` link; do not add a `Child`/`Parent of` copy to the parent.
-- `blocked` only for missing input or external state, with a short `# Blocked` section and a concrete `next` when one exists.
+- `blocked` only for missing input or external state, including prerequisite plan text that no node owns, with a short `# Blocked` section and a concrete `next` when one exists.
 - `resolved` only when the outcome is complete; for a coordinating task verify `Done when`, evidence, and child dispositions first. Remove `next` and keep concise evidence.
 - Reversing a partly implemented outcome is an in-place update while the same node and scope still own it: rewrite the outcome in the same node, and bump `context_rev` because a pinned consumer must reread the changed direction.
 - Supersede only when the outcome moves to a different node: move to `resolved`, set `disposition: superseded`, record the replacement as `Superseded by [[...]]` in the body, and search remaining backlinks. Deprecation follows the same resolved-node shape with `disposition: deprecated` and a note on why the outcome is retired.
