@@ -18,6 +18,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -559,6 +560,56 @@ def _cumulative_snapshot(previous: Json, current: Json, turn_id: str) -> None:
             raise _BenchError(f"turn {turn_id!r} token usage regresses {field}")
 
 
+def _has_turn_usage(path: str) -> bool:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            for line in handle:
+                if "turn_token_usage" not in line:
+                    continue
+                try:
+                    event = _load_event(line)
+                except json.JSONDecodeError:
+                    continue
+                payload = event.get("payload")
+                if (
+                    event.get("type") == "token_usage_record"
+                    and isinstance(payload, dict)
+                    and "turn_token_usage" in payload
+                ):
+                    return True
+    except OSError:
+        return False
+    return False
+
+
+def _wait_for_session_usage(
+    path: str, timeout_seconds: float = 15.0, quiet_seconds: float = 1.0
+) -> None:
+    """Wait for a fresh Codex session to finish flushing its usage records.
+
+    ``codex exec`` can return before its session JSONL is fully written, which
+    previously aborted a valid run with "no token_usage_record". Poll until the
+    file has been stable for ``quiet_seconds`` and contains turn usage.
+    """
+    deadline = time.monotonic() + timeout_seconds
+    last_size = -1
+    last_change = time.monotonic()
+    while time.monotonic() < deadline:
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            size = -1
+        now = time.monotonic()
+        if size != last_size:
+            last_size = size
+            last_change = now
+        elif now - last_change >= quiet_seconds and _has_turn_usage(path):
+            return
+        time.sleep(0.1)
+    if not _has_turn_usage(path):
+        raise _BenchError(f"no token_usage_record.turn_token_usage in {path}")
+
+
 def _session_usage(path: str) -> list[Json]:
     final_snapshots: dict[str, Json] = {}
     with open(path, encoding="utf-8") as handle:
@@ -633,8 +684,17 @@ def _scalar_values(events: list[Json], event_type: str, field: str) -> list[str]
 
 
 def _session_observations(path: str) -> Json:
+    events: list[Json] = []
     with open(path, encoding="utf-8") as handle:
-        events = [_load_event(line) for line in handle]
+        for line in handle:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                events.append(_load_event(stripped))
+            except json.JSONDecodeError:
+                # A live session JSONL can be observed while still being written.
+                continue
     return {
         "observed_agent_path": _scalar_values(events, "session_meta", "agent_path"),
         "observed_cli_version": _scalar_values(events, "session_meta", "cli_version"),
@@ -990,6 +1050,7 @@ def _run_record(options: argparse.Namespace) -> int:
                 _completed_answer(stdout, answer_path, expected)
             metadata.update(fixture)
             session_path = _newest_session(sessions_before, directory)
+            _wait_for_session_usage(session_path)
             observations = _assert_live_observations(
                 session_path,
                 requested={"model": options.model, "effort": options.reasoning_effort},

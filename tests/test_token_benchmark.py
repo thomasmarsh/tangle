@@ -180,3 +180,18 @@ def test_record_rejects_unrelated_fixture_edit(
         == 2
     )
     assert "unexpected fixture path" in capsys.readouterr().err
+
+
+def test_wait_for_session_usage_returns_for_complete_session() -> None:
+    token_benchmark._wait_for_session_usage(
+        str(_SESSION), timeout_seconds=1.0, quiet_seconds=0.05
+    )
+
+
+def test_wait_for_session_usage_times_out_without_usage(tmp_path: Path) -> None:
+    path = tmp_path / "empty-session.jsonl"
+    path.write_text('{"type":"session_meta","payload":{}}\n', encoding="utf-8")
+    with pytest.raises(token_benchmark._BenchError):
+        token_benchmark._wait_for_session_usage(
+            str(path), timeout_seconds=0.2, quiet_seconds=0.05
+        )
