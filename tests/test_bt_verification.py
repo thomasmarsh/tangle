@@ -17,6 +17,13 @@ from pathlib import Path
 
 BtCommand = Callable[[], list[str]]
 
+# The only valid ``--base-hash`` operand is a bare 64-character lowercase hex
+# digest, so the tests pass real digests rather than placeholders.
+_BASE_HASH = "4d" * 32
+_OLD_HASH = "5e" * 32
+_NEW_HASH = "6f" * 32
+_CHANGED_HASH = "7a" * 32
+
 
 def _env(**overrides: str | None) -> dict[str, str]:
     env = os.environ.copy()
@@ -64,7 +71,7 @@ def test_claim_contention_produces_one_owner(
         "TAS-900",
         "agent-a",
         "--base-hash",
-        "hash-a",
+        _BASE_HASH,
         "--lease-seconds",
         "60",
     ]
@@ -114,7 +121,16 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
     command = bt_command()
     subprocess.run([*command, "init"], env=env, capture_output=True, check=True)
     subprocess.run(
-        [*command, "claim", "TAS-901", "agent-a", "--base-hash", "old", "--lease-seconds", "60"],
+        [
+            *command,
+            "claim",
+            "TAS-901",
+            "agent-a",
+            "--base-hash",
+            _OLD_HASH,
+            "--lease-seconds",
+            "60",
+        ],
         env=env,
         capture_output=True,
         check=True,
@@ -127,7 +143,16 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
     finally:
         connection.close()
     reclaimed = subprocess.run(
-        [*command, "claim", "TAS-901", "agent-b", "--base-hash", "new", "--lease-seconds", "60"],
+        [
+            *command,
+            "claim",
+            "TAS-901",
+            "agent-b",
+            "--base-hash",
+            _NEW_HASH,
+            "--lease-seconds",
+            "60",
+        ],
         env=env,
         capture_output=True,
         text=True,
@@ -140,7 +165,7 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
             "TAS-901",
             "agent-b",
             "--base-hash",
-            "changed",
+            _CHANGED_HASH,
             "--lease-seconds",
             "60",
         ],
@@ -157,7 +182,7 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
     finally:
         connection.close()
     lapsed = subprocess.run(
-        [*command, "release", "TAS-901", "agent-b", "--base-hash", "new"],
+        [*command, "release", "TAS-901", "agent-b", "--base-hash", _NEW_HASH],
         env=env,
         capture_output=True,
         text=True,
@@ -165,7 +190,7 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
     assert 'result: "expired"' in lapsed.stdout
     assert 'lease_remaining_seconds: "0"' in lapsed.stdout
     never_held = subprocess.run(
-        [*command, "release", "TAS-901", "agent-b", "--base-hash", "new"],
+        [*command, "release", "TAS-901", "agent-b", "--base-hash", _NEW_HASH],
         env=env,
         capture_output=True,
         text=True,
@@ -248,14 +273,32 @@ def test_worktrees_share_project_identity(
     assert identity_a and identity_a == identity_b
 
     subprocess.run(
-        [*command, "claim", "TAS-902", "tree-a", "--base-hash", "base", "--lease-seconds", "60"],
+        [
+            *command,
+            "claim",
+            "TAS-902",
+            "tree-a",
+            "--base-hash",
+            _BASE_HASH,
+            "--lease-seconds",
+            "60",
+        ],
         cwd=tree_a,
         env=env,
         capture_output=True,
         check=True,
     )
     conflict = subprocess.run(
-        [*command, "claim", "TAS-902", "tree-b", "--base-hash", "base", "--lease-seconds", "60"],
+        [
+            *command,
+            "claim",
+            "TAS-902",
+            "tree-b",
+            "--base-hash",
+            _BASE_HASH,
+            "--lease-seconds",
+            "60",
+        ],
         cwd=tree_b,
         env=env,
         capture_output=True,

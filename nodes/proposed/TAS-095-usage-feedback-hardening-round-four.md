@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T17:32:35Z
+updated: 2026-09-12T21:46:34Z
 summary: Fix or dispose the round-four Tangle feedback findings and close the one admitted portfolio gap in the node-capture path.
-next: "[[TAS-096-base-hash-validation]]"
+next: "[[TAS-097-slice-primitive-scope]]"
 ---
 
 # Context

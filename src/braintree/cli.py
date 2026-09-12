@@ -78,6 +78,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
 
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
 _POSITIVE_INTEGER = re.compile(r"[0-9]+\Z")
+# The only accepted ``--base-hash`` operand is the bare digest ``braintree hash``
+# prints, so the labelled ``node:``/``content_hash:`` block, a short placeholder,
+# or an uppercase digest can never become a recorded lease identity.
+_BASE_HASH = re.compile(r"[0-9a-f]{64}\Z")
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
 _NODE_STEM = re.compile(r"([A-Z][A-Z0-9_]*-\d+)-")
 _PRIORITY = re.compile(r"P[0-3]\Z")
@@ -118,6 +122,19 @@ def _usage_error(message: str) -> int:
     print(field("error", message))
     print(field("help", "Run `braintree --help` for command usage."))
     return 2
+
+
+def _base_hash_error(value: str) -> int:
+    """Reject a base hash that is not the bare digest ``braintree hash`` prints.
+
+    The accepted operand is one bare 64-character lowercase hex digest, so the
+    labelled ``node:``/``content_hash:`` block, a short placeholder, or an
+    uppercase digest fails here, before any sidecar write.
+    """
+    return _usage_error(
+        "--base-hash must be a bare 64-character lowercase hex digest, not "
+        f"{value!r}"
+    )
 
 
 def _runtime_error(message: str) -> int:
@@ -231,6 +248,8 @@ def _claim(args: list[str]) -> int:
         index_arg += 1
     if node == "" or agent == "" or base_hash is None or base_hash == "":
         return _usage_error("claim requires non-empty NODE, AGENT, and --base-hash HASH")
+    if _BASE_HASH.fullmatch(base_hash) is None:
+        return _base_hash_error(base_hash)
     if _POSITIVE_INTEGER.fullmatch(lease_raw) is None or int(lease_raw) <= 0:
         return _usage_error("--lease-seconds must be a positive integer")
     try:
@@ -262,6 +281,8 @@ def _release(args: list[str]) -> int:
     node, agent, base_hash = args[1], args[2], args[4]
     if node == "" or agent == "" or base_hash == "":
         return _usage_error("release requires non-empty NODE, AGENT, and HASH")
+    if _BASE_HASH.fullmatch(base_hash) is None:
+        return _base_hash_error(base_hash)
     try:
         result, remaining = sidecar.release(node, agent, base_hash)
     except sidecar.ReleaseConflict as exc:

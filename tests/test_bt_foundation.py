@@ -29,6 +29,12 @@ _FRONTMATTER = (
     "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\nsummary: Fixture.\n---\n"
 )
 
+# Real 64-character lowercase hex digests stand in for a node's recorded base
+# hash, the bare operand `braintree hash` prints.
+_BASE_HASH_A = "1a" * 32
+_BASE_HASH_B = "2b" * 32
+_BASE_HASH_C = "3c" * 32
+
 
 def _seed_allocations(vault: Path) -> None:
     (vault / "active").mkdir(parents=True)
@@ -79,44 +85,96 @@ def test_allocate_is_atomic_and_per_prefix(tmp_path: Path, run_bt: RunBt) -> Non
 def test_claim_renew_conflict_and_release(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
     first = run_bt(
-        "claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "60", env=env
+        "claim",
+        "TAS-001",
+        "agent-a",
+        "--base-hash",
+        _BASE_HASH_A,
+        "--lease-seconds",
+        "60",
+        env=env,
     )
     assert 'result: "claimed"' in first.stdout
     renewed = run_bt(
-        "claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "60", env=env
+        "claim",
+        "TAS-001",
+        "agent-a",
+        "--base-hash",
+        _BASE_HASH_A,
+        "--lease-seconds",
+        "60",
+        env=env,
     )
     assert 'result: "claimed"' in renewed.stdout
 
-    other_agent = run_bt("claim", "TAS-001", "agent-b", "--base-hash", "abc", env=env)
+    other_agent = run_bt("claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env)
     assert other_agent.returncode == 1
     assert (
         'error: "node is claimed by agent-a with a different base hash"' in other_agent.stdout
     )
-    other_hash = run_bt("claim", "TAS-001", "agent-a", "--base-hash", "def", env=env)
+    other_hash = run_bt("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_B, env=env)
     assert other_hash.returncode == 1
     assert 'error: "node is claimed by agent-a with a different base hash"' in other_hash.stdout
 
-    wrong_hash = run_bt("release", "TAS-001", "agent-a", "--base-hash", "def", env=env)
+    wrong_hash = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_B, env=env)
     assert wrong_hash.returncode == 1
     assert (
         'error: "base hash does not match the recorded claim for TAS-001; release refused"'
         in wrong_hash.stdout
     )
-    wrong_owner = run_bt("release", "TAS-001", "agent-b", "--base-hash", "abc", env=env)
+    wrong_owner = run_bt("release", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env)
     assert wrong_owner.returncode == 1
     assert 'error: "node is claimed by agent-a; release refused"' in wrong_owner.stdout
-    still_held = run_bt("claim", "TAS-001", "agent-b", "--base-hash", "abc", env=env)
+    still_held = run_bt("claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env)
     assert still_held.returncode == 1
 
-    released = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    released = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert 'result: "released"' in released.stdout
-    again = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    again = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert 'result: "no-op"' in again.stdout
+
+
+def test_claim_and_release_reject_a_non_digest_base_hash(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    labelled_block = f'node: "TAS-001"\ncontent_hash: "{_BASE_HASH_A}"'
+    malformed = {
+        "the labelled multi-line hash block": labelled_block,
+        "a short placeholder": "abc",
+        "an uppercase digest": _BASE_HASH_A.upper(),
+    }
+    for label, operand in malformed.items():
+        claim = run_bt("claim", "TAS-001", "agent-a", "--base-hash", operand, env=env)
+        assert claim.returncode == 2, label
+        assert (
+            "--base-hash must be a bare 64-character lowercase hex digest" in claim.stdout
+        ), label
+        release = run_bt("release", "TAS-001", "agent-a", "--base-hash", operand, env=env)
+        assert release.returncode == 2, label
+        assert (
+            "--base-hash must be a bare 64-character lowercase hex digest" in release.stdout
+        ), label
+    # The shape check runs before any sidecar write, so no claim and no sidecar
+    # were created by the rejected operands.
+    assert not _database(tmp_path).is_file()
+
+
+def test_claim_and_release_accept_a_bare_digest(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    claimed = run_bt("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    assert claimed.returncode == 0
+    assert f'base_hash: "{_BASE_HASH_A}"' in claimed.stdout
+    released = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    assert released.returncode == 0
+    assert 'result: "released"' in released.stdout
 
 
 def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
-    run_bt("claim", "TAS-001", "agent-b", "--base-hash", "def", "--lease-seconds", "1", env=env)
+    run_bt(
+        "claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_B, "--lease-seconds", "1", env=env
+    )
     database = _database(tmp_path)
     connection = sqlite3.connect(database)
     try:
@@ -125,14 +183,21 @@ def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_bt: RunBt) -> None:
     finally:
         connection.close()
     reclaimed = run_bt(
-        "claim", "TAS-001", "agent-a", "--base-hash", "ghi", "--lease-seconds", "60", env=env
+        "claim",
+        "TAS-001",
+        "agent-a",
+        "--base-hash",
+        _BASE_HASH_C,
+        "--lease-seconds",
+        "60",
+        env=env,
     )
     assert 'result: "claimed"' in reclaimed.stdout
 
 
 def test_claim_states_the_default_lease_duration(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
-    claimed = run_bt("claim", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    claimed = run_bt("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert 'result: "claimed"' in claimed.stdout
     assert _remaining(claimed.stdout) == 900
 
@@ -142,28 +207,43 @@ def test_reclaim_with_the_same_agent_and_hash_renews_the_lease(
 ) -> None:
     env = _env(tmp_path)
     first = run_bt(
-        "claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "60", env=env
+        "claim",
+        "TAS-001",
+        "agent-a",
+        "--base-hash",
+        _BASE_HASH_A,
+        "--lease-seconds",
+        "60",
+        env=env,
     )
     assert _remaining(first.stdout) == 60
     renewed = run_bt(
-        "claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "300",
+        "claim",
+        "TAS-001",
+        "agent-a",
+        "--base-hash",
+        _BASE_HASH_A,
+        "--lease-seconds",
+        "300",
         env=env,
     )
     assert 'result: "claimed"' in renewed.stdout
     assert _remaining(renewed.stdout) == 300
-    released = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    released = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert 'result: "released"' in released.stdout
     assert 1 <= _remaining(released.stdout) <= 300
 
 
 def test_release_separates_expired_from_never_held(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
-    never_held = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    never_held = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert never_held.returncode == 0
     assert 'result: "no-op"' in never_held.stdout
     assert _remaining(never_held.stdout) == 0
 
-    run_bt("claim", "TAS-001", "agent-a", "--base-hash", "abc", "--lease-seconds", "1", env=env)
+    run_bt(
+        "claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, "--lease-seconds", "1", env=env
+    )
     database = _database(tmp_path)
     connection = sqlite3.connect(database)
     try:
@@ -172,13 +252,13 @@ def test_release_separates_expired_from_never_held(tmp_path: Path, run_bt: RunBt
     finally:
         connection.close()
 
-    lapsed = run_bt("release", "TAS-001", "agent-a", "--base-hash", "abc", env=env)
+    lapsed = run_bt("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert lapsed.returncode == 0
     assert 'result: "expired"' in lapsed.stdout
     assert _remaining(lapsed.stdout) == 0
 
     # The lapsed claim is cleared, so the node is free for the next writer.
-    reclaimed = run_bt("claim", "TAS-001", "agent-b", "--base-hash", "def", env=env)
+    reclaimed = run_bt("claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_B, env=env)
     assert 'result: "claimed"' in reclaimed.stdout
 
 
