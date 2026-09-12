@@ -1,10 +1,10 @@
 """Opt-in Codex token benchmark.
 
-Typed Python port of ``scripts/token-benchmark.rb``. The measured work is a
-fresh generated repository, never this checkout. Only usage telemetry is read
-from sessions. Every option surface, output line, fixture, and correctness gate
-is preserved so the tracked baselines and the zero-live-call recording checks
-keep working.
+Typed Python port of the historical ``token-benchmark`` harness. The measured
+work is a fresh generated repository, never this checkout. Only usage telemetry
+is read from sessions. Every option surface, output line, fixture, and
+correctness gate is preserved so the tracked baselines and the zero-live-call
+recording checks keep working.
 """
 
 from __future__ import annotations
@@ -93,8 +93,37 @@ def _skill_metadata_source() -> Path:
     return _repo_root() / "agents" / "openai.yaml"
 
 
-def _graph_check_source() -> Path:
-    return _repo_root() / "scripts" / "graph-check.rb"
+def _installed_skill_files() -> dict[str, bytes]:
+    """Map installed-skill relative paths to their repository bytes.
+
+    The installed skill is a ``uv`` project, so a fixture copy mirrors the
+    installer's distributable tree exactly.
+    """
+    package = _repo_root() / "src" / "braintree"
+    paths = [
+        _skill_source(),
+        _skill_metadata_source(),
+        _repo_root() / "pyproject.toml",
+        _repo_root() / "uv.lock",
+        _repo_root() / ".python-version",
+        _repo_root() / "README.md",
+    ]
+    files: dict[str, bytes] = {}
+    for path in paths:
+        files[str(path.relative_to(_repo_root()))] = path.read_bytes()
+    for source in sorted(package.iterdir()):
+        if source.is_file():
+            files[str(source.relative_to(_repo_root()))] = source.read_bytes()
+    return files
+
+
+def _run_graph_check(nodes_dir: str, *graph_args: str) -> int:
+    result = subprocess.run(
+        [sys.executable, "-m", "braintree.graph_check", *graph_args, nodes_dir],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.returncode
 
 
 def _write(path: str, data: str | bytes) -> None:
@@ -228,13 +257,7 @@ def _completed_mutation(stream: str, answer_path: str, root: str, before: dict[s
         raise _BenchError("mutation did not preserve its dependency pin")
     if "# Result\n\nValidated the signed schema contract.\n" not in node:
         raise _BenchError("mutation did not record exact completion evidence")
-    graph_check = os.path.join(root, ".agents/skills/braintree/scripts/graph-check.rb")
-    result = subprocess.run(
-        ["ruby", graph_check, os.path.join(root, "nodes")],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    if result.returncode != 0:
+    if _run_graph_check(os.path.join(root, "nodes")) != 0:
         raise _BenchError("mutated graph is invalid")
 
 
@@ -337,15 +360,8 @@ def _generate_fixture(root: str, representation: str, scale: str, benchmark_case
     _write(os.path.join(root, ".gitignore"), "*\n!.gitignore\n")
     if representation == "graph":
         skill_root = os.path.join(root, ".agents/skills/braintree")
-        _write(os.path.join(skill_root, "SKILL.md"), _skill_source().read_bytes())
-        _write(
-            os.path.join(skill_root, "agents/openai.yaml"),
-            _skill_metadata_source().read_bytes(),
-        )
-        _write(
-            os.path.join(skill_root, "scripts/graph-check.rb"),
-            _graph_check_source().read_bytes(),
-        )
+        for relative, data in _installed_skill_files().items():
+            _write(os.path.join(skill_root, relative), data)
         if benchmark_case == "routine-mutation":
             _write(
                 os.path.join(root, "nodes/index-map.md"),
@@ -738,17 +754,17 @@ def _emit_historical_accounting(runs: list[list[Json]], provenance: list[Json]) 
 def _protocol() -> None:
     print("token_benchmark{status,live_calls,baseline}: ready,0,absent")
     print(
-        "record: ruby scripts/token-benchmark.rb --record --model MODEL "
+        "record: uv run token-benchmark --record --model MODEL "
         "--reasoning-effort low --representation graph --scale small "
         "--repetitions 3 --output benchmark/token-baseline.json"
     )
     print(
-        "control: ruby scripts/token-benchmark.rb --record --model MODEL "
+        "control: uv run token-benchmark --record --model MODEL "
         "--reasoning-effort low --representation plan --scale small "
         "--repetitions 3 --output benchmark/token-plan-control.json"
     )
     print(
-        "historical accounting: ruby scripts/token-benchmark.rb --session PATH "
+        "historical accounting: uv run token-benchmark --session PATH "
         "[--task-path /root/task]"
     )
 
@@ -812,20 +828,12 @@ def _check_fixture(benchmark_case: str) -> int:
                 ):
                     raise _BenchError("fixture prompt leaks expected answer")
                 if representation == "graph":
-                    graph_check = os.path.join(
-                        directory, ".agents/skills/braintree/scripts/graph-check.rb"
-                    )
                     graph_args = (
                         ["--allow-stale", "--allow-orphan", "TAS-060-unrouted-cleanup"]
                         if benchmark_case == "composite"
                         else []
                     )
-                    result = subprocess.run(
-                        ["ruby", graph_check, *graph_args, os.path.join(directory, "nodes")],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    if result.returncode != 0:
+                    if _run_graph_check(os.path.join(directory, "nodes"), *graph_args) != 0:
                         raise _BenchError("graph fixture structural check failed")
                     if Path(directory, ".agents/skills/braintree/SKILL.md").read_bytes() != (
                         _skill_source().read_bytes()

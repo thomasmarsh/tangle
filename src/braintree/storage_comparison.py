@@ -1,6 +1,6 @@
 """Offline comparison of four status representations.
 
-Typed Python port of ``scripts/storage-comparison.rb``. It creates disposable
+Typed Python implementation of the status-representation comparison. It creates disposable
 Git repositories only; no fixture, cache, or status view is retained. The
 ``storage{...}`` line and the tracked baseline in
 ``benchmark/storage-comparison-baseline.txt`` are preserved.

@@ -9,7 +9,7 @@ Use the vault as a low-overhead execution graph. Keep planning, decisions, defin
 
 ## Hybrid sidecar contract
 
-Use the installed `scripts/bt` command for graph indexes and live coordination; do not have workers read or write SQLite directly. Its stdout is compact TOON and its errors are actionable. `bt` keeps an untracked, external SQLite sidecar keyed by the repository's Git common directory, normally under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all worktrees of one local repository therefore share it. `BT_SIDECAR_DIR` and `BT_PROJECT_ID` are explicit test or isolated-vault overrides.
+Use the installed `bt` command for graph indexes and live coordination; invoke it through the skill's `uv` project with `uv run --project .agents/skills/braintree --frozen bt ...` (`.claude/skills/braintree` for a Claude install). Do not have workers read or write SQLite directly. Its stdout is compact TOON and its errors are actionable. `bt` keeps an untracked, external SQLite sidecar keyed by the repository's Git common directory, normally under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all worktrees of one local repository therefore share it. `BT_SIDECAR_DIR` and `BT_PROJECT_ID` are explicit test or isolated-vault overrides.
 
 - Markdown remains authoritative for node prose, wikilinks, semantic `context_rev` values and pins, status directories, priorities, and `next`. Preserve its directory layout for Obsidian. Do not introduce a second authority for any field.
 - `bt reindex [nodes]` rebuilds derived SQLite node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown. `bt search`, `bt backlinks`, and `bt stale` reconcile first, so cached graph rows are disposable acceleration rather than durable knowledge.
@@ -103,9 +103,9 @@ For parallel creation, use `bt allocate PREFIX` to atomically reserve an ID. Coo
 
 Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node, and claims it with `bt claim`. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
 
-Serial work uses the same discipline without separate branches: a lone worker self-assigns one node and its write set before claiming. Include any deliberate parent-frontier advance in the same commit as the node's content update and status move, then run `ruby scripts/graph-check.rb nodes` and the exact dependency-pin searches. Commit the coherent unit unless the user or project says otherwise; do not leave a resolved status move uncommitted.
+Serial work uses the same discipline without separate branches: a lone worker self-assigns one node and its write set before claiming. Include any deliberate parent-frontier advance in the same commit as the node's content update and status move, then run `uv run --project .agents/skills/braintree --frozen graph-check nodes` and the exact dependency-pin searches. Commit the coherent unit unless the user or project says otherwise; do not leave a resolved status move uncommitted.
 
-The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `ruby scripts/graph-check.rb nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
+The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `uv run --project .agents/skills/braintree --frozen graph-check nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
 
 ## Reachability contract
 
@@ -188,12 +188,12 @@ Prefer counts or bounded results over printing thousands of paths. Direct backli
 
 ## Integrity and sidecar commands
 
-For grooming or CI, an installed copy includes `scripts/graph-check.rb`, a portable read-only Markdown validator. It does not require the sidecar. The installed `scripts/bt` and `scripts/bt-index.rb` provide the optional hybrid index and same-host coordination layer:
+For grooming or CI, an installed copy includes the `graph-check` command, a portable read-only Markdown validator. It does not require the sidecar. The installed `bt` command provides the optional hybrid index and same-host coordination layer. Both run through the skill's `uv` project:
 
 ```sh
-ruby .agents/skills/braintree/scripts/graph-check.rb nodes
-./.agents/skills/braintree/scripts/bt reindex nodes
-./.agents/skills/braintree/scripts/bt search 'authentication' --limit 10
+uv run --project .agents/skills/braintree --frozen graph-check nodes
+uv run --project .agents/skills/braintree --frozen bt reindex nodes
+uv run --project .agents/skills/braintree --frozen bt search 'authentication' --limit 10
 ```
 
 Run them from the project root, passing the current vault's nodes directory when it is not `nodes`. The checker validates the current status-directory layout: node identity and links, required headers and lifecycle rules, canonical edges and frontiers, dependency-pin syntax and revision mismatch, primary-route reachability, and parent cycles. The sidecar is optional for ordinary serial graph work.

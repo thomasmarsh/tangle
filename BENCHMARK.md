@@ -6,7 +6,7 @@ Actual model-token consumption is the optimization metric. Fixture bytes,
 filesystem reads, elapsed time, and synthetic `work_units` are not token
 proxies. A token result is valid only when the controlled task is correct.
 
-`scripts/token-benchmark.rb` reads only `token_usage_record` usage maps from a
+`token-benchmark` reads only `token_usage_record` usage maps from a
 fresh Codex session JSONL and reports `input_tokens`, `cached_input_tokens`,
 `uncached_input_tokens`, `output_tokens`, `reasoning_output_tokens`, and
 `total_tokens`. It derives uncached input as input minus cached input and
@@ -276,8 +276,8 @@ deliberate treatment differences, so this is evidence about this retrieval task,
 not a universal token ranking.
 
 Every graph fixture installs the same distributable files as the project Codex
-installer: `SKILL.md`, `agents/openai.yaml`, `scripts/graph-check.rb`, `scripts/bt`, and
-`scripts/bt-index.rb` under
+installer: `SKILL.md`, `agents/openai.yaml`, `pyproject.toml`, `uv.lock`,
+`.python-version`, `README.md`, and the `src/braintree/` package under
 `.agents/skills/braintree/`; the zero-call check byte-compares
 the copied instructions and metadata with this repository. Every live invocation uses `codex exec --json --ignore-user-config --ignore-rules
 -C GENERATED_FIXTURE` with a fresh session and read-only sandbox. Authentication
@@ -311,7 +311,7 @@ exact `next` action, while resolved history, blocked work, proposed work, and
 unselected active work are distractors. It is used only to compare one skill
 route variant at a time; baseline and candidate must use its same fixture hash,
 prompt, model, effort, CLI version, and recording configuration. Generate it
-without live calls with `ruby scripts/token-benchmark.rb --check-fixture --case cold-resume`.
+without live calls with `uv run token-benchmark --check-fixture --case cold-resume`.
 
 The final two-call cold-resume route screen was rejected, not adopted. Both
 fresh sessions returned the exact gate answer, but the recorder rejected their
@@ -336,8 +336,8 @@ mode cannot mask an accidental stale pin. `make benchmark` makes zero model call
 sanitized telemetry schema without session content with:
 
 ```sh
-ruby scripts/token-benchmark.rb --check-fixture
-ruby scripts/token-benchmark.rb --inspect-session ~/.codex/sessions/...jsonl
+uv run token-benchmark --check-fixture
+uv run token-benchmark --inspect-session ~/.codex/sessions/...jsonl
 ```
 
 ## Historical implementation-cost accounting
@@ -349,7 +349,7 @@ task-path match:
 
 ```sh
 rg -l -F '/root/token_benchmark_realism' ~/.codex/sessions --glob '*.jsonl'
-ruby scripts/token-benchmark.rb --session ~/.codex/sessions/...jsonl --task-path /root/token_benchmark_realism
+uv run token-benchmark --session ~/.codex/sessions/...jsonl --task-path /root/token_benchmark_realism
 ```
 
 The importer reads only safe session metadata (`agent_path`, CLI version,
@@ -368,21 +368,21 @@ Record a reviewable graph baseline (three model sessions) only by explicit
 opt-in; record the matched control separately (three more sessions):
 
 ```sh
-ruby scripts/token-benchmark.rb --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 3 --output benchmark/token-baseline.json
-ruby scripts/token-benchmark.rb --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 3 --output benchmark/token-plan-control.json
+uv run token-benchmark --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 3 --output benchmark/token-baseline.json
+uv run token-benchmark --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 3 --output benchmark/token-plan-control.json
 ```
 
 For a minimal initial baseline, use two fresh sessions per representation:
 
 ```sh
-ruby scripts/token-benchmark.rb --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 2 --output benchmark/token-graph-small-2.json
-ruby scripts/token-benchmark.rb --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 2 --output benchmark/token-plan-small-2.json
+uv run token-benchmark --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 2 --output benchmark/token-graph-small-2.json
+uv run token-benchmark --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 2 --output benchmark/token-plan-small-2.json
 ```
 
 ## Secondary filesystem diagnostic
 
-`scripts/behavioral-benchmark.rb` builds disposable 100- and 1,000-node graph
-fixtures using only Ruby's standard library. Each contains an index route to a
+`behavioral-benchmark` builds disposable 100- and 1,000-node graph
+fixtures using only the Python standard library. Each contains an index route to a
 root hub, a current definition, a superseded and current routing decision,
 pinned task dependencies, an active high-priority cold-resumption record, and
 one deliberately disconnected actionable record. It performs four bounded
@@ -422,7 +422,7 @@ change handoff.
 
 ## Status-storage comparison
 
-`scripts/storage-comparison.rb` creates four disposable 100-node Git fixtures:
+`storage-comparison` creates four disposable 100-node Git fixtures:
 the adopted status directories, stationary prefix-sharded files with an
 authoritative `status` field, stationary files with symlink status views, and
 stationary files with one copied status index. `make storage-comparison` checks
@@ -463,8 +463,8 @@ automatic global ranking, and linear scans for cross-cutting questions. These
 are preferable here to a mutable global cache only while the scan costs and
 agent interaction remain acceptable for the real repository.
 
-An optional, read-only `scripts/graph-check.rb` is distributed with the skill
-for grooming and CI. It uses only Ruby's standard library and retains no state;
+An optional, read-only `graph-check` command is distributed with the skill
+for grooming and CI. It uses only the Python standard library and retains no state;
 it checks integrity but is not part of normal graph reads or mutations.
 
 ## Routine-mutation screen

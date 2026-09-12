@@ -19,7 +19,7 @@ write_node "$nodes/resolved/DEF-001-contract.md" '---' 'context_rev: 1' 'updated
 write_node "$nodes/active/TAS-001-parent.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Parent.' 'next: Continue [[TAS-002-child]].' '---' '' 'Area [[IDX-001-root]].' '' 'Depends on [[DEF-001-contract]] at context_rev 1.'
 write_node "$nodes/active/TAS-002-child.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Child.' 'next: Finish the check.' '---' '' 'Parent [[TAS-001-parent]].'
 
-"$repo_root/scripts/graph-check.rb" "$nodes" >/dev/null
+"$repo_root/scripts/graph-check" "$nodes" >/dev/null
 
 # An empty-vault bootstrap needs a routed IDX root before its first actionable
 # node; this fixture exercises the shipped checker against that minimum shape.
@@ -28,12 +28,12 @@ mkdir -p "$bootstrap/active" "$bootstrap/resolved"
 write_node "$bootstrap/index-map.md" '---' 'updated: 2026-09-10T00:00:00Z' 'summary: Route graph work.' '---' '' '# Root hubs' '' '- Indexes [[IDX-001-root]].'
 write_node "$bootstrap/resolved/IDX-001-root.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Root hub.' '---' '' '# Invariant' '' 'No Parent or Area route.'
 write_node "$bootstrap/active/TAS-001-first-action.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: First actionable node.' 'next: Perform the first action.' '---' '' 'Area [[IDX-001-root]].'
-"$repo_root/scripts/graph-check.rb" "$bootstrap" >/dev/null
+"$repo_root/scripts/graph-check" "$bootstrap" >/dev/null
 
 expect_error() {
   label=$1
   expected=$2
-  if "$repo_root/scripts/graph-check.rb" "$nodes" >"$test_root/out" 2>"$test_root/err"; then
+  if "$repo_root/scripts/graph-check" "$nodes" >"$test_root/out" 2>"$test_root/err"; then
     echo "expected graph check failure: $label" >&2
     exit 1
   fi

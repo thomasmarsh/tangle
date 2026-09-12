@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic fake Codex CLI for the zero-live-call mutation recorder test.
 
-Python port of ``tests/fixtures/fake-codex-mutation.rb``. It performs the one
+It performs the one
 expected node mutation, records the event stream the real CLI would emit, and
 honors ``BT_FAKE_MUTATION_EXTRA_EDIT`` to exercise the unrelated-edit gate.
 """

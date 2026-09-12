@@ -1,6 +1,6 @@
 """Rebuildable Markdown-derived graph index.
 
-Typed Python port of ``scripts/bt-index.rb``. Durable graph state stays in
+Typed Python implementation of the Markdown index builder. Durable graph state stays in
 Markdown; this module rebuilds the disposable ``nodes``, ``edges``, and FTS
 rows plus the search, backlinks, and stale-pin queries over them.
 """

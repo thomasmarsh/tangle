@@ -9,20 +9,36 @@ project="$test_root/project"
 home_root="$test_root/home"
 mkdir -p "$project" "$home_root"
 
+# Every installed skill is a `uv` project. Compare its copied package tree with
+# the repository sources, then prove the installed console script runs.
+package_files="pyproject.toml uv.lock .python-version README.md"
+for file in "$repo_root"/src/braintree/*; do
+  [ -f "$file" ] || continue
+  package_files="$package_files src/braintree/$(basename -- "$file")"
+done
+
+check_tree() {
+  destination=$1
+  cmp -s "$repo_root/SKILL.md" "$destination/SKILL.md"
+  for relative in $package_files; do
+    cmp -s "$repo_root/$relative" "$destination/$relative"
+  done
+}
+
+run_installed() {
+  destination=$1
+  uv run --project "$destination" --frozen --quiet graph-check "$repo_root/nodes" >/dev/null
+}
+
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)
 case "$dry_run" in *"$project/.agents/skills/braintree"*) ;; *) exit 1;; esac
 [ ! -e "$project/.agents" ]
 
 $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$project/.agents/skills/braintree/SKILL.md"
-cmp -s "$repo_root/agents/openai.yaml" "$project/.agents/skills/braintree/agents/openai.yaml"
-cmp -s "$repo_root/scripts/graph-check.rb" "$project/.agents/skills/braintree/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/bt" "$project/.agents/skills/braintree/scripts/bt"
-cmp -s "$repo_root/scripts/bt-index.rb" "$project/.agents/skills/braintree/scripts/bt-index.rb"
-[ -x "$project/.agents/skills/braintree/scripts/graph-check.rb" ]
-[ -x "$project/.agents/skills/braintree/scripts/bt" ]
-[ -x "$project/.agents/skills/braintree/scripts/bt-index.rb" ]
-ruby "$project/.agents/skills/braintree/scripts/graph-check.rb" "$repo_root/nodes" >/dev/null
+codex_destination="$project/.agents/skills/braintree"
+check_tree "$codex_destination"
+cmp -s "$repo_root/agents/openai.yaml" "$codex_destination/agents/openai.yaml"
+run_installed "$codex_destination"
 
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
@@ -31,13 +47,10 @@ $repo_root/scripts/install.sh --codex --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/braintree/SKILL.md"
 
 $repo_root/scripts/install.sh --claude --project "$project" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$project/.claude/skills/braintree/SKILL.md"
-cmp -s "$repo_root/scripts/graph-check.rb" "$project/.claude/skills/braintree/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/bt" "$project/.claude/skills/braintree/scripts/bt"
-cmp -s "$repo_root/scripts/bt-index.rb" "$project/.claude/skills/braintree/scripts/bt-index.rb"
-[ -x "$project/.claude/skills/braintree/scripts/graph-check.rb" ]
-[ -x "$project/.claude/skills/braintree/scripts/bt" ]
-[ -x "$project/.claude/skills/braintree/scripts/bt-index.rb" ]
+claude_destination="$project/.claude/skills/braintree"
+check_tree "$claude_destination"
+[ ! -e "$claude_destination/agents" ]
+run_installed "$claude_destination"
 
 $repo_root/scripts/install.sh --claude --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.claude/skills/braintree/SKILL.md"
@@ -52,25 +65,15 @@ case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/b
 [ ! -e "$claude_project/.claude" ]
 
 $repo_root/scripts/install-claude.sh --project "$claude_project" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$claude_project/.claude/skills/braintree/SKILL.md"
-cmp -s "$repo_root/scripts/graph-check.rb" "$claude_project/.claude/skills/braintree/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/bt" "$claude_project/.claude/skills/braintree/scripts/bt"
-cmp -s "$repo_root/scripts/bt-index.rb" "$claude_project/.claude/skills/braintree/scripts/bt-index.rb"
-[ -x "$claude_project/.claude/skills/braintree/scripts/graph-check.rb" ]
-[ -x "$claude_project/.claude/skills/braintree/scripts/bt" ]
-[ -x "$claude_project/.claude/skills/braintree/scripts/bt-index.rb" ]
-[ ! -e "$claude_project/.claude/skills/braintree/agents" ]
+wrapper_destination="$claude_project/.claude/skills/braintree"
+check_tree "$wrapper_destination"
+[ ! -e "$wrapper_destination/agents" ]
+run_installed "$wrapper_destination"
 claude_repeat=$($repo_root/scripts/install-claude.sh --project "$claude_project")
 case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; esac
 
 $repo_root/scripts/install-claude.sh --home "$claude_home" >/dev/null
-cmp -s "$repo_root/SKILL.md" "$claude_home/.claude/skills/braintree/SKILL.md"
-cmp -s "$repo_root/scripts/graph-check.rb" "$claude_home/.claude/skills/braintree/scripts/graph-check.rb"
-cmp -s "$repo_root/scripts/bt" "$claude_home/.claude/skills/braintree/scripts/bt"
-cmp -s "$repo_root/scripts/bt-index.rb" "$claude_home/.claude/skills/braintree/scripts/bt-index.rb"
-[ -x "$claude_home/.claude/skills/braintree/scripts/graph-check.rb" ]
-[ -x "$claude_home/.claude/skills/braintree/scripts/bt" ]
-[ -x "$claude_home/.claude/skills/braintree/scripts/bt-index.rb" ]
+check_tree "$claude_home/.claude/skills/braintree"
 [ ! -e "$claude_home/.claude/skills/braintree/agents" ]
 
 if $repo_root/scripts/install.sh --codex >/dev/null 2>&1; then exit 1; fi

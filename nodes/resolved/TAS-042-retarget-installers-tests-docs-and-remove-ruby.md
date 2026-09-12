@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-11T23:45:12Z
-summary: Retarget installers, test runner, skill contract, and docs to the Python toolchain and delete tracked Ruby.
-next: Update `scripts/install.sh` to install the Python entry points and metadata, then rewrite the Ruby test scripts.
+updated: 2026-09-12T00:38:48Z
+summary: Installers, tests, Makefile, and docs drive the uv-managed Python toolchain; all tracked Ruby is removed.
 ---
 
 # Context
@@ -24,3 +23,9 @@ Installers, tests, Makefile, and docs drive the Python toolchain, and no tracked
 # Done when
 
 `make test` and `git diff --check` pass with no tracked Ruby, and a `--dry-run` install still reports the correct destination without writing.
+
+# Result
+
+`scripts/install.sh` now copies the `uv` project into the skill destination: `SKILL.md`, optional `agents/openai.yaml`, `pyproject.toml`, `uv.lock`, `.python-version`, `README.md`, and `src/braintree/`. Installed copies run through `uv run --project <destination> --frozen bt|graph-check`, matching the distribution decision. `tests/install.sh` byte-compares the copied tree and runs the installed `graph-check`; `tests/skill.sh` became `tests/test_skill.py`; `tests/graph-check.sh` and `tests/worktree-parallel.sh` invoke the new Python `scripts/graph-check` launcher. `Makefile` runs pytest, ruff, strict mypy, and the shell suites, and `README.md`/`BENCHMARK.md`/`SKILL.md` name the Python commands. `token_benchmark.py` installs the package tree in its fixture and validates with `python -m braintree.graph_check`.
+
+Evidence: `make test` passes (69 pytest tests, ruff, strict mypy, and every shell suite); `git ls-files` contains no `*.rb`; the token fixture `--check-fixture`/`--record` gates pass.

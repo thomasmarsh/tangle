@@ -1,7 +1,9 @@
 .PHONY: test benchmark diagnostic-benchmark storage-comparison
 
 test:
-	sh tests/skill.sh
+	uv run pytest -q
+	uv run ruff check
+	uv run mypy
 	sh tests/graph-check.sh
 	sh tests/install.sh
 	sh tests/behavioral-benchmark.sh
@@ -14,10 +16,10 @@ test:
 	git diff --check
 
 benchmark:
-	ruby scripts/token-benchmark.rb --protocol
+	uv run token-benchmark --protocol
 
 diagnostic-benchmark:
-	ruby scripts/behavioral-benchmark.rb --verify
+	uv run behavioral-benchmark --verify
 
 storage-comparison:
-	ruby scripts/storage-comparison.rb --verify
+	uv run storage-comparison --verify

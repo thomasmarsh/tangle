@@ -1,6 +1,6 @@
 """Deterministic, offline filesystem diagnostic for the file-only graph.
 
-Typed Python port of ``scripts/behavioral-benchmark.rb``. It creates a
+Typed Python implementation of the behavioral filesystem diagnostic. It creates a
 realistic cold-resumption corpus and measures bounded local reads; it is not a
 model-token benchmark. The tracked ``benchmark/behavioral-baseline.txt``
 metrics and the ``filesystem_diagnostic{...}`` line are preserved.

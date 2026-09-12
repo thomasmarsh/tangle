@@ -113,29 +113,33 @@ if [ "$dry_run" = true ]; then
 fi
 
 changed=false
-if [ ! -f "$destination/SKILL.md" ] || ! cmp -s "$repo_root/SKILL.md" "$destination/SKILL.md"; then
-  mkdir -p "$destination" 2>/dev/null || runtime_error "unable to create destination: $destination"
-  install -m 0644 "$repo_root/SKILL.md" "$destination/SKILL.md" 2>/dev/null || runtime_error "unable to install SKILL.md at: $destination"
-  changed=true
-fi
 
-if [ "$agent" = codex ]; then
-  if [ ! -f "$destination/agents/openai.yaml" ] || ! cmp -s "$repo_root/agents/openai.yaml" "$destination/agents/openai.yaml"; then
-    mkdir -p "$destination/agents" 2>/dev/null || runtime_error "unable to create metadata directory: $destination/agents"
-    install -m 0644 "$repo_root/agents/openai.yaml" "$destination/agents/openai.yaml" 2>/dev/null || runtime_error "unable to install Codex metadata at: $destination"
-    changed=true
-  fi
-fi
-
-for distributable in graph-check.rb bt bt-index.rb; do
-  source="$repo_root/scripts/$distributable"
-  target="$destination/scripts/$distributable"
+# Install one repository file into the skill destination, preserving its
+# relative path. The skill is a `uv` project: installed copies are invoked as
+# `uv run --project <destination> --frozen bt ...` and `... graph-check ...`.
+copy_file() {
+  relative=$1
+  mode=$2
+  source="$repo_root/$relative"
+  target="$destination/$relative"
   if [ -f "$target" ] && cmp -s "$source" "$target"; then
-    continue
+    return
   fi
-  mkdir -p "$destination/scripts" 2>/dev/null || runtime_error "unable to create checker directory: $destination/scripts"
-  install -m 0755 "$source" "$target" 2>/dev/null || runtime_error "unable to install graph tooling at: $target"
+  mkdir -p "$(dirname -- "$target")" 2>/dev/null || runtime_error "unable to create directory for: $target"
+  install -m "$mode" "$source" "$target" 2>/dev/null || runtime_error "unable to install: $target"
   changed=true
+}
+
+copy_file SKILL.md 0644
+if [ "$agent" = codex ]; then
+  copy_file agents/openai.yaml 0644
+fi
+for metadata in pyproject.toml uv.lock .python-version README.md; do
+  copy_file "$metadata" 0644
+done
+for source in "$repo_root"/src/braintree/*; do
+  [ -f "$source" ] || continue
+  copy_file "src/braintree/$(basename -- "$source")" 0644
 done
 
 if [ "$changed" = true ]; then

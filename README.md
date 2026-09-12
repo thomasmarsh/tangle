@@ -20,13 +20,13 @@ It is compatible with both Codex and Claude Code because both consume the standa
 
 ## Hybrid local sidecar
 
-Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `scripts/bt` hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
+Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `bt` command hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
 
 ```sh
-./scripts/bt init
-./scripts/bt reindex nodes
-./scripts/bt search 'authentication' --limit 10
-./scripts/bt allocate TAS
+uv run bt init
+uv run bt reindex nodes
+uv run bt search 'authentication' --limit 10
+uv run bt allocate TAS
 ```
 
 The sidecar is external and untracked, keyed by the Git common directory under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all local worktrees share it. It is rebuildable: database loss loses only indexes and leases, recovered by `bt init` and `bt reindex`. SQLite WAL is limited to concurrent processes on one host and a local filesystem. Do not place it on a network or synchronization filesystem. Cross-host coordination needs a server database (for example PostgreSQL) behind the same command interface. Status directories remain Markdown-authoritative; a stationary-path migration is deferred pending evidence that status-renames still cause material churn.
@@ -73,17 +73,17 @@ make test
 Installed projects can validate the current graph with the bundled Markdown checker (which needs no sidecar) or use the optional sidecar commands from the project root:
 
 ```sh
-ruby .agents/skills/braintree/scripts/graph-check.rb
+uv run --project .agents/skills/braintree --frozen graph-check nodes
 # or, for a Claude Code installation
-ruby .claude/skills/braintree/scripts/graph-check.rb nodes
-./.agents/skills/braintree/scripts/bt reindex nodes
+uv run --project .claude/skills/braintree --frozen graph-check nodes
+uv run --project .agents/skills/braintree --frozen bt reindex nodes
 ```
 
 It is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the checker plus `bt` and its Ruby index helper, leaving repository graph state and development files behind.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt` and `graph-check` console scripts, leaving repository graph state and development files behind.
 
 A vault uses this shape:
 

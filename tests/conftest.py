@@ -1,6 +1,6 @@
 """Shared subprocess harness for the ``bt`` sidecar tests.
 
-The shell suites in ``tests/bt-*.sh`` exercise the Ruby/shell implementation.
+The shell suites in ``tests/*.sh`` drive the installed Python launchers.
 These helpers let the pytest ports drive the Python ``bt`` as a real process so
 concurrency, cross-worktree identity, and environment handling are identical.
 """

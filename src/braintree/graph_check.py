@@ -1,6 +1,6 @@
 """The read-only ``graph-check`` vault validator.
 
-Typed Python port of ``scripts/graph-check.rb``. It enforces the same
+Typed Python implementation of the read-only vault validator. It enforces the same
 status-directory, frontmatter, lifecycle, canonical-edge, dependency-pin,
 reachability, cycle, and focus rules, and preserves the option surface,
 exit codes, and error strings. The checker is deliberately stateless.
@@ -333,3 +333,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     print(f"graph check: passed ({node_count} nodes)")
     return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - module entry point
+    raise SystemExit(main())

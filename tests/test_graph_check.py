@@ -1,7 +1,7 @@
 """Behavioral tests for the Python ``graph-check`` validator.
 
-Ported from ``tests/graph-check.sh`` so the validator is verified without
-Ruby. Each failure case starts from the same valid fixture and applies the
+Ported from ``tests/graph-check.sh`` so the validator is verified through the
+Python package. Each failure case starts from the same valid fixture and applies the
 single mutation the shell test used.
 """
 
