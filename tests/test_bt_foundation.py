@@ -221,7 +221,6 @@ def test_search_filters_and_similar_are_dispatched(tmp_path: Path, run_bt: RunBt
     assert help_output.returncode == 0
     assert "similar TEXT" in help_output.stdout
     assert "--status" in help_output.stdout
-
     missing = run_bt("similar", env=env)
     assert missing.returncode == 2
     assert 'error: "similar requires TEXT or --file PATH"' in missing.stdout
@@ -229,3 +228,23 @@ def test_search_filters_and_similar_are_dispatched(tmp_path: Path, run_bt: RunBt
     unknown = run_bt("search", "q", "--bogus", env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown argument for search: --bogus"' in unknown.stdout
+
+
+def test_next_and_frontier_group_verbs_are_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    help_output = run_bt("--help", env=env)
+    assert help_output.returncode == 0
+    assert "next [--rank]" in help_output.stdout
+    assert "frontier [--group]" in help_output.stdout
+
+    unknown = run_bt("next", "--bogus", env=env)
+    assert unknown.returncode == 2
+    assert 'error: "unknown argument for next: --bogus"' in unknown.stdout
+
+    bad_limit = run_bt("next", "--rank", "--limit", "0", env=env)
+    assert bad_limit.returncode == 2
+    assert 'error: "--limit must be a positive integer"' in bad_limit.stdout
+
+    limit_without_group = run_bt("frontier", "--limit", "2", env=env)
+    assert limit_without_group.returncode == 2
+    assert 'error: "frontier --limit requires --group"' in limit_without_group.stdout

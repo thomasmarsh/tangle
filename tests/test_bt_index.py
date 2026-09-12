@@ -1059,3 +1059,208 @@ def test_similar_rejects_conflicting_or_missing_input(
     unreadable = run_bt("similar", "--file", str(tmp_path / "absent.md"), env=env)
     assert unreadable.returncode == 1
     assert 'error: "cannot read file:' in unreadable.stdout
+
+
+def _seed_ranking(vault: Path) -> None:
+    """Seed a frontier where priority, blocking power, and recency each decide."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    for name, priority, updated, extra in (
+        ("TAS-010-urgent.md", "P1", "2026-09-01T00:00:00Z", ""),
+        ("TAS-011-blocker.md", "P2", "2026-09-02T00:00:00Z", ""),
+        (
+            "TAS-012-blocked-a.md",
+            "P3",
+            "2026-09-03T00:00:00Z",
+            "Depends on [[TAS-011-blocker]] at context_rev 1.\n",
+        ),
+        (
+            "TAS-013-blocked-b.md",
+            "P3",
+            "2026-09-03T00:00:00Z",
+            "Depends on [[TAS-011-blocker]] at context_rev 1.\n",
+        ),
+        ("TAS-014-recent.md", "P2", "2026-09-09T00:00:00Z", ""),
+        ("TAS-015-old.md", "P2", "2026-09-05T00:00:00Z", ""),
+    ):
+        _write(
+            vault / "active" / name,
+            f"---\ncontext_rev: 1\npriority: {priority}\nupdated: {updated}\n"
+            f"summary: Candidate {name}.\nnext: Do the {name} work.\n---\n\n"
+            "# Context\n\nParent [[IDX-001-root]].\n\n"
+            f"{extra}",
+        )
+
+
+def test_next_rank_orders_by_priority_blocking_and_recency(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """Priority leads, then blocking power, then recency, then the id."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_ranking(vault)
+    result = run_bt("next", "--rank", "--limit", "6", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'ranking: "priority P0-P3 asc; transitive blocking desc; updated desc; id asc"' in (
+        result.stdout
+    )
+    assert 'total: "6"' in result.stdout
+    rows = _toon_rows(result.stdout, "next")
+    assert [row[0] for row in rows] == ["1", "2", "3", "4", "5", "6"]
+    assert [row[1] for row in rows] == [
+        "TAS-010",
+        "TAS-011",
+        "TAS-014",
+        "TAS-015",
+        "TAS-012",
+        "TAS-013",
+    ]
+    blocking = {row[1]: row[4] for row in rows}
+    assert blocking["TAS-011"] == "2"
+    assert all(blocking[node] == "0" for node in blocking if node != "TAS-011")
+
+
+def test_next_rank_defaults_to_rank_mode_and_a_bounded_shortlist(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """Bare ``next`` ranks like ``--rank`` and truncates while keeping the total."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_ranking(vault)
+    env = _env(tmp_path, vault)
+    ranked = run_bt("next", "--rank", env=env)
+    default = run_bt("next", env=env)
+    assert default.returncode == 0
+    assert default.stdout == ranked.stdout
+    assert 'total: "6"' in default.stdout
+    assert len(_toon_rows(default.stdout, "next")) == 5
+
+
+def test_next_rank_reports_zero(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "resolved").mkdir(parents=True)
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    result = run_bt("next", "--rank", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'total: "0"' in result.stdout
+    assert result.stdout.strip().endswith("next: 0 ranked candidates")
+
+
+def _seed_workstreams(vault: Path) -> None:
+    """Seed two frontier workstreams that share a parent and an area."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "resolved" / "TAS-001-coordinator.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Coordinate parser work.\n---\n\n# Context\n\nParent [[IDX-001-root]].\n",
+    )
+    for name, route, priority, updated in (
+        ("TAS-020-alpha.md", "Parent [[TAS-001-coordinator]]", "P1", "2026-09-09T00:00:00Z"),
+        ("TAS-021-beta.md", "Parent [[TAS-001-coordinator]]", "P2", "2026-09-08T00:00:00Z"),
+        ("TAS-030-gamma.md", "Area [[IDX-001-root]]", "P1", "2026-09-07T00:00:00Z"),
+        ("TAS-031-delta.md", "Area [[IDX-001-root]]", "P2", "2026-09-06T00:00:00Z"),
+    ):
+        _write(
+            vault / "active" / name,
+            f"---\ncontext_rev: 1\npriority: {priority}\nupdated: {updated}\n"
+            f"summary: Candidate {name}.\nnext: Do the {name} work.\n---\n\n"
+            f"# Context\n\n{route}.\n",
+        )
+
+
+def test_frontier_group_splits_shared_routes_into_workstreams(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """One group per shared parent or area, members in ranked order."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_workstreams(vault)
+    result = run_bt("frontier", "--group", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'advisory: "groups are advisory and are not work claims"' in result.stdout
+    assert 'groups: "2"' in result.stdout
+    rows = _toon_rows(result.stdout, "frontier_groups")
+    assert [row[1] for row in rows] == ["TAS-020", "TAS-021", "TAS-030", "TAS-031"]
+    group_of = {row[1]: row[0] for row in rows}
+    assert group_of["TAS-020"] == group_of["TAS-021"] == "TAS-001"
+    assert group_of["TAS-030"] == group_of["TAS-031"] == "IDX-001"
+    assert "claim" not in result.stdout.replace("work claims", "")
+
+
+def _seed_dependency_merge(vault: Path) -> None:
+    """Seed two differently routed candidates joined only by a dependency edge."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "resolved" / "TAS-001-coordinator.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Coordinate parser work.\n---\n\n# Context\n\nParent [[IDX-001-root]].\n",
+    )
+    _write(
+        vault / "active" / "TAS-050-parented.md",
+        "---\ncontext_rev: 1\npriority: P1\nupdated: 2026-09-05T00:00:00Z\n"
+        "summary: Parented candidate.\nnext: Do the parented work.\n---\n\n"
+        "# Context\n\nParent [[TAS-001-coordinator]].\n",
+    )
+    _write(
+        vault / "active" / "TAS-051-dependent.md",
+        "---\ncontext_rev: 1\npriority: P2\nupdated: 2026-09-04T00:00:00Z\n"
+        "summary: Dependent candidate.\nnext: Do the dependent work.\n---\n\n"
+        "# Context\n\nArea [[IDX-001-root]].\n\n"
+        "Depends on [[TAS-050-parented]] at context_rev 1.\n",
+    )
+
+
+def test_frontier_group_merges_dependency_connected_candidates(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """A dependency edge joins two otherwise separate routes into one group."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_dependency_merge(vault)
+    result = run_bt("frontier", "--group", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'groups: "1"' in result.stdout
+    rows = _toon_rows(result.stdout, "frontier_groups")
+    assert {row[1] for row in rows} == {"TAS-050", "TAS-051"}
+    assert len({row[0] for row in rows}) == 1
+
+
+def test_frontier_group_bounds_rows_and_reports_zero(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """The group rows are bounded, and an empty frontier reports zero groups."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_workstreams(vault)
+    bounded = run_bt("frontier", "--group", "--limit", "1", env=_env(tmp_path, vault))
+    assert bounded.returncode == 0
+    assert 'groups: "2"' in bounded.stdout
+    assert len(_toon_rows(bounded.stdout, "frontier_groups")) == 1
+
+    empty = tmp_path / "empty" / "nodes"
+    (empty / "resolved").mkdir(parents=True)
+    _write(
+        empty / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    zero = run_bt("frontier", "--group", env=_env(tmp_path, empty))
+    assert zero.returncode == 0
+    assert 'groups: "0"' in zero.stdout
+    assert zero.stdout.strip().endswith("frontier_groups: 0 groups")

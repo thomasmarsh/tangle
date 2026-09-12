@@ -4,9 +4,11 @@ Typed Python implementation of the Markdown index builder. Durable graph state s
 Markdown; this module rebuilds the disposable ``nodes``, ``edges``, and FTS
 rows plus the search, backlinks, and stale-pin queries over them, and derives
 the direct ``frontier``, ``node_view``, ``impact``, and ``orient`` answers from
-the same Markdown. The structured ``search`` filters and the lexical
-``similar`` baseline are likewise derived from Markdown, so an admission or
-filter decision never depends on a derived sidecar column.
+the same Markdown. The same derivation also ranks the frontier for ``next``
+and clusters it into advisory workstreams for ``frontier --group``. The
+structured ``search`` filters and the lexical ``similar`` baseline are likewise
+derived from Markdown, so an admission or filter decision never depends on a
+derived sidecar column.
 """
 
 from __future__ import annotations
@@ -34,13 +36,17 @@ __all__ = [
     "Backlink",
     "ContextEdge",
     "FrontierEntry",
+    "FrontierGroups",
+    "GroupedCandidate",
     "Impact",
     "ImpactEdge",
     "IndexedNode",
+    "NextRanking",
     "NodeView",
     "ORIENT_SECTIONS",
     "OrientSection",
     "Orientation",
+    "RankedCandidate",
     "SearchFilters",
     "SimilarCandidate",
     "backlinks",
@@ -48,7 +54,9 @@ __all__ = [
     "existing_allocations",
     "format_table",
     "frontier",
+    "frontier_groups",
     "impact",
+    "next_ranked",
     "node_hash",
     "node_view",
     "orient",
@@ -427,6 +435,45 @@ class FrontierEntry:
 
 
 @dataclass(frozen=True)
+class RankedCandidate:
+    """One frontier candidate with its rank and the signals that set it."""
+
+    rank: int
+    id: str
+    status: str
+    priority: str
+    blocking: int
+    updated: str
+    summary: str
+    next: str
+    stale: bool
+
+
+@dataclass(frozen=True)
+class NextRanking:
+    """The ranked frontier shortlist ``braintree next`` prints."""
+
+    total: int
+    candidates: tuple[RankedCandidate, ...]
+
+
+@dataclass(frozen=True)
+class GroupedCandidate:
+    """One ranked candidate placed in its advisory workstream group."""
+
+    group: str
+    candidate: RankedCandidate
+
+
+@dataclass(frozen=True)
+class FrontierGroups:
+    """The advisory workstream grouping ``braintree frontier --group`` prints."""
+
+    total: int
+    rows: tuple[GroupedCandidate, ...]
+
+
+@dataclass(frozen=True)
 class ContextEdge:
     """One context edge with its pin, the target's current revision, and verdict."""
 
@@ -531,6 +578,11 @@ class SimilarCandidate:
     summary: str
 
 
+# An unset priority ranks after every declared ``P0``-``P3``, so a pinned
+# candidate is always preferred over an unpinned one at equal blocking power.
+_PRIORITY_ORDER = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+
+
 def _read_nodes(root: str) -> list[IndexedNode]:
     """Read every Markdown node under ``root`` from its status directory."""
     root = os.path.abspath(root)
@@ -594,9 +646,8 @@ def _is_stale(node: IndexedNode, by_name: dict[str, IndexedNode]) -> bool:
     return any(edge.stale != "" for edge in _context_edges(node, by_name))
 
 
-def frontier(root: str) -> list[FrontierEntry]:
+def _frontier_entries(nodes: list[IndexedNode]) -> list[FrontierEntry]:
     """Return the unfinished nodes whose ``next`` is an action rather than a route."""
-    nodes = _read_nodes(root)
     by_name = {node.name: node for node in nodes}
     entries: list[FrontierEntry] = []
     for node in nodes:
@@ -617,6 +668,11 @@ def frontier(root: str) -> list[FrontierEntry]:
         )
     entries.sort(key=lambda entry: entry.id)
     return entries
+
+
+def frontier(root: str) -> list[FrontierEntry]:
+    """Return the unfinished nodes whose ``next`` is an action rather than a route."""
+    return _frontier_entries(_read_nodes(root))
 
 
 def _backlinks_for(node: IndexedNode, nodes: list[IndexedNode]) -> tuple[Backlink, ...]:
@@ -657,6 +713,34 @@ def node_view(root: str, node: str) -> NodeView | None:
     )
 
 
+def _incoming_context(
+    nodes: list[IndexedNode],
+) -> tuple[dict[str, list[tuple[IndexedNode, str, int | None]]], dict[str, IndexedNode]]:
+    """Return the reverse canonical context edges keyed by dependency id.
+
+    Each ``incoming[dependency]`` entry lists the ``(source, relation, pin)``
+    edges that consume that dependency, so it is the reverse of the edges
+    :data:`braintree.graph_check.CONTEXT_RELATIONS` defines. The second value
+    resolves a wikilink reference to its node by either name or id. ``impact``
+    and the frontier ranking read the same reverse edges, so a blocking count
+    cannot disagree with the impact the ``impact`` verb reports.
+    """
+    by_reference: dict[str, IndexedNode] = {}
+    for candidate in nodes:
+        by_reference[candidate.name] = candidate
+        by_reference[candidate.id] = candidate
+    incoming: dict[str, list[tuple[IndexedNode, str, int | None]]] = {}
+    for source in nodes:
+        for relation, reference, suffix in _CONTEXT_EDGE.findall(source.body):
+            dependency = by_reference.get(reference)
+            if dependency is None:
+                continue
+            pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
+            pinned = int(pin_match.group(1)) if pin_match is not None else None
+            incoming.setdefault(dependency.id, []).append((source, relation, pinned))
+    return incoming, by_reference
+
+
 def impact(root: str, node: str) -> Impact | None:
     """Return every direct and transitive dependent of ``node`` in dependency order.
 
@@ -670,24 +754,10 @@ def impact(root: str, node: str) -> Impact | None:
     consumers come first.
     """
     nodes = _read_nodes(root)
-    by_reference: dict[str, IndexedNode] = {}
-    for candidate in nodes:
-        by_reference[candidate.name] = candidate
-        by_reference[candidate.id] = candidate
+    incoming, by_reference = _incoming_context(nodes)
     target = by_reference.get(node)
     if target is None:
         return None
-
-    # ``incoming[dependency]`` lists the edges whose source depends on it.
-    incoming: dict[str, list[tuple[IndexedNode, str, int | None]]] = {}
-    for source in nodes:
-        for relation, reference, suffix in _CONTEXT_EDGE.findall(source.body):
-            dependency = by_reference.get(reference)
-            if dependency is None:
-                continue
-            pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
-            pinned = int(pin_match.group(1)) if pin_match is not None else None
-            incoming.setdefault(dependency.id, []).append((source, relation, pinned))
 
     depth: dict[str, int] = {target.id: 0}
     queue: deque[str] = deque([target.id])
@@ -986,3 +1056,154 @@ def orient(
             )
         )
     return Orientation(tuple(packet))
+
+
+def _blocking_power(
+    candidate_id: str,
+    incoming: dict[str, list[tuple[IndexedNode, str, int | None]]],
+    status_by_id: dict[str, str],
+) -> int:
+    """Count the distinct unfinished nodes that transitively depend on a candidate.
+
+    The walk follows the reverse canonical context edges, so only the relations
+    ``CONTEXT_RELATIONS`` defines count. A resolved dependent is no longer
+    blocked, so it does not add to the power; a cycle is visited once and the
+    candidate itself is never counted.
+    """
+    seen: set[str] = set()
+    queue: deque[str] = deque(
+        source.id for source, _relation, _pin in incoming.get(candidate_id, [])
+    )
+    while queue:
+        node_id = queue.popleft()
+        if node_id == candidate_id or node_id in seen:
+            continue
+        seen.add(node_id)
+        queue.extend(source.id for source, _relation, _pin in incoming.get(node_id, []))
+    return sum(1 for node_id in seen if status_by_id.get(node_id) != "resolved")
+
+
+def _rank_candidates(
+    nodes: list[IndexedNode],
+    incoming: dict[str, list[tuple[IndexedNode, str, int | None]]],
+) -> list[RankedCandidate]:
+    """Order the frontier candidates by priority, blocking power, then recency.
+
+    The total order is, most significant first: ``priority`` from ``P0`` to
+    ``P3`` with an unset priority last; the transitive blocking count from
+    :func:`_blocking_power` descending; ``updated`` descending; and finally the
+    node id ascending. The stable passes below apply the least significant key
+    first, so the result is deterministic and needs no model.
+    """
+    updated_of = {node.id: node.metadata.get("updated", "") for node in nodes}
+    status_by_id = {node.id: node.status for node in nodes}
+    scored = [
+        (entry, _blocking_power(entry.id, incoming, status_by_id))
+        for entry in _frontier_entries(nodes)
+    ]
+    scored.sort(key=lambda pair: pair[0].id)
+    scored.sort(key=lambda pair: updated_of[pair[0].id], reverse=True)
+    scored.sort(key=lambda pair: pair[1], reverse=True)
+    scored.sort(key=lambda pair: _PRIORITY_ORDER.get(pair[0].priority, len(_PRIORITY_ORDER)))
+    return [
+        RankedCandidate(
+            rank=rank,
+            id=entry.id,
+            status=entry.status,
+            priority=entry.priority,
+            blocking=blocking,
+            updated=updated_of[entry.id],
+            summary=entry.summary,
+            next=entry.next,
+            stale=entry.stale,
+        )
+        for rank, (entry, blocking) in enumerate(scored, start=1)
+    ]
+
+
+def next_ranked(root: str, limit: int) -> NextRanking:
+    """Return the frontier candidates ranked for the next actor, bounded by ``limit``.
+
+    ``total`` is the unbounded candidate count while ``candidates`` holds the
+    top ``limit`` ranked rows, so one call answers "what should I take next"
+    without dumping the corpus.
+    """
+    nodes = _read_nodes(root)
+    incoming, _by_reference = _incoming_context(nodes)
+    ranked = _rank_candidates(nodes, incoming)
+    return NextRanking(total=len(ranked), candidates=tuple(ranked[:limit]))
+
+
+def _primary_route_id(node: IndexedNode, by_reference: dict[str, IndexedNode]) -> str:
+    """Resolve a node's primary ``Parent``/``Area`` reference to a stable id."""
+    match = _PRIMARY_ROUTE.search(node.body)
+    if match is None:
+        return ""
+    target = by_reference.get(match.group(2))
+    return target.id if target is not None else match.group(2)
+
+
+def frontier_groups(root: str, limit: int) -> FrontierGroups:
+    """Cluster the ranked frontier candidates into bounded advisory workstreams.
+
+    Two frontier candidates join one group when they share a resolved primary
+    ``Parent``/``Area`` route or when one depends on the other through a
+    canonical context edge; the connections merge transitively. Each group is
+    labelled by its shared route, or by its top-ranked member when the routes
+    differ, and a group's members stay in ranked order. ``total`` is the
+    unbounded group count while ``rows`` is truncated to ``limit``. The
+    grouping is advisory: it never states a claim or assignment.
+    """
+    nodes = _read_nodes(root)
+    incoming, by_reference = _incoming_context(nodes)
+    ranked = _rank_candidates(nodes, incoming)
+    by_id = {candidate.id: candidate for candidate in ranked}
+    node_by_id = {node.id: node for node in nodes}
+
+    parent = {candidate.id: candidate.id for candidate in ranked}
+
+    def find(node_id: str) -> str:
+        while parent[node_id] != node_id:
+            parent[node_id] = parent[parent[node_id]]
+            node_id = parent[node_id]
+        return node_id
+
+    def union(left: str, right: str) -> None:
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[max(left_root, right_root)] = min(left_root, right_root)
+
+    routes: dict[str, list[str]] = {}
+    for candidate in ranked:
+        route = _primary_route_id(node_by_id[candidate.id], by_reference)
+        if route:
+            routes.setdefault(route, []).append(candidate.id)
+    for members in routes.values():
+        for other in members[1:]:
+            union(members[0], other)
+
+    for candidate in ranked:
+        body = node_by_id[candidate.id].body
+        for _relation, reference, _suffix in _CONTEXT_EDGE.findall(body):
+            target = by_reference.get(reference)
+            if target is not None and target.id in by_id and target.id != candidate.id:
+                union(candidate.id, target.id)
+
+    components: dict[str, list[str]] = {}
+    for candidate in ranked:
+        components.setdefault(find(candidate.id), []).append(candidate.id)
+
+    groups: list[tuple[str, list[str]]] = []
+    for members in components.values():
+        route_ids = {_primary_route_id(node_by_id[member], by_reference) for member in members}
+        route_ids.discard("")
+        label = next(iter(route_ids)) if len(route_ids) == 1 else members[0]
+        groups.append((label, members))
+    rank_of = {candidate.id: candidate.rank for candidate in ranked}
+    groups.sort(key=lambda group: (rank_of[group[1][0]], group[0]))
+
+    rows: list[GroupedCandidate] = []
+    for label, members in groups:
+        for member in members:
+            rows.append(GroupedCandidate(group=label, candidate=by_id[member]))
+    return FrontierGroups(total=len(groups), rows=tuple(rows[:limit]))

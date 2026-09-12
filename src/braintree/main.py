@@ -46,10 +46,11 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("backlinks NODE", "list derived incoming graph edges"),
     ("hash NODE", "print the raw-content SHA-256 of a node file"),
     ("stale", "find missing or outdated dependency pins"),
-    ("frontier", "list unfinished nodes whose next is an action"),
+    ("frontier [--group] [--limit N]", "list the frontier or cluster it into advisory workstreams"),
     ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
+    ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
     ("check [OPTIONS] [NODES]", "validate a vault without writing state"),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
@@ -74,6 +75,7 @@ _COORDINATION_COMMANDS = frozenset(
         "node",
         "impact",
         "orient",
+        "next",
     }
 )
 
