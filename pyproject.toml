@@ -9,13 +9,15 @@ dependencies = []
 [project.scripts]
 braintree = "braintree.main:main"
 
-# Optional off-the-shelf semantic layer: CPU embedding inference through
-# sentence-transformers and torch, with numpy, scikit-learn, umap-learn for
-# UMAP, and the hdbscan package for HDBSCAN. A plain install stays
-# dependency-free; install the extra with `uv sync --extra semantic` or
-# `pip install 'braintree[semantic]'`.
+# Optional off-the-shelf semantic layer: fastembed on ONNX Runtime is the
+# chosen in-process inference runtime, with sentence-transformers and torch as
+# the compatible CPU fallback runtime for models the ONNX registry does not
+# publish, numpy, scikit-learn, umap-learn for UMAP, and the hdbscan package
+# for HDBSCAN. A plain install stays dependency-free; install the extra with
+# `uv sync --extra semantic` or `pip install 'braintree[semantic]'`.
 [project.optional-dependencies]
 semantic = [
+    "fastembed>=0.5",
     "hdbscan>=0.8.38",
     "numpy>=2.0",
     "scikit-learn>=1.5",

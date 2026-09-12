@@ -1,0 +1,1305 @@
+{
+  "protocol": "embedding-selection-v1",
+  "source": {
+    "nodes_root": "/Users/thomasmarsh/git/braintree/nodes",
+    "revision": "5c8faeb43c929ace159c9c92f772d9495d2071b8",
+    "documents": 118,
+    "probes": 76,
+    "dev": 32,
+    "heldout": 44
+  },
+  "probes": [
+    {
+      "id": "near-duplicate-001",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Every project using Braintree can name its installed version and revision offline, and migration is a settled deliberate decision.\n# Context\n\nArea [[IDX-001-execution-graph]].\n\nDepends on [[DEC-003-semantic-versioning]] at context_rev 1.\n\n# Outcome\n\nAn installation of Braintree records the released version and the source\nrevision it was copied from, exposes that record to the consuming project\nthrough a documented read path, and leaves any migration of installs or vaults\nas an explicit, unevaluated future decision.\n\n# Done when\n\n- A consuming project can read the Braintree version and source revision its\n  installed skill came from without network access or the source repository.\n- The recorded revision is generated install data, not a second hand-maintained\n  source of the semantic version, per [[DEC-003-semantic-versioning]].\n- No migration code, compatibility shim, or data rewrite ships as part of this\n  work.\n- [[TAS-053-version-migration-evaluation]] records the trigger conditions under\n  which a migration would be considered.\n- Tests cover a fresh install, a no-op reinstall, and an upgrade where the\n  recorded revision changes.\n- Every child is resolved or disposed with rationale.\n\n# Result\n\nInstalls record `<version>+g<short-sha>` and report it through `bt --version`\nand `graph-check --version`, so a consuming project can name its installed\nversion and revision offline ([[TAS-052-install-revision-stamp]]).\n[[TAS-053-version-migration-evaluation]] settled the migration policy in\n[[DEC-005-reinstall-not-migration]]: benign version gaps are reconciled by\nreinstalling, the sidecar is rebuilt rather than migrated, and only an\nincompatible change to the installed skill/CLI contract or the vault Markdown\nformat would force a vault migration. The revision is generated install data,\nand no migration code or compatibility shim shipped. `tests/install.sh`,\n`tests/test_revision.py`, and `tests/test_scaffold.py` cover a fresh install, a\nno-op reinstall, and a changed revision; `make test` passes.\n",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-052",
+        "TAS-053",
+        "TAS-056"
+      ],
+      "exclude": [
+        "TAS-051"
+      ]
+    },
+    {
+      "id": "near-duplicate-002",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Installs record the Braintree version and source revision and report them through the documented `--version` read path.\n# Context\n\nParent [[TAS-051-installed-revision-awareness]].\n\nDepends on [[DEC-003-semantic-versioning]] at context_rev 1.\n\n# Outcome\n\nA fresh install copies a machine-readable record of the Braintree release\nversion and source revision into the installed skill, and the installed\ncommands report it without network access or the original checkout.\n\n# Done when\n\n- `scripts/install.sh` writes the record on a real install, leaves it untouched\n  on a no-op reinstall, and the record changes when the installed revision\n  changes.\n- The record holds the semantic version declared in `pyproject.toml` and the\n  source revision available at install time, and states explicitly when no\n  revision can be determined.\n- The installed `bt` (and `graph-check`) report the recorded version and\n  revision through a documented, stable read path that a consuming project can\n  run.\n- The semantic version remains declared once and is not hand-edited into a\n  second artifact; the record is generated data.\n- `tests/install.sh` and the Python suite assert the record exists, matches the\n  declared version, and survives a no-op reinstall unchanged.\n\n# Result\n\nThe installer now writes a generated `installed-revision` record beside the\ninstalled package: the semantic version from `pyproject.toml` stamped with the\nsource revision as `<version>+g<short-sha>`, or `<version>+unknown` when the\nsource revision cannot be determined. Re-running an unchanged install reports\n`no-op` and leaves the record and its file mtime untouched; a changed revision\nis restamped and reported as `installed`.\n\nBoth console scripts read that record through `--version`: the installed `bt`\nand `graph-check` print the recorded revision, while a checkout with no record\nprints the declared version. `bt --version` is therefore the documented read\npath for a `braintree_revision:` value, and the record matches the `FBK`\nrevision convention `graph-check` enforces. The semantic version is still\ndeclared once in `pyproject.toml`; the record only stamps it as generated data.\n\nEvidence:\n\n- `scripts/install.sh` writes `src/braintree/installed-revision` from the\n  declared version and `git rev-parse --short=7 HEAD`, or `+unknown` without git.\n- `braintree.revision` resolves the record; `bt` and `graph-check` report it.\n- `tests/install.sh` asserts a fresh install records the stamp, a no-op\n  reinstall leaves it and its mtime untouched, and a changed revision restamps.\n- `tests/test_revision.py` covers the read path and the unknown fallback, and\n  `tests/test_skill.py` locks the `SKILL.md` contract; `make test` passes.\n",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-056",
+        "TAS-051",
+        "TAS-053"
+      ],
+      "exclude": [
+        "TAS-052"
+      ]
+    },
+    {
+      "id": "near-duplicate-003",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Version gaps are reconciled by reinstalling; migration is warranted only by an incompatible change to the installed skill/CLI or vault Markdown contract.\n# Context\n\nParent [[TAS-051-installed-revision-awareness]].\n\nDepends on [[DEF-001-distribution-contract]] at context_rev 1.\nDepends on [[DEC-003-semantic-versioning]] at context_rev 1.\n\n# Outcome\n\nA settled decision records whether installed Braintree revisions need\nmigration, names the change kinds that would force one, and describes the\nauthority, recovery, and validation a future migration would need. It also\nnames the contracts the semantic version is a compatibility promise about: the\ninstalled skill and CLI contract, and the vault Markdown format. It fixes the\ndivision of labor between the public `<version>` (compatibility) and the\n`+g<short-sha>` build metadata (provenance). No migration ships.\n\n# Done when\n\n- The evaluation separates benign revision gaps from gaps that change\n  vault-observable or sidecar-observable behavior.\n- It names the versioned contract surfaces explicitly and says which field a\n  consumer compares for an offline compatibility decision.\n- It states whether the semantic version can carry that promise as enforced\n  today, or whether the \"behavior change bumps the version\" rule in\n  [[DEC-003-semantic-versioning]] needs enforcement to make a gap meaningful.\n- It names concrete trigger conditions that would justify a migration and the\n  minimum evidence required to act on them.\n- It records the settled choice as a `DEC` node rather than leaving the question\n  open.\n- No migration code, data rewrite, or compatibility shim is added.\n\n# Result\n\nSettled in [[DEC-005-reinstall-not-migration]]. A version gap is benign unless\nit changes one of the two versioned contract surfaces — the installed skill and\nCLI contract, or the vault Markdown format — incompatibly. Benign gaps are\nreconciled by reinstalling; the sidecar is rebuilt, never migrated. The public\n`<version>` is the offline compatibility signal and `+g<short-sha>` is\nprovenance only. The \"a behavior change bumps the version\" rule stays a\nconvention backed by the single-source version test, the `tests/test_skill.py`\ncontract locks, and conventional commits; a diff-based gate is rejected, and a\nMAJOR break must name its migration path in its own `DEC`. No migration code or\ndata rewrite was added.\n",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-051",
+        "TAS-052",
+        "TAS-056"
+      ],
+      "exclude": [
+        "TAS-053"
+      ]
+    },
+    {
+      "id": "near-duplicate-004",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A consuming project records a struggle or suggested improvement in one documented step that yields a valid feedback node.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-052-install-revision-stamp]] at context_rev 2.\n\n# Outcome\n\nA user of an installed Braintree records a struggle or suggested improvement\nthrough one documented step, and the result is a valid, routed feedback node\nthat names the Braintree revision in use.\n\n# Done when\n\n- `SKILL.md` documents a template or command that creates a valid feedback node\n  with minimal user input.\n- The recorded node carries the Braintree revision from the installed record\n  when it is available and degrades explicitly when it is not.\n- The path works from the installed skill in a consuming project, not only from\n  this source repository.\n- A test creates feedback through the documented path and confirms\n  `graph-check` accepts the result.\n\n# Result\n\n`feedback-record` is the recording half of the feedback mechanism. Run from a\nconsuming project's vault root, it allocates the next `FBK` id from Markdown,\ndiscovers a primary route to the vault's root hub from `index-map.md`, reads\nthe installed revision record, and writes\n`nodes/proposed/FBK-<n>-<slug>.md` from the required `--attempted`,\n`--friction`, and `--improvement` values. `--route` overrides the discovered\nroute, `--id`, `--summary`, and `--slug` override the allocated id and derived\nfields, and `--nodes` selects a `nodes/` directory other than the current one.\nThe revision is the installed `installed-revision` record; without one the\ncommand stamps `<version>+unknown`, so the node always names the Braintree\nversion and states the revision explicitly. A recorded node is a valid, routed\n`FBK` node that passes `graph-check`.\n\nEvidence:\n\n- `src/braintree/feedback_record.py` implements the writer and\n  `revision.feedback_revision()` resolves the record or the explicit\n  `<version>+unknown` fallback; `pyproject.toml` declares the `feedback-record`\n  console script and `scripts/feedback-record` keeps the in-repo entry point.\n- `tests/test_feedback_record.py` covers auto-routing, explicit\n  id/route/summary/slug, next-id allocation, revision stamping, the missing\n  route and content errors, and a recorded node passing `graph-check`;\n  `tests/test_revision.py` covers the degraded revision.\n- `tests/test_skill.py` pins the recording contract; `tests/install.sh` runs\n  the installed `feedback-record` in a consuming vault and validates the result\n  with the installed `graph-check`.\n- `make test` passes.\n",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-055",
+        "TAS-052",
+        "TAS-098"
+      ],
+      "exclude": [
+        "TAS-056"
+      ]
+    },
+    {
+      "id": "near-duplicate-005",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A partly implemented reversal updates the same node in place with a context_rev bump, and supersedes only when the outcome moves to a different node.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN1: a task's outcome can be reversed after part of it is implemented and\ncommitted. `SKILL.md` offers both an in-place update and `disposition:\nsuperseded` without saying which wins, and says nothing about the commit that\nnamed the old direction.\n\n# Outcome\n\n`SKILL.md` states the reversal rule, so a worker that reverses a partly\nimplemented outcome does not have to choose between two defensible readings.\n\n# Done when\n\n- `SKILL.md` states when a reversed outcome is an in-place update (with a `context_rev` bump) versus a `superseded` disposition with a replacement link.\n- `SKILL.md` states what the resolved node records about a commit that named the reversed direction.\n- A contract assertion pins the new guidance and `make test` passes.\n\n# Result\n\nTook the documentation branch: the rule reconciles two contracts that already\nexisted, so it required no new mechanism or checker behavior.\n\n`SKILL.md` mutation rules now state the discriminator and the commit record:\n\n- In place while the same node and scope still own the outcome: rewrite the\n  outcome in the same node and bump `context_rev`, because a pinned consumer\n  must reread the changed direction.\n- Supersede only when the outcome moves to a different node: move to\n  `resolved`, set `disposition: superseded`, record the replacement as a\n  canonical `Superseded by` link in the body, and search remaining backlinks.\n  Deprecation follows the same resolved-node shape with `disposition:\n  deprecated`.\n- A reversal records the commit that named the reversed direction — short SHA\n  and subject — in the node body, with whether that commit's change was kept,\n  reverted, or replaced. The reversal lands in the node and a new commit; the\n  earlier commit is never rewritten, amended, or force-pushed.\n\nThe discriminator follows the existing admission rule, which already prefers\nupdating a node when new information advances the same outcome, and the\ncanonical `Superseded by` direction, which already places the replacement link\non the obsolete node.\n\nEvidence:\n\n- `SKILL.md` mutation rules carry the in-place versus supersession\n  discriminator and the reversed-direction commit record.\n- `test_skill_reversal_contract` pins the guidance.\n- `make test` passes.\n",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-060",
+        "TAS-059",
+        "TAS-085"
+      ],
+      "exclude": [
+        "TAS-082"
+      ]
+    },
+    {
+      "id": "near-duplicate-006",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Round-four Tangle feedback disposes FBK-001 and FBK-002 as fixed and admits FBK-003 and FBK-004 plus one portfolio gap in one-command node capture.\n# Question\n\nArea [[IDX-001-execution-graph]].\n\n`braintree feedback scan /Users/thomasmarsh/git/tangle` reports four proposed\nfeedback nodes after the round analyzed in\n[[THO-011-round-three-usage-feedback-analysis]]: `FBK-001` through `FBK-004`.\n`FBK-001` and `FBK-002` are the round-three findings N8 and N5, still open in\nthe consuming vault. Which findings still hold against this implementation at\n`0.5.0`, and which of the nine targeted client use-cases lack a capability that\nremoves a reasoning step or a round trip?\n\n# Conclusion\n\nReproduction used an isolated probe vault at `/tmp/bt-r4` with\n`BT_SIDECAR_DIR`/`BT_PROJECT_ID`, so no reservation state and no vault state\nwas disturbed.\n\n| Feedback | Scan revision | Verdict | Evidence |\n|----------|---------------|---------|----------|\n| `FBK-001` | `0.5.0+gc99a080` | fixed, disposed | An unpinned `Gated on [[TAS-001-probe]].` line to a proposed target passes the checker (`graph check: passed (3 nodes)`), [[TAS-086-unresolved-dependency-representation]] states the form, and an unpinned `Depends on` to the same target fails with `a not-yet-resolved predecessor is recorded as Gated on [[TAS-001-probe]].` |\n| `FBK-002` | `0.5.0+gc99a080` | fixed, disposed | `braintree hash nodes/proposed/TAS-001-probe.md` now fails with `help: \"Use the bare ID 'TAS-001' or the full node name 'TAS-001-probe', not a path.\"`, the bare ID and stem both succeed, and [[TAS-085-hash-addressing-and-operand]] states the accepted forms and the frontier-transition ordering. |\n| `FBK-003` | `0.5.0+g64359e6` | open, admitted | No `SKILL.md` text matches `primitive`, `seam`, or an in-scope-authoring rule; the parallel-worktree contract names the write set but not whether a gate's needed primitive may be authored inside it. |\n| `FBK-004` | `0.5.0+g64359e6` | open, admitted | `braintree claim TAS-001-probe worker --base-hash \"$(braintree hash TAS-001-probe)\"` printed `result: \"claimed\"` and echoed the two-line `node:`/`content_hash:` block as the recorded `base_hash`; the bare digest the skill mandates then failed on release, non-zero, forcing a release-and-reclaim once the mistake was noticed. |\n\nNeither defect re-admitted from `FBK-001` or `FBK-002`: both were already fixed\nby the round-three children, and re-admitting fixed friction would be node\nchurn.\n\n## Portfolio gap map\n\nOne gap is admitted. The rest are covered or deliberately excluded by the\nexisting contract, and that is stated here instead of becoming work.\n\n| Use-case | Coverage | Verdict |\n|----------|----------|---------|\n| Brainstorming | The admission threshold decides whether an idea becomes a node; a question worth answering is a `THO`, and a candidate work item is a `proposed` child. | disposed: the missing piece is the capture cost, which the admitted gap covers, not a new status or type |\n| Detailed planning | A user-requested plan pre-creates children as `proposed`, the parent `next` names one frontier child, `frontier --group` clusters advisory workstreams, and `node` plus `Parent` backlinks show the tree. | disposed, covered |\n| Choosing work items | `frontier`, `next --rank`, and `orient` answer directly, and a coordinating parent's `next` route resolves the candidate list. | disposed, covered |\n| Prioritization | `next --rank` orders unfinished work by `priority` (`P0`-`P3` asc, transitive blocking desc, `updated` desc, `id` asc) and `search --priority P` refines a lexical query; the documented `find`/`rg` recipe covers filter-only enumeration. | disposed, covered |\n| Establishing risk boundaries | `blocked` records missing input or approval, `check` enforces graph invariants, and the coordinator's write set bounds a slice. The unstated slice-scope boundary is `FBK-003`. | admitted via [[TAS-097-slice-primitive-scope]] |\n| Deliberating about work | A `THO` node holds Question, Hypothesis, Prediction, Test, and Evidence. | disposed, covered; authoring cost is the admitted gap |\n| Maintaining work logs | The admission contract deliberately excludes routine narration and tool-call logs, and Git history plus a node's `# Result` is the sanctioned log. | disposed: a log node is the transcript the model rejects |\n| Capturing errand thoughts | `braintree feedback record` creates a routed, revision-stamped node in one step, but no equivalent exists for `THO`, `DEF`, `DEC`, or `TAS`. | admitted via [[TAS-098-node-capture-path]] |\n| Recording architectural decisions | The `DEC` type with Decision, Rationale, and Consequences is current knowledge once resolved. | disposed, covered; creation cost is the admitted gap |\n\nThe admitted capture gap is measured, not asserted. `braintree --help` lists 22\ncommands and `feedback record` is the only one that creates a node; capturing a\nquestion, a decision, or a work item by hand costs `braintree allocate PREFIX`,\na read of `index-map.md` for the hub route, hand-authored `context_rev`,\n`updated`, `summary`, and `next` frontmatter, a chosen status directory, and a\n`braintree check nodes` pass, where the same act for an `FBK` node is one\ncommand.\n\n# Decision\n\nCreate the coordinating task [[TAS-095-usage-feedback-hardening-round-four]]\nwith one child per independently resumable confirmed change:\n\n- [[TAS-096-base-hash-validation]] — `FBK-004`.\n- [[TAS-097-slice-primitive-scope]] — `FBK-003` and the risk-boundary use case.\n- [[TAS-098-node-capture-path]] — the one admitted portfolio gap.\n\nRound four is lower severity than rounds two and three: no finding prevents a\nworker from coordinating or from claiming correctly once it notices the bad\noperand, so the coordinating task is `P2` and does not displace the `P1`\nfrontier routed by [[TAS-087-off-the-shelf-embedding-and-clustering]].\n",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-095",
+        "TAS-098",
+        "THO-011"
+      ],
+      "exclude": [
+        "THO-013"
+      ]
+    },
+    {
+      "id": "near-duplicate-007",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Add an optional, derived, non-authoritative semantic retrieval layer behind the capability boundary.\n# Context\n\nParent [[TAS-068-direct-answer-surface]].\n\nDepends on [[DEC-006-semantic-layer-capability-boundary]] at context_rev 1.\n\nLexical retrieval misses paraphrases and near-duplicates that share no tokens.\nA semantic layer can help, but only under the capability boundary: optional,\nderived, rebuildable, and never authoritative. The lowest-risk path is a\ndeterministic lexical baseline first, then either a shipped small reranker or an\nopportunistic embedding provider with a clean fallback.\n\n# Outcome\n\nWhen semantic support is available, `similar` and ranked search improve; when it\nis absent, every command behaves identically on the lexical baseline. Nothing\nsemantic is required for correctness.\n\n# Done when\n\n- The lexical baseline is the default and is unchanged without a provider.\n- Any provider is probed, optional, and cached in the derived sidecar keyed by\n  content hash.\n- Correctness gates are identical with and without the provider.\n- A token and round-trip comparison decides whether to keep it.\n- `make test` passes.\n\n# Result\n\n`src/braintree/semantic.py` owns the capability boundary as one seam behind\n`braintree similar`. `semantic.probe()` reads the command in\n`BT_SEMANTIC_PROVIDER`; an unset or blank value means the capability is absent\nand no process runs. A command that fails, times out, or returns a malformed or\nempty vector is also absent, so an unhealthy provider degrades instead of\nfailing the command.\n\nThe provider protocol is a command string that reads a JSON array of texts on\nstdin and writes a JSON array of equal-width numeric vectors on stdout; it is\nsplit with `shlex` and never run through a shell. `semantic.vectors()` reads\ncached vectors from the disposable `semantic_cache` table keyed by provider\nidentity and content hash, embeds only the missing hashes in one call, and\nstores the fresh vectors; a wrong-width vector or a failed call returns `None`.\n\n`index.similar(root, text, limit, provider=None, connection=None)` keeps the\nlexical baseline exactly as it was and reranks by the provider's embedding\ncosine only when a probed provider and a sidecar connection are supplied. Any\nsemantic failure falls back to the lexical ranking as a whole, so the two\nmetrics never mix. `cli` enables the path from the environment and opens the\nsidecar only when `semantic.probe()` returns a provider; a sidecar that cannot\nopen also degrades to lexical. Reranking `search` is deliberately out of scope\nhere: only the documented near-duplicate path is wired.\n\nEvidence: `tests/test_semantic.py` proves a synonym paraphrase scores zero\nlexically and tops the semantic ranking; probe failure and batch failure both\nreturn the lexical answer byte for byte; a warm run embeds nothing new while a\nchanged node is the only re-embed (2 provider calls cold, 1 warm, and 1 for the\nchanged content hash after); and the cache holds one row per provider and\ncontent hash. The composite token fixture mirrors the installed package, so\nadding `semantic.py` moved its file count from 67 to 68 and\n`tests/test_token_benchmark.py` now pins the new count. `uv run braintree check\nnodes` passes (97 nodes), `make\nverb-benchmark` passes with `benchmark/verb-baseline.json` unchanged (no gated\nverb uses `similar`), and `make test` passes.\n\nComparison and decision: the agent-visible cost is one `braintree similar` call\nwith an identical output shape with or without a provider, so agent round trips\nand tokens are unchanged; the only added cost is provider process calls (0 with\nno provider, 2 cold and 1 warm with one), and every vector is cached by content\nhash. No real embedding provider or live session was available offline, so no\nlive token A/B was possible and the deterministic round-trip and recall\ncomparison above is the basis. Decision: **keep** the optional seam, default\noff. Nothing semantic is shipped or required, and any provider deployed later\nmust repeat the comparison with live telemetry before its value is claimed.\n",
+      "positives": [
+        "DEC-006"
+      ],
+      "negatives": [
+        "TAS-090",
+        "TAS-075",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-079"
+      ]
+    },
+    {
+      "id": "near-duplicate-008",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Installers, tests, Makefile, and docs drive the uv-managed Python toolchain; all tracked Ruby is removed.\n# Context\n\nParent [[TAS-037-port-ruby-implementation-to-typed-python]].\n\nDepends on [[TAS-038-uv-scaffold-and-distribution-contract]] at context_rev 1.\nDepends on [[TAS-039-port-graph-check-validator-to-python]] at context_rev 1.\nDepends on [[TAS-040-port-sqlite-sidecar-and-index-to-python]] at context_rev 1.\nDepends on [[TAS-041-port-benchmark-harnesses-to-python]] at context_rev 1.\n\nUpdate `tests/install.sh` (it `cmp`s the Ruby files and invokes `ruby`), `tests/skill.sh` (Ruby assertions on `SKILL.md` that require `ruby scripts/graph-check.rb nodes`), `Makefile` targets, `README.md`, and the `SKILL.md` command references and integrity-command section. Remove `scripts/*.rb`, `tests/fixtures/fake-codex-mutation.rb`, and the Ruby test heredocs only after their Python replacements are verified. Preserve the installer's TOON output, `--version 0.3.1` behavior, and explicit-destination guarantees.\n\n# Outcome\n\nInstallers, tests, Makefile, and docs drive the Python toolchain, and no tracked Ruby remains.\n\n# Done when\n\n`make test` and `git diff --check` pass with no tracked Ruby, and a `--dry-run` install still reports the correct destination without writing.\n\n# Result\n\n`scripts/install.sh` now copies the `uv` project into the skill destination: `SKILL.md`, optional `agents/openai.yaml`, `pyproject.toml`, `uv.lock`, `.python-version`, `README.md`, and `src/braintree/`. Installed copies run through `uv run --project <destination> --frozen bt|graph-check`, matching the distribution decision. `tests/install.sh` byte-compares the copied tree and runs the installed `graph-check`; `tests/skill.sh` became `tests/test_skill.py`; `tests/graph-check.sh` and `tests/worktree-parallel.sh` invoke the new Python `scripts/graph-check` launcher. `Makefile` runs pytest, ruff, strict mypy, and the shell suites, and `README.md`/`BENCHMARK.md`/`SKILL.md` name the Python commands. `token_benchmark.py` installs the package tree in its fixture and validates with `python -m braintree.graph_check`.\n\nEvidence: `make test` passes (69 pytest tests, ruff, strict mypy, and every shell suite); `git ls-files` contains no `*.rb`; the token fixture `--check-fixture`/`--record` gates pass.\n",
+      "positives": [
+        "TAS-037"
+      ],
+      "negatives": [
+        "TAS-041",
+        "TAS-065",
+        "TAS-039"
+      ],
+      "exclude": [
+        "TAS-042"
+      ]
+    },
+    {
+      "id": "near-duplicate-009",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Installs record the Braintree version and source revision and report them through the documented `--version` read path.\n# Context\n\nParent [[TAS-051-installed-revision-awareness]].\n\nDepends on [[DEC-003-semantic-versioning]] at context_rev 1.\n\n# Outcome\n\nA fresh install copies a machine-readable record of the Braintree release\nversion and source revision into the installed skill, and the installed\ncommands report it without network access or the original checkout.\n\n# Done when\n\n- `scripts/install.sh` writes the record on a real install, leaves it untouched\n  on a no-op reinstall, and the record changes when the installed revision\n  changes.\n- The record holds the semantic version declared in `pyproject.toml` and the\n  source revision available at install time, and states explicitly when no\n  revision can be determined.\n- The installed `bt` (and `graph-check`) report the recorded version and\n  revision through a documented, stable read path that a consuming project can\n  run.\n- The semantic version remains declared once and is not hand-edited into a\n  second artifact; the record is generated data.\n- `tests/install.sh` and the Python suite assert the record exists, matches the\n  declared version, and survives a no-op reinstall unchanged.\n\n# Result\n\nThe installer now writes a generated `installed-revision` record beside the\ninstalled package: the semantic version from `pyproject.toml` stamped with the\nsource revision as `<version>+g<short-sha>`, or `<version>+unknown` when the\nsource revision cannot be determined. Re-running an unchanged install reports\n`no-op` and leaves the record and its file mtime untouched; a changed revision\nis restamped and reported as `installed`.\n\nBoth console scripts read that record through `--version`: the installed `bt`\nand `graph-check` print the recorded revision, while a checkout with no record\nprints the declared version. `bt --version` is therefore the documented read\npath for a `braintree_revision:` value, and the record matches the `FBK`\nrevision convention `graph-check` enforces. The semantic version is still\ndeclared once in `pyproject.toml`; the record only stamps it as generated data.\n\nEvidence:\n\n- `scripts/install.sh` writes `src/braintree/installed-revision` from the\n  declared version and `git rev-parse --short=7 HEAD`, or `+unknown` without git.\n- `braintree.revision` resolves the record; `bt` and `graph-check` report it.\n- `tests/install.sh` asserts a fresh install records the stamp, a no-op\n  reinstall leaves it and its mtime untouched, and a changed revision restamps.\n- `tests/test_revision.py` covers the read path and the unknown fallback, and\n  `tests/test_skill.py` locks the `SKILL.md` contract; `make test` passes.\n",
+      "positives": [
+        "TAS-051"
+      ],
+      "negatives": [
+        "TAS-056",
+        "DEC-005",
+        "TAS-053"
+      ],
+      "exclude": [
+        "TAS-052"
+      ]
+    },
+    {
+      "id": "near-duplicate-010",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Version gaps are reconciled by reinstalling; migration is warranted only by an incompatible change to the installed skill/CLI or vault Markdown contract.\n# Context\n\nParent [[TAS-051-installed-revision-awareness]].\n\nDepends on [[DEF-001-distribution-contract]] at context_rev 1.\nDepends on [[DEC-003-semantic-versioning]] at context_rev 1.\n\n# Outcome\n\nA settled decision records whether installed Braintree revisions need\nmigration, names the change kinds that would force one, and describes the\nauthority, recovery, and validation a future migration would need. It also\nnames the contracts the semantic version is a compatibility promise about: the\ninstalled skill and CLI contract, and the vault Markdown format. It fixes the\ndivision of labor between the public `<version>` (compatibility) and the\n`+g<short-sha>` build metadata (provenance). No migration ships.\n\n# Done when\n\n- The evaluation separates benign revision gaps from gaps that change\n  vault-observable or sidecar-observable behavior.\n- It names the versioned contract surfaces explicitly and says which field a\n  consumer compares for an offline compatibility decision.\n- It states whether the semantic version can carry that promise as enforced\n  today, or whether the \"behavior change bumps the version\" rule in\n  [[DEC-003-semantic-versioning]] needs enforcement to make a gap meaningful.\n- It names concrete trigger conditions that would justify a migration and the\n  minimum evidence required to act on them.\n- It records the settled choice as a `DEC` node rather than leaving the question\n  open.\n- No migration code, data rewrite, or compatibility shim is added.\n\n# Result\n\nSettled in [[DEC-005-reinstall-not-migration]]. A version gap is benign unless\nit changes one of the two versioned contract surfaces — the installed skill and\nCLI contract, or the vault Markdown format — incompatibly. Benign gaps are\nreconciled by reinstalling; the sidecar is rebuilt, never migrated. The public\n`<version>` is the offline compatibility signal and `+g<short-sha>` is\nprovenance only. The \"a behavior change bumps the version\" rule stays a\nconvention backed by the single-source version test, the `tests/test_skill.py`\ncontract locks, and conventional commits; a diff-based gate is rejected, and a\nMAJOR break must name its migration path in its own `DEC`. No migration code or\ndata rewrite was added.\n",
+      "positives": [
+        "TAS-051"
+      ],
+      "negatives": [
+        "DEC-005",
+        "TAS-052",
+        "TAS-056"
+      ],
+      "exclude": [
+        "TAS-053"
+      ]
+    },
+    {
+      "id": "near-duplicate-011",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A consuming project records a struggle or suggested improvement in one documented step that yields a valid feedback node.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-052-install-revision-stamp]] at context_rev 2.\n\n# Outcome\n\nA user of an installed Braintree records a struggle or suggested improvement\nthrough one documented step, and the result is a valid, routed feedback node\nthat names the Braintree revision in use.\n\n# Done when\n\n- `SKILL.md` documents a template or command that creates a valid feedback node\n  with minimal user input.\n- The recorded node carries the Braintree revision from the installed record\n  when it is available and degrades explicitly when it is not.\n- The path works from the installed skill in a consuming project, not only from\n  this source repository.\n- A test creates feedback through the documented path and confirms\n  `graph-check` accepts the result.\n\n# Result\n\n`feedback-record` is the recording half of the feedback mechanism. Run from a\nconsuming project's vault root, it allocates the next `FBK` id from Markdown,\ndiscovers a primary route to the vault's root hub from `index-map.md`, reads\nthe installed revision record, and writes\n`nodes/proposed/FBK-<n>-<slug>.md` from the required `--attempted`,\n`--friction`, and `--improvement` values. `--route` overrides the discovered\nroute, `--id`, `--summary`, and `--slug` override the allocated id and derived\nfields, and `--nodes` selects a `nodes/` directory other than the current one.\nThe revision is the installed `installed-revision` record; without one the\ncommand stamps `<version>+unknown`, so the node always names the Braintree\nversion and states the revision explicitly. A recorded node is a valid, routed\n`FBK` node that passes `graph-check`.\n\nEvidence:\n\n- `src/braintree/feedback_record.py` implements the writer and\n  `revision.feedback_revision()` resolves the record or the explicit\n  `<version>+unknown` fallback; `pyproject.toml` declares the `feedback-record`\n  console script and `scripts/feedback-record` keeps the in-repo entry point.\n- `tests/test_feedback_record.py` covers auto-routing, explicit\n  id/route/summary/slug, next-id allocation, revision stamping, the missing\n  route and content errors, and a recorded node passing `graph-check`;\n  `tests/test_revision.py` covers the degraded revision.\n- `tests/test_skill.py` pins the recording contract; `tests/install.sh` runs\n  the installed `feedback-record` in a consuming vault and validates the result\n  with the installed `graph-check`.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-052"
+      ],
+      "negatives": [
+        "TAS-055",
+        "TAS-098",
+        "TAS-057"
+      ],
+      "exclude": [
+        "TAS-056"
+      ]
+    },
+    {
+      "id": "near-duplicate-012",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "SKILL.md and graph-check define the FBK feedback convention carrying braintree_revision and Attempted/Friction/Improvement content.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\n# Outcome\n\n`SKILL.md` and `graph-check` agree on one way to mark a node as Braintree\nfeedback, so a script can find feedback in any vault without reading node bodies\nor consulting a sidecar.\n\n# Done when\n\n- The convention fixes a discoverable marker or node type, the required content\n  (what was attempted, the friction observed, and the suggested improvement),\n  and the primary route that keeps a feedback node reachable.\n- `graph-check` validates the convention and reports a clear error for a\n  malformed feedback node.\n- The convention carries the Braintree revision the feedback is about when one\n  is recorded.\n- `tests/test_skill.py` pins the contract strings and a validator test exercises\n  a valid and an invalid feedback node.\n- Discovery works from Markdown alone, with no sidecar, network, or write to the\n  scanned vault.\n\n# Result\n\nThe `FBK` type is the one feedback marker: `find nodes -name 'FBK-*.md'`\ndiscovers feedback from Markdown alone, with no sidecar, network, or write.\n`SKILL.md` gains a `## Feedback nodes` section defining the `FBK-<n>-<slug>.md`\nname, one primary `Parent`/`Area` route, the `braintree_revision:` frontmatter\n(`<version>+<revision>` or `unknown`), and the required `# Feedback` section with\n`Attempted:`, `Friction:`, and `Improvement:` lines. `graph-check` treats `FBK`\nas a knowledge type and rejects a feedback node that omits or malforms\n`braintree_revision` or lacks the required `# Feedback` content.\n\nEvidence:\n\n- `src/braintree/graph_check.py` adds `_check_feedback` and the `FBK` knowledge\n  type; error strings name the missing revision, the malformed value, the\n  missing section, and the missing label.\n- `tests/test_graph_check.py` exercises a valid node, the `unknown` revision, a\n  missing revision, a malformed revision, missing content, and a missing\n  section; `tests/test_skill.py` pins the `SKILL.md` contract strings.\n- `tests/graph-check.sh` mirrors the valid and invalid cases.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-054"
+      ],
+      "negatives": [
+        "TAS-056",
+        "TAS-057",
+        "THO-013"
+      ],
+      "exclude": [
+        "TAS-055"
+      ]
+    },
+    {
+      "id": "near-duplicate-013",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A consuming project records a struggle or suggested improvement in one documented step that yields a valid feedback node.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-052-install-revision-stamp]] at context_rev 2.\n\n# Outcome\n\nA user of an installed Braintree records a struggle or suggested improvement\nthrough one documented step, and the result is a valid, routed feedback node\nthat names the Braintree revision in use.\n\n# Done when\n\n- `SKILL.md` documents a template or command that creates a valid feedback node\n  with minimal user input.\n- The recorded node carries the Braintree revision from the installed record\n  when it is available and degrades explicitly when it is not.\n- The path works from the installed skill in a consuming project, not only from\n  this source repository.\n- A test creates feedback through the documented path and confirms\n  `graph-check` accepts the result.\n\n# Result\n\n`feedback-record` is the recording half of the feedback mechanism. Run from a\nconsuming project's vault root, it allocates the next `FBK` id from Markdown,\ndiscovers a primary route to the vault's root hub from `index-map.md`, reads\nthe installed revision record, and writes\n`nodes/proposed/FBK-<n>-<slug>.md` from the required `--attempted`,\n`--friction`, and `--improvement` values. `--route` overrides the discovered\nroute, `--id`, `--summary`, and `--slug` override the allocated id and derived\nfields, and `--nodes` selects a `nodes/` directory other than the current one.\nThe revision is the installed `installed-revision` record; without one the\ncommand stamps `<version>+unknown`, so the node always names the Braintree\nversion and states the revision explicitly. A recorded node is a valid, routed\n`FBK` node that passes `graph-check`.\n\nEvidence:\n\n- `src/braintree/feedback_record.py` implements the writer and\n  `revision.feedback_revision()` resolves the record or the explicit\n  `<version>+unknown` fallback; `pyproject.toml` declares the `feedback-record`\n  console script and `scripts/feedback-record` keeps the in-repo entry point.\n- `tests/test_feedback_record.py` covers auto-routing, explicit\n  id/route/summary/slug, next-id allocation, revision stamping, the missing\n  route and content errors, and a recorded node passing `graph-check`;\n  `tests/test_revision.py` covers the degraded revision.\n- `tests/test_skill.py` pins the recording contract; `tests/install.sh` runs\n  the installed `feedback-record` in a consuming vault and validates the result\n  with the installed `graph-check`.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-054"
+      ],
+      "negatives": [
+        "TAS-055",
+        "TAS-052",
+        "TAS-098"
+      ],
+      "exclude": [
+        "TAS-056"
+      ]
+    },
+    {
+      "id": "near-duplicate-014",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A maintainer scans external vaults' nodes/ and gets Braintree feedback as a compact result ready for triage into this graph.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-055-feedback-node-contract]] at context_rev 1.\n\n# Outcome\n\nA maintainer points the tooling at one or more external vaults and receives the\nBraintree feedback they contain as a compact, bounded list that can be triaged\ninto admitted work in this graph.\n\n# Done when\n\n- A documented command or recipe scans the `nodes/` of one or more external\n  vaults and returns only feedback under the convention, without reading every\n  node body by hand and without writing to the scanned vault.\n- The result is compact TOON with the fields needed to triage, such as feedback\n  id, status, Braintree revision, and summary, and it states zero results\n  explicitly.\n- The scan works on a read-only checkout and needs no sidecar or network.\n- `SKILL.md` documents the triage step that maps accepted feedback to admitted\n  nodes here and disposes the rest.\n- A test runs the scan against a fixture vault and asserts both a populated\n  result and an explicit zero result.\n\n# Result\n\nThe read-only `feedback-scan` command scans one or more vault roots (or their\n`nodes/` directories), reads only `FBK-*.md` filenames and frontmatter, and\nprints compact TOON rows of `vault,id,status,revision,summary`. It prints\n`feedback: 0 nodes` for an explicit zero, accepts an optional `--limit` bound,\nand never opens the sidecar, touches the network, or writes to a scanned vault.\n`SKILL.md` documents the scan and the triage step that admits feedback likely to\nchange a future decision or action, cites the feedback id and revision, and\notherwise disposes the result explicitly.\n\nEvidence:\n\n- `src/braintree/feedback_scan.py` is a stdlib-only collector over `toon.py`,\n  with `scripts/feedback-scan` and the `feedback-scan` console script in\n  `pyproject.toml`.\n- `tests/test_feedback_scan.py` seeds a fixture vault and asserts the populated\n  result, the explicit zero result, multi-vault collection, the `--limit`\n  bound, a nodes-directory argument, usage errors, and that the vault is\n  unchanged after a scan.\n- `tests/test_skill.py` pins the `feedback-scan` and triage contract strings;\n  `tests/install.sh` runs the installed console script.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-054"
+      ],
+      "negatives": [
+        "TAS-056",
+        "TAS-055",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-057"
+      ]
+    },
+    {
+      "id": "near-duplicate-015",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A consuming project records a struggle or suggested improvement in one documented step that yields a valid feedback node.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-052-install-revision-stamp]] at context_rev 2.\n\n# Outcome\n\nA user of an installed Braintree records a struggle or suggested improvement\nthrough one documented step, and the result is a valid, routed feedback node\nthat names the Braintree revision in use.\n\n# Done when\n\n- `SKILL.md` documents a template or command that creates a valid feedback node\n  with minimal user input.\n- The recorded node carries the Braintree revision from the installed record\n  when it is available and degrades explicitly when it is not.\n- The path works from the installed skill in a consuming project, not only from\n  this source repository.\n- A test creates feedback through the documented path and confirms\n  `graph-check` accepts the result.\n\n# Result\n\n`feedback-record` is the recording half of the feedback mechanism. Run from a\nconsuming project's vault root, it allocates the next `FBK` id from Markdown,\ndiscovers a primary route to the vault's root hub from `index-map.md`, reads\nthe installed revision record, and writes\n`nodes/proposed/FBK-<n>-<slug>.md` from the required `--attempted`,\n`--friction`, and `--improvement` values. `--route` overrides the discovered\nroute, `--id`, `--summary`, and `--slug` override the allocated id and derived\nfields, and `--nodes` selects a `nodes/` directory other than the current one.\nThe revision is the installed `installed-revision` record; without one the\ncommand stamps `<version>+unknown`, so the node always names the Braintree\nversion and states the revision explicitly. A recorded node is a valid, routed\n`FBK` node that passes `graph-check`.\n\nEvidence:\n\n- `src/braintree/feedback_record.py` implements the writer and\n  `revision.feedback_revision()` resolves the record or the explicit\n  `<version>+unknown` fallback; `pyproject.toml` declares the `feedback-record`\n  console script and `scripts/feedback-record` keeps the in-repo entry point.\n- `tests/test_feedback_record.py` covers auto-routing, explicit\n  id/route/summary/slug, next-id allocation, revision stamping, the missing\n  route and content errors, and a recorded node passing `graph-check`;\n  `tests/test_revision.py` covers the degraded revision.\n- `tests/test_skill.py` pins the recording contract; `tests/install.sh` runs\n  the installed `feedback-record` in a consuming vault and validates the result\n  with the installed `graph-check`.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-055"
+      ],
+      "negatives": [
+        "TAS-052",
+        "TAS-098",
+        "TAS-057"
+      ],
+      "exclude": [
+        "TAS-056"
+      ]
+    },
+    {
+      "id": "near-duplicate-016",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A maintainer scans external vaults' nodes/ and gets Braintree feedback as a compact result ready for triage into this graph.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-055-feedback-node-contract]] at context_rev 1.\n\n# Outcome\n\nA maintainer points the tooling at one or more external vaults and receives the\nBraintree feedback they contain as a compact, bounded list that can be triaged\ninto admitted work in this graph.\n\n# Done when\n\n- A documented command or recipe scans the `nodes/` of one or more external\n  vaults and returns only feedback under the convention, without reading every\n  node body by hand and without writing to the scanned vault.\n- The result is compact TOON with the fields needed to triage, such as feedback\n  id, status, Braintree revision, and summary, and it states zero results\n  explicitly.\n- The scan works on a read-only checkout and needs no sidecar or network.\n- `SKILL.md` documents the triage step that maps accepted feedback to admitted\n  nodes here and disposes the rest.\n- A test runs the scan against a fixture vault and asserts both a populated\n  result and an explicit zero result.\n\n# Result\n\nThe read-only `feedback-scan` command scans one or more vault roots (or their\n`nodes/` directories), reads only `FBK-*.md` filenames and frontmatter, and\nprints compact TOON rows of `vault,id,status,revision,summary`. It prints\n`feedback: 0 nodes` for an explicit zero, accepts an optional `--limit` bound,\nand never opens the sidecar, touches the network, or writes to a scanned vault.\n`SKILL.md` documents the scan and the triage step that admits feedback likely to\nchange a future decision or action, cites the feedback id and revision, and\notherwise disposes the result explicitly.\n\nEvidence:\n\n- `src/braintree/feedback_scan.py` is a stdlib-only collector over `toon.py`,\n  with `scripts/feedback-scan` and the `feedback-scan` console script in\n  `pyproject.toml`.\n- `tests/test_feedback_scan.py` seeds a fixture vault and asserts the populated\n  result, the explicit zero result, multi-vault collection, the `--limit`\n  bound, a nodes-directory argument, usage errors, and that the vault is\n  unchanged after a scan.\n- `tests/test_skill.py` pins the `feedback-scan` and triage contract strings;\n  `tests/install.sh` runs the installed console script.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-055"
+      ],
+      "negatives": [
+        "TAS-054",
+        "TAS-056",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-057"
+      ]
+    },
+    {
+      "id": "near-duplicate-017",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A maintainer scans external vaults' nodes/ and gets Braintree feedback as a compact result ready for triage into this graph.\n# Context\n\nParent [[TAS-054-feedback-mechanism]].\n\nDepends on [[TAS-055-feedback-node-contract]] at context_rev 1.\n\n# Outcome\n\nA maintainer points the tooling at one or more external vaults and receives the\nBraintree feedback they contain as a compact, bounded list that can be triaged\ninto admitted work in this graph.\n\n# Done when\n\n- A documented command or recipe scans the `nodes/` of one or more external\n  vaults and returns only feedback under the convention, without reading every\n  node body by hand and without writing to the scanned vault.\n- The result is compact TOON with the fields needed to triage, such as feedback\n  id, status, Braintree revision, and summary, and it states zero results\n  explicitly.\n- The scan works on a read-only checkout and needs no sidecar or network.\n- `SKILL.md` documents the triage step that maps accepted feedback to admitted\n  nodes here and disposes the rest.\n- A test runs the scan against a fixture vault and asserts both a populated\n  result and an explicit zero result.\n\n# Result\n\nThe read-only `feedback-scan` command scans one or more vault roots (or their\n`nodes/` directories), reads only `FBK-*.md` filenames and frontmatter, and\nprints compact TOON rows of `vault,id,status,revision,summary`. It prints\n`feedback: 0 nodes` for an explicit zero, accepts an optional `--limit` bound,\nand never opens the sidecar, touches the network, or writes to a scanned vault.\n`SKILL.md` documents the scan and the triage step that admits feedback likely to\nchange a future decision or action, cites the feedback id and revision, and\notherwise disposes the result explicitly.\n\nEvidence:\n\n- `src/braintree/feedback_scan.py` is a stdlib-only collector over `toon.py`,\n  with `scripts/feedback-scan` and the `feedback-scan` console script in\n  `pyproject.toml`.\n- `tests/test_feedback_scan.py` seeds a fixture vault and asserts the populated\n  result, the explicit zero result, multi-vault collection, the `--limit`\n  bound, a nodes-directory argument, usage errors, and that the vault is\n  unchanged after a scan.\n- `tests/test_skill.py` pins the `feedback-scan` and triage contract strings;\n  `tests/install.sh` runs the installed console script.\n- `make test` passes.\n",
+      "positives": [
+        "TAS-056"
+      ],
+      "negatives": [
+        "TAS-054",
+        "TAS-055",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-057"
+      ]
+    },
+    {
+      "id": "near-duplicate-018",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Added a tested `Frontier` query recipe that surfaces the current frontier in one command.\n# Context\n\nArea [[IDX-001-execution-graph]].\n\nDogfooding observation from the TAS-060 session. With no direct node pointer,\nlocating the current frontier took a full orientation pass: read `SKILL.md`,\nread `nodes/index-map.md`, enumerate the unfinished nodes, open the root hub\n[[IDX-001-execution-graph]], derive its members by `Parent`/`Area` backlink,\nthen follow each coordinating node's `next`. `index-map.md` offers an\n`Unfinished` recipe but no recipe that resolves coordinating nodes' `next` to\nthe actual frontier, and the hub deliberately lists no members, so a cold agent\nmust reconstruct the chain by hand before it can start work.\n\n# Outcome\n\nA cold agent with no pointer locates the current frontier in one documented\nquery, without opening the hub, the parent chain, and the unfinished list by\nhand.\n\n# Done when\n\n- `index-map.md` or `SKILL.md` names a query that surfaces the coordinating\n  node's `next` target — the frontier — directly.\n- The recipe is tested so it cannot silently drift as nodes move.\n- `make test` passes.\n\n# Result\n\n`nodes/index-map.md` carries a `Frontier` recipe:\n\n```sh\nrg --files-without-match '^next:.*\\[\\[' nodes/*/ 2>/dev/null | rg '/(active|proposed|blocked)/'\n```\n\nIt lists the unfinished nodes whose `next` is an action rather than a\nwikilinked child route, which is the current frontier: a coordinating node is\nexcluded while its `next` target appears. `SKILL.md` names the recipe in Read and\nexecute step 2 and in Common queries.\n\n`tests/test_skill.py` covers it twice. One test builds a temporary vault with a\ncoordinating node whose `next` is a wikilink to `TAS-102-validate-manifests`, a\nleaf, and a resolved node and asserts the frontier is the child and leaf only.\nThe other runs the recipe extracted from `index-map.md` against the live vault\nand compares it with the frontier derived from the Markdown, so it cannot\nsilently drift as nodes move.\n\nEvidence: `make test` passes.\n",
+      "positives": [
+        "TAS-060"
+      ],
+      "negatives": [
+        "TAS-083",
+        "TAS-071",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-066"
+      ]
+    },
+    {
+      "id": "near-duplicate-019",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "The frontier answers are a candidate list a worker resolves through the coordinator's `next` route, and a plan-text gate no node owns is `blocked`.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN2: `braintree frontier`, `braintree next --rank`, and `braintree orient`\nreport every unfinished node whose `next` is an action. For a user-requested\nplan whose children are created up front as `proposed`, the coordinator's\nsequenced-but-not-frontier siblings therefore appear as equal candidates even\nthough the contract calls them \"not yet at the frontier\". N3: the contract also\ndoes not state which status a gate on un-tracked plan text takes.\n\n# Outcome\n\nThe frontier answers and the contract agree on the one deliberate frontier\nchild, and a plan-text gate has a stated status.\n\n# Done when\n\n- `braintree frontier`, `next`, and `orient` either return the coordinator's `next` target as the frontier or the contract states the answer is a candidate list that a worker must resolve through the coordinator.\n- The `blocked` versus `proposed` guidance covers a gate on prerequisite plan text that no node owns.\n- A vault fixture with an up-front plan and sequenced siblings has regression tests for the chosen behavior.\n- `make test` passes.\n\n# Result\n\nTook the candidate-list branch the node allows, because the verbs and the\nfrontier definition are both defensible and only their relationship was\nunstated; documenting that relationship needs no new derivation, while\nnarrowing the verbs to the frontier chain would re-decide how a root task, a\nblocked coordinator, and a hub member each reach the frontier.\n\nN2 — `SKILL.md` now states the relationship in both places that describe the\nfrontier:\n\n- The reachability contract names all three answers (`braintree frontier`,\n  `braintree next --rank`, and `braintree orient`) as returning frontier\n  candidates: every unfinished node whose `next` is an action, which is a\n  superset of the frontier. An up-front plan's sequenced sibling carries its\n  own action `next` and is reported beside the deliberate child.\n- The read-and-execute loop states the answer is a candidate list, not the\n  resolved frontier, and requires resolving it through the coordinator: keep\n  only the candidate the coordinating parent's `next` route names; a candidate\n  whose parent's `next` names a different node is not yet at the frontier.\n- The verb's own help line says it lists frontier candidates.\n\nN3 — `SKILL.md` states that a gate on prerequisite plan text that no node owns\nis `blocked`, like any other input the vault does not own, with the prerequisite\nand unblock condition in `# Blocked`; once a node owns that plan text the gate\nis a sibling dependency and the node is `proposed`. The mutation rule's\n`blocked` bullet names the same plan-text case.\n\nEvidence:\n\n- `test_skill_frontier_candidate_contract` and `test_skill_plan_text_gate_status`\n  pin the new contract text.\n- `_seed_upfront_plan` seeds a proposed coordinator whose `next` names\n  `TAS-101-first-step` beside the sequenced `TAS-102` and `TAS-103` siblings:\n  `test_frontier_reports_sequenced_siblings_as_candidates`,\n  `test_frontier_candidates_resolve_through_the_coordinator`, and\n  `test_next_and_orient_report_the_same_frontier_candidates` cover candidate\n  reporting and the unique coordinator resolution.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-060"
+      ],
+      "negatives": [
+        "TAS-081",
+        "TAS-071",
+        "TAS-066"
+      ],
+      "exclude": [
+        "TAS-083"
+      ]
+    },
+    {
+      "id": "near-duplicate-020",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Node addressing and the hash operand are documented next to hash, claim, and release and in the worktree contract, and a path-shaped unknown-node error names the accepted forms.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN5: the worktree handoff gives a worker a direct node path, but `braintree hash`\nrejects a path and accepts only a bare ID or filename stem, and `SKILL.md` never\nstates the accepted form. N6: `braintree hash` prints a labelled two-line\nobject while the skill calls it \"the base hash\" and says to pass \"that same\nstarting value\"; the claim accepts either the whole block or the bare\n`content_hash` as an opaque operand, so the recorded value is ambiguous. N7: the\nskill says to hash and claim before editing but never says whether a node's own\nfrontier transition (the status move and `# Context` edit that takes the\nfrontier) precedes the claim or belongs to the claimed edit, and which content\nthe recorded base hash names.\n\n# Outcome\n\nOne documented, unambiguous hash and claim contract.\n\n# Done when\n\n- `braintree hash`, `claim`, and `release` accept the node path the handoff gives a worker, or `SKILL.md` states the accepted forms next to each command and in the worktree contract.\n- `braintree hash` prints a bare digest, or `SKILL.md` states that the `content_hash` field is the operand and shows it in the hash, claim, and release examples.\n- `SKILL.md` states whether the frontier transition precedes the claim or is part of the claimed edit, and which content the base hash names.\n- A path-shaped unknown-node error suggests the accepted forms.\n- Regression tests cover the chosen addressing and operand behavior and `make test` passes.\n\n# Result\n\nTook the documentation branch for N5, N6, and N7, plus the error-path change the\naddressing bullet requires.\n\n- N5 addressing: `SKILL.md` states the accepted NODE forms next to the\n  hash/claim/release commands and in the parallel-worktree handoff. NODE is a\n  bare ID (`TAS-085`) or the full node name, the filename stem\n  (`TAS-085-hash-addressing-and-operand`); a path is not accepted. `hash`\n  resolves either form, while `claim` and `release` never read Markdown and\n  treat NODE as the same opaque claim key, so one node is addressed with one\n  spelling. `braintree hash nodes/proposed/X.md` still fails, but the\n  `unknown node` help now derives the bare ID and full node name from the path\n  and names them. The shared `_unknown_node` helper carries the same suggestion\n  for `hash`, `backlinks`, `node`, and `impact`.\n- N6 operand: `SKILL.md` states that the `content_hash` field is the operand, a\n  bare 64-character digest passed as `--base-hash`, never the\n  `node:`/`content_hash:` block, and shows it in hash, claim, and release\n  examples.\n- N7 ordering: `SKILL.md` states that a worker hashes and claims before editing,\n  that the node's own frontier transition (the status move and the `# Context`\n  edit that take the frontier) is part of the claimed edit rather than a\n  precondition, and that the recorded `content_hash` names the node content\n  exactly as handed off, before that transition and before any other edit.\n\nEvidence:\n\n- `test_hash_rejects_a_path_and_names_the_accepted_forms` and\n  `test_hash_content_hash_is_the_claim_and_release_operand` pin the addressing\n  and operand behavior.\n- `test_skill_hash_addressing_and_operand_contract` pins the `SKILL.md` strings,\n  including the worktree wording.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-061"
+      ],
+      "negatives": [
+        "TAS-081",
+        "TAS-062",
+        "TAS-096"
+      ],
+      "exclude": [
+        "TAS-085"
+      ]
+    },
+    {
+      "id": "near-duplicate-021",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Node addressing and the hash operand are documented next to hash, claim, and release and in the worktree contract, and a path-shaped unknown-node error names the accepted forms.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN5: the worktree handoff gives a worker a direct node path, but `braintree hash`\nrejects a path and accepts only a bare ID or filename stem, and `SKILL.md` never\nstates the accepted form. N6: `braintree hash` prints a labelled two-line\nobject while the skill calls it \"the base hash\" and says to pass \"that same\nstarting value\"; the claim accepts either the whole block or the bare\n`content_hash` as an opaque operand, so the recorded value is ambiguous. N7: the\nskill says to hash and claim before editing but never says whether a node's own\nfrontier transition (the status move and `# Context` edit that takes the\nfrontier) precedes the claim or belongs to the claimed edit, and which content\nthe recorded base hash names.\n\n# Outcome\n\nOne documented, unambiguous hash and claim contract.\n\n# Done when\n\n- `braintree hash`, `claim`, and `release` accept the node path the handoff gives a worker, or `SKILL.md` states the accepted forms next to each command and in the worktree contract.\n- `braintree hash` prints a bare digest, or `SKILL.md` states that the `content_hash` field is the operand and shows it in the hash, claim, and release examples.\n- `SKILL.md` states whether the frontier transition precedes the claim or is part of the claimed edit, and which content the base hash names.\n- A path-shaped unknown-node error suggests the accepted forms.\n- Regression tests cover the chosen addressing and operand behavior and `make test` passes.\n\n# Result\n\nTook the documentation branch for N5, N6, and N7, plus the error-path change the\naddressing bullet requires.\n\n- N5 addressing: `SKILL.md` states the accepted NODE forms next to the\n  hash/claim/release commands and in the parallel-worktree handoff. NODE is a\n  bare ID (`TAS-085`) or the full node name, the filename stem\n  (`TAS-085-hash-addressing-and-operand`); a path is not accepted. `hash`\n  resolves either form, while `claim` and `release` never read Markdown and\n  treat NODE as the same opaque claim key, so one node is addressed with one\n  spelling. `braintree hash nodes/proposed/X.md` still fails, but the\n  `unknown node` help now derives the bare ID and full node name from the path\n  and names them. The shared `_unknown_node` helper carries the same suggestion\n  for `hash`, `backlinks`, `node`, and `impact`.\n- N6 operand: `SKILL.md` states that the `content_hash` field is the operand, a\n  bare 64-character digest passed as `--base-hash`, never the\n  `node:`/`content_hash:` block, and shows it in hash, claim, and release\n  examples.\n- N7 ordering: `SKILL.md` states that a worker hashes and claims before editing,\n  that the node's own frontier transition (the status move and the `# Context`\n  edit that take the frontier) is part of the claimed edit rather than a\n  precondition, and that the recorded `content_hash` names the node content\n  exactly as handed off, before that transition and before any other edit.\n\nEvidence:\n\n- `test_hash_rejects_a_path_and_names_the_accepted_forms` and\n  `test_hash_content_hash_is_the_claim_and_release_operand` pin the addressing\n  and operand behavior.\n- `test_skill_hash_addressing_and_operand_contract` pins the `SKILL.md` strings,\n  including the worktree wording.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-062"
+      ],
+      "negatives": [
+        "TAS-061",
+        "TAS-081",
+        "TAS-096"
+      ],
+      "exclude": [
+        "TAS-085"
+      ]
+    },
+    {
+      "id": "near-duplicate-022",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "A dependency on a not-yet-resolved predecessor is a documented unpinned `Gated on` gate line, and the missing-pin and unresolved-target diagnostics name it.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN8: a node that knows it depends on a predecessor which is not yet resolved has\nno sanctioned way to record that. An unpinned context edge fails as a missing\npin and a pinned edge fails because the target is not resolved, and neither\ndiagnostic names the sanctioned form. The contract says to confirm a pinned\ndependency is resolved before executing, but not how to gate on one before that\npoint.\n\n# Outcome\n\nA worker can record a known dependency on an unresolved predecessor without\nfailing the checker, or is told the one sanctioned alternative in the failure.\n\n# Done when\n\n- `SKILL.md` states how to record a dependency on a predecessor that is not yet resolved, or the checker accepts a bounded not-yet-resolved form.\n- The unresolved-target and missing-pin diagnostics name that sanctioned form.\n- Regression tests cover the chosen behavior and `make test` passes.\n\n# Result\n\nTook the documentation branch: the one sanctioned representation is a gate, the\nunpinned `Gated on` line in `# Context`, and both context-edge diagnostics name\nit.\n\n- The gate is deliberately not a context relation, so it needs no pin and the\n  checker accepts it while the target is unresolved. `GATED_RELATION` in\n  `graph_check.py` is the single spelling, and the `CONTEXT_RELATIONS` comment\n  states why `Gated on` is absent from it, so `stale`, `impact`, and the context\n  views keep reading only the consumable edges.\n- `SKILL.md` states the form, that a gated node stays `proposed` until it can\n  execute, that the gate is never pinned, the exact search that finds gates for\n  reconciliation, and that the pinned `Depends on` edge replaces the gate once\n  the target resolves.\n- `_gate_hint` in `graph_check.py` renders the same clause for both\n  diagnostics, and only while the target is `proposed`, `active`, or `blocked`;\n  an unpinned edge to a resolved target keeps the plain missing-pin message\n  because the gate does not apply there.\n\nEvidence:\n\n- `test_gated_dependency_on_unresolved_predecessor_passes` asserts a gate to a\n  proposed target passes the checker,\n  `test_missing_pin_to_unresolved_target_names_the_gated_form` and\n  `test_pinned_dependency_not_resolved` assert both diagnostics name the gate\n  form for the unresolved target, and `test_missing_context_rev_pin` asserts\n  the resolved-target message does not name it.\n- `test_skill_gated_dependency_contract` pins the `SKILL.md` contract text.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-063"
+      ],
+      "negatives": [
+        "TAS-059",
+        "DEC-005",
+        "TAS-081"
+      ],
+      "exclude": [
+        "TAS-086"
+      ]
+    },
+    {
+      "id": "near-duplicate-023",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "The frontier answers are a candidate list a worker resolves through the coordinator's `next` route, and a plan-text gate no node owns is `blocked`.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN2: `braintree frontier`, `braintree next --rank`, and `braintree orient`\nreport every unfinished node whose `next` is an action. For a user-requested\nplan whose children are created up front as `proposed`, the coordinator's\nsequenced-but-not-frontier siblings therefore appear as equal candidates even\nthough the contract calls them \"not yet at the frontier\". N3: the contract also\ndoes not state which status a gate on un-tracked plan text takes.\n\n# Outcome\n\nThe frontier answers and the contract agree on the one deliberate frontier\nchild, and a plan-text gate has a stated status.\n\n# Done when\n\n- `braintree frontier`, `next`, and `orient` either return the coordinator's `next` target as the frontier or the contract states the answer is a candidate list that a worker must resolve through the coordinator.\n- The `blocked` versus `proposed` guidance covers a gate on prerequisite plan text that no node owns.\n- A vault fixture with an up-front plan and sequenced siblings has regression tests for the chosen behavior.\n- `make test` passes.\n\n# Result\n\nTook the candidate-list branch the node allows, because the verbs and the\nfrontier definition are both defensible and only their relationship was\nunstated; documenting that relationship needs no new derivation, while\nnarrowing the verbs to the frontier chain would re-decide how a root task, a\nblocked coordinator, and a hub member each reach the frontier.\n\nN2 — `SKILL.md` now states the relationship in both places that describe the\nfrontier:\n\n- The reachability contract names all three answers (`braintree frontier`,\n  `braintree next --rank`, and `braintree orient`) as returning frontier\n  candidates: every unfinished node whose `next` is an action, which is a\n  superset of the frontier. An up-front plan's sequenced sibling carries its\n  own action `next` and is reported beside the deliberate child.\n- The read-and-execute loop states the answer is a candidate list, not the\n  resolved frontier, and requires resolving it through the coordinator: keep\n  only the candidate the coordinating parent's `next` route names; a candidate\n  whose parent's `next` names a different node is not yet at the frontier.\n- The verb's own help line says it lists frontier candidates.\n\nN3 — `SKILL.md` states that a gate on prerequisite plan text that no node owns\nis `blocked`, like any other input the vault does not own, with the prerequisite\nand unblock condition in `# Blocked`; once a node owns that plan text the gate\nis a sibling dependency and the node is `proposed`. The mutation rule's\n`blocked` bullet names the same plan-text case.\n\nEvidence:\n\n- `test_skill_frontier_candidate_contract` and `test_skill_plan_text_gate_status`\n  pin the new contract text.\n- `_seed_upfront_plan` seeds a proposed coordinator whose `next` names\n  `TAS-101-first-step` beside the sequenced `TAS-102` and `TAS-103` siblings:\n  `test_frontier_reports_sequenced_siblings_as_candidates`,\n  `test_frontier_candidates_resolve_through_the_coordinator`, and\n  `test_next_and_orient_report_the_same_frontier_candidates` cover candidate\n  reporting and the unique coordinator resolution.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-066"
+      ],
+      "negatives": [
+        "TAS-060",
+        "TAS-081",
+        "TAS-071"
+      ],
+      "exclude": [
+        "TAS-083"
+      ]
+    },
+    {
+      "id": "near-duplicate-024",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Add advisory `braintree next --rank` and clustering so frontier selection and hub grouping are direct answers.\n# Context\n\nParent [[TAS-068-direct-answer-surface]].\n\nThe frontier answers \"what is unfinished\" but not \"what should one actor take\nnext\" or \"which candidates belong to the same workstream.\" Those are graph and\nlexical computations over data the sidecar already holds.\n\n# Outcome\n\n`braintree next --rank` orders frontier candidates by priority, transitive\nblocking power, and recency, and `frontier --group` clusters candidates by\nshared parent, area, and dependencies so a coordinator can assign disjoint\nwrite sets. Both are advisory, never claims.\n\n# Done when\n\n- Ranking is deterministic and documented, with no model required.\n- Grouping is advisory and bounded, and its output never becomes authority.\n- Tests cover the ranking order and a two-workstream grouping.\n- `make test` passes.\n\n# Result\n\n`braintree next --rank` ranks the frontier and `braintree frontier --group`\nclusters it, both derived from Markdown alone in `src/braintree/index.py` over\nthe reverse canonical context edges `braintree impact` already uses, so a\nblocking count cannot disagree with the reported impact.\n\nThe ranking key is total and model-free, most significant first: `priority`\nfrom `P0` to `P3` with an unset priority last; the transitive blocking count\n(unfinished dependents reachable over canonical context edges) descending;\n`updated` descending; and the node id ascending. `next --rank [--limit N]`\nprints the key in a `ranking` field, bounds the rows, and keeps the unbounded\ncount in `total`; the default limit is 5.\n\n`frontier --group [--limit N]` joins two frontier candidates into one group\nwhen they share a resolved primary `Parent`/`Area` route or when one depends on\nthe other through a canonical context edge, merging the connections\ntransitively. A group is labelled by its shared route, or by its top-ranked\nmember when the routes differ; rows stay in group-then-rank order and are\nbounded, and an explicit `advisory` line states that a group is never a claim\nor assignment. The default limit is 10.\n\nEvidence: `tests/test_bt_index.py` covers the priority, blocking, and recency\nordering; the default bounded shortlist; the zero case; two shared-route\nworkstreams; a dependency-merged group; and the bounded and zero group output;\n`tests/test_bt_foundation.py` covers dispatch and argument errors. `make test`\nand `make verb-benchmark` pass. `benchmark/verb-baseline.json` is unchanged\nbecause the gated default `frontier` answer is byte-identical; `next` is not\nyet a gated case.\n",
+      "positives": [
+        "TAS-071"
+      ],
+      "negatives": [
+        "TAS-075",
+        "TAS-083",
+        "TAS-072"
+      ],
+      "exclude": [
+        "TAS-076"
+      ]
+    },
+    {
+      "id": "near-duplicate-025",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "The frontier answers are a candidate list a worker resolves through the coordinator's `next` route, and a plan-text gate no node owns is `blocked`.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN2: `braintree frontier`, `braintree next --rank`, and `braintree orient`\nreport every unfinished node whose `next` is an action. For a user-requested\nplan whose children are created up front as `proposed`, the coordinator's\nsequenced-but-not-frontier siblings therefore appear as equal candidates even\nthough the contract calls them \"not yet at the frontier\". N3: the contract also\ndoes not state which status a gate on un-tracked plan text takes.\n\n# Outcome\n\nThe frontier answers and the contract agree on the one deliberate frontier\nchild, and a plan-text gate has a stated status.\n\n# Done when\n\n- `braintree frontier`, `next`, and `orient` either return the coordinator's `next` target as the frontier or the contract states the answer is a candidate list that a worker must resolve through the coordinator.\n- The `blocked` versus `proposed` guidance covers a gate on prerequisite plan text that no node owns.\n- A vault fixture with an up-front plan and sequenced siblings has regression tests for the chosen behavior.\n- `make test` passes.\n\n# Result\n\nTook the candidate-list branch the node allows, because the verbs and the\nfrontier definition are both defensible and only their relationship was\nunstated; documenting that relationship needs no new derivation, while\nnarrowing the verbs to the frontier chain would re-decide how a root task, a\nblocked coordinator, and a hub member each reach the frontier.\n\nN2 — `SKILL.md` now states the relationship in both places that describe the\nfrontier:\n\n- The reachability contract names all three answers (`braintree frontier`,\n  `braintree next --rank`, and `braintree orient`) as returning frontier\n  candidates: every unfinished node whose `next` is an action, which is a\n  superset of the frontier. An up-front plan's sequenced sibling carries its\n  own action `next` and is reported beside the deliberate child.\n- The read-and-execute loop states the answer is a candidate list, not the\n  resolved frontier, and requires resolving it through the coordinator: keep\n  only the candidate the coordinating parent's `next` route names; a candidate\n  whose parent's `next` names a different node is not yet at the frontier.\n- The verb's own help line says it lists frontier candidates.\n\nN3 — `SKILL.md` states that a gate on prerequisite plan text that no node owns\nis `blocked`, like any other input the vault does not own, with the prerequisite\nand unblock condition in `# Blocked`; once a node owns that plan text the gate\nis a sibling dependency and the node is `proposed`. The mutation rule's\n`blocked` bullet names the same plan-text case.\n\nEvidence:\n\n- `test_skill_frontier_candidate_contract` and `test_skill_plan_text_gate_status`\n  pin the new contract text.\n- `_seed_upfront_plan` seeds a proposed coordinator whose `next` names\n  `TAS-101-first-step` beside the sequenced `TAS-102` and `TAS-103` siblings:\n  `test_frontier_reports_sequenced_siblings_as_candidates`,\n  `test_frontier_candidates_resolve_through_the_coordinator`, and\n  `test_next_and_orient_report_the_same_frontier_candidates` cover candidate\n  reporting and the unique coordinator resolution.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-071"
+      ],
+      "negatives": [
+        "TAS-060",
+        "TAS-081",
+        "TAS-066"
+      ],
+      "exclude": [
+        "TAS-083"
+      ]
+    },
+    {
+      "id": "near-duplicate-026",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "The frontier answers are a candidate list a worker resolves through the coordinator's `next` route, and a plan-text gate no node owns is `blocked`.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN2: `braintree frontier`, `braintree next --rank`, and `braintree orient`\nreport every unfinished node whose `next` is an action. For a user-requested\nplan whose children are created up front as `proposed`, the coordinator's\nsequenced-but-not-frontier siblings therefore appear as equal candidates even\nthough the contract calls them \"not yet at the frontier\". N3: the contract also\ndoes not state which status a gate on un-tracked plan text takes.\n\n# Outcome\n\nThe frontier answers and the contract agree on the one deliberate frontier\nchild, and a plan-text gate has a stated status.\n\n# Done when\n\n- `braintree frontier`, `next`, and `orient` either return the coordinator's `next` target as the frontier or the contract states the answer is a candidate list that a worker must resolve through the coordinator.\n- The `blocked` versus `proposed` guidance covers a gate on prerequisite plan text that no node owns.\n- A vault fixture with an up-front plan and sequenced siblings has regression tests for the chosen behavior.\n- `make test` passes.\n\n# Result\n\nTook the candidate-list branch the node allows, because the verbs and the\nfrontier definition are both defensible and only their relationship was\nunstated; documenting that relationship needs no new derivation, while\nnarrowing the verbs to the frontier chain would re-decide how a root task, a\nblocked coordinator, and a hub member each reach the frontier.\n\nN2 — `SKILL.md` now states the relationship in both places that describe the\nfrontier:\n\n- The reachability contract names all three answers (`braintree frontier`,\n  `braintree next --rank`, and `braintree orient`) as returning frontier\n  candidates: every unfinished node whose `next` is an action, which is a\n  superset of the frontier. An up-front plan's sequenced sibling carries its\n  own action `next` and is reported beside the deliberate child.\n- The read-and-execute loop states the answer is a candidate list, not the\n  resolved frontier, and requires resolving it through the coordinator: keep\n  only the candidate the coordinating parent's `next` route names; a candidate\n  whose parent's `next` names a different node is not yet at the frontier.\n- The verb's own help line says it lists frontier candidates.\n\nN3 — `SKILL.md` states that a gate on prerequisite plan text that no node owns\nis `blocked`, like any other input the vault does not own, with the prerequisite\nand unblock condition in `# Blocked`; once a node owns that plan text the gate\nis a sibling dependency and the node is `proposed`. The mutation rule's\n`blocked` bullet names the same plan-text case.\n\nEvidence:\n\n- `test_skill_frontier_candidate_contract` and `test_skill_plan_text_gate_status`\n  pin the new contract text.\n- `_seed_upfront_plan` seeds a proposed coordinator whose `next` names\n  `TAS-101-first-step` beside the sequenced `TAS-102` and `TAS-103` siblings:\n  `test_frontier_reports_sequenced_siblings_as_candidates`,\n  `test_frontier_candidates_resolve_through_the_coordinator`, and\n  `test_next_and_orient_report_the_same_frontier_candidates` cover candidate\n  reporting and the unique coordinator resolution.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-081"
+      ],
+      "negatives": [
+        "TAS-060",
+        "TAS-071",
+        "TAS-066"
+      ],
+      "exclude": [
+        "TAS-083"
+      ]
+    },
+    {
+      "id": "near-duplicate-027",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Node addressing and the hash operand are documented next to hash, claim, and release and in the worktree contract, and a path-shaped unknown-node error names the accepted forms.\n# Context\n\nParent [[TAS-081-usage-feedback-hardening-round-three]].\n\nN5: the worktree handoff gives a worker a direct node path, but `braintree hash`\nrejects a path and accepts only a bare ID or filename stem, and `SKILL.md` never\nstates the accepted form. N6: `braintree hash` prints a labelled two-line\nobject while the skill calls it \"the base hash\" and says to pass \"that same\nstarting value\"; the claim accepts either the whole block or the bare\n`content_hash` as an opaque operand, so the recorded value is ambiguous. N7: the\nskill says to hash and claim before editing but never says whether a node's own\nfrontier transition (the status move and `# Context` edit that takes the\nfrontier) precedes the claim or belongs to the claimed edit, and which content\nthe recorded base hash names.\n\n# Outcome\n\nOne documented, unambiguous hash and claim contract.\n\n# Done when\n\n- `braintree hash`, `claim`, and `release` accept the node path the handoff gives a worker, or `SKILL.md` states the accepted forms next to each command and in the worktree contract.\n- `braintree hash` prints a bare digest, or `SKILL.md` states that the `content_hash` field is the operand and shows it in the hash, claim, and release examples.\n- `SKILL.md` states whether the frontier transition precedes the claim or is part of the claimed edit, and which content the base hash names.\n- A path-shaped unknown-node error suggests the accepted forms.\n- Regression tests cover the chosen addressing and operand behavior and `make test` passes.\n\n# Result\n\nTook the documentation branch for N5, N6, and N7, plus the error-path change the\naddressing bullet requires.\n\n- N5 addressing: `SKILL.md` states the accepted NODE forms next to the\n  hash/claim/release commands and in the parallel-worktree handoff. NODE is a\n  bare ID (`TAS-085`) or the full node name, the filename stem\n  (`TAS-085-hash-addressing-and-operand`); a path is not accepted. `hash`\n  resolves either form, while `claim` and `release` never read Markdown and\n  treat NODE as the same opaque claim key, so one node is addressed with one\n  spelling. `braintree hash nodes/proposed/X.md` still fails, but the\n  `unknown node` help now derives the bare ID and full node name from the path\n  and names them. The shared `_unknown_node` helper carries the same suggestion\n  for `hash`, `backlinks`, `node`, and `impact`.\n- N6 operand: `SKILL.md` states that the `content_hash` field is the operand, a\n  bare 64-character digest passed as `--base-hash`, never the\n  `node:`/`content_hash:` block, and shows it in hash, claim, and release\n  examples.\n- N7 ordering: `SKILL.md` states that a worker hashes and claims before editing,\n  that the node's own frontier transition (the status move and the `# Context`\n  edit that take the frontier) is part of the claimed edit rather than a\n  precondition, and that the recorded `content_hash` names the node content\n  exactly as handed off, before that transition and before any other edit.\n\nEvidence:\n\n- `test_hash_rejects_a_path_and_names_the_accepted_forms` and\n  `test_hash_content_hash_is_the_claim_and_release_operand` pin the addressing\n  and operand behavior.\n- `test_skill_hash_addressing_and_operand_contract` pins the `SKILL.md` strings,\n  including the worktree wording.\n- `make test` and `braintree check nodes` pass.\n",
+      "positives": [
+        "TAS-081"
+      ],
+      "negatives": [
+        "TAS-061",
+        "TAS-062",
+        "TAS-096"
+      ],
+      "exclude": [
+        "TAS-085"
+      ]
+    },
+    {
+      "id": "near-duplicate-028",
+      "family": "near-duplicate",
+      "split": "heldout",
+      "query": "Round-four Tangle feedback disposes FBK-001 and FBK-002 as fixed and admits FBK-003 and FBK-004 plus one portfolio gap in one-command node capture.\n# Question\n\nArea [[IDX-001-execution-graph]].\n\n`braintree feedback scan /Users/thomasmarsh/git/tangle` reports four proposed\nfeedback nodes after the round analyzed in\n[[THO-011-round-three-usage-feedback-analysis]]: `FBK-001` through `FBK-004`.\n`FBK-001` and `FBK-002` are the round-three findings N8 and N5, still open in\nthe consuming vault. Which findings still hold against this implementation at\n`0.5.0`, and which of the nine targeted client use-cases lack a capability that\nremoves a reasoning step or a round trip?\n\n# Conclusion\n\nReproduction used an isolated probe vault at `/tmp/bt-r4` with\n`BT_SIDECAR_DIR`/`BT_PROJECT_ID`, so no reservation state and no vault state\nwas disturbed.\n\n| Feedback | Scan revision | Verdict | Evidence |\n|----------|---------------|---------|----------|\n| `FBK-001` | `0.5.0+gc99a080` | fixed, disposed | An unpinned `Gated on [[TAS-001-probe]].` line to a proposed target passes the checker (`graph check: passed (3 nodes)`), [[TAS-086-unresolved-dependency-representation]] states the form, and an unpinned `Depends on` to the same target fails with `a not-yet-resolved predecessor is recorded as Gated on [[TAS-001-probe]].` |\n| `FBK-002` | `0.5.0+gc99a080` | fixed, disposed | `braintree hash nodes/proposed/TAS-001-probe.md` now fails with `help: \"Use the bare ID 'TAS-001' or the full node name 'TAS-001-probe', not a path.\"`, the bare ID and stem both succeed, and [[TAS-085-hash-addressing-and-operand]] states the accepted forms and the frontier-transition ordering. |\n| `FBK-003` | `0.5.0+g64359e6` | open, admitted | No `SKILL.md` text matches `primitive`, `seam`, or an in-scope-authoring rule; the parallel-worktree contract names the write set but not whether a gate's needed primitive may be authored inside it. |\n| `FBK-004` | `0.5.0+g64359e6` | open, admitted | `braintree claim TAS-001-probe worker --base-hash \"$(braintree hash TAS-001-probe)\"` printed `result: \"claimed\"` and echoed the two-line `node:`/`content_hash:` block as the recorded `base_hash`; the bare digest the skill mandates then failed on release, non-zero, forcing a release-and-reclaim once the mistake was noticed. |\n\nNeither defect re-admitted from `FBK-001` or `FBK-002`: both were already fixed\nby the round-three children, and re-admitting fixed friction would be node\nchurn.\n\n## Portfolio gap map\n\nOne gap is admitted. The rest are covered or deliberately excluded by the\nexisting contract, and that is stated here instead of becoming work.\n\n| Use-case | Coverage | Verdict |\n|----------|----------|---------|\n| Brainstorming | The admission threshold decides whether an idea becomes a node; a question worth answering is a `THO`, and a candidate work item is a `proposed` child. | disposed: the missing piece is the capture cost, which the admitted gap covers, not a new status or type |\n| Detailed planning | A user-requested plan pre-creates children as `proposed`, the parent `next` names one frontier child, `frontier --group` clusters advisory workstreams, and `node` plus `Parent` backlinks show the tree. | disposed, covered |\n| Choosing work items | `frontier`, `next --rank`, and `orient` answer directly, and a coordinating parent's `next` route resolves the candidate list. | disposed, covered |\n| Prioritization | `next --rank` orders unfinished work by `priority` (`P0`-`P3` asc, transitive blocking desc, `updated` desc, `id` asc) and `search --priority P` refines a lexical query; the documented `find`/`rg` recipe covers filter-only enumeration. | disposed, covered |\n| Establishing risk boundaries | `blocked` records missing input or approval, `check` enforces graph invariants, and the coordinator's write set bounds a slice. The unstated slice-scope boundary is `FBK-003`. | admitted via [[TAS-097-slice-primitive-scope]] |\n| Deliberating about work | A `THO` node holds Question, Hypothesis, Prediction, Test, and Evidence. | disposed, covered; authoring cost is the admitted gap |\n| Maintaining work logs | The admission contract deliberately excludes routine narration and tool-call logs, and Git history plus a node's `# Result` is the sanctioned log. | disposed: a log node is the transcript the model rejects |\n| Capturing errand thoughts | `braintree feedback record` creates a routed, revision-stamped node in one step, but no equivalent exists for `THO`, `DEF`, `DEC`, or `TAS`. | admitted via [[TAS-098-node-capture-path]] |\n| Recording architectural decisions | The `DEC` type with Decision, Rationale, and Consequences is current knowledge once resolved. | disposed, covered; creation cost is the admitted gap |\n\nThe admitted capture gap is measured, not asserted. `braintree --help` lists 22\ncommands and `feedback record` is the only one that creates a node; capturing a\nquestion, a decision, or a work item by hand costs `braintree allocate PREFIX`,\na read of `index-map.md` for the hub route, hand-authored `context_rev`,\n`updated`, `summary`, and `next` frontmatter, a chosen status directory, and a\n`braintree check nodes` pass, where the same act for an `FBK` node is one\ncommand.\n\n# Decision\n\nCreate the coordinating task [[TAS-095-usage-feedback-hardening-round-four]]\nwith one child per independently resumable confirmed change:\n\n- [[TAS-096-base-hash-validation]] — `FBK-004`.\n- [[TAS-097-slice-primitive-scope]] — `FBK-003` and the risk-boundary use case.\n- [[TAS-098-node-capture-path]] — the one admitted portfolio gap.\n\nRound four is lower severity than rounds two and three: no finding prevents a\nworker from coordinating or from claiming correctly once it notices the bad\noperand, so the coordinating task is `P2` and does not displace the `P1`\nfrontier routed by [[TAS-087-off-the-shelf-embedding-and-clustering]].\n",
+      "positives": [
+        "TAS-081"
+      ],
+      "negatives": [
+        "TAS-095",
+        "TAS-098",
+        "THO-011"
+      ],
+      "exclude": [
+        "THO-013"
+      ]
+    },
+    {
+      "id": "near-duplicate-029",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Round-three Tangle feedback confirms seven findings at 0.5.0 (64359e6) across reversal semantics, frontier determinacy, checker link parsing, node addressing, the hash operand, and unresolved dependency representation.\n# Question\n\nArea [[IDX-001-execution-graph]].\n\nThe Tangle vault recorded friction after the round analyzed in\n[[THO-009-second-round-usage-feedback-analysis]]: the resolved notes\n`THO-010-braintree-friction-release-profile-reversal`,\n`THO-011-braintree-friction-phase-2-decomposition`,\n`THO-012-braintree-friction-phase-2-increment-0`, and\n`THO-013-braintree-friction-phase-1-increment-1`, plus the proposed feedback\nnodes `FBK-001-braintree-check-nodes-failed-with-invalid-or-mis` and\n`FBK-002-braintree-hash-rejects-a-node-path-with-a-bare-u`. Their ids collide\nwith this vault's own `THO`-`FBK` numbering, so they are cited as\n`Tangle THO-0NN` and `Tangle FBK-00N`. Which findings still hold against this\nimplementation at `0.5.0` (`64359e6`), and what self-improvement work do they\nrequire?\n\n# Conclusion\n\nSeven findings reproduce; two prior findings are already fixed and three are\nconsuming-side only. Reproduction used, in addition to the real vault, an\nisolated probe vault in `/tmp/bt-probe` with `BT_SIDECAR_DIR`/`BT_PROJECT_ID`,\nso no reservation state was disturbed.\n\n| # | Finding | Source | Kind | Severity | Evidence |\n|---|---------|--------|------|----------|----------|\n| N1 | Reversing an outcome after partial implementation has no stated rule for update-in-place versus `disposition: superseded`, nor for what the resolved node owes a commit that named the old direction | Tangle THO-010 F1 | docs | medium | `SKILL.md` mutation rules state \"prefer updating\" and define `superseded`, but the reversal paragraph the source proposes does not exist |\n| N2 | `braintree frontier`, `braintree next --rank`, and `braintree orient` report every unfinished node whose `next` is an action, so a coordinator's sequenced-but-not-frontier `proposed` siblings appear as equal frontier candidates | Tangle THO-011 F1, Tangle THO-012 F2 | tooling/docs | high | Probe: coordinator `next` names one child, yet all four action-`next` nodes (two children, two unrelated `THO`) print with no distinguishing mark; `SKILL.md` says `proposed` work is \"not yet at the frontier\" |\n| N3 | There is no stated status for work gated on prerequisite plan text that no node owns | Tangle THO-012 F4 | docs | medium | `SKILL.md` contrasts `blocked` (external state, credential, approval) with `proposed` (ready but not frontier, or a sibling decision) but not a plan-text gate |\n| N4 | The checker parses wikilink-shaped tokens inside inline code spans and fenced code blocks as real links, so a node quoting the skill's own grammar fails | Tangle THO-011 F4, Tangle THO-008 F2 | checker | medium | Probe: one inline and one fenced quoted token produced two `broken link` findings; the checker scans raw text without masking code |\n| N5 | Node addressing is undocumented next to the commands and the worktree handoff says \"node path\": `braintree hash nodes/proposed/X.md` fails while `braintree hash X` succeeds | Tangle THO-012 F1, Tangle THO-013 F2, Tangle FBK-002 | docs/tooling | low | Probe: path form prints `unknown node`; the `help` line already names the accepted forms, but `SKILL.md` and the handoff do not state which operand the tool takes |\n| N6 | `braintree hash` prints a labelled two-line object, while `SKILL.md` says it \"prints the base hash\" and to pass \"that same starting value\"; the claim accepts the whole two-line string as an opaque operand | Tangle THO-013 F1 | docs/tooling | medium | Probe: `braintree hash X` prints `node:` plus `content_hash:`; `claim --base-hash` accepted both the whole block and the bare digest, so the recorded value is ambiguous |\n| N7 | The skill does not order the frontier transition against the claim, so it is unspecified whether the status move and `# Context` edit precede the claim or belong to the claimed edit, and which content \"base hash\" names | Tangle FBK-002 | docs | medium | `SKILL.md` says a worker hashes and claims \"before editing\" and that resolving a frontier child advances the parent, but never says whether a node's own `proposed`-to-`active` move is that first edit |\n| N8 | A `Depends on` edge to an unresolved predecessor has no sanctioned representation: an unpinned edge fails as a missing pin and a pinned edge fails as unresolved | Tangle FBK-001 | docs/checker | medium | Probe: both forms are rejected with generic diagnostics and neither names the sanctioned gated form |\n\nAlready fixed (disposed, no work required):\n\n- Tangle THO-010 F2, recurring `braintree allocate` collision: `allocate THO`\n  on a vault holding `THO-001` and `THO-002` returned `THO-003`, so\n  [[TAS-045-id-reservation-reconciliation]] holds.\n- Tangle THO-011 F2, read loop pointing at an absent index-map recipe: the loop\n  now runs the `braintree frontier` verb and no longer depends on a vault recipe.\n\nConsuming-side only (disposed):\n\n- Tangle THO-011 F3, Tangle THO-012 F3, and Tangle THO-013 F3, the divergence\n  between the skill's `FBK` marker and the project's `THO` friction mechanism,\n  is resolved in the consuming project: Tangle's `AGENTS.md` now mandates\n  `braintree feedback record` and the `FBK` node it writes.\n\n# Decision\n\nCreate the coordinating task [[TAS-081-usage-feedback-hardening-round-three]]\nwith one child per independently resumable confirmed change:\n\n- [[TAS-082-reversal-semantics]] — N1.\n- [[TAS-083-frontier-determinacy]] — N2 and N3.\n- [[TAS-084-code-span-link-masking]] — N4.\n- [[TAS-085-hash-addressing-and-operand]] — N5, N6, and N7.\n- [[TAS-086-unresolved-dependency-representation]] — N8.\n\nN2 is the highest-severity finding: the direct-answer verbs the current thrust\nlanded disagree with the documented frontier definition, so a fresh worker can\nselect a sequenced sibling.\n",
+      "positives": [
+        "THO-009"
+      ],
+      "negatives": [
+        "THO-013",
+        "TAS-085",
+        "TAS-081"
+      ],
+      "exclude": [
+        "THO-011"
+      ]
+    },
+    {
+      "id": "near-duplicate-030",
+      "family": "near-duplicate",
+      "split": "dev",
+      "query": "Round-four Tangle feedback disposes FBK-001 and FBK-002 as fixed and admits FBK-003 and FBK-004 plus one portfolio gap in one-command node capture.\n# Question\n\nArea [[IDX-001-execution-graph]].\n\n`braintree feedback scan /Users/thomasmarsh/git/tangle` reports four proposed\nfeedback nodes after the round analyzed in\n[[THO-011-round-three-usage-feedback-analysis]]: `FBK-001` through `FBK-004`.\n`FBK-001` and `FBK-002` are the round-three findings N8 and N5, still open in\nthe consuming vault. Which findings still hold against this implementation at\n`0.5.0`, and which of the nine targeted client use-cases lack a capability that\nremoves a reasoning step or a round trip?\n\n# Conclusion\n\nReproduction used an isolated probe vault at `/tmp/bt-r4` with\n`BT_SIDECAR_DIR`/`BT_PROJECT_ID`, so no reservation state and no vault state\nwas disturbed.\n\n| Feedback | Scan revision | Verdict | Evidence |\n|----------|---------------|---------|----------|\n| `FBK-001` | `0.5.0+gc99a080` | fixed, disposed | An unpinned `Gated on [[TAS-001-probe]].` line to a proposed target passes the checker (`graph check: passed (3 nodes)`), [[TAS-086-unresolved-dependency-representation]] states the form, and an unpinned `Depends on` to the same target fails with `a not-yet-resolved predecessor is recorded as Gated on [[TAS-001-probe]].` |\n| `FBK-002` | `0.5.0+gc99a080` | fixed, disposed | `braintree hash nodes/proposed/TAS-001-probe.md` now fails with `help: \"Use the bare ID 'TAS-001' or the full node name 'TAS-001-probe', not a path.\"`, the bare ID and stem both succeed, and [[TAS-085-hash-addressing-and-operand]] states the accepted forms and the frontier-transition ordering. |\n| `FBK-003` | `0.5.0+g64359e6` | open, admitted | No `SKILL.md` text matches `primitive`, `seam`, or an in-scope-authoring rule; the parallel-worktree contract names the write set but not whether a gate's needed primitive may be authored inside it. |\n| `FBK-004` | `0.5.0+g64359e6` | open, admitted | `braintree claim TAS-001-probe worker --base-hash \"$(braintree hash TAS-001-probe)\"` printed `result: \"claimed\"` and echoed the two-line `node:`/`content_hash:` block as the recorded `base_hash`; the bare digest the skill mandates then failed on release, non-zero, forcing a release-and-reclaim once the mistake was noticed. |\n\nNeither defect re-admitted from `FBK-001` or `FBK-002`: both were already fixed\nby the round-three children, and re-admitting fixed friction would be node\nchurn.\n\n## Portfolio gap map\n\nOne gap is admitted. The rest are covered or deliberately excluded by the\nexisting contract, and that is stated here instead of becoming work.\n\n| Use-case | Coverage | Verdict |\n|----------|----------|---------|\n| Brainstorming | The admission threshold decides whether an idea becomes a node; a question worth answering is a `THO`, and a candidate work item is a `proposed` child. | disposed: the missing piece is the capture cost, which the admitted gap covers, not a new status or type |\n| Detailed planning | A user-requested plan pre-creates children as `proposed`, the parent `next` names one frontier child, `frontier --group` clusters advisory workstreams, and `node` plus `Parent` backlinks show the tree. | disposed, covered |\n| Choosing work items | `frontier`, `next --rank`, and `orient` answer directly, and a coordinating parent's `next` route resolves the candidate list. | disposed, covered |\n| Prioritization | `next --rank` orders unfinished work by `priority` (`P0`-`P3` asc, transitive blocking desc, `updated` desc, `id` asc) and `search --priority P` refines a lexical query; the documented `find`/`rg` recipe covers filter-only enumeration. | disposed, covered |\n| Establishing risk boundaries | `blocked` records missing input or approval, `check` enforces graph invariants, and the coordinator's write set bounds a slice. The unstated slice-scope boundary is `FBK-003`. | admitted via [[TAS-097-slice-primitive-scope]] |\n| Deliberating about work | A `THO` node holds Question, Hypothesis, Prediction, Test, and Evidence. | disposed, covered; authoring cost is the admitted gap |\n| Maintaining work logs | The admission contract deliberately excludes routine narration and tool-call logs, and Git history plus a node's `# Result` is the sanctioned log. | disposed: a log node is the transcript the model rejects |\n| Capturing errand thoughts | `braintree feedback record` creates a routed, revision-stamped node in one step, but no equivalent exists for `THO`, `DEF`, `DEC`, or `TAS`. | admitted via [[TAS-098-node-capture-path]] |\n| Recording architectural decisions | The `DEC` type with Decision, Rationale, and Consequences is current knowledge once resolved. | disposed, covered; creation cost is the admitted gap |\n\nThe admitted capture gap is measured, not asserted. `braintree --help` lists 22\ncommands and `feedback record` is the only one that creates a node; capturing a\nquestion, a decision, or a work item by hand costs `braintree allocate PREFIX`,\na read of `index-map.md` for the hub route, hand-authored `context_rev`,\n`updated`, `summary`, and `next` frontmatter, a chosen status directory, and a\n`braintree check nodes` pass, where the same act for an `FBK` node is one\ncommand.\n\n# Decision\n\nCreate the coordinating task [[TAS-095-usage-feedback-hardening-round-four]]\nwith one child per independently resumable confirmed change:\n\n- [[TAS-096-base-hash-validation]] — `FBK-004`.\n- [[TAS-097-slice-primitive-scope]] — `FBK-003` and the risk-boundary use case.\n- [[TAS-098-node-capture-path]] — the one admitted portfolio gap.\n\nRound four is lower severity than rounds two and three: no finding prevents a\nworker from coordinating or from claiming correctly once it notices the bad\noperand, so the coordinating task is `P2` and does not displace the `P1`\nfrontier routed by [[TAS-087-off-the-shelf-embedding-and-clustering]].\n",
+      "positives": [
+        "THO-011"
+      ],
+      "negatives": [
+        "TAS-095",
+        "TAS-098",
+        "TAS-081"
+      ],
+      "exclude": [
+        "THO-013"
+      ]
+    },
+    {
+      "id": "paraphrase-031",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "If semantic retrieval is added, it is optional, derived, rebuildable, and never authoritative; core answers are identical without it.",
+      "positives": [
+        "DEC-002"
+      ],
+      "negatives": [
+        "TAS-079",
+        "THO-002",
+        "TAS-087"
+      ],
+      "exclude": [
+        "DEC-006"
+      ]
+    },
+    {
+      "id": "paraphrase-032",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Define authority, reconciliation, recovery, and deployment invariants for the hybrid graph store.",
+      "positives": [
+        "DEC-002"
+      ],
+      "negatives": [
+        "TAS-033",
+        "TAS-030",
+        "TAS-008"
+      ],
+      "exclude": [
+        "DEF-002"
+      ]
+    },
+    {
+      "id": "paraphrase-033",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Converted this graph project to a Markdown-canonical, SQLite-assisted local execution store.",
+      "positives": [
+        "DEC-002"
+      ],
+      "negatives": [
+        "TAS-054",
+        "DEC-005",
+        "TAS-035"
+      ],
+      "exclude": [
+        "TAS-030"
+      ]
+    },
+    {
+      "id": "paraphrase-034",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Document and distribute specialized hybrid-store commands without changing Markdown authority.",
+      "positives": [
+        "DEC-002"
+      ],
+      "negatives": [
+        "TAS-032",
+        "TAS-030",
+        "TAS-034"
+      ],
+      "exclude": [
+        "TAS-033"
+      ]
+    },
+    {
+      "id": "paraphrase-035",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Audit confirms Markdown authority, external sidecar isolation, recovery, and same-host coordination boundaries.",
+      "positives": [
+        "DEC-002"
+      ],
+      "negatives": [
+        "TAS-030",
+        "TAS-033",
+        "TAS-034"
+      ],
+      "exclude": [
+        "TAS-035"
+      ]
+    },
+    {
+      "id": "paraphrase-036",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Retain authoritative status directories; hybrid evidence does not justify stationary paths or database-owned workflow metadata.",
+      "positives": [
+        "DEC-002"
+      ],
+      "negatives": [
+        "TAS-035",
+        "TAS-030",
+        "TAS-017"
+      ],
+      "exclude": [
+        "TAS-036"
+      ]
+    },
+    {
+      "id": "paraphrase-037",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Version gaps are reconciled by reinstalling, not migrating; only an incompatible change to the installed skill/CLI contract or the vault Markdown format would force a vault migration.",
+      "positives": [
+        "DEC-003"
+      ],
+      "negatives": [
+        "TAS-053",
+        "TAS-051",
+        "TAS-057"
+      ],
+      "exclude": [
+        "DEC-005"
+      ]
+    },
+    {
+      "id": "paraphrase-038",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Every project using Braintree can name its installed version and revision offline, and migration is a settled deliberate decision.",
+      "positives": [
+        "DEC-003"
+      ],
+      "negatives": [
+        "TAS-052",
+        "TAS-053",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-051"
+      ]
+    },
+    {
+      "id": "paraphrase-039",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Installs record the Braintree version and source revision and report them through the documented `--version` read path.",
+      "positives": [
+        "DEC-003"
+      ],
+      "negatives": [
+        "TAS-051",
+        "TAS-056",
+        "TAS-080"
+      ],
+      "exclude": [
+        "TAS-052"
+      ]
+    },
+    {
+      "id": "paraphrase-040",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Version gaps are reconciled by reinstalling; migration is warranted only by an incompatible change to the installed skill/CLI or vault Markdown contract.",
+      "positives": [
+        "DEC-003"
+      ],
+      "negatives": [
+        "DEC-005",
+        "TAS-051",
+        "DEC-004"
+      ],
+      "exclude": [
+        "TAS-053"
+      ]
+    },
+    {
+      "id": "paraphrase-041",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Move graph reasoning out of SKILL.md prose into direct `braintree` answers so client agents decide and act in fewer round trips while the always-loaded skill shrinks.",
+      "positives": [
+        "DEC-004"
+      ],
+      "negatives": [
+        "THO-010",
+        "TAS-074",
+        "TAS-065"
+      ],
+      "exclude": [
+        "TAS-068"
+      ]
+    },
+    {
+      "id": "paraphrase-042",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Replace the shell recipes in SKILL.md with the direct-answer verbs and measure the skill's token reduction.",
+      "positives": [
+        "DEC-004"
+      ],
+      "negatives": [
+        "TAS-060",
+        "THO-010",
+        "TAS-082"
+      ],
+      "exclude": [
+        "TAS-074"
+      ]
+    },
+    {
+      "id": "paraphrase-043",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Install a single `braintree` command into the home root's `.local/bin` and make it the only documented invocation, with no `uv`, Python, or implementation-language awareness in `SKILL.md` or consuming projects.",
+      "positives": [
+        "DEC-005"
+      ],
+      "negatives": [
+        "TAS-037",
+        "TAS-088",
+        "TAS-097"
+      ],
+      "exclude": [
+        "TAS-065"
+      ]
+    },
+    {
+      "id": "paraphrase-044",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Add an optional, derived, non-authoritative semantic retrieval layer behind the capability boundary.",
+      "positives": [
+        "DEC-006"
+      ],
+      "negatives": [
+        "TAS-087",
+        "TAS-094",
+        "TAS-090"
+      ],
+      "exclude": [
+        "TAS-079"
+      ]
+    },
+    {
+      "id": "paraphrase-045",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Add an optional off-the-shelf embedding and manifold-clustering retrieval layer behind the DEC-006 capability boundary without training any model.",
+      "positives": [
+        "DEC-006"
+      ],
+      "negatives": [
+        "THO-012",
+        "TAS-094",
+        "TAS-090"
+      ],
+      "exclude": [
+        "TAS-087"
+      ]
+    },
+    {
+      "id": "paraphrase-046",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Ship a native Python embedding provider over the chosen off-the-shelf model that speaks the existing stdin/stdout vector protocol and caches by content hash.",
+      "positives": [
+        "DEC-006"
+      ],
+      "negatives": [
+        "TAS-085",
+        "TAS-079",
+        "TAS-087"
+      ],
+      "exclude": [
+        "TAS-090"
+      ]
+    },
+    {
+      "id": "paraphrase-047",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Expose advisory clusters, embedding-reranked similar, and bounded hub and cluster digests through direct braintree answers.",
+      "positives": [
+        "DEC-006"
+      ],
+      "negatives": [
+        "TAS-092",
+        "THO-012",
+        "TAS-089"
+      ],
+      "exclude": [
+        "TAS-093"
+      ]
+    },
+    {
+      "id": "paraphrase-048",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Gate the embedding and clustering layer with cluster-quality, retrieval, and round-trip evidence plus an explicit keep, revise, or revert decision.",
+      "positives": [
+        "DEC-006"
+      ],
+      "negatives": [
+        "TAS-087",
+        "THO-012",
+        "TAS-080"
+      ],
+      "exclude": [
+        "TAS-094"
+      ]
+    },
+    {
+      "id": "paraphrase-049",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Version gaps are reconciled by reinstalling, not migrating; only an incompatible change to the installed skill/CLI contract or the vault Markdown format would force a vault migration.",
+      "positives": [
+        "DEF-001"
+      ],
+      "negatives": [
+        "TAS-053",
+        "TAS-051",
+        "TAS-057"
+      ],
+      "exclude": [
+        "DEC-005"
+      ]
+    },
+    {
+      "id": "paraphrase-050",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Deliver an installable, documented, tested Codex and Claude Code distribution.",
+      "positives": [
+        "DEF-001"
+      ],
+      "negatives": [
+        "TAS-002",
+        "TAS-004",
+        "TAS-014"
+      ],
+      "exclude": [
+        "TAS-001"
+      ]
+    },
+    {
+      "id": "paraphrase-051",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Version gaps are reconciled by reinstalling; migration is warranted only by an incompatible change to the installed skill/CLI or vault Markdown contract.",
+      "positives": [
+        "DEF-001"
+      ],
+      "negatives": [
+        "DEC-005",
+        "TAS-051",
+        "DEC-004"
+      ],
+      "exclude": [
+        "TAS-053"
+      ]
+    },
+    {
+      "id": "paraphrase-052",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Install a single `braintree` command into the home root's `.local/bin` and make it the only documented invocation, with no `uv`, Python, or implementation-language awareness in `SKILL.md` or consuming projects.",
+      "positives": [
+        "DEF-001"
+      ],
+      "negatives": [
+        "TAS-037",
+        "DEC-005",
+        "TAS-088"
+      ],
+      "exclude": [
+        "TAS-065"
+      ]
+    },
+    {
+      "id": "paraphrase-053",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "If semantic retrieval is added, it is optional, derived, rebuildable, and never authoritative; core answers are identical without it.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "TAS-079",
+        "THO-002",
+        "TAS-087"
+      ],
+      "exclude": [
+        "DEC-006"
+      ]
+    },
+    {
+      "id": "paraphrase-054",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Converted this graph project to a Markdown-canonical, SQLite-assisted local execution store.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "DEC-002",
+        "TAS-054",
+        "DEC-005"
+      ],
+      "exclude": [
+        "TAS-030"
+      ]
+    },
+    {
+      "id": "paraphrase-055",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Implement the external SQLite sidecar identity, schema, atomic claims, leases, and ID allocation.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "DEC-002",
+        "TAS-040",
+        "TAS-030"
+      ],
+      "exclude": [
+        "TAS-031"
+      ]
+    },
+    {
+      "id": "paraphrase-056",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Implemented rebuildable SQLite indexing of Markdown nodes, semantic edges, and full-text search.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "DEC-002",
+        "TAS-033",
+        "TAS-014"
+      ],
+      "exclude": [
+        "TAS-032"
+      ]
+    },
+    {
+      "id": "paraphrase-057",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Document and distribute specialized hybrid-store commands without changing Markdown authority.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "TAS-032",
+        "DEC-002",
+        "TAS-030"
+      ],
+      "exclude": [
+        "TAS-033"
+      ]
+    },
+    {
+      "id": "paraphrase-058",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Verify hybrid-store correctness, recovery, and same-host worktree coordination.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "TAS-033",
+        "DEC-002",
+        "TAS-031"
+      ],
+      "exclude": [
+        "TAS-034"
+      ]
+    },
+    {
+      "id": "paraphrase-059",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Move graph reasoning out of SKILL.md prose into direct `braintree` answers so client agents decide and act in fewer round trips while the always-loaded skill shrinks.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "THO-010",
+        "TAS-074",
+        "TAS-065"
+      ],
+      "exclude": [
+        "TAS-068"
+      ]
+    },
+    {
+      "id": "paraphrase-060",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Unified check, index, and stale on one canonical context-edge set; stale now reports missing, revision-mismatched, and unresolved pins.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "TAS-032",
+        "TAS-049",
+        "TAS-039"
+      ],
+      "exclude": [
+        "TAS-069"
+      ]
+    },
+    {
+      "id": "paraphrase-061",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Add `braintree frontier` and `braintree node` so the current frontier and a node's graph view are direct CLI answers.",
+      "positives": [
+        "DEF-002"
+      ],
+      "negatives": [
+        "TAS-083",
+        "TAS-068",
+        "TAS-076"
+      ],
+      "exclude": [
+        "TAS-071"
+      ]
+    },
+    {
+      "id": "paraphrase-062",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Provide a dedicated Claude Code installer with a wrapper-valid interface and shared core installation logic.",
+      "positives": [
+        "TAS-006"
+      ],
+      "negatives": [
+        "TAS-084",
+        "TAS-092",
+        "TAS-093"
+      ],
+      "exclude": [
+        "TAS-002"
+      ]
+    },
+    {
+      "id": "paraphrase-063",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "graph-check now rejects the blocked-section, disposition, and task-next lifecycle violations its contract documents.",
+      "positives": [
+        "TAS-014"
+      ],
+      "negatives": [
+        "TAS-039",
+        "TAS-055",
+        "TAS-083"
+      ],
+      "exclude": [
+        "TAS-043"
+      ]
+    },
+    {
+      "id": "paraphrase-064",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Adopt the compact SKILL.md; a two-round A/B cut median benchmark tokens 23.5% by reducing repeated-context rounds.",
+      "positives": [
+        "TAS-020"
+      ],
+      "negatives": [
+        "DEC-005",
+        "TAS-082",
+        "TAS-048"
+      ],
+      "exclude": [
+        "DEC-004"
+      ]
+    },
+    {
+      "id": "paraphrase-065",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Port the read-only vault validator to typed Python with identical checks, options, exit codes, and error strings.",
+      "positives": [
+        "TAS-038"
+      ],
+      "negatives": [
+        "TAS-040",
+        "TAS-070",
+        "TAS-037"
+      ],
+      "exclude": [
+        "TAS-039"
+      ]
+    },
+    {
+      "id": "paraphrase-066",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Port the `bt` sidecar, Markdown index builder, and FTS/claim/allocation logic to typed Python with unchanged output and semantics.",
+      "positives": [
+        "TAS-038"
+      ],
+      "negatives": [
+        "TAS-031",
+        "TAS-045",
+        "TAS-032"
+      ],
+      "exclude": [
+        "TAS-040"
+      ]
+    },
+    {
+      "id": "paraphrase-067",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Port the behavioral, storage, and token benchmark harnesses to typed Python with identical output and tracked-baseline verification.",
+      "positives": [
+        "TAS-038"
+      ],
+      "negatives": [
+        "TAS-040",
+        "TAS-042",
+        "TAS-018"
+      ],
+      "exclude": [
+        "TAS-041"
+      ]
+    },
+    {
+      "id": "paraphrase-068",
+      "family": "paraphrase",
+      "split": "dev",
+      "query": "Installers, tests, Makefile, and docs drive the uv-managed Python toolchain; all tracked Ruby is removed.",
+      "positives": [
+        "TAS-038"
+      ],
+      "negatives": [
+        "TAS-037",
+        "TAS-041",
+        "TAS-040"
+      ],
+      "exclude": [
+        "TAS-042"
+      ]
+    },
+    {
+      "id": "paraphrase-069",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Installers, tests, Makefile, and docs drive the uv-managed Python toolchain; all tracked Ruby is removed.",
+      "positives": [
+        "TAS-039"
+      ],
+      "negatives": [
+        "TAS-037",
+        "TAS-038",
+        "TAS-041"
+      ],
+      "exclude": [
+        "TAS-042"
+      ]
+    },
+    {
+      "id": "paraphrase-070",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Installers, tests, Makefile, and docs drive the uv-managed Python toolchain; all tracked Ruby is removed.",
+      "positives": [
+        "TAS-040"
+      ],
+      "negatives": [
+        "TAS-037",
+        "TAS-038",
+        "TAS-041"
+      ],
+      "exclude": [
+        "TAS-042"
+      ]
+    },
+    {
+      "id": "paraphrase-071",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Installers, tests, Makefile, and docs drive the uv-managed Python toolchain; all tracked Ruby is removed.",
+      "positives": [
+        "TAS-041"
+      ],
+      "negatives": [
+        "TAS-037",
+        "TAS-038",
+        "TAS-040"
+      ],
+      "exclude": [
+        "TAS-042"
+      ]
+    },
+    {
+      "id": "paraphrase-072",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "A consuming project records a struggle or suggested improvement in one documented step that yields a valid feedback node.",
+      "positives": [
+        "TAS-052"
+      ],
+      "negatives": [
+        "TAS-054",
+        "TAS-064",
+        "TAS-098"
+      ],
+      "exclude": [
+        "TAS-056"
+      ]
+    },
+    {
+      "id": "paraphrase-073",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "A maintainer scans external vaults' nodes/ and gets Braintree feedback as a compact result ready for triage into this graph.",
+      "positives": [
+        "TAS-055"
+      ],
+      "negatives": [
+        "TAS-054",
+        "TAS-098",
+        "TAS-075"
+      ],
+      "exclude": [
+        "TAS-057"
+      ]
+    },
+    {
+      "id": "paraphrase-074",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Gate the embedding and clustering layer with cluster-quality, retrieval, and round-trip evidence plus an explicit keep, revise, or revert decision.",
+      "positives": [
+        "TAS-078"
+      ],
+      "negatives": [
+        "TAS-087",
+        "THO-012",
+        "TAS-080"
+      ],
+      "exclude": [
+        "TAS-094"
+      ]
+    },
+    {
+      "id": "paraphrase-075",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Add an optional off-the-shelf embedding and manifold-clustering retrieval layer behind the DEC-006 capability boundary without training any model.",
+      "positives": [
+        "TAS-079"
+      ],
+      "negatives": [
+        "THO-012",
+        "TAS-094",
+        "TAS-090"
+      ],
+      "exclude": [
+        "TAS-087"
+      ]
+    },
+    {
+      "id": "paraphrase-076",
+      "family": "paraphrase",
+      "split": "heldout",
+      "query": "Ship a native Python embedding provider over the chosen off-the-shelf model that speaks the existing stdin/stdout vector protocol and caches by content hash.",
+      "positives": [
+        "TAS-079"
+      ],
+      "negatives": [
+        "TAS-085",
+        "TAS-087",
+        "THO-012"
+      ],
+      "exclude": [
+        "TAS-090"
+      ]
+    }
+  ]
+}

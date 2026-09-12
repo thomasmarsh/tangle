@@ -1,0 +1,570 @@
+{
+  "protocol": "embedding-selection-v1",
+  "note": "Cold-start and per-node costs are measured once per runtime in one process; the interactive path never loads a model. Weights are read from the documented offline cache and nothing is downloaded at query time.",
+  "host": {
+    "platform": "macOS-13.7.8-x86_64-i386-64bit",
+    "machine": "x86_64",
+    "python": "3.12.14",
+    "versions": {
+      "torch": "2.2.2",
+      "sentence-transformers": "3.4.1",
+      "transformers": "4.48.3",
+      "numpy": "1.26.4",
+      "onnxruntime": "1.23.2",
+      "fastembed": "0.8.0",
+      "huggingface-hub": "0.36.2"
+    }
+  },
+  "batch": {
+    "models": [
+      "all"
+    ],
+    "runtimes": [
+      "sentence-transformers",
+      "fastembed"
+    ],
+    "limit": null,
+    "probes_limit": null,
+    "time_budget": 5400.0
+  },
+  "corpus": {
+    "path": "benchmark/embedding-corpus.json",
+    "digest": "3e4acf684a96b3cd6bb2523e5e899e84d384cea3ec037ecc5e08a921c7533623",
+    "source_revision": "5c8faeb43c929ace159c9c92f772d9495d2071b8",
+    "nodes_root": "/Users/thomasmarsh/git/braintree/nodes",
+    "documents": 118,
+    "probes": 76,
+    "runtime_seconds": 383.029
+  },
+  "lexical": {
+    "overall": {
+      "probes": 76,
+      "mrr": 0.3441,
+      "recall@1": 0.1579,
+      "recall@5": 0.5789,
+      "recall@10": 0.7105
+    },
+    "dev": {
+      "probes": 32,
+      "mrr": 0.2465,
+      "recall@1": 0.125,
+      "recall@5": 0.375,
+      "recall@10": 0.5
+    },
+    "heldout": {
+      "probes": 44,
+      "mrr": 0.4151,
+      "recall@1": 0.1818,
+      "recall@5": 0.7273,
+      "recall@10": 0.8636
+    },
+    "paraphrase": {
+      "probes": 46,
+      "mrr": 0.1866,
+      "recall@1": 0.0435,
+      "recall@5": 0.3261,
+      "recall@10": 0.5217
+    },
+    "near-duplicate": {
+      "probes": 30,
+      "mrr": 0.5856,
+      "recall@1": 0.3333,
+      "recall@5": 0.9667,
+      "recall@10": 1.0
+    }
+  },
+  "records": [
+    {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "runtime": "sentence-transformers",
+      "license": "apache-2.0",
+      "trust_remote_code": false,
+      "note": "smallest widely used English retrieval encoder; no prompt convention",
+      "status": "ok",
+      "import_seconds": 2.772,
+      "load_seconds": 1.288,
+      "passage_seconds": 3.267,
+      "query_seconds": 1.217,
+      "ms_per_node": 27.687,
+      "ms_per_query": 16.011,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3458,
+          "recall@1": 0.2105,
+          "recall@5": 0.4737,
+          "recall@10": 0.6316
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.3392,
+          "recall@1": 0.1875,
+          "recall@5": 0.4688,
+          "recall@10": 0.5938
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.3506,
+          "recall@1": 0.2273,
+          "recall@5": 0.4773,
+          "recall@10": 0.6591
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2248,
+          "recall@1": 0.1087,
+          "recall@5": 0.2826,
+          "recall@10": 0.5217
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.5313,
+          "recall@1": 0.3667,
+          "recall@5": 0.7667,
+          "recall@10": 0.8
+        }
+      },
+      "weight_source": "sentence-transformers/all-MiniLM-L6-v2",
+      "weight_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "model_cache_bytes": 91578455,
+      "weight_bytes": 90868376,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "BAAI/bge-small-en-v1.5",
+      "runtime": "sentence-transformers",
+      "license": "mit",
+      "trust_remote_code": false,
+      "note": "v1.5 recommends the short-query instruction",
+      "status": "ok",
+      "import_seconds": 0.0,
+      "load_seconds": 0.971,
+      "passage_seconds": 13.687,
+      "query_seconds": 5.275,
+      "ms_per_node": 115.991,
+      "ms_per_query": 69.411,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3497,
+          "recall@1": 0.1974,
+          "recall@5": 0.5395,
+          "recall@10": 0.6711
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.3211,
+          "recall@1": 0.1875,
+          "recall@5": 0.4688,
+          "recall@10": 0.5625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.3704,
+          "recall@1": 0.2045,
+          "recall@5": 0.5909,
+          "recall@10": 0.75
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2292,
+          "recall@1": 0.1087,
+          "recall@5": 0.3478,
+          "recall@10": 0.5217
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.5345,
+          "recall@1": 0.3333,
+          "recall@5": 0.8333,
+          "recall@10": 0.9
+        }
+      },
+      "weight_source": "BAAI/bge-small-en-v1.5",
+      "weight_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+      "model_cache_bytes": 134505980,
+      "weight_bytes": 133466304,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "thenlper/gte-small",
+      "runtime": "sentence-transformers",
+      "license": "mit",
+      "trust_remote_code": false,
+      "note": "no prompt convention",
+      "status": "ok",
+      "import_seconds": 0.0,
+      "load_seconds": 0.968,
+      "passage_seconds": 14.753,
+      "query_seconds": 5.859,
+      "ms_per_node": 125.029,
+      "ms_per_query": 77.099,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3616,
+          "recall@1": 0.1974,
+          "recall@5": 0.5789,
+          "recall@10": 0.7105
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.3227,
+          "recall@1": 0.1562,
+          "recall@5": 0.5,
+          "recall@10": 0.625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.3899,
+          "recall@1": 0.2273,
+          "recall@5": 0.6364,
+          "recall@10": 0.7727
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2346,
+          "recall@1": 0.087,
+          "recall@5": 0.413,
+          "recall@10": 0.587
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.5564,
+          "recall@1": 0.3667,
+          "recall@5": 0.8333,
+          "recall@10": 0.9
+        }
+      },
+      "weight_source": "thenlper/gte-small",
+      "weight_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "model_cache_bytes": 67759195,
+      "weight_bytes": 66746168,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "intfloat/e5-small-v2",
+      "runtime": "sentence-transformers",
+      "license": "mit",
+      "trust_remote_code": false,
+      "note": "requires the asymmetric query:/passage: prefixes",
+      "status": "ok",
+      "import_seconds": 0.0,
+      "load_seconds": 0.979,
+      "passage_seconds": 13.615,
+      "query_seconds": 5.17,
+      "ms_per_node": 115.379,
+      "ms_per_query": 68.028,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3175,
+          "recall@1": 0.1974,
+          "recall@5": 0.4342,
+          "recall@10": 0.6579
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.3197,
+          "recall@1": 0.2188,
+          "recall@5": 0.4062,
+          "recall@10": 0.625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.316,
+          "recall@1": 0.1818,
+          "recall@5": 0.4545,
+          "recall@10": 0.6818
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2184,
+          "recall@1": 0.1087,
+          "recall@5": 0.3261,
+          "recall@10": 0.5217
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.4695,
+          "recall@1": 0.3333,
+          "recall@5": 0.6,
+          "recall@10": 0.8667
+        }
+      },
+      "weight_source": "intfloat/e5-small-v2",
+      "weight_revision": "ffb93f3bd4047442299a41ebb6fa998a38507c52",
+      "model_cache_bytes": 134478737,
+      "weight_bytes": 133466304,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "nomic-ai/nomic-embed-text-v1.5",
+      "runtime": "sentence-transformers",
+      "license": "apache-2.0",
+      "trust_remote_code": true,
+      "note": "requires trust_remote_code and its modeling dependencies",
+      "status": "ok",
+      "import_seconds": 0.0,
+      "load_seconds": 2.541,
+      "passage_seconds": 139.075,
+      "query_seconds": 95.743,
+      "ms_per_node": 1178.601,
+      "ms_per_query": 1259.773,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3796,
+          "recall@1": 0.2368,
+          "recall@5": 0.5526,
+          "recall@10": 0.6842
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.3389,
+          "recall@1": 0.2188,
+          "recall@5": 0.4375,
+          "recall@10": 0.5625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.4091,
+          "recall@1": 0.25,
+          "recall@5": 0.6364,
+          "recall@10": 0.7727
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2734,
+          "recall@1": 0.1304,
+          "recall@5": 0.413,
+          "recall@10": 0.5652
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.5424,
+          "recall@1": 0.4,
+          "recall@5": 0.7667,
+          "recall@10": 0.8667
+        }
+      },
+      "weight_source": "nomic-ai/nomic-embed-text-v1.5",
+      "weight_revision": "e9b6763023c676ca8431644204f50c2b100d9aab",
+      "model_cache_bytes": 547958118,
+      "weight_bytes": 546938168,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "Snowflake/snowflake-arctic-embed-s",
+      "runtime": "sentence-transformers",
+      "license": "apache-2.0",
+      "trust_remote_code": false,
+      "note": "short-query instruction is recommended for retrieval",
+      "status": "ok",
+      "import_seconds": 0.0,
+      "load_seconds": 0.986,
+      "passage_seconds": 17.115,
+      "query_seconds": 5.321,
+      "ms_per_node": 145.045,
+      "ms_per_query": 70.016,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3109,
+          "recall@1": 0.1842,
+          "recall@5": 0.4737,
+          "recall@10": 0.5921
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.2987,
+          "recall@1": 0.1562,
+          "recall@5": 0.5,
+          "recall@10": 0.5625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.3198,
+          "recall@1": 0.2045,
+          "recall@5": 0.4545,
+          "recall@10": 0.6136
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2193,
+          "recall@1": 0.1304,
+          "recall@5": 0.3261,
+          "recall@10": 0.413
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.4513,
+          "recall@1": 0.2667,
+          "recall@5": 0.7,
+          "recall@10": 0.8667
+        }
+      },
+      "weight_source": "Snowflake/snowflake-arctic-embed-s",
+      "weight_revision": "e596f507467533e48a2e17c007f0e1dacc837b33",
+      "model_cache_bytes": 133902641,
+      "weight_bytes": 132870584,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "runtime": "fastembed",
+      "license": "apache-2.0",
+      "trust_remote_code": false,
+      "note": "smallest widely used English retrieval encoder; no prompt convention",
+      "status": "ok",
+      "import_seconds": 0.078,
+      "load_seconds": 0.107,
+      "passage_seconds": 2.248,
+      "query_seconds": 1.43,
+      "ms_per_node": 19.05,
+      "ms_per_query": 18.815,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3277,
+          "recall@1": 0.1579,
+          "recall@5": 0.5526,
+          "recall@10": 0.6447
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.3079,
+          "recall@1": 0.1562,
+          "recall@5": 0.5,
+          "recall@10": 0.5625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.3422,
+          "recall@1": 0.1591,
+          "recall@5": 0.5909,
+          "recall@10": 0.7045
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2532,
+          "recall@1": 0.1087,
+          "recall@5": 0.413,
+          "recall@10": 0.5435
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.442,
+          "recall@1": 0.2333,
+          "recall@5": 0.7667,
+          "recall@10": 0.8
+        }
+      },
+      "weight_source": "qdrant/all-MiniLM-L6-v2-onnx",
+      "weight_revision": "5f1b8cd78bc4fb444dd171e59b18f3a3af89a079",
+      "model_cache_bytes": 91102822,
+      "weight_bytes": 90387630,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "BAAI/bge-small-en-v1.5",
+      "runtime": "fastembed",
+      "license": "mit",
+      "trust_remote_code": false,
+      "note": "v1.5 recommends the short-query instruction",
+      "status": "ok",
+      "import_seconds": 0.0,
+      "load_seconds": 0.207,
+      "passage_seconds": 23.714,
+      "query_seconds": 15.122,
+      "ms_per_node": 200.967,
+      "ms_per_query": 198.978,
+      "metrics": {
+        "overall": {
+          "probes": 76,
+          "mrr": 0.3352,
+          "recall@1": 0.1842,
+          "recall@5": 0.5526,
+          "recall@10": 0.6842
+        },
+        "dev": {
+          "probes": 32,
+          "mrr": 0.2941,
+          "recall@1": 0.1562,
+          "recall@5": 0.4375,
+          "recall@10": 0.625
+        },
+        "heldout": {
+          "probes": 44,
+          "mrr": 0.3651,
+          "recall@1": 0.2045,
+          "recall@5": 0.6364,
+          "recall@10": 0.7273
+        },
+        "paraphrase": {
+          "probes": 46,
+          "mrr": 0.2259,
+          "recall@1": 0.1087,
+          "recall@5": 0.3696,
+          "recall@10": 0.587
+        },
+        "near-duplicate": {
+          "probes": 30,
+          "mrr": 0.5029,
+          "recall@1": 0.3,
+          "recall@5": 0.8333,
+          "recall@10": 0.8333
+        }
+      },
+      "weight_source": "qdrant/bge-small-en-v1.5-onnx-q",
+      "weight_revision": "52398278842ec682c6f32300af41344b1c0b0bb2",
+      "model_cache_bytes": 67179926,
+      "weight_bytes": 66465124,
+      "offline": true,
+      "offline_detail": ""
+    },
+    {
+      "model": "thenlper/gte-small",
+      "runtime": "fastembed",
+      "license": "mit",
+      "trust_remote_code": false,
+      "note": "no prompt convention",
+      "status": "unavailable",
+      "reason": "fastembed does not list thenlper/gte-small"
+    },
+    {
+      "model": "intfloat/e5-small-v2",
+      "runtime": "fastembed",
+      "license": "mit",
+      "trust_remote_code": false,
+      "note": "requires the asymmetric query:/passage: prefixes",
+      "status": "unavailable",
+      "reason": "fastembed does not list intfloat/e5-small-v2"
+    },
+    {
+      "model": "nomic-ai/nomic-embed-text-v1.5",
+      "runtime": "fastembed",
+      "license": "apache-2.0",
+      "trust_remote_code": true,
+      "note": "requires trust_remote_code and its modeling dependencies",
+      "status": "unavailable",
+      "reason": "NoSuchFile: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from /Users/thomasmarsh/.cache/huggingface/hub/models--nomic-ai--nomic-embed-text-v1.5/snapshots/e9b6763023c676ca8431644204f50c2b100d9aab/onnx/model.onnx failed:Load model /Users/thomasmarsh/.cache/huggingface/hub/models--nomic-ai--nomic-embed-text-v1.5/snapshots/e9b6763023c676ca8431644204f50c2b100d9aab/onnx/model.onnx failed. File doesn't exist"
+    },
+    {
+      "model": "Snowflake/snowflake-arctic-embed-s",
+      "runtime": "fastembed",
+      "license": "apache-2.0",
+      "trust_remote_code": false,
+      "note": "short-query instruction is recommended for retrieval",
+      "status": "unavailable",
+      "reason": "NoSuchFile: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from /Users/thomasmarsh/.cache/huggingface/hub/models--snowflake--snowflake-arctic-embed-s/snapshots/e596f507467533e48a2e17c007f0e1dacc837b33/onnx/model.onnx failed:Load model /Users/thomasmarsh/.cache/huggingface/hub/models--snowflake--snowflake-arctic-embed-s/snapshots/e596f507467533e48a2e17c007f0e1dacc837b33/onnx/model.onnx failed. File doesn't exist"
+    }
+  ]
+}

@@ -334,4 +334,6 @@ def test_staged_writes_a_reviewable_report(
 
 def test_benchmark_staged_is_dispatched(capsys: pytest.CaptureFixture[str]) -> None:
     assert bt_main.main(["--help"]) == 0
-    assert "benchmark token|behavioral|storage|verbs|staged" in capsys.readouterr().out
+    assert "benchmark token|behavioral|storage|verbs|staged|embedding" in (
+        capsys.readouterr().out
+    )
