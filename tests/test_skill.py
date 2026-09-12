@@ -13,6 +13,7 @@ from braintree import graph_check
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SKILL = _ROOT / "SKILL.md"
+_AGENTS = _ROOT / "AGENTS.md"
 _NODES = _ROOT / "nodes"
 _INDEX = _NODES / "index-map.md"
 
@@ -169,6 +170,12 @@ _FEEDBACK_CONTRACT: tuple[str, ...] = (
 )
 
 
+_MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
+    "mechanical change with no independently resumable outcome",
+    "enclosing node's `next` or result",
+    "`Refs:` footer",
+)
+
 _ABSENT_CONTRACT: tuple[str, ...] = (
     "stationary node metadata",
     "sequence ledger",
@@ -211,6 +218,11 @@ def test_skill_admission_and_parallel_contract() -> None:
     text = _read(_SKILL)
     _assert_present(text, _ADMISSION_CONTRACT)
     _assert_present(text, _PARALLEL_CONTRACT)
+
+
+def test_mechanical_change_commit_path() -> None:
+    for path in (_SKILL, _AGENTS):
+        _assert_present(_read(path), _MECHANICAL_COMMIT_CONTRACT)
 
 
 def test_live_vault_passes_graph_check() -> None:

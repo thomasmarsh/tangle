@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T13:58:00Z
+updated: 2026-09-12T14:37:55Z
 summary: Define a non-node commit path for mechanical changes so a one-line edit need not spawn a node or an untracked commit.
-next: State in SKILL.md and AGENTS.md that a mechanical change with no independent outcome is recorded in the enclosing node or committed with a Refs reference instead of being admitted as a node.
 ---
 
 # Context
@@ -25,3 +24,16 @@ commit path that references the enclosing node without creating a leaf.
 - `SKILL.md` states that such a change lives in the enclosing node's `next`/result or commits with a `Refs` reference to it.
 - `AGENTS.md` states the matching commit convention.
 - `make test` passes, including the `SKILL.md` contract assertions.
+
+# Result
+
+`SKILL.md` now states in the node-admission section that a mechanical change
+with no independently resumable outcome lives in the enclosing node's `next` or
+result, or names that node in a `Refs:` footer when it needs its own commit.
+`AGENTS.md` carries the matching conventional-commit bullet.
+
+Evidence:
+
+- `test_mechanical_change_commit_path` in `tests/test_skill.py` asserts the
+  mechanical-change contract in both `SKILL.md` and `AGENTS.md`.
+- `make test` passes.

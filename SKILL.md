@@ -34,6 +34,8 @@ Prefer updating the existing node when new information advances the same outcome
 necessary but not sufficient for a distinct node: it must also retain durable execution-memory value, likely to change a later decision or action or materially reduce future resumption cost. Agent boundaries, exclusive write-set boundaries, failed checks, incidental or mechanical cleanup, routine verification, and handoffs alone never qualify; keep them in the current node's `next`, result, evidence, or handoff. A fresh worker may continue the same graph
 node; agents and nodes are not one-to-one.
 
+A mechanical change with no independently resumable outcome — a one-line build, formatting, lint, or install fix — is not a node: record it in the enclosing node's `next` or result, or, when it needs its own commit, name that node in a `Refs:` footer.
+
 Required frontmatter:
 
 ```yaml

@@ -28,6 +28,10 @@ Every commit in this repository MUST use the
   footer.
 - Keep each commit to one logical change. When a graph node changes, keep its
   content update and its status move coherent in the same commit.
+- A mechanical change with no independently resumable outcome (a one-line
+  build, lint, formatting, or install fix) is not a graph node. Keep it in the
+  enclosing node's `next` or result; when it needs its own commit, add a
+  `Refs:` footer naming that node instead of admitting a leaf.
 - Do not add tool, model, or co-author attribution trailers.
 
 Examples:
