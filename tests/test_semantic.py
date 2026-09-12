@@ -10,7 +10,9 @@ are hermetic and never touch the network.
 Inference and clustering libraries are the opt-in ``semantic`` extra, which is
 not installed here: the same tests pin that the default path loads no heavy
 module and that the capability probe reports the extra absent, with the weights
-read offline from a documented local cache.
+read offline from a documented local cache. fastembed on ONNX Runtime is the
+shipped runtime; sentence-transformers and torch were the evaluation baseline
+and are not part of the extra.
 """
 
 from __future__ import annotations
@@ -38,7 +40,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 
 # The heavy modules only the opt-in ``semantic`` extra provides. A plain install
 # has none of them, and driving the commands must never import one.
-_HEAVY_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "torch", "sentence_transformers")
+_HEAVY_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "fastembed")
 
 # Driving the commands in a fresh interpreter is the only way to observe the
 # real import graph. The script answers on the default install without a

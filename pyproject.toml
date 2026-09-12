@@ -10,20 +10,24 @@ dependencies = []
 braintree = "braintree.main:main"
 
 # Optional off-the-shelf semantic layer: fastembed on ONNX Runtime is the
-# chosen in-process inference runtime, with sentence-transformers and torch as
-# the compatible CPU fallback runtime for models the ONNX registry does not
-# publish, numpy, scikit-learn, umap-learn for UMAP, and the hdbscan package
-# for HDBSCAN. A plain install stays dependency-free; install the extra with
+# shipped in-process inference runtime, with numpy, scikit-learn, umap-learn
+# for UMAP, and the hdbscan package for HDBSCAN. sentence-transformers on torch
+# was an evaluation baseline only and does not ship here: it has no x86_64
+# macOS wheel above torch 2.2.2, and torch 2.2.2 needs numpy<2, which
+# contradicts fastembed's numpy>=2.1. The numba/llvmlite pins bound the
+# transitive UMAP and HDBSCAN stack to versions that publish x86_64 macOS
+# wheels. A plain install stays dependency-free; install the extra with
 # `uv sync --extra semantic` or `pip install 'braintree[semantic]'`.
 [project.optional-dependencies]
 semantic = [
-    "fastembed>=0.5",
-    "hdbscan>=0.8.38",
-    "numpy>=2.0",
+    "fastembed>=0.7,<0.9",
+    "onnxruntime>=1.20,<1.24",
+    "numpy>=2.1,<2.6",
     "scikit-learn>=1.5",
-    "sentence-transformers>=3.0",
-    "torch>=2.4",
     "umap-learn>=0.5.6",
+    "hdbscan>=0.8.44",
+    "numba>=0.62,<0.63",
+    "llvmlite>=0.45,<0.46",
 ]
 
 [build-system]

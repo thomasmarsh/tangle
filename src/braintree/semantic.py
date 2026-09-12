@@ -14,7 +14,8 @@ with no provider configured, no process runs and no vector is read, so the
 default answer is the lexical baseline byte for byte.
 
 The inference runtime and the clustering libraries are the optional ``semantic``
-extra, which a plain install never has. :func:`extra` reports whether that extra
+extra, which a plain install never has. fastembed on ONNX Runtime is the
+shipped runtime: it needs no torch. :func:`extra` reports whether that extra
 is importable using ``importlib.util.find_spec`` alone, so probing it never
 imports a heavy module, and :func:`model_cache` names the local directory
 pre-fetched weights are read from offline.
@@ -48,9 +49,11 @@ _ENV_PROVIDER = "BT_SEMANTIC_PROVIDER"
 _ENV_MODEL_CACHE = "BT_MODEL_CACHE"
 _ENV_HF_HOME = "HF_HOME"
 # The optional extra, as the top-level modules a plain install must not need:
-# CPU inference through sentence-transformers and torch, with numpy and
-# scikit-learn, umap-learn for UMAP, and the hdbscan package for HDBSCAN.
-_EXTRA_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "torch", "sentence_transformers")
+# CPU inference through fastembed on ONNX Runtime, with numpy and scikit-learn,
+# umap-learn for UMAP, and the hdbscan package for HDBSCAN. sentence-transformers
+# and torch were the evaluation baseline and are deliberately not shipped, so
+# they are not part of this set.
+_EXTRA_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "fastembed")
 _PROBE_TEXT = "braintree semantic probe"
 _TIMEOUT_SECONDS = 10
 # The vector cache is disposable derived state keyed by provider identity and
@@ -103,7 +106,7 @@ def extra() -> SemanticExtra | None:
     """Return the installed optional extra, or ``None`` when it is missing.
 
     Presence is decided with ``importlib.util.find_spec``, which never imports
-    the module it locates. A plain install therefore stays free of torch and
+    the module it locates. A plain install therefore stays free of fastembed and
     every other heavy module, and each interactive verb keeps answering
     byte-identically without loading a model.
     """

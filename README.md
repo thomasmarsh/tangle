@@ -82,7 +82,7 @@ uv sync --extra semantic
 pip install 'braintree[semantic]'
 ```
 
-The extra names pinned lower bounds for the off-the-shelf inference and clustering libraries: `fastembed` for the chosen ONNX Runtime inference path, `sentence-transformers` and `torch` as the compatible CPU fallback runtime for models the ONNX registry does not publish, `numpy`, `scikit-learn`, `umap-learn` for UMAP reduction, and `hdbscan` for density clustering. No model is trained, fine-tuned, or shipped here; the extra only makes published models usable. Capability probing is a `find_spec` lookup that never imports or loads any of them, so `braintree check`, `braintree frontier`, `braintree orient`, `braintree search`, and every other interactive verb answer exactly as before while the extra is absent.
+The extra pins the off-the-shelf inference and clustering libraries that ship: `fastembed` on ONNX Runtime is the in-process inference runtime, with `numpy`, `scikit-learn`, `umap-learn` for UMAP reduction, and `hdbscan` for density clustering. `sentence-transformers` on CPU torch was an evaluation baseline only and is deliberately not shipped: above torch 2.2.2 it publishes no x86_64 macOS wheel, and torch 2.2.2 needs `numpy<2`, which contradicts fastembed's `numpy>=2.1`. No model is trained, fine-tuned, or shipped here; the extra only makes published models usable. Capability probing is a `find_spec` lookup that never imports or loads any of them, so `braintree check`, `braintree frontier`, `braintree orient`, `braintree search`, and every other interactive verb answer exactly as before while the extra is absent.
 
 Model weights are read offline from a local cache, and nothing downloads at query time. Pre-fetch the weights once into the cache, then run offline:
 
@@ -94,7 +94,7 @@ BT_MODEL_CACHE=/path/to/model-cache braintree similar 'expired authentication gr
 
 ## Embedding model and runtime selection
 
-The selected default is **`sentence-transformers/all-MiniLM-L6-v2`**, the fallback is **`BAAI/bge-small-en-v1.5`**, and the chosen in-process runtime is **`fastembed` on ONNX Runtime**; `sentence-transformers` on CPU torch remains the compatibility runtime for models the fastembed registry does not publish. The choice is recorded with its measurements in `benchmark/embedding-evidence.json` and re-runnable from a fixed corpus.
+The selected default is **`sentence-transformers/all-MiniLM-L6-v2`**, the fallback is **`BAAI/bge-small-en-v1.5`**, and the chosen in-process runtime is **`fastembed` on ONNX Runtime**, which is what the `semantic` extra installs. `sentence-transformers` on CPU torch was an evaluation baseline only and is not shipped. The choice is recorded with its measurements in `benchmark/embedding-evidence.json` and re-runnable from a fixed corpus.
 
 The default and fallback both run through fastembed's ONNX copies and are offline-available from the documented cache: MiniLM at 0.33 MRR and 0.55 recall@5 against 0.34 and 0.58 for the lexical `braintree similar` baseline, with the best measured paraphrase recall@5 (0.41 against 0.33 lexical) at 19 ms per node and a 0.1 s model load instead of a 2.8 s torch import. No candidate beats the lexical baseline across the board, so the lexical baseline stays the correctness reference and the semantic layer adds paraphrase recall rather than replacing it.
 

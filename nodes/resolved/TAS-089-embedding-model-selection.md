@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T18:27:38Z
+updated: 2026-09-12T18:35:29Z
 summary: Choose fastembed on ONNX Runtime with all-MiniLM-L6-v2 as the default off-the-shelf embedding model and bge-small-en-v1.5 as the fallback, against a fixed committed retrieval corpus and the measured lexical baseline.
 ---
 
@@ -9,7 +9,7 @@ summary: Choose fastembed on ONNX Runtime with all-MiniLM-L6-v2 as the default o
 
 Parent [[TAS-087-off-the-shelf-embedding-and-clustering]].
 
-Depends on [[TAS-088-optional-embedding-extra]] at context_rev 1.
+Depends on [[TAS-088-optional-embedding-extra]] at context_rev 2.
 
 We do not have training infrastructure and will not train or fine-tune a model.
 The choice is which published model and which inference runtime to use, and
@@ -44,10 +44,14 @@ to the choice.
 
 Decision:
 
-- Runtime: `fastembed>=0.5` (measured 0.8.0 on ONNX Runtime 1.23.2), the chosen
-  in-process path. `sentence-transformers>=3.0` on CPU torch remains in the
-  `semantic` extra as the compatibility runtime for models the fastembed
-  registry does not publish; the default and fallback need no torch.
+- Runtime: `fastembed>=0.7,<0.9` (measured 0.8.0 on ONNX Runtime 1.23.2), the
+  chosen and only shipped in-process path, which is what the `semantic` extra
+  installs ([[TAS-088-optional-embedding-extra]]). `sentence-transformers` on
+  CPU torch was the evaluation baseline for models the fastembed registry does
+  not publish and is not shipped: above `torch==2.2.2` there is no x86_64 macOS
+  wheel, and `torch==2.2.2` needs `numpy<2`, which contradicts fastembed's
+  `numpy>=2.1`, so the two cannot share one extra. The default and fallback
+  need no torch either way.
 - Default model: `sentence-transformers/all-MiniLM-L6-v2` (Apache-2.0), loaded
   through fastembed's ONNX copy `qdrant/all-MiniLM-L6-v2-onnx` at revision
   `5f1b8cd7`.
@@ -113,7 +117,8 @@ Recorded negatives, exactly as measured:
   recall@5 gain at all (0.5526 each, and 0.4130 each on the paraphrase family).
 - `thenlper/gte-small` is the best sentence-transformers candidate (MRR 0.3616,
   recall@5 0.5789) and the smallest (66.7 MB), but fastembed's registry does not
-  publish it, so choosing it would force torch back onto the default path.
+  publish it, so choosing it would require the torch path the extra cannot
+  carry.
 - fastembed's registry lists `nomic-ai/nomic-embed-text-v1.5` and
   `Snowflake/snowflake-arctic-embed-s` but loading them fails with
   `ONNXRuntimeError: NO_SUCHFILE` because the resolved snapshots hold no ONNX
@@ -168,3 +173,11 @@ the same change.
 
 Resolving this node pinned the TAS-088 extra it consumed and advanced the
 parent's `next` to [[TAS-090-native-embedding-provider]].
+
+Reversal: commit `8c24cc5 feat(benchmark): select off-the-shelf embedding model
+and runtime` recorded `sentence-transformers>=3.0` on CPU torch as remaining in
+the `semantic` extra as a compatibility runtime. That claim is replaced here:
+torch and sentence-transformers were an evaluation baseline only and do not ship
+(TAS-088 now pins an extra without them). The decision is unchanged: default
+fastembed `sentence-transformers/all-MiniLM-L6-v2`, fallback fastembed
+`BAAI/bge-small-en-v1.5`.
