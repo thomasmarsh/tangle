@@ -17,7 +17,19 @@ from dataclasses import dataclass
 
 from .revision import reported_version
 
-__all__ = ["main"]
+__all__ = [
+    "CONTEXT_EDGE_LINE",
+    "CONTEXT_PIN",
+    "CONTEXT_PIN_LINE",
+    "CONTEXT_RELATIONS",
+    "PROBLEM_MISMATCH",
+    "PROBLEM_MISSING",
+    "PROBLEM_UNPINNED",
+    "PROBLEM_UNRESOLVED",
+    "context_pin_problem",
+    "main",
+    "stale_reason",
+]
 
 _USAGE = (
     "usage: braintree check [--version] [--allow-stale] [--allow-orphan NODE] "
@@ -26,7 +38,41 @@ _USAGE = (
 )
 
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
-_CONTEXT_EDGES = ("Depends on", "Implements", "Requires", "Governed by")
+
+# One canonical context-edge definition, shared with the derived index so
+# ``braintree check`` and ``braintree stale`` cannot disagree. A context edge
+# supplies consumer-relevant context, so it carries a terminating
+# ``at context_rev N.`` pin. ``Depends on`` is the common case; ``Implements``,
+# ``Requires``, and ``Governed by`` are equally context-bearing. Navigation
+# relations such as ``Parent``, ``Area``, ``Indexes``, and ``Superseded by`` are
+# deliberately absent.
+CONTEXT_RELATIONS: tuple[str, ...] = (
+    "Depends on",
+    "Implements",
+    "Requires",
+    "Governed by",
+)
+CONTEXT_EDGE_LINE = re.compile(
+    r"^(?:" + "|".join(CONTEXT_RELATIONS) + r")\s+\[\[([^\]]+)\]\](.*)$",
+    re.MULTILINE,
+)
+CONTEXT_PIN = re.compile(r" at context_rev (\d+)\.")
+CONTEXT_PIN_LINE = re.compile(r" at context_rev (\d+)\.\s*")
+
+# One problem per context edge, in precedence order: an unpinned edge is
+# malformed, a missing target is unreadable, an unresolved target is not ready
+# to consume, and a revision mismatch is stale context.
+PROBLEM_UNPINNED = "unpinned"
+PROBLEM_MISSING = "missing"
+PROBLEM_UNRESOLVED = "unresolved"
+PROBLEM_MISMATCH = "mismatch"
+
+_STALE_REASONS: dict[str, str] = {
+    PROBLEM_UNPINNED: "missing context_rev pin",
+    PROBLEM_MISSING: "missing target",
+    PROBLEM_MISMATCH: "context_rev mismatch",
+}
+
 _FORBIDDEN_FIELDS = ("id", "type", "status", "seq", "mtime", "rev")
 # Types that record knowledge rather than executable work; only tasks require `next`.
 # `FBK` records Braintree friction as a durable, discoverable feedback node.
@@ -42,12 +88,6 @@ _RECIPROCAL_EDGE = re.compile(
 _UPDATED_LINE = re.compile(r"^updated: ([^\n]+)$", re.MULTILINE)
 _UPDATED_VALUE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 _WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
-_CONTEXT_EDGE_LINE = re.compile(
-    r"^(?:" + "|".join(_CONTEXT_EDGES) + r")\s+\[\[([^\]]+)\]\](.*)$",
-    re.MULTILINE,
-)
-_CONTEXT_PIN = re.compile(r" at context_rev (\d+)\.")
-_CONTEXT_PIN_LINE = re.compile(r" at context_rev (\d+)\.\s*")
 _PRIMARY_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
 _NODE_ID = re.compile(r"[A-Z]+-\d+")
 _ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
@@ -77,6 +117,35 @@ class _Node:
     status: str
     text: str
     metadata: dict[str, object]
+
+
+def context_pin_problem(
+    pinned: int | None,
+    target_status: str | None,
+    current_rev: int | None,
+) -> str | None:
+    """Return the shared verdict for one context edge, or ``None`` if current.
+
+    ``pinned`` is the ``context_rev`` recorded by the edge, ``target_status``
+    is the pinned target's status directory (``None`` when the target is
+    missing), and ``current_rev`` is the target's current ``context_rev``.
+    """
+    if pinned is None:
+        return PROBLEM_UNPINNED
+    if target_status is None:
+        return PROBLEM_MISSING
+    if target_status != "resolved":
+        return PROBLEM_UNRESOLVED
+    if current_rev != pinned:
+        return PROBLEM_MISMATCH
+    return None
+
+
+def stale_reason(problem: str, target_status: str | None = None) -> str:
+    """Render a shared verdict as the compact reason ``braintree stale`` prints."""
+    if problem == PROBLEM_UNRESOLVED and target_status:
+        return f"target is {target_status}, not resolved"
+    return _STALE_REASONS[problem]
 
 
 def _parse_scalar(value: str) -> object:
@@ -274,10 +343,10 @@ def _check_context_edges(
     errors: list[str],
 ) -> None:
     for node in nodes:
-        for target, suffix in _CONTEXT_EDGE_LINE.findall(node.text):
-            pin_match = _CONTEXT_PIN_LINE.fullmatch(suffix)
+        for target, suffix in CONTEXT_EDGE_LINE.findall(node.text):
+            pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
             if pin_match is None:
-                partial = _CONTEXT_PIN.search(suffix)
+                partial = CONTEXT_PIN.search(suffix)
                 trailing = suffix[partial.end() :].strip() if partial else ""
                 if trailing:
                     errors.append(
@@ -293,13 +362,19 @@ def _check_context_edges(
             target_nodes = by_name.get(target)
             if target_nodes is None:
                 continue
-            if target_nodes[0].status != "resolved":
+            target_node = target_nodes[0]
+            current = target_node.metadata.get("context_rev")
+            problem = context_pin_problem(
+                pin,
+                target_node.status,
+                current if isinstance(current, int) else None,
+            )
+            if problem == PROBLEM_UNRESOLVED:
                 errors.append(
                     f"{node.path}: pinned dependency [[{target}]] is "
-                    f"{target_nodes[0].status}, not resolved"
+                    f"{target_node.status}, not resolved"
                 )
-            current = target_nodes[0].metadata.get("context_rev")
-            if not allow_stale and current != pin:
+            elif problem == PROBLEM_MISMATCH and not allow_stale:
                 label = current if isinstance(current, int) else ""
                 errors.append(
                     f"{node.path}: context_rev mismatch for [[{target}]] "

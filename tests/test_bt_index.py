@@ -12,6 +12,10 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
+import pytest
+
+from braintree.graph_check import CONTEXT_RELATIONS
+
 RunBt = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -76,8 +80,38 @@ def test_reindex_counts_and_queries(tmp_path: Path, run_bt: RunBt) -> None:
     assert '"TAS-001","active","Depends on","2"' in backlinks.stdout
 
     stale = run_bt("stale", env=env)
-    assert '"TAS-001","active","DEF-001","2","3"' in stale.stdout
-    assert '"TAS-002","active","DEF-404-missing","",""' in stale.stdout
+    assert (
+        '"TAS-001","active","DEF-001","2","3","Depends on","context_rev mismatch"'
+        in stale.stdout
+    )
+    assert (
+        '"TAS-002","active","DEF-404-missing","","","Depends on",'
+        '"missing context_rev pin"'
+    ) in stale.stdout
+
+
+def test_stale_reports_missing_pinned_target(tmp_path: Path, run_bt: RunBt) -> None:
+    """A pin whose target is absent is reported with the missing-target verdict."""
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "active" / "TAS-001-consumer.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Consume a missing contract.\nnext: Locate the contract.\n---\n\n"
+        "# Context\n\nRequires [[DEF-404-missing]] at context_rev 1.\n",
+    )
+    stale = run_bt("stale", env=_env(tmp_path, vault))
+    assert stale.returncode == 0
+    assert (
+        '"TAS-001","active","DEF-404-missing","1","","Requires","missing target"'
+        in stale.stdout
+    )
 
 
 def test_reindex_recovers_after_database_loss(tmp_path: Path, run_bt: RunBt) -> None:
@@ -176,3 +210,76 @@ def test_stale_without_stale_pins_names_them(tmp_path: Path, run_bt: RunBt) -> N
     result = run_bt("stale", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stdout.strip() == "stale: 0 stale dependency pins"
+
+
+@pytest.mark.parametrize("relation", CONTEXT_RELATIONS)
+def test_stale_reports_each_context_relation(
+    tmp_path: Path, run_bt: RunBt, relation: str
+) -> None:
+    """A pin on every canonical context relation is reconciled, not just `Depends on`."""
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "DEF-001-contract.md",
+        "---\ncontext_rev: 3\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Current contract.\n---\n\n# Invariant\n\nCurrent.\n",
+    )
+    _write(
+        vault / "active" / "TAS-001-consumer.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Consume the contract.\nnext: Reconcile the contract.\n---\n\n"
+        f"# Context\n\n{relation} [[DEF-001-contract]] at context_rev 2.\n",
+    )
+    result = run_bt("stale", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert (
+        '"TAS-001","active","DEF-001","2","3",'
+        f'"{relation}","context_rev mismatch"'
+    ) in result.stdout
+
+
+def test_stale_and_check_agree_on_unresolved_pin(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """`stale` reports a pin whose target is not resolved, as `check` does."""
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    (vault / "proposed").mkdir()
+    _write(
+        vault / "index-map.md",
+        "---\nupdated: 2026-09-11T00:00:00Z\nsummary: Route work.\n---\n\n"
+        "# Root hubs\n\n- Indexes [[IDX-001-root]].\n",
+    )
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "proposed" / "DEF-001-contract.md",
+        "---\ncontext_rev: 2\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Proposed contract.\n---\n\nArea [[IDX-001-root]].\n",
+    )
+    _write(
+        vault / "active" / "TAS-001-consumer.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Consume the contract.\nnext: Reconcile the contract.\n---\n\n"
+        "# Context\n\nParent [[IDX-001-root]].\n\n"
+        "Implements [[DEF-001-contract]] at context_rev 2.\n",
+    )
+
+    checked = run_bt("check", str(vault))
+    assert checked.returncode == 1
+    assert (
+        "pinned dependency [[DEF-001-contract]] is proposed, not resolved"
+        in checked.stderr
+    )
+
+    stale = run_bt("stale", env=_env(tmp_path, vault))
+    assert stale.returncode == 0
+    assert (
+        '"TAS-001","active","DEF-001","2","2","Implements",'
+        '"target is proposed, not resolved"'
+    ) in stale.stdout

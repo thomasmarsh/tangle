@@ -286,6 +286,34 @@ def test_missing_context_rev_pin(nodes: Path, capsys: pytest.CaptureFixture[str]
     assert "invalid or missing context_rev pin" in err
 
 
+@pytest.mark.parametrize("relation", graph_check.CONTEXT_RELATIONS)
+def test_each_context_relation_requires_a_pin(
+    nodes: Path, capsys: pytest.CaptureFixture[str], relation: str
+) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"{relation} [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "invalid or missing context_rev pin for [[DEF-001-contract]]" in err
+
+
+def test_non_context_relation_is_not_pinned(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + "Related to [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
 def test_context_pin_with_trailing_text_names_it(
     nodes: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

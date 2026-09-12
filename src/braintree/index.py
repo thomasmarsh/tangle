@@ -14,6 +14,7 @@ import sqlite3
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
+from .graph_check import CONTEXT_RELATIONS, context_pin_problem, stale_reason
 from .sidecar import SidecarError, content_hash
 
 __all__ = [
@@ -264,22 +265,47 @@ def backlinks(conn: sqlite3.Connection, node: str) -> list[tuple[str, str, str, 
     return [(str(row[0]), str(row[1]), str(row[2]), str(row[3])) for row in cursor.fetchall()]
 
 
-def stale(conn: sqlite3.Connection) -> list[tuple[str, str, str, str, str]]:
-    """Return dependency edges missing a target or mismatching its revision."""
+def stale(conn: sqlite3.Connection) -> list[tuple[str, str, str, str, str, str, str]]:
+    """Return the context edges that need reconciliation and the shared verdict.
+
+    The rows are exactly the canonical context edges
+    :data:`braintree.graph_check.CONTEXT_RELATIONS` defines, filtered by the
+    same verdict ``braintree check`` reaches: a pin that is missing, a target
+    that is missing, a target that is not resolved, or a revision that differs
+    from the pin.
+    """
+    placeholders = ",".join("?" for _ in CONTEXT_RELATIONS)
     cursor = conn.execute(
-        "SELECT COALESCE(e.source_id,''),COALESCE(n.status,''),COALESCE(e.target_id,''),"
-        "COALESCE(e.pinned_context_rev,''),COALESCE(d.context_rev,'') "
+        "SELECT COALESCE(e.source_id,''),COALESCE(n.status,''),"
+        "COALESCE(e.target_id,''),COALESCE(e.pinned_context_rev,''),"
+        "COALESCE(d.context_rev,''),COALESCE(e.relation,''),d.status "
         "FROM edges e JOIN nodes n ON n.id=e.source_id "
         "LEFT JOIN nodes d ON d.id=e.target_id "
-        "WHERE e.relation='Depends on' AND "
-        "(e.pinned_context_rev IS NULL OR d.id IS NULL OR d.context_rev != e.pinned_context_rev) "
-        "ORDER BY e.source_id,e.target_id",
-        (),
+        f"WHERE e.relation IN ({placeholders}) "
+        "ORDER BY e.source_id,e.target_id,e.relation",
+        CONTEXT_RELATIONS,
     )
-    return [
-        (str(row[0]), str(row[1]), str(row[2]), str(row[3]), str(row[4]))
-        for row in cursor.fetchall()
-    ]
+    rows: list[tuple[str, str, str, str, str, str, str]] = []
+    for row in cursor.fetchall():
+        source, source_status, target, pinned, current, relation, target_status = row
+        pinned_rev = int(pinned) if pinned != "" else None
+        current_rev = int(current) if current != "" else None
+        status = str(target_status) if target_status is not None else None
+        problem = context_pin_problem(pinned_rev, status, current_rev)
+        if problem is None:
+            continue
+        rows.append(
+            (
+                str(source),
+                str(source_status),
+                str(target),
+                str(pinned),
+                str(current),
+                str(relation),
+                stale_reason(problem, status),
+            )
+        )
+    return rows
 
 
 def format_table(

@@ -273,7 +273,7 @@ def _stale(args: list[str]) -> int:
     if len(args) != 1:
         return _usage_error("stale accepts no arguments")
 
-    def query_index() -> list[tuple[str, str, str, str, str]]:
+    def query_index() -> list[tuple[str, str, str, str, str, str, str]]:
         conn = sidecar.open_connection()
         try:
             index.reindex(conn, _nodes_directory())
@@ -285,7 +285,7 @@ def _stale(args: list[str]) -> int:
     print(
         index.format_table(
             "stale",
-            "source,status,target,pinned,current",
+            "source,status,target,pinned,current,relation,reason",
             "stale: 0 stale dependency pins",
             rows,
         )
