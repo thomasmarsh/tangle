@@ -23,7 +23,7 @@ _USAGE = (
     "braintree [status|location|init|allocate PREFIX|"
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
     "release NODE AGENT --base-hash HASH|index [NODES]|"
-    "search QUERY [--limit N]|backlinks NODE|hash NODE|stale]"
+    "search QUERY [--limit N]|backlinks NODE|hash NODE|stale|frontier|node NODE]"
 )
 
 _COMMANDS: tuple[tuple[str, str], ...] = (
@@ -38,6 +38,8 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("backlinks NODE", "list derived incoming graph edges"),
     ("hash NODE", "print the raw-content SHA-256 of a node file"),
     ("stale", "find missing or outdated dependency pins"),
+    ("frontier", "list unfinished nodes whose next is an action"),
+    ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
 )
 
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
@@ -75,6 +77,15 @@ def _print_fields(fields: Sequence[tuple[str, str]]) -> None:
 
 def _nodes_directory() -> str:
     return os.environ.get("BT_NODES_DIR", "nodes")
+
+
+def _require_nodes_directory() -> str | None:
+    root = _nodes_directory()
+    if os.path.isdir(root):
+        return root
+    print(field("error", f"nodes directory does not exist: {os.path.abspath(root)}"))
+    print(field("help", "Run from the project root or set BT_NODES_DIR."))
+    return None
 
 
 def _index_guard[T](operation: Callable[[], T]) -> T:
@@ -293,6 +304,92 @@ def _stale(args: list[str]) -> int:
     return 0
 
 
+def _frontier(args: list[str]) -> int:
+    if len(args) != 1:
+        return _usage_error("frontier accepts no arguments")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    rows = [
+        (
+            entry.id,
+            entry.status,
+            entry.priority,
+            entry.summary,
+            entry.next,
+            "true" if entry.stale else "false",
+        )
+        for entry in index.frontier(root)
+    ]
+    print(
+        index.format_table(
+            "frontier",
+            "id,status,priority,summary,next,stale",
+            "frontier: 0 frontier nodes",
+            rows,
+        )
+    )
+    return 0
+
+
+def _node(args: list[str]) -> int:
+    if len(args) != 2:
+        return _usage_error("node requires NODE")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    view = index.node_view(root, args[1])
+    if view is None:
+        print(field("error", f"unknown node: {args[1]}"))
+        print(field("help", "Use a bare ID or a full node name from the vault."))
+        return 1
+    node = view.node
+    print(field("node", node.id))
+    print(field("name", node.name))
+    print(field("status", node.status))
+    print(field("path", node.path))
+    print(
+        index.format_table(
+            "frontmatter",
+            "key,value",
+            "frontmatter: 0 fields",
+            [(key, value) for key, value in sorted(node.metadata.items())],
+        )
+    )
+    print(field("route_relation", view.route_relation))
+    print(field("route", view.route))
+    print(
+        index.format_table(
+            "context_edges",
+            "relation,target,pinned,current,status,stale",
+            "context_edges: 0 context edges",
+            [
+                (
+                    edge.relation,
+                    edge.target,
+                    edge.pinned,
+                    edge.current,
+                    edge.status,
+                    edge.stale,
+                )
+                for edge in view.context_edges
+            ],
+        )
+    )
+    print(
+        index.format_table(
+            "backlinks",
+            "source,status,relation,pinned",
+            "backlinks: 0 backlinks",
+            [
+                (edge.source, edge.status, edge.relation, edge.pinned)
+                for edge in view.backlinks
+            ],
+        )
+    )
+    return 0
+
+
 def _dispatch(command: str, args: list[str]) -> int:
     if command == "status":
         if len(args) != 1:
@@ -341,6 +438,10 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _backlinks(args)
     if command == "hash":
         return _hash(args)
+    if command == "frontier":
+        return _frontier(args)
+    if command == "node":
+        return _node(args)
     return _stale(args)
 
 

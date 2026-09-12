@@ -2,7 +2,8 @@
 
 Typed Python implementation of the Markdown index builder. Durable graph state stays in
 Markdown; this module rebuilds the disposable ``nodes``, ``edges``, and FTS
-rows plus the search, backlinks, and stale-pin queries over them.
+rows plus the search, backlinks, and stale-pin queries over them, and derives
+the direct ``frontier`` and ``node_view`` answers from the same Markdown.
 """
 
 from __future__ import annotations
@@ -12,17 +13,30 @@ import os
 import re
 import sqlite3
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from .graph_check import CONTEXT_RELATIONS, context_pin_problem, stale_reason
+from .graph_check import (
+    CONTEXT_PIN_LINE,
+    CONTEXT_RELATIONS,
+    context_pin_problem,
+    stale_reason,
+)
 from .sidecar import SidecarError, content_hash
 
 __all__ = [
+    "Backlink",
+    "ContextEdge",
+    "FrontierEntry",
+    "IndexedNode",
+    "NodeView",
     "backlinks",
     "ensure_index_schema",
     "existing_allocations",
     "format_table",
+    "frontier",
     "node_hash",
+    "node_view",
     "prefix_maxima",
     "reindex",
     "resolve_node",
@@ -37,6 +51,13 @@ _EDGE = re.compile(
     r"^([A-Za-z][A-Za-z ]*?)\s+\[\[([^\]]+)\]\](?:\s+at context_rev\s+(\d+))?\.?\s*$",
     re.MULTILINE,
 )
+# The relation set is the one canonical context-edge definition; capturing the
+# relation lets the direct view name the edge exactly as ``stale`` does.
+_CONTEXT_EDGE = re.compile(
+    r"^(" + "|".join(CONTEXT_RELATIONS) + r")\s+\[\[([^\]]+)\]\](.*)$",
+    re.MULTILINE,
+)
+_PRIMARY_ROUTE = re.compile(r"^(Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
 
 _INDEX_SCHEMA = """
 CREATE TABLE IF NOT EXISTS nodes (
@@ -322,3 +343,186 @@ def format_table(
         cells = ",".join('"' + str(value).replace('"', '\\"') + '"' for value in row)
         lines.append(f"  {cells}")
     return "\n".join(lines)
+
+
+@dataclass(frozen=True)
+class IndexedNode:
+    """One Markdown node read from a status directory."""
+
+    id: str
+    name: str
+    path: str
+    status: str
+    metadata: dict[str, str]
+    body: str
+
+
+@dataclass(frozen=True)
+class FrontierEntry:
+    """One actionable frontier candidate."""
+
+    id: str
+    status: str
+    priority: str
+    summary: str
+    next: str
+    stale: bool
+
+
+@dataclass(frozen=True)
+class ContextEdge:
+    """One context edge with its pin, the target's current revision, and verdict."""
+
+    relation: str
+    target: str
+    pinned: str
+    current: str
+    status: str
+    stale: str
+
+
+@dataclass(frozen=True)
+class Backlink:
+    """One incoming edge pointing at the node."""
+
+    source: str
+    status: str
+    relation: str
+    pinned: str
+
+
+@dataclass(frozen=True)
+class NodeView:
+    """The graph view ``braintree node`` prints for one resolved node."""
+
+    node: IndexedNode
+    route_relation: str
+    route: str
+    context_edges: tuple[ContextEdge, ...]
+    backlinks: tuple[Backlink, ...]
+
+
+def _read_nodes(root: str) -> list[IndexedNode]:
+    """Read every Markdown node under ``root`` from its status directory."""
+    root = os.path.abspath(root)
+    nodes: list[IndexedNode] = []
+    for path in sorted(glob.glob(os.path.join(root, "*", "*.md"))):
+        status = os.path.basename(os.path.dirname(path))
+        if status not in _STATUSES:
+            continue
+        basename = os.path.basename(path)[:-3]
+        match = _NODE_ID.match(basename)
+        if match is None:
+            continue
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        header, body = _frontmatter(text)
+        nodes.append(
+            IndexedNode(
+                id=match.group(1),
+                name=basename,
+                path=os.path.relpath(path, root),
+                status=status,
+                metadata=header,
+                body=body,
+            )
+        )
+    return nodes
+
+
+def _target_context_rev(node: IndexedNode | None) -> int | None:
+    if node is None:
+        return None
+    return _context_rev(node.metadata)
+
+
+def _context_edges(
+    node: IndexedNode, by_name: dict[str, IndexedNode]
+) -> tuple[ContextEdge, ...]:
+    edges: list[ContextEdge] = []
+    for relation, target, suffix in _CONTEXT_EDGE.findall(node.body):
+        pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
+        pinned = int(pin_match.group(1)) if pin_match is not None else None
+        target_node = by_name.get(target)
+        current = _target_context_rev(target_node)
+        target_status = target_node.status if target_node is not None else None
+        problem = context_pin_problem(pinned, target_status, current)
+        edges.append(
+            ContextEdge(
+                relation=relation,
+                target=target,
+                pinned=str(pinned) if pinned is not None else "",
+                current=str(current) if current is not None else "",
+                status=target_status if target_status is not None else "",
+                stale="" if problem is None else stale_reason(problem, target_status),
+            )
+        )
+    edges.sort(key=lambda edge: (edge.target, edge.relation))
+    return tuple(edges)
+
+
+def _is_stale(node: IndexedNode, by_name: dict[str, IndexedNode]) -> bool:
+    return any(edge.stale != "" for edge in _context_edges(node, by_name))
+
+
+def frontier(root: str) -> list[FrontierEntry]:
+    """Return the unfinished nodes whose ``next`` is an action rather than a route."""
+    nodes = _read_nodes(root)
+    by_name = {node.name: node for node in nodes}
+    entries: list[FrontierEntry] = []
+    for node in nodes:
+        if node.status == "resolved":
+            continue
+        next_value = node.metadata.get("next", "")
+        if "[[" in next_value:
+            continue
+        entries.append(
+            FrontierEntry(
+                id=node.id,
+                status=node.status,
+                priority=node.metadata.get("priority", ""),
+                summary=node.metadata.get("summary", ""),
+                next=next_value,
+                stale=_is_stale(node, by_name),
+            )
+        )
+    entries.sort(key=lambda entry: entry.id)
+    return entries
+
+
+def _backlinks_for(node: IndexedNode, nodes: list[IndexedNode]) -> tuple[Backlink, ...]:
+    backlinks: list[Backlink] = []
+    for source in nodes:
+        for relation, target, pin in _EDGE.findall(source.body):
+            if target not in {node.name, node.id}:
+                continue
+            backlinks.append(
+                Backlink(
+                    source=source.id,
+                    status=source.status,
+                    relation=relation.strip(),
+                    pinned=pin,
+                )
+            )
+    backlinks.sort(key=lambda edge: (edge.source, edge.relation))
+    return tuple(backlinks)
+
+
+def node_view(root: str, node: str) -> NodeView | None:
+    """Resolve a bare ID or full node name and return its Markdown graph view."""
+    nodes = _read_nodes(root)
+    target = next(
+        (candidate for candidate in nodes if node in {candidate.id, candidate.name}),
+        None,
+    )
+    if target is None:
+        return None
+    by_name = {candidate.name: candidate for candidate in nodes}
+    route_match = _PRIMARY_ROUTE.search(target.body)
+    return NodeView(
+        node=target,
+        route_relation=route_match.group(1) if route_match is not None else "",
+        route=route_match.group(2) if route_match is not None else "",
+        context_edges=_context_edges(target, by_name),
+        backlinks=_backlinks_for(target, nodes),
+    )

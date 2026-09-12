@@ -167,3 +167,19 @@ def test_allocate_skips_on_disk_identity_with_empty_sidecar(
     result = run_bt("allocate", "TAS", env=env)
     assert result.returncode == 0
     assert result.stdout.strip() == 'id: "TAS-008"'
+
+
+def test_frontier_and_node_verbs_are_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    help_output = run_bt("--help", env=env)
+    assert help_output.returncode == 0
+    assert "frontier" in help_output.stdout
+    assert "node NODE" in help_output.stdout
+
+    missing = run_bt("node", env=env)
+    assert missing.returncode == 2
+    assert 'error: "node requires NODE"' in missing.stdout
+
+    extra = run_bt("frontier", "extra", env=env)
+    assert extra.returncode == 2
+    assert 'error: "frontier accepts no arguments"' in extra.stdout

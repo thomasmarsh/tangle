@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T15:09:27Z
+updated: 2026-09-12T15:34:00Z
 summary: Add `braintree frontier` and `braintree node` so the current frontier and a node's graph view are direct CLI answers.
-next: Implement `braintree frontier` and a normalized `braintree node ID` view over the derived index.
 ---
 
 # Context
@@ -31,3 +30,19 @@ revision, and backlinks.
 - The node verb resolves a bare ID or full name and reports the graph view.
 - Tests tie both answers to the Markdown derivation.
 - `make test` passes.
+
+# Result
+
+`src/braintree/index.py` derives both answers from Markdown alone, so
+`braintree frontier` and `braintree node ID` need no sidecar and cannot drift
+from the vault. `frontier` follows the documented recipe: the unfinished nodes
+whose `next` is an action rather than a single child route, reporting identity,
+status, priority, summary, `next`, and a stale flag from the shared
+`context_pin_problem` verdict. `node` resolves a bare ID or full node name and
+prints frontmatter, the primary `Parent`/`Area` route, context edges with pin
+versus current revision, and backlinks.
+
+`tests/test_bt_index.py` ties the frontier set and the node view to an
+independent Markdown derivation on the live vault and on a temporary fixture;
+`tests/test_bt_foundation.py` covers dispatch and argument errors. `make test`
+passes.
