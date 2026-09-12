@@ -9,12 +9,12 @@ summary: Route agents from the durable execution-graph root hub to authoritative
 
 # Queries
 
-- Frontier: `rg --files-without-match '^next:.*\[\[' nodes/*/ 2>/dev/null | rg '/(active|proposed|blocked)/' || true`
+- Frontier: `braintree frontier`
 - Known item: `find nodes -type f -name 'TAS-007-*'`
 - Unfinished: `find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'`
 - Blocked: `find nodes -type f -path '*/blocked/TAS-*.md'`
 - Highest actionable priority: `find nodes -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +`
-- Changed definition: `rg -n -F 'Depends on [[DEF-ID]] at context_rev ' nodes`
+- Changed definition: `braintree impact ID`
 - Exceptional lifecycle: `rg -l '^disposition:' nodes`
 - Recent: `rg -H '^updated:' nodes | awk -F ': ' '{print $2 " " $1}' | sort -r | head -5`
 - Primary routes: `rg -n '^(Parent|Area) \[\[' nodes`

@@ -93,7 +93,7 @@ The bump commit shape: commit the semantic `context_rev` bump with the bumped no
 ## Read and execute loop
 
 1. Read `nodes/index-map.md` when orienting or when no direct node pointer was supplied.
-2. With no pointer, run the `Frontier` recipe in `nodes/index-map.md` to list the current frontier directly: it returns the unfinished nodes whose `next` is an action rather than a `[[child]]` route, so a coordinating node's `next` target appears instead of the coordinator. Deriving a hub's members from `Parent`/`Area` backlinks and following each coordinating node's `next` reaches the same frontier. Validate the candidate's status and header exactly as a `# Focus` target. `# Focus`, `priority`, and `active` are not the frontier.
+2. With no pointer, run `braintree frontier` to list the current frontier directly: it returns the unfinished nodes whose `next` is an action rather than a `[[child]]` route, so a coordinating node's `next` target appears instead of the coordinator. Validate the candidate's status and header exactly as a `# Focus` target. `# Focus`, `priority`, and `active` are not the frontier.
 3. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`.
 4. For each context-bearing dependency, compare its header `context_rev` with the pin and confirm it is `resolved`; follow only mismatched, blocking, or required pointers.
 5. Groom a stale node before execution: reconcile assumptions, update pins, and refresh `updated`.
@@ -106,14 +106,16 @@ One orientation pass is enough. Never bulk-dump `nodes/`; filter and count in th
 ## Common queries
 
 ```sh
-rg --files-without-match '^next:.*\[\[' nodes/*/ 2>/dev/null | rg '/(active|proposed|blocked)/'  # frontier
+braintree frontier  # frontier
+braintree node ID  # one node
+braintree impact ID  # dependency impact
+braintree orient  # orientation packet
 find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'          # unfinished
 find nodes -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +  # actionable P0
-rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev ' nodes               # pinned dependents
 rg -n '^(Parent|Area) \[\[' nodes                                               # primary routes
 ```
 
-Prefer bounded results. Direct backlink search is authoritative for explicit edges; transitive impact repeats it through returned dependents.
+Prefer bounded results. Do not repeat a backlink search through returned dependents; `braintree impact ID` traverses the chain directly.
 
 ## Integrity and sidecar commands
 

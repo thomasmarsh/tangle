@@ -172,6 +172,27 @@ _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "`Refs:` footer",
 )
 
+# The direct-answer verbs replaced the frontier and dependency-impact recipes;
+# the documented surfaces must name the verbs and no longer carry the raw
+# recipes that the verbs answer directly.
+_DIRECT_ANSWER_CONTRACT: tuple[str, ...] = (
+    "braintree frontier",
+    "braintree node ID",
+    "braintree impact ID",
+    "braintree orient",
+)
+
+_SKILL_REMOVED_RECIPES: tuple[str, ...] = (
+    r"rg --files-without-match '^next:.*\[\['",
+    "rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev ' nodes",
+    "transitive impact repeats it",
+)
+
+_INDEX_REMOVED_RECIPES: tuple[str, ...] = (
+    r"rg --files-without-match '^next:.*\[\['",
+    "rg -n -F 'Depends on [[DEF-ID]] at context_rev '",
+)
+
 _ABSENT_CONTRACT: tuple[str, ...] = (
     "stationary node metadata",
     "sequence ledger",
@@ -204,6 +225,8 @@ def _read(path: Path) -> str:
 
 
 _FRONTIER_RECIPE = re.compile(r"^- Frontier: `([^`]+)`$", re.MULTILINE)
+_FRONTIER_ID = re.compile(r'^\s*"([A-Z][A-Z0-9_]*-\d+)"', re.MULTILINE)
+_NODE_ID = re.compile(r"^([A-Z][A-Z0-9_]*-\d+)-")
 
 
 def _frontier_recipe() -> str:
@@ -220,7 +243,7 @@ def _run_frontier_recipe(root: Path) -> set[str]:
         text=True,
         check=True,
     )
-    return set(result.stdout.split())
+    return set(_FRONTIER_ID.findall(result.stdout))
 
 
 def _frontmatter(text: str) -> str:
@@ -294,6 +317,18 @@ def test_index_is_routing_not_a_catalog() -> None:
         assert not re.search(r"^(?:Parent|Area) \[\[", hub_text, re.MULTILINE)
 
 
+def test_skill_names_the_direct_answer_verbs() -> None:
+    text = _read(_SKILL)
+    _assert_present(text, _DIRECT_ANSWER_CONTRACT)
+    _assert_absent(text, _SKILL_REMOVED_RECIPES)
+
+
+def test_index_map_queries_use_the_direct_answer_verbs() -> None:
+    index = _read(_INDEX)
+    assert "braintree frontier" in index
+    _assert_absent(index, _INDEX_REMOVED_RECIPES)
+
+
 def _write_node(path: Path, body: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(body, encoding="utf-8")
@@ -330,10 +365,7 @@ def test_frontier_recipe_resolves_a_coordinating_next(tmp_path: Path) -> None:
 
     frontier = _run_frontier_recipe(tmp_path)
 
-    assert "nodes/active/TAS-102-validate-manifests.md" in frontier
-    assert "nodes/proposed/TAS-103-follow-up-cleanup.md" in frontier
-    assert "nodes/active/TAS-101-import-coordinator.md" not in frontier
-    assert not any(path.startswith("nodes/resolved/") for path in frontier)
+    assert frontier == {"TAS-102", "TAS-103"}
 
 
 def test_frontier_recipe_matches_the_live_vault() -> None:
@@ -345,7 +377,9 @@ def test_frontier_recipe_matches_the_live_vault() -> None:
         next_match = re.search(r"^next:\s*(.+)$", header, re.MULTILINE)
         if next_match is not None and "[[" in next_match.group(1):
             continue
-        expected.add(str(path.relative_to(_ROOT)))
+        match = _NODE_ID.match(path.name)
+        assert match is not None
+        expected.add(match.group(1))
     assert _run_frontier_recipe(_ROOT) == expected
 
 
