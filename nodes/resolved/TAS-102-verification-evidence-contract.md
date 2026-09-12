@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T21:14:39Z
+updated: 2026-09-12T21:28:07Z
 summary: State the falsifiable evidence independent slice verification needs, so a no-shell reviewer cannot be the sole sign-off on recorded gate claims.
-next: State the verification-evidence requirement in SKILL.md, then pin it with a contract test.
 ---
 
 # Context
@@ -33,3 +32,25 @@ recorded gate claim.
 - `SKILL.md` states that independent slice verification requires a verifying actor able to execute the gates, or a coordinator-run gate transcript attached to the handoff.
 - `SKILL.md` states that a read-only, no-execution reviewer sign-off alone does not falsify a recorded gate claim.
 - A `SKILL.md` contract test pins the stated rule and `make test` passes.
+
+# Result
+
+`SKILL.md`'s parallel worktree contract carries a new verification-evidence
+bullet beside the coordinator-integrates and resolution-authority clauses. It
+states that independent slice verification rests on falsifiable evidence: a
+verifying actor that can execute the gates, or a coordinator-run gate transcript
+attached to the handoff. It states the complementary limit — a read-only,
+no-execution reviewer sign-off alone does not falsify a recorded gate claim, so
+it can never be the sole sign-off — and the remedy: when only such a reviewer is
+available, the coordinator reruns the gates and attaches the transcript it
+verifies.
+
+Evidence: `tests/test_skill.py::test_skill_verification_evidence_contract` pins
+the new text via `_VERIFICATION_EVIDENCE_CONTRACT`. `braintree check nodes` and
+`make test` (24 passed in `tests/test_skill.py`; full offline suite green) pass.
+
+Limitations: the rule is stated as contract prose and pinned by substring test
+only; nothing in `braintree check` enforces which actor ran a gate, because the
+vault records node state and not gate transcripts. No vault node had a pinned
+`Depends on [[TAS-102-verification-evidence-contract]]` edge, so the resolution
+changes no consumer pin and `context_rev` stays `1`.

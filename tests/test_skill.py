@@ -212,6 +212,17 @@ _RESOLUTION_CLAIM_CONTRACT: tuple[str, ...] = (
     "a delegated closeout task stops at the handoff",
 )
 
+# Independent slice verification has one stated evidence rule: an actor that can
+# execute the gates, or a coordinator-run transcript, because a no-shell reviewer
+# sign-off cannot falsify a recorded gate claim.
+_VERIFICATION_EVIDENCE_CONTRACT: tuple[str, ...] = (
+    "Independent slice verification rests on falsifiable evidence",
+    "a verifying actor that can execute the gates",
+    "a coordinator-run gate transcript attached to the handoff",
+    "read-only, no-execution reviewer sign-off alone does not falsify a recorded gate claim",
+    "it can never be the sole sign-off",
+)
+
 _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "mechanical change with no independently resumable outcome",
     "enclosing node's `next` or result",
@@ -464,6 +475,10 @@ def test_skill_lease_lifecycle_contract() -> None:
 
 def test_skill_resolution_claim_contract() -> None:
     _assert_present(_read(_SKILL), _RESOLUTION_CLAIM_CONTRACT)
+
+
+def test_skill_verification_evidence_contract() -> None:
+    _assert_present(_read(_SKILL), _VERIFICATION_EVIDENCE_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:
