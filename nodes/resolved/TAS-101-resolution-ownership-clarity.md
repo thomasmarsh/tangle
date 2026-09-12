@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T21:14:39Z
+updated: 2026-09-12T21:26:13Z
 summary: State that the coordinator resolves a coordinating parent as a graph action and that a worker slice prepares closeout evidence only.
-next: State the coordinator-resolves-parent and worker-closeout-evidence rule in the parallel-worktree contract in SKILL.md, then pin it with a contract test.
 ---
 
 # Context
@@ -32,3 +31,26 @@ contributes closeout evidence but never performs the parent's resolving edit.
 - `SKILL.md` states that the coordinator alone performs a coordinating parent's resolving edit — the status move, the outcome evidence and limitations, and the `next` removal — once required children are integrated.
 - `SKILL.md` states that a worker slice may prepare closeout evidence (result, limitations, and test and dependency evidence) but may not move the coordinating parent to `resolved`.
 - A `SKILL.md` contract test pins the stated rule and `make test` passes.
+
+# Result
+
+`SKILL.md`'s parallel worktree contract now carries a resolution-authority
+bullet beside the existing coordinator-integrates clause. It states that
+resolution authority is the coordinator's: after required children are
+integrated, the coordinator alone performs a coordinating parent's resolving
+edit — moving it to `resolved`, writing the outcome's evidence and limitations,
+and removing `next`. It states the complementary boundary: a worker slice
+prepares closeout evidence only (its result, limitations, and test and
+dependency evidence) and never moves the coordinating parent to `resolved`, so a
+delegated closeout task stops at the handoff and leaves the resolving edit to
+the coordinator.
+
+Evidence: `tests/test_skill.py::test_skill_resolution_claim_contract` pins the
+new text via `_RESOLUTION_CLAIM_CONTRACT`. `braintree check nodes` and
+`make test` pass.
+
+Limitations: the rule is stated as contract prose and pinned by substring test
+only; nothing in `braintree check` enforces which agent performs a resolving
+edit, because the vault records node state and not writer identity. No vault
+node had a pinned `Depends on [[TAS-101-resolution-ownership-clarity]]` edge, so
+the resolution changes no consumer pin.

@@ -196,6 +196,22 @@ _LEASE_LIFECYCLE_CONTRACT: tuple[str, ...] = (
     "from a node that holds no claim at all (`no-op`)",
 )
 
+# Resolution authority is the coordinator's graph action, not a delegated
+# writer's: a worker slice prepares closeout evidence, and the coordinator alone
+# performs the resolving edit once required children are integrated.
+_RESOLUTION_CLAIM_CONTRACT: tuple[str, ...] = (
+    "Resolution authority is the coordinator's",
+    "After required children are integrated",
+    "the coordinator alone performs a coordinating parent's resolving edit",
+    "moving it to `resolved`",
+    "writing the outcome's evidence and limitations",
+    "removing `next`",
+    "worker slice prepares closeout evidence only",
+    "result, limitations, and test and dependency evidence",
+    "never moves the coordinating parent to `resolved`",
+    "a delegated closeout task stops at the handoff",
+)
+
 _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "mechanical change with no independently resumable outcome",
     "enclosing node's `next` or result",
@@ -444,6 +460,10 @@ def test_skill_hash_addressing_and_operand_contract() -> None:
 
 def test_skill_lease_lifecycle_contract() -> None:
     _assert_present(_read(_SKILL), _LEASE_LIFECYCLE_CONTRACT)
+
+
+def test_skill_resolution_claim_contract() -> None:
+    _assert_present(_read(_SKILL), _RESOLUTION_CLAIM_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:
