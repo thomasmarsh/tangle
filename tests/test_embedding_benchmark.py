@@ -295,7 +295,7 @@ def test_usage_errors(capsys: pytest.CaptureFixture[str]) -> None:
 def test_benchmark_embedding_is_dispatched(capsys: pytest.CaptureFixture[str]) -> None:
     assert main.main(["--help"]) == 0
     assert (
-        "benchmark token|behavioral|storage|verbs|staged|embedding"
+        "benchmark token|behavioral|storage|verbs|staged|embedding|quality"
         in capsys.readouterr().out
     )
 

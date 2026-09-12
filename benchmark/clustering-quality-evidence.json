@@ -1,0 +1,291 @@
+{
+  "protocol": "clustering-quality-v1",
+  "note": "Cluster, retrieval, and round-trip quality for the optional embedding and clustering layer, measured on the committed TAS-089 corpus and the committed matched token records. Advisory evidence for one keep/revise/revert verdict per answer.",
+  "host": {
+    "platform": "macOS-13.7.8-x86_64-i386-64bit",
+    "machine": "x86_64",
+    "python": "3.12.14",
+    "versions": {
+      "numpy": "2.3.5",
+      "onnxruntime": "1.23.2",
+      "fastembed": "0.8.0",
+      "huggingface-hub": "1.31.0"
+    }
+  },
+  "model": {
+    "runtime": "fastembed",
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "fallback": "BAAI/bge-small-en-v1.5",
+    "dimensions": 384,
+    "weights": "see benchmark/embedding-evidence.json"
+  },
+  "corpus": {
+    "path": "benchmark/embedding-corpus.json",
+    "digest": "3e4acf684a96b3cd6bb2523e5e899e84d384cea3ec037ecc5e08a921c7533623",
+    "source_revision": "5c8faeb43c929ace159c9c92f772d9495d2071b8",
+    "documents": 118,
+    "probes": 76
+  },
+  "retrieval": {
+    "overall": {
+      "probes": 76,
+      "lexical": {
+        "probes": 76,
+        "mrr": 0.3441,
+        "recall@1": 0.1579,
+        "recall@5": 0.5789,
+        "recall@10": 0.7105
+      },
+      "embedding": {
+        "probes": 76,
+        "mrr": 0.3277,
+        "recall@1": 0.1579,
+        "recall@5": 0.5526,
+        "recall@10": 0.6447
+      },
+      "delta": {
+        "mrr": -0.0164,
+        "recall_at_1": 0.0,
+        "recall_at_5": -0.0263,
+        "recall_at_10": -0.0658
+      }
+    },
+    "near-duplicate": {
+      "probes": 30,
+      "lexical": {
+        "probes": 30,
+        "mrr": 0.5856,
+        "recall@1": 0.3333,
+        "recall@5": 0.9667,
+        "recall@10": 1.0
+      },
+      "embedding": {
+        "probes": 30,
+        "mrr": 0.442,
+        "recall@1": 0.2333,
+        "recall@5": 0.7667,
+        "recall@10": 0.8
+      },
+      "delta": {
+        "mrr": -0.1436,
+        "recall_at_1": -0.1,
+        "recall_at_5": -0.2,
+        "recall_at_10": -0.2
+      }
+    },
+    "paraphrase": {
+      "probes": 46,
+      "lexical": {
+        "probes": 46,
+        "mrr": 0.1866,
+        "recall@1": 0.0435,
+        "recall@5": 0.3261,
+        "recall@10": 0.5217
+      },
+      "embedding": {
+        "probes": 46,
+        "mrr": 0.2532,
+        "recall@1": 0.1087,
+        "recall@5": 0.413,
+        "recall@10": 0.5435
+      },
+      "delta": {
+        "mrr": 0.0666,
+        "recall_at_1": 0.0652,
+        "recall_at_5": 0.087,
+        "recall_at_10": 0.0217
+      }
+    }
+  },
+  "clustering": {
+    "space": "raw",
+    "method": "",
+    "params": {
+      "min_cluster_size": 6,
+      "min_samples": 2
+    },
+    "clusters": 3,
+    "noise": 65,
+    "over_broad_routes": 2,
+    "members": 118,
+    "stability": [
+      {
+        "space": "raw",
+        "runs": 10,
+        "ari": 0.6445
+      },
+      {
+        "space": "reduced",
+        "runs": 10,
+        "ari": 0.5132
+      }
+    ],
+    "route_agreement": {
+      "routed": 117,
+      "routeless": 1,
+      "distinct_routes": 21,
+      "ari": 0.0307,
+      "purity": 0.3136
+    },
+    "outlier": {
+      "default": {
+        "threshold": 0.9,
+        "flagged": 0,
+        "graph_isolated": 7,
+        "true_outliers": 0,
+        "false_outliers": 0,
+        "precision": null,
+        "recall": 0.0
+      },
+      "sweep": [
+        {
+          "threshold": 0.9,
+          "flagged": 0,
+          "graph_isolated": 7,
+          "true_outliers": 0,
+          "false_outliers": 0,
+          "precision": null,
+          "recall": 0.0
+        },
+        {
+          "threshold": 0.8,
+          "flagged": 0,
+          "graph_isolated": 7,
+          "true_outliers": 0,
+          "false_outliers": 0,
+          "precision": null,
+          "recall": 0.0
+        },
+        {
+          "threshold": 0.7,
+          "flagged": 0,
+          "graph_isolated": 7,
+          "true_outliers": 0,
+          "false_outliers": 0,
+          "precision": null,
+          "recall": 0.0
+        },
+        {
+          "threshold": 0.6,
+          "flagged": 0,
+          "graph_isolated": 7,
+          "true_outliers": 0,
+          "false_outliers": 0,
+          "precision": null,
+          "recall": 0.0
+        },
+        {
+          "threshold": 0.5,
+          "flagged": 0,
+          "graph_isolated": 7,
+          "true_outliers": 0,
+          "false_outliers": 0,
+          "precision": null,
+          "recall": 0.0
+        },
+        {
+          "threshold": 0.4,
+          "flagged": 0,
+          "graph_isolated": 7,
+          "true_outliers": 0,
+          "false_outliers": 0,
+          "precision": null,
+          "recall": 0.0
+        }
+      ]
+    }
+  },
+  "answer_surface": {
+    "verb_gate": {
+      "harness": "braintree benchmark verbs --verify",
+      "passed": true,
+      "cases": [
+        {
+          "case": "frontier",
+          "exit": 0
+        },
+        {
+          "case": "node",
+          "exit": 0
+        },
+        {
+          "case": "impact",
+          "exit": 0
+        },
+        {
+          "case": "orient",
+          "exit": 0
+        },
+        {
+          "case": "check-toon",
+          "exit": 1
+        },
+        {
+          "case": "digest",
+          "exit": 0
+        },
+        {
+          "case": "clusters",
+          "exit": 0
+        }
+      ]
+    },
+    "staged": {
+      "harness": "braintree benchmark staged",
+      "before": "benchmark/token-ab-tight.json",
+      "after": "benchmark/token-ab-current.json",
+      "decision": "revise",
+      "matched": {
+        "fixture_version": "graph-retrieval-v3",
+        "fixture_seed": "tas-020-2026-09-10",
+        "benchmark_case": "composite",
+        "representation": "graph",
+        "scale": "small",
+        "requested_model": "gpt-5.6-terra",
+        "requested_reasoning_effort": "medium",
+        "requested_codex_version": "codex-cli 0.154.0"
+      },
+      "round_trips": {
+        "comparable": false,
+        "before": {
+          "tool_calls": null,
+          "shell_calls": null
+        },
+        "after": {
+          "tool_calls": null,
+          "shell_calls": null
+        },
+        "sources": {
+          "before": "unavailable",
+          "after": "unavailable"
+        },
+        "fallback": "no round-trip telemetry in record or session"
+      },
+      "tokens": {
+        "uncached_delta": -1102,
+        "total_delta": 38370
+      }
+    },
+    "capability_absent": {
+      "exit": 0,
+      "line": "clusters: \"capability absent\"",
+      "byte_identical": true
+    },
+    "open_item": "The agent-level round-trip delta of `clusters` and `digest` needs one bounded matched live Codex pair, which is not authorized (cf. TAS-080); the zero-live verb gate and staged record parsers are used instead."
+  },
+  "decisions": {
+    "retrieval": {
+      "decision": "revise",
+      "rationale": "near-duplicate MRR 0.4420 < lexical 0.5856 but paraphrase MRR 0.2532 > lexical 0.1866; keep the opt-in rerank, keep lexical as the near-duplicate reference"
+    },
+    "clustering": {
+      "decision": "revise",
+      "rationale": "stable but weak answer: stability 0.6445 (bar 0.5), route agreement 0.0307 (bar 0.3), noise 65/118 (bar 0.5), outlier view flags 0 at the default threshold"
+    },
+    "digest": {
+      "decision": "keep",
+      "rationale": "graph-only bounded answer; exact-value gate passed at exit 0"
+    }
+  },
+  "reproduce": "UV_PROJECT_ENVIRONMENT=/tmp/bt-quality-venv uv sync --extra semantic; UV_PROJECT_ENVIRONMENT=/tmp/bt-quality-venv uv run braintree benchmark quality emit"
+}

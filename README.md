@@ -140,6 +140,22 @@ Inference is offline: `HF_HUB_OFFLINE` and `TRANSFORMERS_OFFLINE` are forced on 
 
 `braintree digest NODE` is the graph-only companion: bounded by `--limit`, it prints the summaries and `next` of one hub's or coordinating node's unresolved direct members with no generative summary, and it needs no embedding capability, so it stays on the fast path. `braintree similar` is unchanged: with a provider it reranks by embedding cosine, and with the provider absent or unhealthy it is byte-identical to the lexical baseline.
 
+## Embedding and clustering quality gate
+
+`braintree benchmark quality` is the recorded, correctness-gated comparison that decides whether the optional layer earns each answer it backs. It measures on the committed `TAS-089` corpus (the same documents and probes the lexical baseline is scored on), reuses the existing `braintree benchmark verbs --verify` gate and the zero-live staged A/B for the round-trip and token side, and writes `benchmark/clustering-quality-evidence.json` with one keep, revise, or revert verdict per answer.
+
+The measured numbers decide, not belief. On the frozen corpus the embedding ranking loses near-duplicate retrieval to the lexical baseline (MRR 0.44 against 0.59) while improving paraphrase recall (0.25 against 0.19), so retrieval earns a revise: keep the opt-in rerank where it helps and keep lexical as the near-duplicate reference. The clustering is stable across seeds and subsamples but agrees weakly with the graph's own routes (ARI 0.03, purity 0.31), leaves 65 of 118 nodes as noise, and the outlier view flags nothing at the default threshold, so clustering earns a revise. The graph digest is graph-only, bounded, and passes its exact-value gate, so it keeps. The evidence file records the host, the model, and the corpus digest; `verify` re-checks the corpus digest, the lexical baseline, the route parse, the decision shape, and the verb gate offline and loads no model:
+
+```sh
+braintree benchmark quality verify
+```
+
+The measurement itself is an explicit batch that needs the optional extra for the clustering fit, reads weights from the documented offline cache, and writes the evidence file:
+
+```sh
+braintree benchmark quality emit
+```
+
 ## Validate and collect feedback
 
 Installed projects validate the current graph with the bundled Markdown checker (which needs no sidecar) and query the optional index from any project root:

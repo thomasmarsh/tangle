@@ -20,6 +20,7 @@ from . import (
     feedback_scan,
     graph_check,
     provider,
+    quality_benchmark,
     staged_benchmark,
     storage_comparison,
     token_benchmark,
@@ -74,7 +75,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
     (
-        "benchmark token|behavioral|storage|verbs|staged|embedding",
+        "benchmark token|behavioral|storage|verbs|staged|embedding|quality",
         "run a development benchmark",
     ),
 )
@@ -111,6 +112,7 @@ _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "verbs": verb_benchmark.main,
     "staged": staged_benchmark.main,
     "embedding": embedding_benchmark.main,
+    "quality": quality_benchmark.main,
 }
 
 
@@ -156,7 +158,7 @@ def _semantic(args: list[str]) -> int:
 def _benchmark(args: list[str]) -> int:
     if not args:
         return _usage_error(
-            "benchmark requires token, behavioral, storage, verbs, staged, or embedding"
+            "benchmark requires token, behavioral, storage, verbs, staged, embedding, or quality"
         )
     name = args[0]
     if name not in _BENCHMARKS:
