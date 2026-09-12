@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T16:16:56Z
+updated: 2026-09-12T16:21:41Z
 summary: Move graph reasoning out of SKILL.md prose into direct `braintree` answers so client agents decide and act in fewer round trips while the always-loaded skill shrinks.
-next: "[[TAS-079-optional-semantic-retrieval]]"
+next: "[[TAS-080-staged-token-ab]]"
 ---
 
 # Context

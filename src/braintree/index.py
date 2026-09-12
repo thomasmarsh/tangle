@@ -26,6 +26,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from . import semantic
 from .graph_check import (
     CONTEXT_PIN_LINE,
     CONTEXT_RELATIONS,
@@ -907,21 +908,19 @@ def _cosine(query: Counter[str], node: Counter[str]) -> float:
     return dot / (query_norm * node_norm)
 
 
-def similar(root: str, text: str, limit: int) -> list[SimilarCandidate]:
-    """Rank existing nodes by lexical similarity to ``text`` for admission.
+def _similar_text(node: IndexedNode) -> str:
+    """Return the summary-plus-body text ``similar`` embeds and compares."""
+    return node.metadata.get("summary", "") + "\n" + node.body
 
-    The metric is cosine similarity over the lowercased alphanumeric token
-    counts of ``text`` and each node's ``summary`` plus body. It is
-    deterministic and model-free: the stable lexical baseline an admission
-    decision compares a draft against, which an optional semantic layer may
-    later rerank without changing this path. Only positive scores are returned,
-    ties break by node ID, and the result is bounded by ``limit``.
-    """
+
+def _similar_lexical(
+    nodes: list[IndexedNode], text: str, limit: int
+) -> list[SimilarCandidate]:
+    """Rank ``nodes`` by lexical cosine over lowercased token counts."""
     query = _token_counts(text)
     candidates: list[SimilarCandidate] = []
-    for node in _read_nodes(root):
-        body = node.metadata.get("summary", "") + "\n" + node.body
-        score = _cosine(query, _token_counts(body))
+    for node in nodes:
+        score = _cosine(query, _token_counts(_similar_text(node)))
         if score <= 0:
             continue
         candidates.append(
@@ -934,6 +933,86 @@ def similar(root: str, text: str, limit: int) -> list[SimilarCandidate]:
         )
     candidates.sort(key=lambda candidate: (-candidate.score, candidate.id))
     return candidates[:limit]
+
+
+def _similar_semantic(
+    nodes: list[IndexedNode],
+    text: str,
+    limit: int,
+    provider: semantic.SemanticProvider,
+    connection: sqlite3.Connection,
+) -> list[SimilarCandidate] | None:
+    """Rerank ``nodes`` by provider embedding cosine, or ``None`` on any failure.
+
+    Node vectors are cached by content hash, and the query is embedded in the
+    same call. A provider failure, a wrong-width vector, or a missing query
+    vector returns ``None`` so the caller keeps one consistent metric instead of
+    mixing semantic and lexical scores.
+    """
+    items: list[tuple[str, str]] = []
+    node_hashes: list[tuple[IndexedNode, str]] = []
+    seen: set[str] = set()
+    for node in nodes:
+        body = _similar_text(node)
+        content_digest = content_hash(body.encode("utf-8"))
+        node_hashes.append((node, content_digest))
+        if content_digest not in seen:
+            seen.add(content_digest)
+            items.append((content_digest, body))
+    query_digest = content_hash(text.encode("utf-8"))
+    if query_digest not in seen:
+        items.append((query_digest, text))
+    resolved = semantic.vectors(provider, connection, items)
+    if resolved is None or query_digest not in resolved:
+        return None
+    query_vector = resolved[query_digest]
+    candidates: list[SimilarCandidate] = []
+    for node, content_digest in node_hashes:
+        vector = resolved.get(content_digest)
+        if vector is None:
+            return None
+        score = semantic.cosine(query_vector, vector)
+        if score <= 0:
+            continue
+        candidates.append(
+            SimilarCandidate(
+                id=node.id,
+                status=node.status,
+                score=score,
+                summary=node.metadata.get("summary", ""),
+            )
+        )
+    candidates.sort(key=lambda candidate: (-candidate.score, candidate.id))
+    return candidates[:limit]
+
+
+def similar(
+    root: str,
+    text: str,
+    limit: int,
+    provider: semantic.SemanticProvider | None = None,
+    connection: sqlite3.Connection | None = None,
+) -> list[SimilarCandidate]:
+    """Rank existing nodes by similarity to ``text`` for admission.
+
+    Without a provider this is the stable lexical baseline: cosine similarity
+    over the lowercased alphanumeric token counts of ``text`` and each node's
+    ``summary`` plus body. It is deterministic and model-free, the correctness
+    reference an admission decision compares a draft against.
+
+    With a probed ``provider`` and a sidecar ``connection`` it reranks by the
+    provider's embedding cosine instead, caching node vectors by content hash in
+    the disposable sidecar. Nothing semantic is required: when no provider is
+    configured, or the provider fails, the answer is the lexical baseline byte
+    for byte. Only positive scores are returned, ties break by node ID, and the
+    result is bounded by ``limit``.
+    """
+    nodes = _read_nodes(root)
+    if provider is not None and connection is not None:
+        reranked = _similar_semantic(nodes, text, limit, provider, connection)
+        if reranked is not None:
+            return reranked
+    return _similar_lexical(nodes, text, limit)
 
 
 def stale_pins(root: str) -> list[tuple[str, str, str, str, str, str, str]]:

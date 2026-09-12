@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import os
 import re
+import sqlite3
 import sys
 from collections.abc import Callable, Sequence
 
-from . import index, sidecar
+from . import index, semantic, sidecar
 from .revision import reported_version
 from .toon import escape, field
 
@@ -336,7 +337,20 @@ def _similar(args: list[str]) -> int:
     root = _require_nodes_directory()
     if root is None:
         return 1
-    rows = index.similar(root, text, int(limit_raw))
+    # The semantic provider is optional: without ``BT_SEMANTIC_PROVIDER`` no
+    # process runs, and an unhealthy provider degrades to the lexical baseline.
+    provider = semantic.probe()
+    connection: sqlite3.Connection | None = None
+    if provider is not None:
+        try:
+            connection = sidecar.open_connection()
+        except sidecar.SidecarError:
+            provider = None
+    try:
+        rows = index.similar(root, text, int(limit_raw), provider, connection)
+    finally:
+        if connection is not None:
+            connection.close()
     print(
         index.format_table(
             "similar",
