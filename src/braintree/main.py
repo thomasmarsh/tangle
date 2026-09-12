@@ -19,6 +19,7 @@ from . import (
     feedback_record,
     feedback_scan,
     graph_check,
+    provider,
     staged_benchmark,
     storage_comparison,
     token_benchmark,
@@ -61,6 +62,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
         "plan duplicate, divergence, and stale-pin repairs from a Git change set",
     ),
     ("check [OPTIONS] [NODES]", "validate a vault without writing state"),
+    (
+        "semantic embed [--model NAME]",
+        "embed JSON texts as JSON vectors for BT_SEMANTIC_PROVIDER",
+    ),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
     (
@@ -132,6 +137,15 @@ def _feedback(args: list[str]) -> int:
     return _usage_error(f"unknown feedback command: {group}")
 
 
+def _semantic(args: list[str]) -> int:
+    if not args:
+        return _usage_error("semantic requires embed")
+    group = args[0]
+    if group == "embed":
+        return provider.main(args[1:])
+    return _usage_error(f"unknown semantic command: {group}")
+
+
 def _benchmark(args: list[str]) -> int:
     if not args:
         return _usage_error(
@@ -162,6 +176,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return graph_check.main(args[1:])
     if command == "feedback":
         return _feedback(args[1:])
+    if command == "semantic":
+        return _semantic(args[1:])
     if command == "benchmark":
         return _benchmark(args[1:])
     if command in _COORDINATION_COMMANDS:

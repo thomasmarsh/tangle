@@ -18,7 +18,9 @@ extra, which a plain install never has. fastembed on ONNX Runtime is the
 shipped runtime: it needs no torch. :func:`extra` reports whether that extra
 is importable using ``importlib.util.find_spec`` alone, so probing it never
 imports a heavy module, and :func:`model_cache` names the local directory
-pre-fetched weights are read from offline.
+pre-fetched weights are read from offline. The shipped provider for
+``BT_SEMANTIC_PROVIDER`` is ``braintree semantic embed`` in
+:mod:`braintree.provider`, which speaks the protocol above through fastembed.
 """
 
 from __future__ import annotations

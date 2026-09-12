@@ -115,6 +115,21 @@ braintree benchmark embedding run
 
 Bound it with `--models`, `--runtimes`, `--probes`, `--limit`, and `--time-budget`. No interactive verb loads a model, and `make test` never downloads one: the tests drive the same pipeline with an injected embedder that reproduces the lexical baseline exactly.
 
+## Native embedding provider
+
+`braintree semantic embed` is the shipped provider command the optional seam probes through `BT_SEMANTIC_PROVIDER`. It reads a JSON array of texts on stdin and writes the protocol's JSON array of equal-width vectors on stdout:
+
+```sh
+export BT_SEMANTIC_PROVIDER='braintree semantic embed'
+BT_MODEL_CACHE=/path/to/model-cache braintree similar 'expired authentication grants'
+
+echo '["hello world","near duplicate hello world"]' | braintree semantic embed
+```
+
+It loads the selected model once per process and embeds in bounded batches, using `sentence-transformers/all-MiniLM-L6-v2` by default and falling back once to `BAAI/bge-small-en-v1.5` when the default cannot load. `BT_EMBEDDING_MODEL` selects the model and `--model NAME` overrides it. The command string is the provider identity the sidecar vector cache is keyed by, so pin `--model` in `BT_SEMANTIC_PROVIDER` whenever it is not the default.
+
+Inference is offline: `HF_HUB_OFFLINE` and `TRANSFORMERS_OFFLINE` are forced on before the runtime loads, and weights are read from the `BT_MODEL_CACHE`/`HF_HOME` cache, so nothing downloads at query time. An unpopulated cache or a missing extra exits non-zero, which the seam reads as capability absent: `braintree similar` falls back to the lexical baseline instead of failing. A malformed, empty, or wrong-width model result is refused the same way, and nothing is written to stdout except the vector array. Fastembed is imported lazily inside the command handler, so a plain install still loads no heavy module.
+
 ## Validate and collect feedback
 
 Installed projects validate the current graph with the bundled Markdown checker (which needs no sidecar) and query the optional index from any project root:
