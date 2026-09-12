@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+from pathlib import Path
 
 import pytest
 
@@ -48,9 +49,13 @@ def test_bt_unknown_command_is_usage_error(capsys: pytest.CaptureFixture[str]) -
     assert 'error: "unknown command: frobnicate"' in capsys.readouterr().out
 
 
-def test_bt_known_command_reports_unimplemented(capsys: pytest.CaptureFixture[str]) -> None:
-    assert cli.main(["status"]) == 1
-    assert 'error: "command is not implemented in the scaffold: status"' in capsys.readouterr().out
+def test_bt_status_reports_uninitialized_sidecar(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "sidecar"))
+    monkeypatch.setenv("BT_PROJECT_ID", "scaffold-test")
+    assert cli.main(["status"]) == 0
+    assert 'initialized: "false"' in capsys.readouterr().out
 
 
 def test_graph_check_help(capsys: pytest.CaptureFixture[str]) -> None:

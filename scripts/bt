@@ -1,64 +1,15 @@
 #!/bin/sh
-# Local coordination sidecar for Braintree.
+# Launch the typed Python `bt` implementation.
+#
+# The historical entry point path is preserved for in-repo tests and callers;
+# installed skills use the `bt` console script declared in pyproject.toml.
 set -eu
-version=0.1.0
-[ "$#" -eq 1 ] && case "$1" in --version|-v|-V) printf '%s\n' "$version"; exit 0;; esac
-quote() { printf '%s' "$1" | sed "s/'/''/g"; }
-field() { printf '%s: "%s"\n' "$1" "$(printf '%s' "$2" | sed 's/\\/\\\\/g; s/"/\\"/g')"; }
-usage() { field description 'Coordinate and query a Markdown-canonical graph through an external SQLite sidecar.'; field usage 'scripts/bt [status|location|init|allocate PREFIX|claim NODE AGENT --base-hash HASH [--lease-seconds N]|release NODE AGENT --base-hash HASH|reindex [NODES]|search QUERY [--limit N]|backlinks NODE|stale]'; printf 'commands[10]{command,purpose}:\n  "status","show the current sidecar state"\n  "location","show the stable project identity and database path"\n  "init","create or repair the local sidecar"\n  "allocate PREFIX","atomically allocate PREFIX-NNN"\n  "claim NODE AGENT --base-hash HASH","acquire or renew an exclusive lease"\n  "release NODE AGENT --base-hash HASH","release the matching unexpired lease"\n  "reindex [NODES]","rebuild derived nodes, edges, and FTS from Markdown"\n  "search QUERY [--limit N]","full-text search derived Markdown content"\n  "backlinks NODE","list derived incoming graph edges"\n  "stale","find missing or outdated dependency pins"\n'; }
-usage_error() { field error "$1"; field help 'Run `scripts/bt --help` for command usage.'; exit 2; }
-runtime_error() { field error "$1"; field help 'Check the local sidecar location and retry.'; exit 1; }
-require_sqlite() { command -v sqlite3 >/dev/null 2>&1 || runtime_error 'sqlite3 is required for local coordination'; }
-project_id() { if [ -n "${BT_PROJECT_ID:-}" ]; then printf '%s\n' "$BT_PROJECT_ID"; else common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || runtime_error 'run bt inside a Git project or set BT_PROJECT_ID for an isolated test'; printf '%s' "$common" | shasum -a 256 | awk '{print substr($1, 1, 20)}'; fi; }
-state_root() { if [ -n "${BT_SIDECAR_DIR:-}" ]; then printf '%s\n' "$BT_SIDECAR_DIR"; elif [ -n "${XDG_STATE_HOME:-}" ]; then printf '%s/braintree\n' "$XDG_STATE_HOME"; else printf '%s/.local/state/braintree\n' "${HOME:?HOME is required when XDG_STATE_HOME is unset}"; fi; }
-sidecar_dir="$(state_root)/projects/$(project_id)"
-db="$sidecar_dir/graph.sqlite3"
-busy_timeout_ms=1000
-busy_retries=4
-network_guard() { [ "${BT_ALLOW_NETWORK_SIDECAR:-}" = 1 ] && return 0; probe=$1; while [ ! -e "$probe" ]; do next=$(dirname "$probe"); [ "$next" != "$probe" ] || break; probe=$next; done; source=$(df -P "$probe" 2>/dev/null | awk 'NR==2 {print $1}'); case "$source" in //*|*:*|nfs*) runtime_error 'sidecar filesystem appears network-mounted; SQLite WAL requires a local same-host filesystem';; esac; }
-sqlite_exec() {
-  sql=$1
-  attempt=0
-  while :; do
-    if output=$(sqlite3 -cmd ".timeout $busy_timeout_ms" "$db" "$sql" 2>&1); then
-      printf '%s' "$output"
-      return 0
-    fi
-    result=$?
-    case "$output" in
-      *'database is locked'*|*'database is busy'*|*'SQLITE_BUSY'*)
-        [ "$attempt" -ge "$busy_retries" ] && return "$result"
-        attempt=$((attempt + 1))
-        sleep 1
-        ;;
-      *) return "$result" ;;
-    esac
-  done
-}
-ensure_sidecar() { require_sqlite; network_guard "$sidecar_dir"; mkdir -p "$sidecar_dir" 2>/dev/null || runtime_error "unable to create sidecar directory: $sidecar_dir"; sqlite_exec '
-PRAGMA journal_mode = WAL;
-PRAGMA foreign_keys = ON;
-CREATE TABLE IF NOT EXISTS id_sequences (prefix TEXT PRIMARY KEY, next_value INTEGER NOT NULL CHECK(next_value > 0));
-CREATE TABLE IF NOT EXISTS claims (node_id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, base_content_hash TEXT NOT NULL, lease_expires_at INTEGER NOT NULL);
-CREATE INDEX IF NOT EXISTS claims_lease_expiry ON claims(lease_expires_at);
-' >/dev/null 2>&1 || runtime_error 'unable to initialize the SQLite sidecar'; }
-index_command() { ensure_sidecar; ruby "$(dirname "$0")/bt-index.rb" "$db" "$@" || runtime_error 'unable to reconcile the derived Markdown index'; }
-location() { field project_id "$(project_id)"; field sidecar "$db"; }
-status() { location; if [ -f "$db" ]; then count=$(sqlite_exec 'SELECT count(*) FROM claims;' 2>/dev/null || printf '?'); field initialized true; field active_claims "$count"; else field initialized false; field active_claims 0; fi; }
-allocate() { prefix=$1; case "$prefix" in ''|*[!A-Z0-9_-]*) usage_error 'PREFIX must contain only uppercase letters, digits, underscores, or hyphens';; esac; ensure_sidecar; safe=$(quote "$prefix"); value=$(sqlite_exec "BEGIN IMMEDIATE; INSERT INTO id_sequences(prefix,next_value) VALUES('$safe', 2) ON CONFLICT(prefix) DO NOTHING; SELECT next_value - 1 FROM id_sequences WHERE prefix = '$safe'; UPDATE id_sequences SET next_value = next_value + 1 WHERE prefix = '$safe'; COMMIT;" 2>/dev/null) || runtime_error 'unable to allocate an ID atomically'; field id "$(printf '%s-%03d' "$prefix" "$value")"; }
-claim() { node=$1 agent=$2 hash=$3 lease=$4; now=$(date +%s); expires=$((now + lease)); ensure_sidecar; node_sql=$(quote "$node"); agent_sql=$(quote "$agent"); hash_sql=$(quote "$hash"); result=$(sqlite_exec "BEGIN IMMEDIATE; DELETE FROM claims WHERE lease_expires_at <= $now; INSERT INTO claims(node_id,agent_id,base_content_hash,lease_expires_at) VALUES('$node_sql','$agent_sql','$hash_sql',$expires) ON CONFLICT(node_id) DO UPDATE SET lease_expires_at=excluded.lease_expires_at WHERE claims.agent_id=excluded.agent_id AND claims.base_content_hash=excluded.base_content_hash; SELECT agent_id || '|' || base_content_hash || '|' || lease_expires_at FROM claims WHERE node_id='$node_sql'; COMMIT;" 2>/dev/null) || runtime_error 'unable to acquire the claim atomically'; owner=${result%%|*}; rest=${result#*|}; recorded_hash=${rest%%|*}; recorded_expiry=${rest##*|}; if [ "$owner" != "$agent" ] || [ "$recorded_hash" != "$hash" ]; then field error "node is claimed by $owner with a different base hash"; field help 'Use a different node or reconcile the current Markdown content before claiming.'; exit 1; fi; field result claimed; field node "$node"; field agent "$agent"; field base_hash "$hash"; field lease_expires_at "$recorded_expiry"; }
-release() { node=$1 agent=$2 hash=$3; now=$(date +%s); ensure_sidecar; node_sql=$(quote "$node"); agent_sql=$(quote "$agent"); hash_sql=$(quote "$hash"); changed=$(sqlite_exec "BEGIN IMMEDIATE; DELETE FROM claims WHERE lease_expires_at <= $now; DELETE FROM claims WHERE node_id='$node_sql' AND agent_id='$agent_sql' AND base_content_hash='$hash_sql'; SELECT changes(); COMMIT;" 2>/dev/null) || runtime_error 'unable to release the claim atomically'; if [ "$changed" = 1 ]; then field result released; else field result no-op; fi; field node "$node"; }
-command=${1:-status}
-case "$command" in
---help|-h) usage;;
-status) [ "$#" -eq 1 ] || usage_error 'status accepts no arguments'; status;;
-location) [ "$#" -eq 1 ] || usage_error 'location accepts no arguments'; location;;
-init) [ "$#" -eq 1 ] || usage_error 'init accepts no arguments'; ensure_sidecar; field result initialized; location;;
-allocate) [ "$#" -eq 2 ] || usage_error 'allocate requires PREFIX'; allocate "$2";;
-claim) [ "$#" -ge 5 ] || usage_error 'claim requires NODE AGENT --base-hash HASH'; node=$2; agent=$3; shift 3; hash=; lease=900; while [ "$#" -gt 0 ]; do case "$1" in --base-hash) shift; [ "$#" -gt 0 ] || usage_error '--base-hash requires HASH'; hash=$1;; --lease-seconds) shift; [ "$#" -gt 0 ] || usage_error '--lease-seconds requires seconds'; lease=$1;; *) usage_error "unknown argument for claim: $1";; esac; shift; done; [ -n "$node" ] && [ -n "$agent" ] && [ -n "$hash" ] || usage_error 'claim requires non-empty NODE, AGENT, and --base-hash HASH'; case "$lease" in *[!0-9]*|'') usage_error '--lease-seconds must be a positive integer';; esac; [ "$lease" -gt 0 ] || usage_error '--lease-seconds must be a positive integer'; claim "$node" "$agent" "$hash" "$lease";;
-release) [ "$#" -eq 5 ] && [ "$4" = --base-hash ] || usage_error 'release requires NODE AGENT --base-hash HASH'; [ -n "$2" ] && [ -n "$3" ] && [ -n "$5" ] || usage_error 'release requires non-empty NODE, AGENT, and HASH'; release "$2" "$3" "$5";;
-reindex) [ "$#" -le 2 ] || usage_error 'reindex accepts at most one NODES directory'; index_command reindex "${2:-${BT_NODES_DIR:-nodes}}";;
-search) [ "$#" -ge 2 ] && [ "$2" != --limit ] || usage_error 'search requires QUERY'; query=$2; shift 2; limit=20; while [ "$#" -gt 0 ]; do case "$1" in --limit) shift; [ "$#" -gt 0 ] || usage_error '--limit requires N'; limit=$1;; *) usage_error "unknown argument for search: $1";; esac; shift; done; case "$limit" in *[!0-9]*|'') usage_error '--limit must be a positive integer';; esac; [ "$limit" -gt 0 ] || usage_error '--limit must be a positive integer'; index_command reindex "${BT_NODES_DIR:-nodes}" >/dev/null; index_command search "$query" "$limit";;
-backlinks) [ "$#" -eq 2 ] || usage_error 'backlinks requires NODE'; index_command reindex "${BT_NODES_DIR:-nodes}" >/dev/null; index_command backlinks "$2";;
-stale) [ "$#" -eq 1 ] || usage_error 'stale accepts no arguments'; index_command reindex "${BT_NODES_DIR:-nodes}" >/dev/null; index_command stale;;
-*) usage_error "unknown command: $command";; esac
+here=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ -x "$here/.venv/bin/python" ]; then
+  python=$here/.venv/bin/python
+else
+  python=${PYTHON:-python3}
+fi
+PYTHONPATH="$here/src${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+exec "$python" -m braintree "$@"
