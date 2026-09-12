@@ -7,6 +7,9 @@ single mutation the shell test used.
 
 from __future__ import annotations
 
+import re
+import shutil
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -551,3 +554,511 @@ def test_feedback_node_requires_section(
     code, err = _run(nodes, capsys)
     assert code == 1
     assert "feedback node requires a # Feedback section" in err
+
+
+# --- Structured ``--format toon`` output and stable finding codes ----------------
+
+
+def _toon_codes(out: str) -> list[str]:
+    """Return the leading ``code`` cell of every emitted TOON record."""
+    codes: list[str] = []
+    for line in out.splitlines():
+        match = re.match(r'\s+"([^"]+)"', line)
+        if match is not None:
+            codes.append(match.group(1))
+    return codes
+
+
+def _mut_vault_no_nodes(nodes: Path) -> None:
+    for path in sorted(nodes.glob("*/*.md")):
+        path.unlink()
+
+
+def _mut_vault_missing_directory(nodes: Path) -> None:
+    shutil.rmtree(nodes)
+
+
+def _mut_node_status_directory(nodes: Path) -> None:
+    (nodes / "weird").mkdir()
+    _write(
+        nodes / "weird" / "TAS-010-weird.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Weird status.",
+        "next: Continue.",
+        "---",
+    )
+
+
+def _mut_node_frontmatter_missing(nodes: Path) -> None:
+    _write(nodes / "active" / "TAS-010-bare.md", "No frontmatter here.")
+
+
+def _mut_node_frontmatter_mapping(nodes: Path) -> None:
+    _write(nodes / "active" / "TAS-010-bad.md", "---", "not a mapping", "---")
+
+
+def _mut_node_context_rev(nodes: Path) -> None:
+    _write(
+        nodes / "active" / "TAS-010-bad-rev.md",
+        "---",
+        "context_rev: 0",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Bad revision.",
+        "next: Continue.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_updated(nodes: Path) -> None:
+    _write(
+        nodes / "active" / "TAS-010-bad-updated.md",
+        "---",
+        "context_rev: 1",
+        "updated: yesterday",
+        "summary: Bad timestamp.",
+        "next: Continue.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_summary(nodes: Path) -> None:
+    _write(
+        nodes / "active" / "TAS-010-no-summary.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "next: Continue.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_authority_fields(nodes: Path) -> None:
+    _write(
+        nodes / "active" / "TAS-010-authority.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Duplicated authority.",
+        "next: Continue.",
+        "status: active",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_next_required(nodes: Path) -> None:
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        "".join(
+            line
+            for line in child.read_text(encoding="utf-8").splitlines(keepends=True)
+            if not line.startswith("next:")
+        ),
+        encoding="utf-8",
+    )
+
+
+def _mut_node_blocked_section(nodes: Path) -> None:
+    _write(
+        nodes / "blocked" / "TAS-010-waiting.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Waiting.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_disposition(nodes: Path) -> None:
+    _write(
+        nodes / "resolved" / "TAS-010-disposition.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Disposition.",
+        "disposition: current",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_disposition_status(nodes: Path) -> None:
+    _write(
+        nodes / "active" / "TAS-010-disposition.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Disposition too early.",
+        "next: Continue.",
+        "disposition: abandoned",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_resolved_next(nodes: Path) -> None:
+    _write(
+        nodes / "resolved" / "TAS-010-done.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Done but unsettled.",
+        "next: Keep going.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+
+
+def _mut_node_reciprocal_edge(nodes: Path) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8") + "Child [[TAS-002-child]].\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_node_duplicate_identity(nodes: Path) -> None:
+    source = nodes / "active" / "TAS-001-parent.md"
+    (nodes / "blocked" / "TAS-001-copy.md").write_text(
+        source.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+
+
+def _mut_node_broken_link(nodes: Path) -> None:
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        child.read_text(encoding="utf-8") + "Related to [[TAS-999-missing]].\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_feedback_revision_missing(nodes: Path) -> None:
+    _write(
+        nodes / "proposed" / "FBK-010-missing.md",
+        *_feedback_node(
+            None,
+            "# Feedback",
+            "",
+            "Attempted: a.",
+            "Friction: b.",
+            "Improvement: c.",
+        ),
+    )
+
+
+def _mut_feedback_revision_format(nodes: Path) -> None:
+    _write(
+        nodes / "proposed" / "FBK-010-malformed.md",
+        *_feedback_node(
+            "latest",
+            "# Feedback",
+            "",
+            "Attempted: a.",
+            "Friction: b.",
+            "Improvement: c.",
+        ),
+    )
+
+
+def _mut_feedback_section_missing(nodes: Path) -> None:
+    _write(
+        nodes / "proposed" / "FBK-010-no-section.md",
+        *_feedback_node("0.4.0", "# Context", "", "No feedback body."),
+    )
+
+
+def _mut_feedback_content_missing(nodes: Path) -> None:
+    _write(
+        nodes / "proposed" / "FBK-010-no-friction.md",
+        *_feedback_node(
+            "0.4.0",
+            "# Feedback",
+            "",
+            "Attempted: a.",
+            "Improvement: c.",
+        ),
+    )
+
+
+def _mut_context_pin_trailing_text(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        " at context_rev 1.",
+        " at context_rev 1. and more.",
+    )
+
+
+def _mut_context_pin_missing(nodes: Path) -> None:
+    _replace(nodes / "active" / "TAS-001-parent.md", " at context_rev 1.", ".")
+
+
+def _mut_context_unresolved(nodes: Path) -> None:
+    source = nodes / "resolved" / "DEF-001-contract.md"
+    source.rename(nodes / "proposed" / source.name)
+
+
+def _mut_context_rev_mismatch(nodes: Path) -> None:
+    _replace(nodes / "active" / "TAS-001-parent.md", "context_rev 1.", "context_rev 2.")
+
+
+def _mut_index_missing(nodes: Path) -> None:
+    (nodes / "index-map.md").unlink()
+
+
+def _mut_index_copied_state(nodes: Path) -> None:
+    index = nodes / "index-map.md"
+    index.write_text(
+        index.read_text(encoding="utf-8") + "| [[TAS-002-child]] | active |\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_index_root_route_missing(nodes: Path) -> None:
+    _replace(nodes / "index-map.md", "- Indexes [[IDX-001-root]].\n", "")
+
+
+def _mut_index_root_hub_type(nodes: Path) -> None:
+    _replace(
+        nodes / "index-map.md",
+        "- Indexes [[IDX-001-root]].",
+        "- Indexes [[DEF-001-contract]].",
+    )
+
+
+def _mut_index_broken_link(nodes: Path) -> None:
+    index = nodes / "index-map.md"
+    index.write_text(
+        index.read_text(encoding="utf-8") + "\n- [[TAS-999-missing]].\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_index_focus_without_active(nodes: Path) -> None:
+    (nodes / "active" / "TAS-001-parent.md").rename(
+        nodes / "resolved" / "TAS-001-parent.md"
+    )
+    (nodes / "active" / "TAS-002-child.md").rename(
+        nodes / "resolved" / "TAS-002-child.md"
+    )
+    index = nodes / "index-map.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n# Focus\n\n- [[TAS-002-child]]\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_index_focus_target(nodes: Path) -> None:
+    index = nodes / "index-map.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n# Focus\n\n- [[DEF-001-contract]]\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_route_root_hub_unrouted(nodes: Path) -> None:
+    hub = nodes / "resolved" / "IDX-001-root.md"
+    hub.write_text(
+        hub.read_text(encoding="utf-8") + "\nArea [[IDX-001-root]].\n",
+        encoding="utf-8",
+    )
+
+
+def _mut_route_primary_missing(nodes: Path) -> None:
+    _write(
+        nodes / "active" / "TAS-010-unrouted.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: No route.",
+        "next: Continue.",
+        "---",
+    )
+
+
+def _mut_route_cycle(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-002-child.md",
+        "Parent [[TAS-001-parent]].",
+        "Parent [[TAS-002-child]].",
+    )
+
+
+def _mut_route_orphan(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-002-child.md",
+        "Parent [[TAS-001-parent]].",
+        "Parent [[TAS-777-missing]].",
+    )
+
+
+def _mut_next_multiple_frontiers(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "next: Continue [[TAS-002-child]].",
+        "next: Continue [[TAS-002-child]] and [[DEF-001-contract]].",
+    )
+
+
+def _mut_next_not_direct_child(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "next: Continue [[TAS-002-child]].",
+        "next: Continue [[DEF-001-contract]].",
+    )
+
+
+# Every error class the validator can raise, with one mutation that triggers it.
+_MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
+    "vault-no-nodes": (_mut_vault_no_nodes, "vault-no-nodes"),
+    "vault-missing-directory": (_mut_vault_missing_directory, "vault-missing-directory"),
+    "node-status-directory": (_mut_node_status_directory, "node-status-directory"),
+    "node-frontmatter-missing": (_mut_node_frontmatter_missing, "node-frontmatter-missing"),
+    "node-frontmatter-mapping": (_mut_node_frontmatter_mapping, "node-frontmatter-mapping"),
+    "node-context-rev": (_mut_node_context_rev, "node-context-rev"),
+    "node-updated": (_mut_node_updated, "node-updated"),
+    "node-summary": (_mut_node_summary, "node-summary"),
+    "node-authority-fields": (_mut_node_authority_fields, "node-authority-fields"),
+    "node-next-required": (_mut_node_next_required, "node-next-required"),
+    "node-blocked-section": (_mut_node_blocked_section, "node-blocked-section"),
+    "node-disposition": (_mut_node_disposition, "node-disposition"),
+    "node-disposition-status": (_mut_node_disposition_status, "node-disposition-status"),
+    "node-resolved-next": (_mut_node_resolved_next, "node-resolved-next"),
+    "node-reciprocal-edge": (_mut_node_reciprocal_edge, "node-reciprocal-edge"),
+    "node-duplicate-identity": (_mut_node_duplicate_identity, "node-duplicate-identity"),
+    "node-broken-link": (_mut_node_broken_link, "node-broken-link"),
+    "feedback-revision-missing": (
+        _mut_feedback_revision_missing,
+        "feedback-revision-missing",
+    ),
+    "feedback-revision-format": (
+        _mut_feedback_revision_format,
+        "feedback-revision-format",
+    ),
+    "feedback-section-missing": (
+        _mut_feedback_section_missing,
+        "feedback-section-missing",
+    ),
+    "feedback-content-missing": (
+        _mut_feedback_content_missing,
+        "feedback-content-missing",
+    ),
+    "context-pin-trailing-text": (
+        _mut_context_pin_trailing_text,
+        "context-pin-trailing-text",
+    ),
+    "context-pin-missing": (_mut_context_pin_missing, "context-pin-missing"),
+    "context-unresolved": (_mut_context_unresolved, "context-unresolved"),
+    "context-rev-mismatch": (_mut_context_rev_mismatch, "context-rev-mismatch"),
+    "index-missing": (_mut_index_missing, "index-missing"),
+    "index-copied-state": (_mut_index_copied_state, "index-copied-state"),
+    "index-root-route-missing": (
+        _mut_index_root_route_missing,
+        "index-root-route-missing",
+    ),
+    "index-root-hub-type": (_mut_index_root_hub_type, "index-root-hub-type"),
+    "index-broken-link": (_mut_index_broken_link, "index-broken-link"),
+    "index-focus-without-active": (
+        _mut_index_focus_without_active,
+        "index-focus-without-active",
+    ),
+    "index-focus-target": (_mut_index_focus_target, "index-focus-target"),
+    "route-root-hub-unrouted": (
+        _mut_route_root_hub_unrouted,
+        "route-root-hub-unrouted",
+    ),
+    "route-primary-missing": (_mut_route_primary_missing, "route-primary-missing"),
+    "route-cycle": (_mut_route_cycle, "route-cycle"),
+    "route-orphan": (_mut_route_orphan, "route-orphan"),
+    "next-multiple-frontiers": (
+        _mut_next_multiple_frontiers,
+        "next-multiple-frontiers",
+    ),
+    "next-not-direct-child": (_mut_next_not_direct_child, "next-not-direct-child"),
+}
+
+
+def test_toon_format_passes_with_zero_findings(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert graph_check.main(["--format", "toon", str(nodes)]) == 0
+    out = capsys.readouterr().out
+    assert 'result: "passed"' in out
+    assert 'nodes: "4"' in out
+    assert "findings: 0" in out
+
+
+def test_toon_format_emits_a_record_per_finding(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mut_context_rev_mismatch(nodes)
+    assert graph_check.main(["--format", "toon", str(nodes)]) == 1
+    out = capsys.readouterr().out
+    assert 'result: "failed"' in out
+    assert "findings[1]{code,node,detail}:" in out
+    assert '"context-rev-mismatch"' in out
+    assert str(nodes / "active" / "TAS-001-parent.md") in out
+    assert "context_rev mismatch" in out
+
+
+def test_toon_finding_carries_all_three_fields(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mut_node_broken_link(nodes)
+    assert graph_check.main(["--format", "toon", str(nodes)]) == 1
+    out = capsys.readouterr().out
+    assert "node-broken-link" in _toon_codes(out)
+    assert '"node-broken-link","' in out
+    assert "broken link [[TAS-999-missing]]" in out
+
+
+def test_text_format_is_the_default(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert graph_check.main([str(nodes)]) == 0
+    default_out = capsys.readouterr().out
+    assert graph_check.main(["--format", "text", str(nodes)]) == 0
+    assert capsys.readouterr().out == default_out
+
+
+def test_unknown_format_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
+    assert graph_check.main(["--format", "json", "nodes"]) == 1
+    assert "unknown format: json" in capsys.readouterr().err
+
+
+def test_format_requires_a_value(capsys: pytest.CaptureFixture[str]) -> None:
+    assert graph_check.main(["--format"]) == 1
+    assert "--format requires text or toon" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("name", sorted(_MUTATIONS))
+def test_every_error_class_emits_a_documented_code(
+    nodes: Path, capsys: pytest.CaptureFixture[str], name: str
+) -> None:
+    mutate, expected = _MUTATIONS[name]
+    mutate(nodes)
+    assert graph_check.main(["--format", "toon", str(nodes)]) == 1
+    out = capsys.readouterr().out
+    emitted = _toon_codes(out)
+    assert expected in emitted
+    assert set(emitted) <= set(graph_check.FINDING_CODES)
+
+
+def test_documented_codes_cover_every_error_class() -> None:
+    covered = {expected for _mutate, expected in _MUTATIONS.values()}
+    assert covered == set(graph_check.FINDING_CODES)

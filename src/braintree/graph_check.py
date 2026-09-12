@@ -4,6 +4,31 @@ Typed Python implementation of the read-only vault validator. It enforces the sa
 status-directory, frontmatter, lifecycle, canonical-edge, dependency-pin,
 reachability, cycle, and focus rules, and preserves the option surface,
 exit codes, and error strings. The checker is deliberately stateless.
+
+Every finding carries a documented stable code so a client can branch on the
+finding without parsing the human sentence. The codes are the keys of
+:data:`FINDING_CODES`; ``--format toon`` emits one ``code,node,detail`` record
+per finding while the default human output stays byte-for-byte identical.
+
+Finding codes by class:
+
+- Vault: ``vault-no-nodes``, ``vault-missing-directory``.
+- Node frontmatter and lifecycle: ``node-status-directory``,
+  ``node-frontmatter-missing``, ``node-frontmatter-mapping``,
+  ``node-context-rev``, ``node-updated``, ``node-summary``,
+  ``node-authority-fields``, ``node-next-required``, ``node-blocked-section``,
+  ``node-disposition``, ``node-disposition-status``, ``node-resolved-next``,
+  ``node-reciprocal-edge``, ``node-duplicate-identity``, ``node-broken-link``.
+- Feedback: ``feedback-revision-missing``, ``feedback-revision-format``,
+  ``feedback-section-missing``, ``feedback-content-missing``.
+- Context edges: ``context-pin-trailing-text``, ``context-pin-missing``,
+  ``context-unresolved``, ``context-rev-mismatch``.
+- Index map: ``index-missing``, ``index-copied-state``,
+  ``index-root-route-missing``, ``index-root-hub-type``, ``index-broken-link``,
+  ``index-focus-without-active``, ``index-focus-target``.
+- Routes and frontier: ``route-root-hub-unrouted``, ``route-primary-missing``,
+  ``route-cycle``, ``route-orphan``, ``next-multiple-frontiers``,
+  ``next-not-direct-child``.
 """
 
 from __future__ import annotations
@@ -16,12 +41,15 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from .revision import reported_version
+from .toon import field, table
 
 __all__ = [
     "CONTEXT_EDGE_LINE",
     "CONTEXT_PIN",
     "CONTEXT_PIN_LINE",
     "CONTEXT_RELATIONS",
+    "FINDING_CODES",
+    "Finding",
     "PROBLEM_MISMATCH",
     "PROBLEM_MISSING",
     "PROBLEM_UNPINNED",
@@ -33,8 +61,9 @@ __all__ = [
 
 _USAGE = (
     "usage: braintree check [--version] [--allow-stale] [--allow-orphan NODE] "
-    "[nodes-directory]\n"
-    "Validate a file-only Braintree vault without writing state."
+    "[--format text|toon] [nodes-directory]\n"
+    "Validate a file-only Braintree vault without writing state.\n"
+    "--format toon prints one code,node,detail record per finding."
 )
 
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
@@ -73,6 +102,51 @@ _STALE_REASONS: dict[str, str] = {
     PROBLEM_MISMATCH: "context_rev mismatch",
 }
 
+# The documented, stable code for every existing check error class. A code
+# never changes meaning once shipped; add a new code rather than repurposing
+# one. ``node`` is the offending node path, or the index map, duplicate
+# identity, or vault location when the finding is not owned by one node.
+FINDING_CODES: dict[str, str] = {
+    "vault-no-nodes": "nodes directory contains no node files",
+    "vault-missing-directory": "nodes directory does not exist",
+    "node-status-directory": "node is not in a known status directory",
+    "node-frontmatter-missing": "node has no frontmatter block",
+    "node-frontmatter-mapping": "frontmatter is not a flat mapping",
+    "node-context-rev": "context_rev is not a positive integer",
+    "node-updated": "updated is not a UTC ISO-8601 timestamp",
+    "node-summary": "summary is missing or empty",
+    "node-authority-fields": "frontmatter duplicates authority fields",
+    "node-next-required": "unfinished task omits next",
+    "node-blocked-section": "blocked node lacks a # Blocked section",
+    "node-disposition": "disposition is not an allowed value",
+    "node-disposition-status": "disposition on a node that is not resolved",
+    "node-resolved-next": "resolved node still carries next",
+    "node-reciprocal-edge": "node stores a reciprocal edge",
+    "node-duplicate-identity": "two nodes share a node identity",
+    "node-broken-link": "node links to a missing node",
+    "feedback-revision-missing": "feedback node omits braintree_revision",
+    "feedback-revision-format": "braintree_revision is malformed",
+    "feedback-section-missing": "feedback node lacks a # Feedback section",
+    "feedback-content-missing": "feedback node lacks a required Feedback label",
+    "context-pin-trailing-text": "context_rev pin is followed by trailing text",
+    "context-pin-missing": "context edge has no valid context_rev pin",
+    "context-unresolved": "pinned dependency is not resolved",
+    "context-rev-mismatch": "pinned dependency revision differs from current",
+    "index-missing": "index-map.md is missing",
+    "index-copied-state": "index-map.md copies node state",
+    "index-root-route-missing": "index-map.md lacks an Indexes root route",
+    "index-root-hub-type": "root hub is not an IDX node",
+    "index-broken-link": "index-map.md links to a missing node",
+    "index-focus-without-active": "index-map.md keeps Focus without active tasks",
+    "index-focus-target": "Focus target is not an active node",
+    "route-root-hub-unrouted": "root hub carries a Parent or Area route",
+    "route-primary-missing": "node lacks one primary Parent or Area route",
+    "route-cycle": "parent route forms a cycle",
+    "route-orphan": "unfinished node cannot reach a hub",
+    "next-multiple-frontiers": "next names more than one frontier node",
+    "next-not-direct-child": "next frontier is not a direct child",
+}
+
 _FORBIDDEN_FIELDS = ("id", "type", "status", "seq", "mtime", "rev")
 # Types that record knowledge rather than executable work; only tasks require `next`.
 # `FBK` records Braintree friction as a durable, discoverable feedback node.
@@ -103,6 +177,15 @@ _FEEDBACK_LINE = re.compile(
 _BRAINTREE_REVISION = re.compile(r"\d+\.\d+\.\d+(?:[+\-][0-9A-Za-z.\-]+)?\Z")
 _UNKNOWN_REVISION = "unknown"
 _NUMBER = re.compile(r"-?\d+")
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One validator finding: a stable code, its node, and the human detail."""
+
+    code: str
+    node: str
+    detail: str
 
 
 class _MappingError(Exception):
@@ -202,52 +285,86 @@ def _check_feedback(
     path: str,
     text: str,
     metadata: dict[str, object],
-    errors: list[str],
+    errors: list[Finding],
 ) -> None:
     """Validate the discoverable ``FBK`` feedback-node convention."""
     revision = metadata.get(_FEEDBACK_REVISION_FIELD)
     if not (isinstance(revision, str) and revision != ""):
         errors.append(
-            f"{path}: feedback node requires {_FEEDBACK_REVISION_FIELD} "
-            "(use `unknown` when no revision is recorded)"
+            Finding(
+                "feedback-revision-missing",
+                path,
+                f"{path}: feedback node requires {_FEEDBACK_REVISION_FIELD} "
+                "(use `unknown` when no revision is recorded)",
+            )
         )
     elif revision != _UNKNOWN_REVISION and _BRAINTREE_REVISION.match(revision) is None:
         errors.append(
-            f"{path}: {_FEEDBACK_REVISION_FIELD} must be a version like "
-            "0.4.0+g1b58d57 or unknown"
+            Finding(
+                "feedback-revision-format",
+                path,
+                f"{path}: {_FEEDBACK_REVISION_FIELD} must be a version like "
+                "0.4.0+g1b58d57 or unknown",
+            )
         )
     section = _FEEDBACK_BLOCK.search(text)
     if section is None:
-        errors.append(f"{path}: feedback node requires a # Feedback section")
+        errors.append(
+            Finding(
+                "feedback-section-missing",
+                path,
+                f"{path}: feedback node requires a # Feedback section",
+            )
+        )
         return
     seen = {match.group(1) for match in _FEEDBACK_LINE.finditer(section.group(1))}
     for label in _FEEDBACK_LABELS:
         if label not in seen:
             errors.append(
-                f"{path}: feedback node requires a {label}: line in # Feedback"
+                Finding(
+                    "feedback-content-missing",
+                    path,
+                    f"{path}: feedback node requires a {label}: line in # Feedback",
+                )
             )
 
 
-def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
+def _collect_nodes(nodes_dir: str, errors: list[Finding]) -> list[_Node]:
     paths = sorted(glob.glob(os.path.join(nodes_dir, "*", "*.md")))
     if not paths:
-        errors.append(f"no node files under {nodes_dir}")
+        errors.append(
+            Finding("vault-no-nodes", "", f"no node files under {nodes_dir}")
+        )
     nodes: list[_Node] = []
     for path in paths:
         status = os.path.basename(os.path.dirname(path))
         name = os.path.basename(path)[:-3]
         text = _read_text(path)
         if status not in _STATUSES:
-            errors.append(f"{path}: invalid status directory {status}")
+            errors.append(
+                Finding(
+                    "node-status-directory",
+                    path,
+                    f"{path}: invalid status directory {status}",
+                )
+            )
             continue
         header = _extract_frontmatter(text)
         if header is None:
-            errors.append(f"{path}: missing frontmatter")
+            errors.append(
+                Finding("node-frontmatter-missing", path, f"{path}: missing frontmatter")
+            )
             continue
         try:
             metadata = _parse_frontmatter(header)
         except _MappingError:
-            errors.append(f"{path}: frontmatter must be a mapping")
+            errors.append(
+                Finding(
+                    "node-frontmatter-mapping",
+                    path,
+                    f"{path}: frontmatter must be a mapping",
+                )
+            )
             continue
         context_rev = metadata.get("context_rev")
         context_rev_ok = (
@@ -256,17 +373,33 @@ def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
             and context_rev > 0
         )
         if not context_rev_ok:
-            errors.append(f"{path}: context_rev must be a positive integer")
+            errors.append(
+                Finding(
+                    "node-context-rev",
+                    path,
+                    f"{path}: context_rev must be a positive integer",
+                )
+            )
         updated_match = _UPDATED_LINE.search(header)
         updated = updated_match.group(1) if updated_match else None
         if updated is None or _UPDATED_VALUE.fullmatch(updated) is None:
-            errors.append(f"{path}: updated must be UTC ISO-8601")
+            errors.append(
+                Finding("node-updated", path, f"{path}: updated must be UTC ISO-8601")
+            )
         summary = metadata.get("summary")
         if not (isinstance(summary, str) and summary != ""):
-            errors.append(f"{path}: summary is required")
+            errors.append(
+                Finding("node-summary", path, f"{path}: summary is required")
+            )
         forbidden = [key for key in metadata if key in _FORBIDDEN_FIELDS]
         if forbidden:
-            errors.append(f"{path}: duplicated authority fields: {', '.join(forbidden)}")
+            errors.append(
+                Finding(
+                    "node-authority-fields",
+                    path,
+                    f"{path}: duplicated authority fields: {', '.join(forbidden)}",
+                )
+            )
         id_match = _NODE_ID.match(name)
         node_type = id_match.group(0).split("-")[0] if id_match else None
         if (
@@ -276,7 +409,13 @@ def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
         ):
             next_value = metadata.get("next")
             if not (isinstance(next_value, str) and next_value != ""):
-                errors.append(f"{path}: unfinished task requires next")
+                errors.append(
+                    Finding(
+                        "node-next-required",
+                        path,
+                        f"{path}: unfinished task requires next",
+                    )
+                )
         if node_type == _FEEDBACK_TYPE:
             _check_feedback(path, text, metadata, errors)
         if status == "blocked":
@@ -284,21 +423,47 @@ def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
             blocked_section = blocked_match.group(1) if blocked_match else ""
             if "Blocked by" not in blocked_section or "Unblocks when" not in blocked_section:
                 errors.append(
-                    f"{path}: blocked node requires a # Blocked section with "
-                    "Blocked by and Unblocks when"
+                    Finding(
+                        "node-blocked-section",
+                        path,
+                        f"{path}: blocked node requires a # Blocked section with "
+                        "Blocked by and Unblocks when",
+                    )
                 )
         disposition = metadata.get("disposition")
         if disposition is not None:
             if not (isinstance(disposition, str) and disposition in _DISPOSITIONS):
                 errors.append(
-                    f"{path}: disposition must be abandoned, deprecated, or superseded"
+                    Finding(
+                        "node-disposition",
+                        path,
+                        f"{path}: disposition must be abandoned, deprecated, or superseded",
+                    )
                 )
             elif status != "resolved":
-                errors.append(f"{path}: disposition requires a resolved node")
+                errors.append(
+                    Finding(
+                        "node-disposition-status",
+                        path,
+                        f"{path}: disposition requires a resolved node",
+                    )
+                )
         if status == "resolved" and "next" in metadata:
-            errors.append(f"{path}: resolved node must omit next")
+            errors.append(
+                Finding(
+                    "node-resolved-next",
+                    path,
+                    f"{path}: resolved node must omit next",
+                )
+            )
         if _RECIPROCAL_EDGE.search(text):
-            errors.append(f"{path}: stored reciprocal edge")
+            errors.append(
+                Finding(
+                    "node-reciprocal-edge",
+                    path,
+                    f"{path}: stored reciprocal edge",
+                )
+            )
         nodes.append(
             _Node(
                 path=path,
@@ -312,35 +477,55 @@ def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
     return nodes
 
 
-def _check_duplicates(nodes: list[_Node], errors: list[str]) -> dict[str, list[_Node]]:
+def _check_duplicates(nodes: list[_Node], errors: list[Finding]) -> dict[str, list[_Node]]:
     by_name: dict[str, list[_Node]] = {}
     for node in nodes:
         by_name.setdefault(node.name, []).append(node)
     for name, matches in by_name.items():
         if len(matches) > 1:
-            errors.append(f"duplicate node identity: {name}")
+            errors.append(
+                Finding(
+                    "node-duplicate-identity",
+                    name,
+                    f"duplicate node identity: {name}",
+                )
+            )
     by_id: dict[str | None, list[_Node]] = {}
     for node in nodes:
         by_id.setdefault(node.node_id, []).append(node)
     for node_id, matches in by_id.items():
         if len(matches) > 1:
             label = node_id if node_id is not None else matches[0].name
-            errors.append(f"duplicate node identity: {label}")
+            errors.append(
+                Finding(
+                    "node-duplicate-identity",
+                    label,
+                    f"duplicate node identity: {label}",
+                )
+            )
     return by_name
 
 
-def _check_links(nodes: list[_Node], by_name: dict[str, list[_Node]], errors: list[str]) -> None:
+def _check_links(
+    nodes: list[_Node], by_name: dict[str, list[_Node]], errors: list[Finding]
+) -> None:
     for node in nodes:
         for target in _WIKILINK.findall(node.text):
             if target not in by_name:
-                errors.append(f"{node.path}: broken link [[{target}]]")
+                errors.append(
+                    Finding(
+                        "node-broken-link",
+                        node.path,
+                        f"{node.path}: broken link [[{target}]]",
+                    )
+                )
 
 
 def _check_context_edges(
     nodes: list[_Node],
     by_name: dict[str, list[_Node]],
     allow_stale: bool,
-    errors: list[str],
+    errors: list[Finding],
 ) -> None:
     for node in nodes:
         for target, suffix in CONTEXT_EDGE_LINE.findall(node.text):
@@ -350,12 +535,20 @@ def _check_context_edges(
                 trailing = suffix[partial.end() :].strip() if partial else ""
                 if trailing:
                     errors.append(
-                        f"{node.path}: context_rev pin for [[{target}]] has "
-                        f"trailing text: {trailing}"
+                        Finding(
+                            "context-pin-trailing-text",
+                            node.path,
+                            f"{node.path}: context_rev pin for [[{target}]] has "
+                            f"trailing text: {trailing}",
+                        )
                     )
                 else:
                     errors.append(
-                        f"{node.path}: invalid or missing context_rev pin for [[{target}]]"
+                        Finding(
+                            "context-pin-missing",
+                            node.path,
+                            f"{node.path}: invalid or missing context_rev pin for [[{target}]]",
+                        )
                     )
                 continue
             pin = int(pin_match.group(1))
@@ -371,14 +564,22 @@ def _check_context_edges(
             )
             if problem == PROBLEM_UNRESOLVED:
                 errors.append(
-                    f"{node.path}: pinned dependency [[{target}]] is "
-                    f"{target_node.status}, not resolved"
+                    Finding(
+                        "context-unresolved",
+                        node.path,
+                        f"{node.path}: pinned dependency [[{target}]] is "
+                        f"{target_node.status}, not resolved",
+                    )
                 )
             elif problem == PROBLEM_MISMATCH and not allow_stale:
                 label = current if isinstance(current, int) else ""
                 errors.append(
-                    f"{node.path}: context_rev mismatch for [[{target}]] "
-                    f"(pinned {pin}, current {label})"
+                    Finding(
+                        "context-rev-mismatch",
+                        node.path,
+                        f"{node.path}: context_rev mismatch for [[{target}]] "
+                        f"(pinned {pin}, current {label})",
+                    )
                 )
 
 
@@ -387,10 +588,16 @@ def _validate(
     *,
     allow_stale: bool,
     allowed_orphans: list[str | None],
-) -> tuple[list[str], int]:
-    errors: list[str] = []
+) -> tuple[list[Finding], int]:
+    errors: list[Finding] = []
     if not os.path.isdir(nodes_dir):
-        return [f"nodes directory does not exist: {nodes_dir}"], 0
+        return [
+            Finding(
+                "vault-missing-directory",
+                nodes_dir,
+                f"nodes directory does not exist: {nodes_dir}",
+            )
+        ], 0
     nodes = _collect_nodes(nodes_dir, errors)
     by_name = _check_duplicates(nodes, errors)
     _check_links(nodes, by_name, errors)
@@ -398,31 +605,65 @@ def _validate(
     index_path = os.path.join(nodes_dir, "index-map.md")
     index_text = _read_text(index_path) if os.path.isfile(index_path) else ""
     if not os.path.isfile(index_path):
-        errors.append("missing index-map.md")
+        errors.append(
+            Finding("index-missing", index_path, "missing index-map.md")
+        )
     if _INDEX_TABLE.search(index_text):
-        errors.append("index-map.md contains copied node-state table")
+        errors.append(
+            Finding(
+                "index-copied-state",
+                index_path,
+                "index-map.md contains copied node-state table",
+            )
+        )
     root_hubs = list(dict.fromkeys(_ROOT_ROUTE.findall(index_text)))
     if not root_hubs:
-        errors.append("index-map.md lacks an Indexes root route")
+        errors.append(
+            Finding(
+                "index-root-route-missing",
+                index_path,
+                "index-map.md lacks an Indexes root route",
+            )
+        )
     for hub in root_hubs:
         if _ID_ANCHOR.match(hub) is None:
-            errors.append(f"root hub is not IDX: {hub}")
+            errors.append(
+                Finding("index-root-hub-type", hub, f"root hub is not IDX: {hub}")
+            )
     focus_match = _FOCUS_BLOCK.search(index_text)
     focus = list(dict.fromkeys(_WIKILINK.findall(focus_match.group(1) if focus_match else "")))
 
     _check_context_edges(nodes, by_name, allow_stale, errors)
     for target in _INDEX_LINK.findall(index_text):
         if target not in by_name:
-            errors.append(f"index-map.md: broken link [[{target}]]")
+            errors.append(
+                Finding(
+                    "index-broken-link",
+                    index_path,
+                    f"index-map.md: broken link [[{target}]]",
+                )
+            )
 
     routes: dict[str, str | None] = {}
     for node in nodes:
         found = _PRIMARY_ROUTE.findall(node.text)
         if node.name in root_hubs:
             if found:
-                errors.append(f"{node.path}: root hub must not have Parent or Area")
+                errors.append(
+                    Finding(
+                        "route-root-hub-unrouted",
+                        node.path,
+                        f"{node.path}: root hub must not have Parent or Area",
+                    )
+                )
         elif len(found) != 1 and node.name not in allowed_orphans:
-            errors.append(f"{node.path}: requires exactly one primary Parent or Area route")
+            errors.append(
+                Finding(
+                    "route-primary-missing",
+                    node.path,
+                    f"{node.path}: requires exactly one primary Parent or Area route",
+                )
+            )
         else:
             routes[node.name] = found[0] if found else None
 
@@ -432,9 +673,21 @@ def _validate(
             continue
         frontier = _WIKILINK.findall(next_value)
         if len(frontier) > 1:
-            errors.append(f"{node.path}: next names multiple frontier nodes")
+            errors.append(
+                Finding(
+                    "next-multiple-frontiers",
+                    node.path,
+                    f"{node.path}: next names multiple frontier nodes",
+                )
+            )
         if len(frontier) == 1 and routes.get(frontier[0]) != node.name:
-            errors.append(f"{node.path}: frontier is not a direct child")
+            errors.append(
+                Finding(
+                    "next-not-direct-child",
+                    node.path,
+                    f"{node.path}: frontier is not a direct child",
+                )
+            )
 
     for node in nodes:
         if node.status == "resolved":
@@ -443,12 +696,24 @@ def _validate(
         seen: set[str | None] = set()
         while current not in root_hubs and current not in focus:
             if current in seen:
-                errors.append(f"{node.path}: parent cycle at {current}")
+                errors.append(
+                    Finding(
+                        "route-cycle",
+                        node.path,
+                        f"{node.path}: parent cycle at {current}",
+                    )
+                )
                 break
             seen.add(current)
             if current is None or current not in routes:
                 if node.name not in allowed_orphans and node.node_id not in allowed_orphans:
-                    errors.append(f"{node.path}: orphan unfinished node")
+                    errors.append(
+                        Finding(
+                            "route-orphan",
+                            node.path,
+                            f"{node.path}: orphan unfinished node",
+                        )
+                    )
                 break
             current = routes[current]
 
@@ -456,12 +721,38 @@ def _validate(
         node for node in nodes if node.status == "active" and node.name.startswith("TAS-")
     ]
     if not active_tasks and focus:
-        errors.append("index-map.md: Focus remains without active tasks")
+        errors.append(
+            Finding(
+                "index-focus-without-active",
+                index_path,
+                "index-map.md: Focus remains without active tasks",
+            )
+        )
     for target in focus:
         target_nodes = by_name.get(target)
         if target_nodes is None or target_nodes[0].status != "active":
-            errors.append(f"index-map.md: Focus target is not active: {target}")
+            errors.append(
+                Finding(
+                    "index-focus-target",
+                    index_path,
+                    f"index-map.md: Focus target is not active: {target}",
+                )
+            )
     return errors, len(nodes)
+
+
+def _print_toon(findings: list[Finding], node_count: int) -> None:
+    """Emit one structured record per finding plus the run summary."""
+    print(field("result", "failed" if findings else "passed"))
+    print(field("nodes", node_count))
+    print(
+        table(
+            "findings",
+            "code,node,detail",
+            ((finding.code, finding.node, finding.detail) for finding in findings),
+            "findings: 0",
+        )
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -469,12 +760,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     allow_stale = False
     allowed_orphans: list[str | None] = []
+    output_format = "text"
     while args and args[0].startswith("-"):
         option = args.pop(0)
         if option == "--allow-stale":
             allow_stale = True
         elif option == "--allow-orphan":
             allowed_orphans.append(args.pop(0) if args else None)
+        elif option == "--format":
+            if not args:
+                print("error: --format requires text or toon", file=sys.stderr)
+                return 1
+            output_format = args.pop(0)
+            if output_format not in {"text", "toon"}:
+                print(f"error: unknown format: {output_format}", file=sys.stderr)
+                return 1
         elif option in {"-h", "--help"}:
             print(_USAGE)
             return 0
@@ -491,11 +791,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     errors, node_count = _validate(
         nodes_dir, allow_stale=allow_stale, allowed_orphans=allowed_orphans
     )
-    for error in errors:
-        print(f"error: {error}", file=sys.stderr)
+    if output_format == "toon":
+        _print_toon(errors, node_count)
+    else:
+        for error in errors:
+            print(f"error: {error.detail}", file=sys.stderr)
     if errors:
         return 1
-    print(f"graph check: passed ({node_count} nodes)")
+    if output_format != "toon":
+        print(f"graph check: passed ({node_count} nodes)")
     return 0
 
 
