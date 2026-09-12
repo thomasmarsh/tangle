@@ -496,3 +496,158 @@ def test_node_unknown_node_is_an_error(tmp_path: Path, run_bt: RunBt) -> None:
     result = run_bt("node", "TAS-999", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: TAS-999"' in result.stdout
+
+
+def _seed_impact_chain(vault: Path) -> None:
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "DEF-001-contract.md",
+        "---\ncontext_rev: 3\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Current contract.\n---\n\n# Invariant\n\nCurrent.\n",
+    )
+    _write(
+        vault / "resolved" / "TAS-001-consumer.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Direct consumer.\n---\n\n# Context\n\n"
+        "Depends on [[DEF-001-contract]] at context_rev 2.\n",
+    )
+    _write(
+        vault / "active" / "TAS-002-transitive.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Transitive consumer.\n---\n\n# Context\n\n"
+        "Depends on [[TAS-001-consumer]] at context_rev 1.\n",
+    )
+
+
+def test_impact_chain_is_transitive_and_dependency_ordered(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """A chain reports the direct consumer before the transitive one, with pins."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_impact_chain(vault)
+    result = run_bt("impact", "DEF-001", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'target: "DEF-001"' in result.stdout
+    assert 'target_context_rev: "3"' in result.stdout
+    assert _toon_rows(result.stdout, "impact") == [
+        [
+            "TAS-001",
+            "resolved",
+            "1",
+            "Depends on",
+            "DEF-001",
+            "2",
+            "3",
+            "context_rev mismatch",
+        ],
+        ["TAS-002", "active", "2", "Depends on", "TAS-001", "1", "1", ""],
+    ]
+
+    named = run_bt("impact", "DEF-001-contract", env=_env(tmp_path, vault))
+    assert named.returncode == 0
+    assert named.stdout == result.stdout
+
+
+def _seed_impact_diamond(vault: Path) -> None:
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    _write(
+        vault / "resolved" / "DEF-001-contract.md",
+        "---\ncontext_rev: 2\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Shared contract.\n---\n\n# Invariant\n\nShared.\n",
+    )
+    for name, summary in (
+        ("TAS-001-left.md", "Left consumer."),
+        ("TAS-002-right.md", "Right consumer."),
+    ):
+        _write(
+            vault / "resolved" / name,
+            "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+            f"summary: {summary}\n---\n\n# Context\n\n"
+            "Depends on [[DEF-001-contract]] at context_rev 2.\n",
+        )
+    _write(
+        vault / "active" / "TAS-003-join.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Joining consumer.\n---\n\n# Context\n\n"
+        "Depends on [[TAS-001-left]] at context_rev 1.\n\n"
+        "Depends on [[TAS-002-right]] at context_rev 1.\n",
+    )
+
+
+def test_impact_diamond_names_every_edge_once(tmp_path: Path, run_bt: RunBt) -> None:
+    """A diamond reports both paths to the joining dependent, each edge once."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_impact_diamond(vault)
+    rows = _toon_rows(
+        run_bt("impact", "DEF-001", env=_env(tmp_path, vault)).stdout, "impact"
+    )
+    assert [row[0] for row in rows] == ["TAS-001", "TAS-002", "TAS-003", "TAS-003"]
+    assert [row[2] for row in rows] == ["1", "1", "2", "2"]
+    assert {(row[0], row[4]) for row in rows} == {
+        ("TAS-001", "DEF-001"),
+        ("TAS-002", "DEF-001"),
+        ("TAS-003", "TAS-001"),
+        ("TAS-003", "TAS-002"),
+    }
+
+
+def _seed_impact_cycle(vault: Path) -> None:
+    (vault / "active").mkdir(parents=True)
+    for name, target in (
+        ("TAS-001-a.md", "TAS-002-b"),
+        ("TAS-002-b.md", "TAS-003-c"),
+        ("TAS-003-c.md", "TAS-001-a"),
+    ):
+        _write(
+            vault / "active" / name,
+            "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+            f"summary: Cycle member {target}.\n---\n\n# Context\n\n"
+            f"Depends on [[{target}]] at context_rev 1.\n",
+        )
+
+
+def test_impact_cycle_terminates_without_self_listing(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """A dependency cycle terminates and never lists the target as its own dependent."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_impact_cycle(vault)
+    result = run_bt("impact", "TAS-001", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    rows = _toon_rows(result.stdout, "impact")
+    assert [row[0] for row in rows] == ["TAS-003", "TAS-002"]
+    assert [row[4] for row in rows] == ["TAS-001", "TAS-003"]
+    assert all(row[0] != "TAS-001" for row in rows)
+
+
+def test_impact_ignores_navigation_edges_and_reports_zero(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """Only canonical context edges create impact; navigation edges do not."""
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "resolved").mkdir(parents=True)
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "resolved" / "DEF-001-contract.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Contract with only a route back.\n---\n\n# Context\n\n"
+        "Area [[IDX-001-root]].\n",
+    )
+    result = run_bt("impact", "DEF-001", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'target_context_rev: "1"' in result.stdout
+    assert result.stdout.strip().endswith("impact: 0 dependents")
+
+
+def test_impact_unknown_node_is_an_error(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_impact_chain(vault)
+    result = run_bt("impact", "TAS-999", env=_env(tmp_path, vault))
+    assert result.returncode == 1
+    assert 'error: "unknown node: TAS-999"' in result.stdout

@@ -183,3 +183,14 @@ def test_frontier_and_node_verbs_are_dispatched(tmp_path: Path, run_bt: RunBt) -
     extra = run_bt("frontier", "extra", env=env)
     assert extra.returncode == 2
     assert 'error: "frontier accepts no arguments"' in extra.stdout
+
+
+def test_impact_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    help_output = run_bt("--help", env=env)
+    assert help_output.returncode == 0
+    assert "impact NODE" in help_output.stdout
+
+    missing = run_bt("impact", env=env)
+    assert missing.returncode == 2
+    assert 'error: "impact requires NODE"' in missing.stdout

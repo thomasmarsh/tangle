@@ -12,6 +12,7 @@ import glob
 import os
 import re
 import sqlite3
+from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -28,6 +29,8 @@ __all__ = [
     "Backlink",
     "ContextEdge",
     "FrontierEntry",
+    "Impact",
+    "ImpactEdge",
     "IndexedNode",
     "NodeView",
     "backlinks",
@@ -35,6 +38,7 @@ __all__ = [
     "existing_allocations",
     "format_table",
     "frontier",
+    "impact",
     "node_hash",
     "node_view",
     "prefix_maxima",
@@ -402,6 +406,29 @@ class NodeView:
     backlinks: tuple[Backlink, ...]
 
 
+@dataclass(frozen=True)
+class ImpactEdge:
+    """One dependent edge reached from the impact target with its shared verdict."""
+
+    dependent: str
+    status: str
+    depth: int
+    relation: str
+    dependency: str
+    pinned: str
+    current: str
+    stale: str
+
+
+@dataclass(frozen=True)
+class Impact:
+    """The transitive dependent view ``braintree impact`` prints for one node."""
+
+    target: str
+    target_context_rev: int
+    edges: tuple[ImpactEdge, ...]
+
+
 def _read_nodes(root: str) -> list[IndexedNode]:
     """Read every Markdown node under ``root`` from its status directory."""
     root = os.path.abspath(root)
@@ -525,4 +552,71 @@ def node_view(root: str, node: str) -> NodeView | None:
         route=route_match.group(2) if route_match is not None else "",
         context_edges=_context_edges(target, by_name),
         backlinks=_backlinks_for(target, nodes),
+    )
+
+
+def impact(root: str, node: str) -> Impact | None:
+    """Return every direct and transitive dependent of ``node`` in dependency order.
+
+    Traversal walks the reverse of the canonical context edges, so only edges
+    :data:`braintree.graph_check.CONTEXT_RELATIONS` defines count. Each distinct
+    dependent edge is reported once with its pinned revision and the current
+    revision of the dependency it pins, using the shared ``context_pin_problem``
+    verdict. A visited set stops a dependency cycle from repeating, and a cycle
+    that returns to the impact target is not listed as its own dependent. Rows
+    are ordered by dependency distance, then identity, so the nearest stale
+    consumers come first.
+    """
+    nodes = _read_nodes(root)
+    by_reference: dict[str, IndexedNode] = {}
+    for candidate in nodes:
+        by_reference[candidate.name] = candidate
+        by_reference[candidate.id] = candidate
+    target = by_reference.get(node)
+    if target is None:
+        return None
+
+    # ``incoming[dependency]`` lists the edges whose source depends on it.
+    incoming: dict[str, list[tuple[IndexedNode, str, int | None]]] = {}
+    for source in nodes:
+        for relation, reference, suffix in _CONTEXT_EDGE.findall(source.body):
+            dependency = by_reference.get(reference)
+            if dependency is None:
+                continue
+            pin_match = CONTEXT_PIN_LINE.fullmatch(suffix)
+            pinned = int(pin_match.group(1)) if pin_match is not None else None
+            incoming.setdefault(dependency.id, []).append((source, relation, pinned))
+
+    depth: dict[str, int] = {target.id: 0}
+    queue: deque[str] = deque([target.id])
+    edges: list[ImpactEdge] = []
+    while queue:
+        dependency_id = queue.popleft()
+        dependency = by_reference[dependency_id]
+        current = _context_rev(dependency.metadata)
+        for source, relation, pinned in incoming.get(dependency_id, []):
+            if source.id == target.id:
+                # A cycle back to the impact target is not a dependent of itself.
+                continue
+            if source.id not in depth:
+                depth[source.id] = depth[dependency_id] + 1
+                queue.append(source.id)
+            problem = context_pin_problem(pinned, dependency.status, current)
+            edges.append(
+                ImpactEdge(
+                    dependent=source.id,
+                    status=source.status,
+                    depth=depth[source.id],
+                    relation=relation,
+                    dependency=dependency_id,
+                    pinned=str(pinned) if pinned is not None else "",
+                    current=str(current),
+                    stale="" if problem is None else stale_reason(problem, dependency.status),
+                )
+            )
+    edges.sort(key=lambda edge: (edge.depth, edge.dependent, edge.dependency, edge.relation))
+    return Impact(
+        target=target.id,
+        target_context_rev=_context_rev(target.metadata),
+        edges=tuple(edges),
     )

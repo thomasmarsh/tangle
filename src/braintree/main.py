@@ -42,6 +42,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("stale", "find missing or outdated dependency pins"),
     ("frontier", "list unfinished nodes whose next is an action"),
     ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
+    ("impact NODE", "list direct and transitive dependents of a node"),
     ("check [OPTIONS] [NODES]", "validate a vault without writing state"),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
@@ -63,6 +64,7 @@ _COORDINATION_COMMANDS = frozenset(
         "stale",
         "frontier",
         "node",
+        "impact",
     }
 )
 

@@ -23,7 +23,8 @@ _USAGE = (
     "braintree [status|location|init|allocate PREFIX|"
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
     "release NODE AGENT --base-hash HASH|index [NODES]|"
-    "search QUERY [--limit N]|backlinks NODE|hash NODE|stale|frontier|node NODE]"
+    "search QUERY [--limit N]|backlinks NODE|hash NODE|stale|frontier|node NODE|"
+    "impact NODE]"
 )
 
 _COMMANDS: tuple[tuple[str, str], ...] = (
@@ -40,6 +41,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("stale", "find missing or outdated dependency pins"),
     ("frontier", "list unfinished nodes whose next is an action"),
     ("node NODE", "show one node's frontmatter, route, edges, and backlinks"),
+    ("impact NODE", "list direct and transitive dependents of a node"),
 )
 
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
@@ -390,6 +392,42 @@ def _node(args: list[str]) -> int:
     return 0
 
 
+def _impact(args: list[str]) -> int:
+    if len(args) != 2:
+        return _usage_error("impact requires NODE")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    view = index.impact(root, args[1])
+    if view is None:
+        print(field("error", f"unknown node: {args[1]}"))
+        print(field("help", "Use a bare ID or a full node name from the vault."))
+        return 1
+    print(field("target", view.target))
+    print(field("target_context_rev", str(view.target_context_rev)))
+    print(
+        index.format_table(
+            "impact",
+            "dependent,status,depth,relation,dependency,pinned,current,stale",
+            "impact: 0 dependents",
+            [
+                (
+                    edge.dependent,
+                    edge.status,
+                    str(edge.depth),
+                    edge.relation,
+                    edge.dependency,
+                    edge.pinned,
+                    edge.current,
+                    edge.stale,
+                )
+                for edge in view.edges
+            ],
+        )
+    )
+    return 0
+
+
 def _dispatch(command: str, args: list[str]) -> int:
     if command == "status":
         if len(args) != 1:
@@ -442,6 +480,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _frontier(args)
     if command == "node":
         return _node(args)
+    if command == "impact":
+        return _impact(args)
     return _stale(args)
 
 
