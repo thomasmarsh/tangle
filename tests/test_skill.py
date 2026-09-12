@@ -118,6 +118,14 @@ _CANONICAL_CONTRACT: tuple[str, ...] = (
     "Reconciliation is separate work",
     "reset the pin to the current `context_rev`",
     "before that consumer executes",
+    "When the frontier is a knowledge node (`THO`/`DEF`/`DEC`)",
+    "answer the question and resolve it like any other frontier node",
+    "advance the coordinating parent's `next` to the next deliberate frontier child",
+    "leave its `context_rev` unchanged because `next` is navigation",
+    "Advancing a coordinating parent's `next` after its frontier child is resolved "
+    "is part of that resolution rather than bookkeeping",
+    "refresh the parent's `updated` and leave its `context_rev` unchanged, "
+    "because `next` is navigation",
 )
 
 _FEEDBACK_CONTRACT: tuple[str, ...] = (

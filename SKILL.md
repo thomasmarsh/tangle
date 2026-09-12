@@ -97,6 +97,8 @@ The bump commit shape: commit the semantic `context_rev` bump with the bumped no
 5. Groom a stale node before execution: reconcile assumptions, update pins, and refresh `updated`.
 6. Execute the smallest coherent unit and update summary, next, evidence, status, revision, and timestamp.
 
+When the frontier is a knowledge node (`THO`/`DEF`/`DEC`), answer the question and resolve it like any other frontier node, and in the same change advance the coordinating parent's `next` to the next deliberate frontier child. That advance is part of resolving the frontier, not bookkeeping on an unrelated node: refresh the parent's `updated`, and leave its `context_rev` unchanged because `next` is navigation, not consumer-relevant semantics.
+
 One orientation pass is enough. Never bulk-dump `nodes/`; filter and count in the shell, then open only the fragments needed. If a search returns nothing, report it rather than retrying with different flags.
 
 ## Common queries
@@ -127,6 +129,7 @@ Run from the project root. The checker validates links, headers and lifecycle ru
 
 - Use `find` (or `bt allocate PREFIX` in parallel) to avoid ID collisions; a local `find` detects collisions only and never reserves an ID.
 - Refresh only the mutated node's `updated`; increment `context_rev` only for a consumer-relevant semantic change. Never update unrelated nodes or the index as bookkeeping.
+- Advancing a coordinating parent's `next` after its frontier child is resolved is part of that resolution rather than bookkeeping, so the resolving worker owns that edit; refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation.
 - Change status by moving the unchanged filename between status directories; wikilinks use the basename and stay stable.
 - Give each node one primary `Parent [[...]]` or `Area [[IDX-...]]` link; do not add a `Child`/`Parent of` copy to the parent.
 - `blocked` only for missing input or external state, with a short `# Blocked` section and a concrete `next` when one exists.
