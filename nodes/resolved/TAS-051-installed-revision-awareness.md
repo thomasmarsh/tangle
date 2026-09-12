@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T13:32:09Z
-summary: Every project using Braintree can name the exact installed Braintree revision, and migration stays a deliberate future decision.
-next: Start [[TAS-053-version-migration-evaluation]].
+updated: 2026-09-12T13:55:30Z
+summary: Every project using Braintree can name its installed version and revision offline, and migration is a settled deliberate decision.
 ---
 
 # Context
@@ -32,3 +31,17 @@ as an explicit, unevaluated future decision.
 - Tests cover a fresh install, a no-op reinstall, and an upgrade where the
   recorded revision changes.
 - Every child is resolved or disposed with rationale.
+
+# Result
+
+Installs record `<version>+g<short-sha>` and report it through `bt --version`
+and `graph-check --version`, so a consuming project can name its installed
+version and revision offline ([[TAS-052-install-revision-stamp]]).
+[[TAS-053-version-migration-evaluation]] settled the migration policy in
+[[DEC-005-reinstall-not-migration]]: benign version gaps are reconciled by
+reinstalling, the sidecar is rebuilt rather than migrated, and only an
+incompatible change to the installed skill/CLI contract or the vault Markdown
+format would force a vault migration. The revision is generated install data,
+and no migration code or compatibility shim shipped. `tests/install.sh`,
+`tests/test_revision.py`, and `tests/test_scaffold.py` cover a fresh install, a
+no-op reinstall, and a changed revision; `make test` passes.

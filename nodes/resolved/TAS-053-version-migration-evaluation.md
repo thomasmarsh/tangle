@@ -1,9 +1,8 @@
 ---
 context_rev: 2
 priority: P3
-updated: 2026-09-12T13:43:19Z
-summary: Decide when a Braintree version gap justifies migration, naming the compatibility surfaces and the version-versus-revision division of labor.
-next: Name the versioned contract surfaces, then classify benign versus behavior-changing gaps.
+updated: 2026-09-12T13:55:00Z
+summary: Version gaps are reconciled by reinstalling; migration is warranted only by an incompatible change to the installed skill/CLI or vault Markdown contract.
 ---
 
 # Context
@@ -37,3 +36,16 @@ division of labor between the public `<version>` (compatibility) and the
 - It records the settled choice as a `DEC` node rather than leaving the question
   open.
 - No migration code, data rewrite, or compatibility shim is added.
+
+# Result
+
+Settled in [[DEC-005-reinstall-not-migration]]. A version gap is benign unless
+it changes one of the two versioned contract surfaces — the installed skill and
+CLI contract, or the vault Markdown format — incompatibly. Benign gaps are
+reconciled by reinstalling; the sidecar is rebuilt, never migrated. The public
+`<version>` is the offline compatibility signal and `+g<short-sha>` is
+provenance only. The "a behavior change bumps the version" rule stays a
+convention backed by the single-source version test, the `tests/test_skill.py`
+contract locks, and conventional commits; a diff-based gate is rejected, and a
+MAJOR break must name its migration path in its own `DEC`. No migration code or
+data rewrite was added.
