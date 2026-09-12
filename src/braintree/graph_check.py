@@ -26,8 +26,12 @@ _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
 _CONTEXT_EDGES = ("Depends on", "Implements", "Requires", "Governed by")
 _FORBIDDEN_FIELDS = ("id", "type", "status", "seq", "mtime", "rev")
 # Types that record knowledge rather than executable work; only tasks require `next`.
-_KNOWLEDGE_TYPES = frozenset({"THO", "DEF", "DEC", "IDX"})
+# `FBK` records Braintree friction as a durable, discoverable feedback node.
+_KNOWLEDGE_TYPES = frozenset({"THO", "DEF", "DEC", "IDX", "FBK"})
 _DISPOSITIONS = frozenset({"abandoned", "deprecated", "superseded"})
+_FEEDBACK_TYPE = "FBK"
+_FEEDBACK_LABELS = ("Attempted", "Friction", "Improvement")
+_FEEDBACK_REVISION_FIELD = "braintree_revision"
 
 _RECIPROCAL_EDGE = re.compile(
     r"(?:Child|Parent of|Indexed by|Depended on by|Supersedes|Backlink)\s+\[\["
@@ -49,6 +53,12 @@ _BLOCKED_BLOCK = re.compile(r"^# Blocked\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DO
 _INDEX_TABLE = re.compile(r"^\| .*\[\[", re.MULTILINE)
 _INDEX_LINK = re.compile(r"\[\[([A-Z]+-\d+[^\]]*)\]\]")
 _ID_ANCHOR = re.compile(r"IDX-\d+")
+_FEEDBACK_BLOCK = re.compile(r"^# Feedback\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
+_FEEDBACK_LINE = re.compile(
+    r"^(" + "|".join(_FEEDBACK_LABELS) + r"):\s*(\S.*)$", re.MULTILINE
+)
+_BRAINTREE_REVISION = re.compile(r"\d+\.\d+\.\d+(?:[+\-][0-9A-Za-z.\-]+)?\Z")
+_UNKNOWN_REVISION = "unknown"
 _NUMBER = re.compile(r"-?\d+")
 
 
@@ -116,6 +126,36 @@ def _read_text(path: str) -> str:
         return handle.read()
 
 
+def _check_feedback(
+    path: str,
+    text: str,
+    metadata: dict[str, object],
+    errors: list[str],
+) -> None:
+    """Validate the discoverable ``FBK`` feedback-node convention."""
+    revision = metadata.get(_FEEDBACK_REVISION_FIELD)
+    if not (isinstance(revision, str) and revision != ""):
+        errors.append(
+            f"{path}: feedback node requires {_FEEDBACK_REVISION_FIELD} "
+            "(use `unknown` when no revision is recorded)"
+        )
+    elif revision != _UNKNOWN_REVISION and _BRAINTREE_REVISION.match(revision) is None:
+        errors.append(
+            f"{path}: {_FEEDBACK_REVISION_FIELD} must be a version like "
+            "0.4.0+g1b58d57 or unknown"
+        )
+    section = _FEEDBACK_BLOCK.search(text)
+    if section is None:
+        errors.append(f"{path}: feedback node requires a # Feedback section")
+        return
+    seen = {match.group(1) for match in _FEEDBACK_LINE.finditer(section.group(1))}
+    for label in _FEEDBACK_LABELS:
+        if label not in seen:
+            errors.append(
+                f"{path}: feedback node requires a {label}: line in # Feedback"
+            )
+
+
 def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
     paths = sorted(glob.glob(os.path.join(nodes_dir, "*", "*.md")))
     if not paths:
@@ -165,6 +205,8 @@ def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
             next_value = metadata.get("next")
             if not (isinstance(next_value, str) and next_value != ""):
                 errors.append(f"{path}: unfinished task requires next")
+        if node_type == _FEEDBACK_TYPE:
+            _check_feedback(path, text, metadata, errors)
         if status == "blocked":
             blocked_match = _BLOCKED_BLOCK.search(text)
             blocked_section = blocked_match.group(1) if blocked_match else ""

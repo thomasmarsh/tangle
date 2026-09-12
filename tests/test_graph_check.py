@@ -20,6 +20,7 @@ def _write(path: Path, *lines: str) -> None:
 
 def _seed(nodes: Path) -> None:
     (nodes / "active").mkdir(parents=True)
+    (nodes / "proposed").mkdir()
     (nodes / "resolved").mkdir()
     (nodes / "blocked").mkdir()
     _write(
@@ -377,3 +378,120 @@ def test_extra_argument_exits_two(capsys: pytest.CaptureFixture[str]) -> None:
 def test_missing_directory_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["does-not-exist"]) == 1
     assert "nodes directory does not exist: does-not-exist" in capsys.readouterr().err
+
+
+def _feedback_node(revision: str | None, *body: str) -> list[str]:
+    lines = [
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-12T00:00:00Z",
+        "summary: Allocation collided with nodes on disk.",
+    ]
+    if revision is not None:
+        lines.append(f"braintree_revision: {revision}")
+    lines += ["---", "", "Area [[IDX-001-root]].", ""]
+    lines += list(body)
+    return lines
+
+
+def test_feedback_node_valid(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "proposed" / "FBK-001-allocation-friction.md",
+        *_feedback_node(
+            "0.4.0+g1b58d57",
+            "# Feedback",
+            "",
+            "Attempted: Ran bt allocate after a reindex.",
+            "Friction: The allocated id already existed on disk.",
+            "Improvement: Seed allocation from the Markdown maximum.",
+        ),
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_feedback_node_unknown_revision_is_valid(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "proposed" / "FBK-002-unknown-revision.md",
+        *_feedback_node(
+            "unknown",
+            "# Feedback",
+            "",
+            "Attempted: Installed the skill.",
+            "Friction: No revision record existed.",
+            "Improvement: Record the revision at install time.",
+        ),
+    )
+    assert graph_check.main([str(nodes)]) == 0
+
+
+def test_feedback_node_requires_revision(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "proposed" / "FBK-003-missing-revision.md",
+        *_feedback_node(
+            None,
+            "# Feedback",
+            "",
+            "Attempted: Installed the skill.",
+            "Friction: No revision record existed.",
+            "Improvement: Record the revision at install time.",
+        ),
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "feedback node requires braintree_revision" in err
+
+
+def test_feedback_node_rejects_malformed_revision(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "proposed" / "FBK-004-malformed-revision.md",
+        *_feedback_node(
+            "latest",
+            "# Feedback",
+            "",
+            "Attempted: Installed the skill.",
+            "Friction: No revision record existed.",
+            "Improvement: Record the revision at install time.",
+        ),
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "braintree_revision must be a version like 0.4.0+g1b58d57 or unknown" in err
+
+
+def test_feedback_node_requires_content(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "proposed" / "FBK-005-missing-friction.md",
+        *_feedback_node(
+            "0.4.0",
+            "# Feedback",
+            "",
+            "Attempted: Ran bt allocate.",
+            "Improvement: Seed allocation from the Markdown maximum.",
+        ),
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "feedback node requires a Friction: line in # Feedback" in err
+
+
+def test_feedback_node_requires_section(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "proposed" / "FBK-006-missing-section.md",
+        *_feedback_node("0.4.0", "# Context", "", "No feedback body."),
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "feedback node requires a # Feedback section" in err

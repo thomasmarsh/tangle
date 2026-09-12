@@ -109,6 +109,22 @@ _CANONICAL_CONTRACT: tuple[str, ...] = (
     "resolved `DEF` or `DEC` is current knowledge",
 )
 
+_FEEDBACK_CONTRACT: tuple[str, ...] = (
+    "## Feedback nodes",
+    "records Braintree friction as an `FBK` node",
+    "The `FBK` type is the one feedback marker",
+    "find nodes -name 'FBK-*.md'",
+    "from Markdown alone, with no sidecar, network, or write to the scanned vault",
+    "`FBK-<n>-<slug>.md`",
+    "braintree_revision:",
+    "braintree_revision: 0.4.0+g1b58d57",
+    "braintree_revision: unknown",
+    "one `# Feedback` section",
+    "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
+    "`graph-check` rejects an `FBK` node that omits or malforms `braintree_revision`",
+)
+
+
 _ABSENT_CONTRACT: tuple[str, ...] = (
     "stationary node metadata",
     "sequence ledger",
@@ -160,6 +176,11 @@ def test_live_vault_passes_graph_check() -> None:
 def test_skill_canonical_edge_and_lifecycle_contract() -> None:
     text = _read(_SKILL)
     _assert_present(text, _CANONICAL_CONTRACT)
+
+
+def test_skill_feedback_contract() -> None:
+    text = _read(_SKILL)
+    _assert_present(text, _FEEDBACK_CONTRACT)
 
 
 def test_index_is_routing_not_a_catalog() -> None:

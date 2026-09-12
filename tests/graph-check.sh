@@ -5,7 +5,7 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 test_root=$(mktemp -d)
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 nodes="$test_root/nodes"
-mkdir -p "$nodes/active" "$nodes/resolved" "$nodes/blocked"
+mkdir -p "$nodes/active" "$nodes/proposed" "$nodes/resolved" "$nodes/blocked"
 
 write_node() {
   path=$1
@@ -91,5 +91,14 @@ rm "$nodes/blocked/TAS-003-waiting.md"
 write_node "$nodes/resolved/TAS-004-old.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Old.' 'disposition: current' '---' '' 'Area [[IDX-001-root]].'
 expect_error disposition 'disposition must be abandoned, deprecated, or superseded'
 rm "$nodes/resolved/TAS-004-old.md"
+
+# A feedback node carries the FBK marker, a recorded Braintree revision, and
+# the required # Feedback content; a malformed one fails with a named error.
+write_node "$nodes/proposed/FBK-001-allocation-friction.md" '---' 'context_rev: 1' 'updated: 2026-09-12T00:00:00Z' 'summary: Allocation collided with nodes on disk.' 'braintree_revision: 0.4.0+g1b58d57' '---' '' 'Area [[IDX-001-root]].' '' '# Feedback' '' 'Attempted: Ran bt allocate after a reindex.' 'Friction: The allocated id already existed on disk.' 'Improvement: Seed allocation from the Markdown maximum.'
+"$repo_root/scripts/graph-check" "$nodes" >/dev/null
+expected_feedback=$(sed '/^Friction:/d' "$nodes/proposed/FBK-001-allocation-friction.md")
+printf '%s\n' "$expected_feedback" >"$nodes/proposed/FBK-001-allocation-friction.md"
+expect_error feedback-content 'feedback node requires a Friction: line in # Feedback'
+rm "$nodes/proposed/FBK-001-allocation-friction.md"
 
 printf 'graph checker tests: passed\n'

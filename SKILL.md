@@ -22,7 +22,7 @@ Use the installed `bt` command for graph indexes and live coordination: `uv run 
 
 - Root is the directory containing `nodes/index-map.md`.
 - Each node lives in exactly one status directory: `nodes/proposed/`, `nodes/active/`, `nodes/blocked/`, or `nodes/resolved/`. Those four names are fixed, but a status directory is created on demand: it exists only once a node has that status, and no empty directory is required.
-- Names are `<ID>-<short-slug>.md`; `TAS`/`THO`/`DEF`/`IDX` express type. Filename supplies ID/type, directory supplies status; do not duplicate them in frontmatter.
+- Names are `<ID>-<short-slug>.md`; `TAS`/`THO`/`DEF`/`IDX`/`FBK` express type. Filename supplies ID/type, directory supplies status; do not duplicate them in frontmatter.
 - Store each relationship in one canonical direction: put `Parent` on the child, `Area` on the assigned node, `Depends on` on the consumer, `Superseded by` on the obsolete node, and `Indexes` on `index-map.md` or another deliberate route. Derive child, parent-of, and backlink views by search; do not store them as reciprocal edges.
 
 ## Node admission
@@ -130,8 +130,18 @@ Run from the project root. The checker validates links, headers and lifecycle ru
 - For deprecation or supersession, move to `resolved`, set the sparse `disposition`, record the replacement link, and search remaining backlinks.
 - Graph bookkeeping never broadens authorization for code, external systems, or destructive actions.
 
+## Feedback nodes
+
+A consuming project records Braintree friction as an `FBK` node. The `FBK` type is the one feedback marker, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, with no sidecar, network, or write to the scanned vault.
+
+- Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route into its own vault, like any node.
+- Carry the installed Braintree revision as `braintree_revision:` frontmatter, for example `braintree_revision: 0.4.0+g1b58d57`; write `braintree_revision: unknown` when no revision can be determined.
+- State the friction in one `# Feedback` section with an `Attempted:`, a `Friction:`, and an `Improvement:` line.
+
+`graph-check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
+
 ## Node body and status output
 
-Use body headings only for additional information: `# Context` (with `Depends on [[...]] at context_rev N.`), `# Blocked` (`Blocked by`/`Unblocks when`), `# Outcome`, `# Done when`, `# Result`, and `# Invariant` for definitions. A `DEC` node records a settled choice under `# Decision`/`# Rationale`/`# Consequences`; a resolved `DEF` or `DEC` is current knowledge unless its sparse `disposition` says `deprecated` or `superseded`. Index nodes contain pointers, not copied content.
+Use body headings only for additional information: `# Context` (with `Depends on [[...]] at context_rev N.`), `# Blocked` (`Blocked by`/`Unblocks when`), `# Outcome`, `# Done when`, `# Result`, `# Invariant` for definitions, and `# Feedback` for feedback nodes. A `DEC` node records a settled choice under `# Decision`/`# Rationale`/`# Consequences`; a resolved `DEF` or `DEC` is current knowledge unless its sparse `disposition` says `deprecated` or `superseded`. Index nodes contain pointers, not copied content.
 
 Report graph lists in compact TOON, not JSON or narrative tables, with only the fields needed, e.g. `nodes{id,status,priority,context_rev}: TAS-101,active,P1,3 | DEF-auth,resolved,,7`. State zero results explicitly, and name the resolved node, new status, and advanced frontier in a completion report.
