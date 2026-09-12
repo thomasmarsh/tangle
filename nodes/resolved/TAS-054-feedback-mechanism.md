@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T13:25:14Z
+updated: 2026-09-12T13:50:43Z
 summary: A consuming project records Braintree struggles and improvements as routed nodes that this project can mechanically discover and triage.
-next: Start [[TAS-056-feedback-recording-path]].
 ---
 
 # Context
@@ -29,3 +28,22 @@ its own self-improvement plan.
   that does not is explicitly disposed.
 - `SKILL.md` and `graph-check` document and enforce the convention, with tests.
 - Every child is resolved or disposed with rationale.
+
+# Result
+
+The feedback mechanism is complete. `FBK` is the one feedback marker, carrying
+a `braintree_revision` field and an
+`Attempted:`/`Friction:`/`Improvement:` `# Feedback` section that `graph-check`
+enforces and `SKILL.md` documents ([[TAS-055-feedback-node-contract]]). A
+consuming project records feedback in one step with the `feedback-record`
+writer ([[TAS-056-feedback-recording-path]]), and a maintainer collects it from
+external vaults with the read-only `feedback-scan` collector and the documented
+admission/disposal triage ([[TAS-057-cross-project-feedback-collection]]).
+
+Evidence:
+
+- [[TAS-055-feedback-node-contract]], [[TAS-056-feedback-recording-path]], and
+  [[TAS-057-cross-project-feedback-collection]] are resolved with tests.
+- `SKILL.md` documents the convention, the recording step, the scan, and the
+  triage; `graph-check` enforces the convention.
+- `make test` passes.
