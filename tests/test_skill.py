@@ -172,6 +172,22 @@ _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "`Refs:` footer",
 )
 
+# Reversing a partly implemented outcome has one stated rule: in place while the
+# same node owns the outcome, supersession when the outcome moves, with the
+# reversed direction's commit recorded rather than rewritten.
+_REVERSAL_CONTRACT: tuple[str, ...] = (
+    "Reversing a partly implemented outcome is an in-place update",
+    "rewrite the outcome in the same node",
+    "bump `context_rev` because a pinned consumer must reread the changed direction",
+    "Supersede only when the outcome moves to a different node",
+    "record the replacement as `Superseded by [[...]]` in the body",
+    "search remaining backlinks",
+    "A reversal records the commit that named the reversed direction",
+    "short SHA and subject",
+    "kept, reverted, or replaced",
+    "never rewrite, amend, or force-push the earlier commit",
+)
+
 # The direct-answer verbs replaced the frontier and dependency-impact recipes;
 # the documented surfaces must name the verbs and no longer carry the raw
 # recipes that the verbs answer directly.
@@ -297,6 +313,10 @@ def test_live_vault_passes_graph_check() -> None:
 def test_skill_canonical_edge_and_lifecycle_contract() -> None:
     text = _read(_SKILL)
     _assert_present(text, _CANONICAL_CONTRACT)
+
+
+def test_skill_reversal_contract() -> None:
+    _assert_present(_read(_SKILL), _REVERSAL_CONTRACT)
 
 
 def test_skill_feedback_contract() -> None:

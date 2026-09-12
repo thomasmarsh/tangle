@@ -139,7 +139,9 @@ Run from the project root. The checker validates links, headers and lifecycle ru
 - Give each node one primary `Parent [[...]]` or `Area [[IDX-...]]` link; do not add a `Child`/`Parent of` copy to the parent.
 - `blocked` only for missing input or external state, with a short `# Blocked` section and a concrete `next` when one exists.
 - `resolved` only when the outcome is complete; for a coordinating task verify `Done when`, evidence, and child dispositions first. Remove `next` and keep concise evidence.
-- For deprecation or supersession, move to `resolved`, set the sparse `disposition`, record the replacement link, and search remaining backlinks.
+- Reversing a partly implemented outcome is an in-place update while the same node and scope still own it: rewrite the outcome in the same node, and bump `context_rev` because a pinned consumer must reread the changed direction.
+- Supersede only when the outcome moves to a different node: move to `resolved`, set `disposition: superseded`, record the replacement as `Superseded by [[...]]` in the body, and search remaining backlinks. Deprecation follows the same resolved-node shape with `disposition: deprecated` and a note on why the outcome is retired.
+- A reversal records the commit that named the reversed direction — short SHA and subject — in the node's body, with whether that commit's change was kept, reverted, or replaced. Record the reversal in the node and a new commit; never rewrite, amend, or force-push the earlier commit.
 - Graph bookkeeping never broadens authorization for code, external systems, or destructive actions.
 
 ## Feedback nodes
