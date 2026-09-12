@@ -8,20 +8,20 @@ rows plus the search, backlinks, and stale-pin queries over them.
 from __future__ import annotations
 
 import glob
-import hashlib
 import os
 import re
 import sqlite3
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from .sidecar import SidecarError
+from .sidecar import SidecarError, content_hash
 
 __all__ = [
     "backlinks",
     "ensure_index_schema",
     "existing_allocations",
     "format_table",
+    "node_hash",
     "prefix_maxima",
     "reindex",
     "resolve_node",
@@ -101,8 +101,9 @@ def _read_index_rows(root: str) -> tuple[list[tuple[object, ...]], list[tuple[ob
         if match is None:
             continue
         node_id = match.group(1)
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
+        with open(path, "rb") as handle:
+            raw = handle.read()
+        text = raw.decode("utf-8")
         header, body = _frontmatter(text)
         relative = os.path.relpath(path, root)
         rows.append(
@@ -113,7 +114,7 @@ def _read_index_rows(root: str) -> tuple[list[tuple[object, ...]], list[tuple[ob
                 status,
                 header.get("summary", ""),
                 _context_rev(header),
-                hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                content_hash(raw),
                 _now(),
                 body,
             )
@@ -151,6 +152,26 @@ def existing_allocations(root: str) -> dict[str, set[int]]:
 def prefix_maxima(root: str) -> dict[str, int]:
     """Return the highest numeric suffix already used per prefix under ``root``."""
     return {prefix: max(values) for prefix, values in existing_allocations(root).items()}
+
+
+def node_hash(root: str, node: str) -> str | None:
+    """Return the raw-content SHA-256 for a bare ID or full node name under ``root``.
+
+    Reads Markdown alone so the value is available before any sidecar exists,
+    and matches the ``content_hash`` the index stores.
+    """
+    root = os.path.abspath(root)
+    for path in sorted(glob.glob(os.path.join(root, "*", "*.md"))):
+        status = os.path.basename(os.path.dirname(path))
+        if status not in _STATUSES:
+            continue
+        basename = os.path.basename(path)[:-3]
+        match = _NODE_ID.match(basename)
+        if match is None or node not in {basename, match.group(1)}:
+            continue
+        with open(path, "rb") as handle:
+            return content_hash(handle.read())
+    return None
 
 
 def _upsert_reservations(

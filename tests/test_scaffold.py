@@ -22,6 +22,7 @@ _COMMANDS = (
     "reindex",
     "search",
     "backlinks",
+    "hash",
     "stale",
 )
 

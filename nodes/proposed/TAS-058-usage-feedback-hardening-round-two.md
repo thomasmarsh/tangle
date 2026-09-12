@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T14:05:29Z
+updated: 2026-09-12T14:10:07Z
 summary: Fix or dispose the six confirmed round-two Tangle usage-feedback findings across the skill contract, graph-check, and bt.
-next: [[TAS-061-claim-hash-exposure]]
+next: [[TAS-060-knowledge-node-frontier-advance]]
 ---
 
 # Context

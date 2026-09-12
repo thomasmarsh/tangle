@@ -7,6 +7,7 @@ argument errors that gate the index commands.
 
 from __future__ import annotations
 
+import hashlib
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -135,6 +136,26 @@ def test_backlinks_resolve_full_name_and_reject_unknown(
     unknown = run_bt("backlinks", "DEF-999", env=env)
     assert unknown.returncode == 1
     assert 'error: "unknown node: DEF-999"' in unknown.stdout
+
+
+def test_hash_matches_raw_sha256_algorithm(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed(vault)
+    env = _env(tmp_path, vault)
+    node_file = vault / "active" / "TAS-001-consumer.md"
+    expected = hashlib.sha256(node_file.read_bytes()).hexdigest()
+
+    bare = run_bt("hash", "TAS-001", env=env)
+    assert bare.returncode == 0
+    assert f'content_hash: "{expected}"' in bare.stdout
+
+    named = run_bt("hash", "TAS-001-consumer", env=env)
+    assert named.returncode == 0
+    assert f'content_hash: "{expected}"' in named.stdout
+
+    unknown = run_bt("hash", "TAS-999", env=env)
+    assert unknown.returncode == 1
+    assert 'error: "unknown node: TAS-999"' in unknown.stdout
 
 
 def test_stale_without_stale_pins_names_them(tmp_path: Path, run_bt: RunBt) -> None:

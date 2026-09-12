@@ -70,6 +70,8 @@ output=$("$bt" reindex)
 printf '%s\n' "$output" | grep -Fx 'nodes: 4' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'edges: 5' >/dev/null
 "$bt" search durable | grep -F '"DEF-001","resolved","Searchable protocol contract."' >/dev/null
+hash=$(shasum -a 256 "$vault/active/TAS-001-consumer.md" | cut -d' ' -f1)
+"$bt" hash TAS-001 | grep -F "content_hash: \"$hash\"" >/dev/null
 "$bt" backlinks DEF-001 | grep -F '"TAS-001","active","Depends on","2"' >/dev/null
 stale=$("$bt" stale)
 printf '%s\n' "$stale" | grep -F '"TAS-001","active","DEF-001","2","3"' >/dev/null

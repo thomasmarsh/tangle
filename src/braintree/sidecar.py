@@ -23,6 +23,7 @@ __all__ = [
     "SidecarError",
     "allocate",
     "claim",
+    "content_hash",
     "database_path",
     "ensure_sidecar",
     "location_fields",
@@ -74,6 +75,15 @@ class ReleaseConflict(Exception):
         super().__init__(owner)
         self.owner = owner
         self.recorded_hash = recorded_hash
+
+
+def content_hash(data: bytes) -> str:
+    """Return the SHA-256 hex digest of a node's raw UTF-8 file bytes.
+
+    This is the base hash ``bt claim`` records and ``bt hash`` prints: the
+    digest covers the whole file, frontmatter included, exactly as stored.
+    """
+    return hashlib.sha256(data).hexdigest()
 
 
 def project_id() -> str:

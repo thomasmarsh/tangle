@@ -23,7 +23,7 @@ _USAGE = (
     "bt [status|location|init|allocate PREFIX|"
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
     "release NODE AGENT --base-hash HASH|reindex [NODES]|"
-    "search QUERY [--limit N]|backlinks NODE|stale]"
+    "search QUERY [--limit N]|backlinks NODE|hash NODE|stale]"
 )
 
 _COMMANDS: tuple[tuple[str, str], ...] = (
@@ -36,6 +36,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("reindex [NODES]", "rebuild derived nodes, edges, and FTS from Markdown"),
     ("search QUERY [--limit N]", "full-text search derived Markdown content"),
     ("backlinks NODE", "list derived incoming graph edges"),
+    ("hash NODE", "print the raw-content SHA-256 of a node file"),
     ("stale", "find missing or outdated dependency pins"),
 )
 
@@ -254,6 +255,20 @@ def _backlinks(args: list[str]) -> int:
     return 0
 
 
+def _hash(args: list[str]) -> int:
+    if len(args) != 2:
+        return _usage_error("hash requires NODE")
+    node = args[1]
+    value = index.node_hash(_nodes_directory(), node)
+    if value is None:
+        print(field("error", f"unknown node: {node}"))
+        print(field("help", "Use a bare ID or a full node name from the vault."))
+        return 1
+    print(field("node", node))
+    print(field("content_hash", value))
+    return 0
+
+
 def _stale(args: list[str]) -> int:
     if len(args) != 1:
         return _usage_error("stale accepts no arguments")
@@ -324,6 +339,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _search(args)
     if command == "backlinks":
         return _backlinks(args)
+    if command == "hash":
+        return _hash(args)
     return _stale(args)
 
 
