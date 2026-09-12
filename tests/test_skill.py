@@ -107,6 +107,14 @@ _CANONICAL_CONTRACT: tuple[str, ...] = (
     "resolving children alone does not complete the parent",
     "A `DEC` node records a settled choice",
     "resolved `DEF` or `DEC` is current knowledge",
+    "The bump commit shape:",
+    "commit the semantic `context_rev` bump with the bumped node alone",
+    "sanctioned staged-staleness gate `graph-check --allow-stale nodes`",
+    "still rejects a missing or malformed pin",
+    "relaxes only the revision equality",
+    "Reconciliation is separate work",
+    "reset the pin to the current `context_rev`",
+    "before that consumer executes",
 )
 
 _FEEDBACK_CONTRACT: tuple[str, ...] = (

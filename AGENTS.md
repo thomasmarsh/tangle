@@ -65,6 +65,13 @@ or ad hoc notes.
    uv run bt reindex nodes   # optional hybrid sidecar index
    ```
 
+   A commit that deliberately stages a semantic `context_rev` bump without yet
+   reconciling its pinned consumers runs the sanctioned staged-staleness gate
+   instead: `uv run graph-check --allow-stale nodes`. It still requires every
+   context edge to be pinned and relaxes only the revision equality. Reconcile
+   each consumer before it executes and before finishing, so the plain gate
+   passes and a shipped vault has no staged staleness.
+
 6. When the skill is installed into another project, use the documented
    installer (`./scripts/install.sh --codex|--claude|--pi --project <root>` or
    `./scripts/install-claude.sh --project <root>`) and the installed

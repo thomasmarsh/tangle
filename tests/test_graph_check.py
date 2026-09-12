@@ -340,6 +340,14 @@ def test_allow_stale_suppresses_mismatch(
     assert "graph check: passed" in capsys.readouterr().out
 
 
+def test_allow_stale_still_rejects_missing_pin(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _replace(nodes / "active" / "TAS-001-parent.md", " at context_rev 1.", ".")
+    assert graph_check.main(["--allow-stale", str(nodes)]) == 1
+    assert "invalid or missing context_rev pin" in capsys.readouterr().err
+
+
 def test_allow_orphan_suppresses_orphan(
     nodes: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

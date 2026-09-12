@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T13:58:00Z
+updated: 2026-09-12T14:02:27Z
 summary: Fix or dispose the six confirmed round-two Tangle usage-feedback findings across the skill contract, graph-check, and bt.
-next: [[TAS-059-stale-pin-commit-shape]]
+next: [[TAS-062-release-mismatch-signal]]
 ---
 
 # Context

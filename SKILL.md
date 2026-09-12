@@ -85,6 +85,8 @@ A direct child is a node whose primary `Parent` or `Area` is the current node. A
 
 Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at context_rev 7.` The pin must terminate its line; trailing text after `at context_rev N.` is invalid. Do not pin navigation links. A node is `Stale` when a dependency is missing, its current `context_rev` differs from the pin, or the link lacks a pin; do not add `stale` to status or frontmatter. A semantic change leaves dependents' pins unchanged so one exact backlink search finds the reconciliation work. Confirm each pinned dependency is `resolved` before executing; resolution does not change `context_rev`, so completion is detected from the status directory.
 
+The bump commit shape: commit the semantic `context_rev` bump with the bumped node alone, leaving pinned consumers stale on purpose so the exact backlink search finds them. That commit runs the sanctioned staged-staleness gate `graph-check --allow-stale nodes`, which still rejects a missing or malformed pin and relaxes only the revision equality; plain `graph-check nodes` remains the normal gate everywhere else. Reconciliation is separate work owned by each consumer: reread the dependency, update assumptions, reset the pin to the current `context_rev`, and pass the plain gate before that consumer executes. `--allow-stale` is sanctioned only for a deliberate staged-staleness commit: never use it to silence a pin you can reconcile now, and never leave a consumer stale across its own execution.
+
 ## Read and execute loop
 
 1. Read `nodes/index-map.md` when orienting or when no direct node pointer was supplied.
