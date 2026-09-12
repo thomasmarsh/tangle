@@ -137,7 +137,7 @@ A consuming project records Braintree friction as an `FBK` node. The `FBK` type 
 
 - Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route into its own vault, like any node.
 - Carry the installed Braintree revision as `braintree_revision:` frontmatter, for example `braintree_revision: 0.4.0+g1b58d57`; write `braintree_revision: unknown` when no revision can be determined.
-- Read the revision to record with `bt --version` (or `graph-check --version`): an installed skill prints the installer's generated `installed-revision` stamp, `<version>+g<short-sha>`, or `<version>+unknown` when the source revision could not be determined. The declared semantic version stays single-sourced in `pyproject.toml`.
+- Read the revision to record with `bt --version` (or `graph-check --version`): an installed skill prints the installer's generated `installed-revision` stamp, `<version>+g<short-sha>`, or `<version>+unknown` when the source revision could not be determined. The declared semantic version stays single-sourced in `pyproject.toml`. Treat the public `<version>` as the compatibility signal and the `+g<short-sha>` as provenance: decide compatibility from the version, and never resolve the source revision against the remote, which the offline record cannot support.
 - State the friction in one `# Feedback` section with an `Attempted:`, a `Friction:`, and an `Improvement:` line.
 
 `graph-check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
