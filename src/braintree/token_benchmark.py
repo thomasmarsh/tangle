@@ -5,6 +5,11 @@ work is a fresh generated repository, never this checkout. Only usage telemetry
 is read from sessions. Every option surface, output line, fixture, and
 correctness gate is preserved so the tracked baselines and the zero-live-call
 recording checks keep working.
+
+The report also names round trips alongside tokens: the tool-call and
+shell-invocation counts the session stream exposes. Fewer round trips is the
+goal the direct-answer verbs serve, so a session that exposes no tool-call event
+reports the documented fallback instead of a fabricated zero.
 """
 
 from __future__ import annotations
@@ -40,6 +45,21 @@ FIXTURE_SEED = "tas-020-2026-09-10"
 SCALES = {"small": 32, "large": 320}
 REPRESENTATIONS = ("graph", "plan")
 MUTATION_ANSWER = "Routine mutation complete."
+# A Codex session records each model tool call as a ``response_item`` whose
+# payload type is a tool-call kind; ``payload.name`` names the executable tool,
+# and the ``exec`` tool runs a shell command. Only these observed kinds count as
+# a round trip, and a stream that exposes none reports the fallback below.
+_TOOL_CALL_TYPES = frozenset(
+    {
+        "custom_tool_call",
+        "function_call",
+        "local_shell_call",
+        "computer_call",
+        "web_search_call",
+    }
+)
+_SHELL_TOOL_NAMES = frozenset({"exec", "shell", "local_shell", "bash", "terminal"})
+ROUND_TRIP_FALLBACK = "session stream exposes no tool-call events"
 _ACTIVE_NODE = "nodes/active/TAS-201-validate-schema.md"
 _RESOLVED_NODE = "nodes/resolved/TAS-201-validate-schema.md"
 _UPDATED_STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
@@ -635,6 +655,38 @@ def _session_usage(path: str) -> list[Json]:
     return list(final_snapshots.values())
 
 
+def _session_round_trips(path: str) -> Json | None:
+    """Count the tool calls and shell invocations the session stream exposes.
+
+    A Codex session records each model tool call as a ``response_item`` whose
+    payload type is one of :data:`_TOOL_CALL_TYPES`; ``payload.name`` names the
+    executable tool and ``exec`` runs a shell command. A session that exposes no
+    tool-call event cannot report round trips, so it returns ``None`` for the
+    caller to report as :data:`ROUND_TRIP_FALLBACK` rather than a fake zero.
+    """
+    tool_calls = 0
+    shell_calls = 0
+    exposed = False
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            event = _load_event(line)
+            if event.get("type") != "response_item":
+                continue
+            payload = event.get("payload")
+            if not isinstance(payload, dict):
+                continue
+            kind = payload.get("type")
+            if not isinstance(kind, str) or kind not in _TOOL_CALL_TYPES:
+                continue
+            exposed = True
+            tool_calls += 1
+            if kind == "local_shell_call" or payload.get("name") in _SHELL_TOOL_NAMES:
+                shell_calls += 1
+    if not exposed:
+        return None
+    return {"tool_calls": tool_calls, "shell_calls": shell_calls}
+
+
 def _graph_fixture_facts(root: str) -> Json:
     definition = Path(root, "nodes/resolved/DEF-020-import-contract.md").read_text(encoding="utf-8")
     match = re.search(r"^context_rev: (\d+)$", definition, re.MULTILINE)
@@ -767,24 +819,46 @@ def _median(values: list[int]) -> int:
     return ordered[len(ordered) // 2]
 
 
-def _emit_record(runs: list[list[Json]], metadata: Json, output_path: str | None) -> None:
+def _emit_record(
+    runs: list[list[Json]],
+    round_trips: list[Json | None],
+    metadata: Json,
+    output_path: str | None,
+) -> None:
     sample_totals = [_totals(run) for run in runs]
     fields = list(FIELDS) + ["uncached_input_tokens"]
     medians = {field: _median([run[field] for run in sample_totals]) for field in fields}
+    exposed = [trip for trip in round_trips if trip is not None]
+    if exposed:
+        median: Json = {
+            "tool_calls": _median([trip["tool_calls"] for trip in exposed]),
+            "shell_calls": _median([trip["shell_calls"] for trip in exposed]),
+        }
+        round_trip_median: Json | None = median
+        round_trip_summary = f"{median['tool_calls']},{median['shell_calls']}"
+    else:
+        round_trip_median = None
+        round_trip_summary = "n/a,n/a"
     record = {
         "protocol": "codex-session-token-v2",
         "correctness": True,
         "samples": sample_totals,
         "median": medians,
+        "round_trips": {
+            "samples": round_trips,
+            "median": round_trip_median,
+            "fallback": None if exposed else ROUND_TRIP_FALLBACK,
+        },
         "metadata": metadata,
     }
     print(
         "token_benchmark"
         "{runs,input_tokens,cached_input_tokens,uncached_input_tokens,output_tokens,"
-        "reasoning_output_tokens,total_tokens,correct}: "
+        "reasoning_output_tokens,total_tokens,correct,tool_calls,shell_calls}: "
         f"{len(runs)},{medians['input_tokens']},{medians['cached_input_tokens']},"
         f"{medians['uncached_input_tokens']},{medians['output_tokens']},"
-        f"{medians['reasoning_output_tokens']},{medians['total_tokens']},true"
+        f"{medians['reasoning_output_tokens']},{medians['total_tokens']},true,"
+        f"{round_trip_summary}"
     )
     print(_compact(record))
     if output_path:
@@ -815,6 +889,10 @@ def _emit_historical_accounting(runs: list[list[Json]], provenance: list[Json]) 
 
 def _protocol() -> None:
     print("token_benchmark{status,live_calls,baseline}: ready,0,absent")
+    print(
+        "round trips: reports tool_calls and shell_calls from session tool-call "
+        "events, or n/a when the stream exposes none"
+    )
     print(
         "record: braintree benchmark token --record --model MODEL "
         "--reasoning-effort low --representation graph --scale small "
@@ -1001,6 +1079,7 @@ def _run_record(options: argparse.Namespace) -> int:
         raise _BenchError("timeout must be 1 through 600 seconds")
     expected = CASES[options.benchmark_case].expected
     runs: list[list[Json]] = []
+    round_trips: list[Json | None] = []
     for _ in range(repetitions):
         sessions_before = glob.glob(
             os.path.join(_session_root(), "**", "*.jsonl"), recursive=True
@@ -1059,8 +1138,10 @@ def _run_record(options: argparse.Namespace) -> int:
             )
             metadata["observed_session_telemetry"] = observations
             runs.append(_session_usage(session_path))
+            round_trips.append(_session_round_trips(session_path))
     _emit_record(
         runs,
+        round_trips,
         {**metadata, "source": "fresh-codex-session"},
         options.output,
     )

@@ -1,4 +1,4 @@
-.PHONY: test benchmark diagnostic-benchmark storage-comparison
+.PHONY: test benchmark diagnostic-benchmark storage-comparison verb-benchmark
 
 # The Python suite and the remaining end-to-end shell screens are independent
 # and process-spawn bound, so run them concurrently. Every job is waited on and
@@ -25,3 +25,6 @@ diagnostic-benchmark:
 
 storage-comparison:
 	uv run braintree benchmark storage --verify
+
+verb-benchmark:
+	uv run braintree benchmark verbs --verify

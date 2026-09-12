@@ -1,0 +1,26 @@
+{
+  "protocol": "direct-answer-verb-v1",
+  "note": "Exact stdout and exit status for each direct-answer verb on the deterministic gate fixture; run `braintree benchmark verbs` to regenerate.",
+  "expected": {
+    "frontier": {
+      "exit": 0,
+      "stdout": "frontier[3]{id,status,priority,summary,next,stale}:\n  \"TAS-002\",\"active\",\"P0\",\"Implement the signed parser.\",\"Implement signed-token parsing.\",\"false\"\n  \"TAS-003\",\"active\",\"P2\",\"Verify the parser output.\",\"Run the parser verification.\",\"false\"\n  \"TAS-004\",\"blocked\",\"P1\",\"Wait for the vendor fixture.\",\"Request the vendor fixture.\",\"false\"\n"
+    },
+    "node": {
+      "exit": 0,
+      "stdout": "node: \"TAS-000\"\nname: \"TAS-000-foundation\"\nstatus: \"resolved\"\npath: \"resolved/TAS-000-foundation.md\"\nfrontmatter[3]{key,value}:\n  \"context_rev\",\"1\"\n  \"summary\",\"Land the resolved parser foundation.\"\n  \"updated\",\"2024-01-03T00:00:00Z\"\nroute_relation: \"Area\"\nroute: \"IDX-001-engine\"\ncontext_edges[1]{relation,target,pinned,current,status,stale}:\n  \"Depends on\",\"DEF-010-parser-contract\",\"2\",\"3\",\"resolved\",\"context_rev mismatch\"\nbacklinks[2]{source,status,relation,pinned}:\n  \"TAS-002\",\"active\",\"Depends on\",\"1\"\n  \"TAS-003\",\"active\",\"Depends on\",\"1\"\n"
+    },
+    "impact": {
+      "exit": 0,
+      "stdout": "target: \"DEF-010\"\ntarget_context_rev: \"3\"\nimpact[3]{dependent,status,depth,relation,dependency,pinned,current,stale}:\n  \"TAS-000\",\"resolved\",\"1\",\"Depends on\",\"DEF-010\",\"2\",\"3\",\"context_rev mismatch\"\n  \"TAS-002\",\"active\",\"2\",\"Depends on\",\"TAS-000\",\"1\",\"1\",\"\"\n  \"TAS-003\",\"active\",\"2\",\"Depends on\",\"TAS-000\",\"1\",\"1\",\"\"\n"
+    },
+    "orient": {
+      "exit": 0,
+      "stdout": "section: \"focus\"\ntotal: \"1\"\nfocus[1]{target,status,active}:\n  \"TAS-002-implement-parser\",\"active\",\"true\"\nsection: \"frontier\"\ntotal: \"3\"\nfrontier[3]{id,status,priority,summary,next,stale}:\n  \"TAS-002\",\"active\",\"P0\",\"Implement the signed parser.\",\"Implement signed-token parsing.\",\"false\"\n  \"TAS-003\",\"active\",\"P2\",\"Verify the parser output.\",\"Run the parser verification.\",\"false\"\n  \"TAS-004\",\"blocked\",\"P1\",\"Wait for the vendor fixture.\",\"Request the vendor fixture.\",\"false\"\nsection: \"blockers\"\ntotal: \"1\"\nblockers[1]{id,priority,summary,next}:\n  \"TAS-004\",\"P1\",\"Wait for the vendor fixture.\",\"Request the vendor fixture.\"\nsection: \"stale\"\ntotal: \"1\"\nstale[1]{source,status,target,pinned,current,relation,reason}:\n  \"TAS-000\",\"resolved\",\"DEF-010\",\"2\",\"3\",\"Depends on\",\"context_rev mismatch\"\nsection: \"recent\"\ntotal: \"7\"\nrecent[7]{id,status,updated,summary}:\n  \"TAS-004\",\"blocked\",\"2024-01-07T00:00:00Z\",\"Wait for the vendor fixture.\"\n  \"TAS-003\",\"active\",\"2024-01-06T00:00:00Z\",\"Verify the parser output.\"\n  \"TAS-002\",\"active\",\"2024-01-05T00:00:00Z\",\"Implement the signed parser.\"\n  \"TAS-001\",\"active\",\"2024-01-04T00:00:00Z\",\"Coordinate parser hardening.\"\n  \"TAS-000\",\"resolved\",\"2024-01-03T00:00:00Z\",\"Land the resolved parser foundation.\"\n  \"DEF-010\",\"resolved\",\"2024-01-02T00:00:00Z\",\"Parser contract requires signed tokens.\"\n  \"IDX-001\",\"resolved\",\"2024-01-01T00:00:00Z\",\"Engine execution-memory root.\"\nsection: \"conflicts\"\ntotal: \"1\"\nconflicts[1]{code,node,detail}:\n  \"context-rev-mismatch\",\"<nodes>/resolved/TAS-000-foundation.md\",\"<nodes>/resolved/TAS-000-foundation.md: context_rev mismatch for [[DEF-010-parser-contract]] (pinned 2, current 3)\"\n"
+    },
+    "check-toon": {
+      "exit": 1,
+      "stdout": "result: \"failed\"\nnodes: \"7\"\nfindings[1]{code,node,detail}:\n  \"context-rev-mismatch\",\"<nodes>/resolved/TAS-000-foundation.md\",\"<nodes>/resolved/TAS-000-foundation.md: context_rev mismatch for [[DEF-010-parser-contract]] (pinned 2, current 3)\"\n"
+    }
+  }
+}

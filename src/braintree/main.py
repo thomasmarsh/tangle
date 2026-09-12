@@ -20,6 +20,7 @@ from . import (
     graph_check,
     storage_comparison,
     token_benchmark,
+    verb_benchmark,
 )
 from .revision import reported_version
 from .toon import escape, field
@@ -47,7 +48,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("check [OPTIONS] [NODES]", "validate a vault without writing state"),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
-    ("benchmark token|behavioral|storage", "run a development benchmark"),
+    ("benchmark token|behavioral|storage|verbs", "run a development benchmark"),
 )
 
 _COORDINATION_COMMANDS = frozenset(
@@ -74,6 +75,7 @@ _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "token": token_benchmark.main,
     "behavioral": behavioral_benchmark.main,
     "storage": storage_comparison.main,
+    "verbs": verb_benchmark.main,
 }
 
 
@@ -109,7 +111,7 @@ def _feedback(args: list[str]) -> int:
 
 def _benchmark(args: list[str]) -> int:
     if not args:
-        return _usage_error("benchmark requires token, behavioral, or storage")
+        return _usage_error("benchmark requires token, behavioral, storage, or verbs")
     name = args[0]
     if name not in _BENCHMARKS:
         return _usage_error(f"unknown benchmark: {name}")

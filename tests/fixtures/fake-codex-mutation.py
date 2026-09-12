@@ -66,6 +66,24 @@ def main(argv: list[str]) -> int:
             "payload": {"cwd": root, "model": model, "effort": effort},
         },
         {
+            "type": "response_item",
+            "payload": {
+                "type": "custom_tool_call",
+                "name": "exec",
+                "call_id": "fake-call-1",
+                "input": "braintree node TAS-201",
+            },
+        },
+        {
+            "type": "response_item",
+            "payload": {
+                "type": "custom_tool_call",
+                "name": "apply_patch",
+                "call_id": "fake-call-2",
+                "input": "*** Begin Patch",
+            },
+        },
+        {
             "type": "token_usage_record",
             "payload": {
                 "turn_id": "fake-turn",

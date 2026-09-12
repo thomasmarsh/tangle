@@ -18,6 +18,16 @@ schema](https://developers.openai.com/api/reference/cli/resources/responses/meth
 likewise documents input, cached-input, output, reasoning, and total usage;
 the names above are the verified local Codex-session telemetry names.
 
+Alongside tokens the report names round trips: the `tool_calls` and
+`shell_calls` counts the session stream exposes. Codex records each model tool
+call as a `response_item` whose payload type is a tool-call kind, and the `exec`
+tool runs a shell command, so a shell count is a tool-call count restricted to
+the shell executor. The counts are medians over the accepted samples and appear
+in the record's `round_trips` map and as the trailing `tool_calls,shell_calls`
+columns of the `token_benchmark{...}` line. When a session stream exposes no
+tool-call event the fields are `n/a` and `round_trips.fallback` names the reason
+(`session stream exposes no tool-call events`) instead of a fabricated zero.
+
 `make benchmark` makes zero live calls: it reports the opt-in recording command
 and an absent baseline rather than silently substituting a filesystem metric.
 
@@ -401,6 +411,23 @@ answers. No generated fixture is retained and the benchmark has no network or
 third-party dependency. Add a scale deliberately with `--scales N,N`; update
 the tracked baseline before using `--verify` for that scale.
 
+## Direct-answer verb gate
+
+The direct-answer verbs answer graph questions in one call; a cheaper route must
+not win by answering them wrongly. `braintree benchmark verbs` generates one
+small valid vault whose only deliberate defect is a single stale pin, runs each
+new verb against it, and compares the exact stdout and exit status with the
+checked-in baseline `benchmark/verb-baseline.json`. The five cases are
+`frontier`, `node TAS-000-foundation`, `impact DEF-010-parser-contract`,
+`orient`, and `check --format toon`; the baseline pins the whole verb surface,
+so an omitted or recomputed row fails the comparison.
+
+The gate makes no model calls and no network calls: it runs the installed
+`braintree` verbs locally. Print the current baseline with
+`braintree benchmark verbs` and verify it with `make verb-benchmark` or
+`braintree benchmark verbs --verify`; the fixture's intentional stale pin means
+`check --format toon` is expected to report the one mismatch and exit `1`.
+
 ## Verification
 
 The historical evaluation fixtures stayed outside the repository. Current
@@ -411,6 +438,7 @@ sh tests/skill.sh
 sh tests/install.sh
 make benchmark
 make diagnostic-benchmark
+make verb-benchmark
 make test
 git diff --check
 ```

@@ -11,6 +11,7 @@ from braintree import token_benchmark
 _FIXTURES = Path(__file__).parent / "fixtures"
 _FAKE_CODEX = _FIXTURES / "fake-codex-mutation.py"
 _SESSION = _FIXTURES / "token-usage-session.jsonl"
+_TOOL_SESSION = _FIXTURES / "token-usage-tool-calls.jsonl"
 _COMPLETED_STREAM = _FIXTURES / "codex-stream-complete.jsonl"
 _READING_PREFIX_STREAM = _FIXTURES / "codex-stream-reading-prefix-complete.jsonl"
 _MALFORMED_STREAM = _FIXTURES / "codex-stream-reading-prefix-malformed.jsonl"
@@ -61,7 +62,7 @@ def test_check_fixture_reports_variants(capsys: pytest.CaptureFixture[str]) -> N
 def test_composite_fixture_has_expected_file_count(capsys: pytest.CaptureFixture[str]) -> None:
     assert token_benchmark.main(["--check-fixture"]) == 0
     out = capsys.readouterr().out
-    assert '"files":66' in out
+    assert '"files":67' in out
     assert '"fixture_version":"graph-retrieval-v3"' in out
 
 
@@ -181,6 +182,51 @@ def test_session_validation_rejects_bad_telemetry(
     assert "error:" in capsys.readouterr().err
 
 
+def test_session_round_trips_counts_tool_and_shell_calls() -> None:
+    assert token_benchmark._session_round_trips(str(_TOOL_SESSION)) == {
+        "tool_calls": 3,
+        "shell_calls": 2,
+    }
+
+
+def test_session_round_trips_fall_back_without_tool_calls() -> None:
+    assert token_benchmark._session_round_trips(str(_SESSION)) is None
+
+
+def test_emit_record_reports_the_round_trip_fallback(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    usage = {
+        "input_tokens": 10,
+        "cached_input_tokens": 4,
+        "uncached_input_tokens": 6,
+        "output_tokens": 3,
+        "reasoning_output_tokens": 1,
+        "total_tokens": 13,
+    }
+    token_benchmark._emit_record([[usage]], [None], {}, None)
+    out = capsys.readouterr().out
+    assert "1,10,4,6,3,1,13,true,n/a,n/a" in out
+    assert f'"fallback":"{token_benchmark.ROUND_TRIP_FALLBACK}"' in out
+
+
+def test_emit_record_reports_round_trip_counts(capsys: pytest.CaptureFixture[str]) -> None:
+    usage = {
+        "input_tokens": 10,
+        "cached_input_tokens": 4,
+        "uncached_input_tokens": 6,
+        "output_tokens": 3,
+        "reasoning_output_tokens": 1,
+        "total_tokens": 13,
+    }
+    token_benchmark._emit_record(
+        [[usage]], [{"tool_calls": 3, "shell_calls": 2}], {}, None
+    )
+    out = capsys.readouterr().out
+    assert "1,10,4,6,3,1,13,true,3,2" in out
+    assert '"round_trips":{"samples":[{"tool_calls":3,"shell_calls":2}]' in out
+
+
 def test_record_with_fake_codex_mutates_only_the_node(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -203,7 +249,7 @@ def test_record_with_fake_codex_mutates_only_the_node(
         == 0
     )
     out = capsys.readouterr().out
-    assert "1,11,3,8,5,2,16,true" in out
+    assert "1,11,3,8,5,2,16,true,2,1" in out
     assert '"correctness":true' in out
 
 
