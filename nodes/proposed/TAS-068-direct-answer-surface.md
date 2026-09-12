@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T15:55:00Z
+updated: 2026-09-12T16:01:14Z
 summary: Move graph reasoning out of SKILL.md prose into direct `braintree` answers so client agents decide and act in fewer round trips while the always-loaded skill shrinks.
-next: "[[TAS-075-structured-search-and-admission]]"
+next: "[[TAS-076-frontier-ranking-and-clustering]]"
 ---
 
 # Context

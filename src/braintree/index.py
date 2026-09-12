@@ -4,16 +4,19 @@ Typed Python implementation of the Markdown index builder. Durable graph state s
 Markdown; this module rebuilds the disposable ``nodes``, ``edges``, and FTS
 rows plus the search, backlinks, and stale-pin queries over them, and derives
 the direct ``frontier``, ``node_view``, ``impact``, and ``orient`` answers from
-the same Markdown.
+the same Markdown. The structured ``search`` filters and the lexical
+``similar`` baseline are likewise derived from Markdown, so an admission or
+filter decision never depends on a derived sidecar column.
 """
 
 from __future__ import annotations
 
 import glob
+import math
 import os
 import re
 import sqlite3
-from collections import deque
+from collections import Counter, deque
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -38,6 +41,8 @@ __all__ = [
     "ORIENT_SECTIONS",
     "OrientSection",
     "Orientation",
+    "SearchFilters",
+    "SimilarCandidate",
     "backlinks",
     "ensure_index_schema",
     "existing_allocations",
@@ -51,6 +56,8 @@ __all__ = [
     "reindex",
     "resolve_node",
     "search",
+    "search_filter",
+    "similar",
     "stale",
     "stale_pins",
 ]
@@ -73,6 +80,9 @@ _PRIMARY_ROUTE = re.compile(r"^(Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
 # block ends at the next heading, and the checker validates the same targets.
 _FOCUS_BLOCK = re.compile(r"^# Focus\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
+# Lowercased alphanumeric tokens are the lexical unit the ``similar`` baseline
+# compares, so the metric is independent of punctuation and casing.
+_ALNUM = re.compile(r"[a-z0-9]+")
 
 # The orientation packet answers the fixed cold-start questions in one bounded
 # call. Output order is this order, and each section is truncated to the
@@ -274,20 +284,40 @@ def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
     return len(rows), len(edges), root
 
 
-def search(conn: sqlite3.Connection, query: str, limit: int) -> list[tuple[str, str, str]]:
-    """Return ``id``, ``status``, and ``summary`` for the best FTS matches."""
+def search(
+    conn: sqlite3.Connection,
+    query: str,
+    limit: int,
+    match: Callable[[str], bool] | None = None,
+) -> list[tuple[str, str, str]]:
+    """Return ``id``, ``status``, and ``summary`` for the best FTS matches.
+
+    ``match`` optionally restricts the ranked matches to the node IDs a
+    Markdown-derived structured filter allows. It is applied before ``limit``,
+    so a filtered search still fills its limit from the best matches rather
+    than dropping rows after a truncated fetch.
+    """
+    statement = (
+        "SELECT COALESCE(n.id,''),COALESCE(n.status,''),COALESCE(n.summary,'') "
+        "FROM nodes_fts JOIN nodes n ON n.id=nodes_fts.id "
+        "WHERE nodes_fts MATCH ? ORDER BY bm25(nodes_fts)"
+    )
+    params: list[object] = [query]
+    if match is None:
+        statement += " LIMIT ?"
+        params.append(limit)
     try:
-        cursor = conn.execute(
-            "SELECT COALESCE(n.id,''),COALESCE(n.status,''),COALESCE(n.summary,'') "
-            "FROM nodes_fts JOIN nodes n ON n.id=nodes_fts.id "
-            "WHERE nodes_fts MATCH ? ORDER BY bm25(nodes_fts) LIMIT ?",
-            (query, limit),
-        )
+        rows = [
+            (str(row[0]), str(row[1]), str(row[2]))
+            for row in conn.execute(statement, params).fetchall()
+        ]
     except sqlite3.OperationalError as exc:
         raise SidecarError(
             "invalid full-text query; use words, quoted phrases, or AND/OR"
         ) from exc
-    return [(str(row[0]), str(row[1]), str(row[2])) for row in cursor.fetchall()]
+    if match is not None:
+        rows = [row for row in rows if match(row[0])]
+    return rows[:limit]
 
 
 def resolve_node(conn: sqlite3.Connection, node: str) -> str | None:
@@ -468,6 +498,37 @@ class Orientation:
     """The bounded orientation packet ``braintree orient`` prints."""
 
     sections: tuple[OrientSection, ...]
+
+
+@dataclass(frozen=True)
+class SearchFilters:
+    """The structured node filters ``braintree search`` narrows a query with.
+
+    An empty field is unset, so the fields combine with AND. ``status``,
+    ``type``, and ``priority`` match the node's own metadata; ``parent`` matches
+    the primary ``Parent``/``Area`` route and ``dependency`` matches any
+    canonical context edge.
+    """
+
+    status: str = ""
+    type: str = ""
+    priority: str = ""
+    parent: str = ""
+    dependency: str = ""
+
+    def any(self) -> bool:
+        """Return whether at least one filter field is set."""
+        return any((self.status, self.type, self.priority, self.parent, self.dependency))
+
+
+@dataclass(frozen=True)
+class SimilarCandidate:
+    """One ranked existing node from the ``braintree similar`` lexical baseline."""
+
+    id: str
+    status: str
+    score: float
+    summary: str
 
 
 def _read_nodes(root: str) -> list[IndexedNode]:
@@ -661,6 +722,105 @@ def impact(root: str, node: str) -> Impact | None:
         target_context_rev=_context_rev(target.metadata),
         edges=tuple(edges),
     )
+
+
+def _resolves_to(reference: str, wanted: str, by_reference: dict[str, IndexedNode]) -> bool:
+    """Return whether a wikilink reference names the resolved ``wanted`` node."""
+    if not reference:
+        return False
+    if reference == wanted:
+        return True
+    target = by_reference.get(reference)
+    return target is not None and target.id == wanted
+
+
+def _matches_filters(
+    node: IndexedNode,
+    filters: SearchFilters,
+    by_reference: dict[str, IndexedNode],
+) -> bool:
+    """Return whether one node satisfies every set field of ``filters``."""
+    if filters.status and node.status != filters.status:
+        return False
+    if filters.type and node.id.split("-", 1)[0] != filters.type:
+        return False
+    if filters.priority and node.metadata.get("priority", "") != filters.priority:
+        return False
+    if filters.parent:
+        route = _PRIMARY_ROUTE.search(node.body)
+        target = route.group(2) if route is not None else ""
+        if not _resolves_to(target, filters.parent, by_reference):
+            return False
+    if filters.dependency and not any(
+        _resolves_to(edge.target, filters.dependency, by_reference)
+        for edge in _context_edges(node, by_reference)
+    ):
+        return False
+    return True
+
+
+def search_filter(root: str, filters: SearchFilters) -> Callable[[str], bool]:
+    """Return the Markdown-derived node-ID predicate the structured filters define.
+
+    Every field is compared against the authoritative Markdown: the status
+    directory, the ID prefix, the frontmatter priority, the primary
+    ``Parent``/``Area`` route, and the canonical context edges. ``search``
+    applies the predicate to its ranked full-text matches, so a filter never
+    depends on a derived sidecar column that the rebuild might not carry.
+    """
+    nodes = _read_nodes(root)
+    by_reference: dict[str, IndexedNode] = {}
+    for node in nodes:
+        by_reference[node.name] = node
+        by_reference[node.id] = node
+    allowed = {node.id for node in nodes if _matches_filters(node, filters, by_reference)}
+    return lambda node_id: node_id in allowed
+
+
+def _token_counts(text: str) -> Counter[str]:
+    """Return the lowercased alphanumeric token counts of ``text``."""
+    return Counter(_ALNUM.findall(text.lower()))
+
+
+def _cosine(query: Counter[str], node: Counter[str]) -> float:
+    """Return the cosine similarity of two token-count vectors."""
+    if not query or not node:
+        return 0.0
+    dot = sum(count * node.get(token, 0) for token, count in query.items())
+    if dot == 0:
+        return 0.0
+    query_norm = math.sqrt(sum(count * count for count in query.values()))
+    node_norm = math.sqrt(sum(count * count for count in node.values()))
+    return dot / (query_norm * node_norm)
+
+
+def similar(root: str, text: str, limit: int) -> list[SimilarCandidate]:
+    """Rank existing nodes by lexical similarity to ``text`` for admission.
+
+    The metric is cosine similarity over the lowercased alphanumeric token
+    counts of ``text`` and each node's ``summary`` plus body. It is
+    deterministic and model-free: the stable lexical baseline an admission
+    decision compares a draft against, which an optional semantic layer may
+    later rerank without changing this path. Only positive scores are returned,
+    ties break by node ID, and the result is bounded by ``limit``.
+    """
+    query = _token_counts(text)
+    candidates: list[SimilarCandidate] = []
+    for node in _read_nodes(root):
+        body = node.metadata.get("summary", "") + "\n" + node.body
+        score = _cosine(query, _token_counts(body))
+        if score <= 0:
+            continue
+        candidates.append(
+            SimilarCandidate(
+                id=node.id,
+                status=node.status,
+                score=score,
+                summary=node.metadata.get("summary", ""),
+            )
+        )
+    candidates.sort(key=lambda candidate: (-candidate.score, candidate.id))
+    return candidates[:limit]
 
 
 def stale_pins(root: str) -> list[tuple[str, str, str, str, str, str, str]]:

@@ -213,3 +213,19 @@ def test_orient_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
     missing_value = run_bt("orient", "--section", env=env)
     assert missing_value.returncode == 2
     assert 'error: "--section requires a section name"' in missing_value.stdout
+
+
+def test_search_filters_and_similar_are_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
+    env = _env(tmp_path)
+    help_output = run_bt("--help", env=env)
+    assert help_output.returncode == 0
+    assert "similar TEXT" in help_output.stdout
+    assert "--status" in help_output.stdout
+
+    missing = run_bt("similar", env=env)
+    assert missing.returncode == 2
+    assert 'error: "similar requires TEXT or --file PATH"' in missing.stdout
+
+    unknown = run_bt("search", "q", "--bogus", env=env)
+    assert unknown.returncode == 2
+    assert 'error: "unknown argument for search: --bogus"' in unknown.stdout

@@ -861,3 +861,201 @@ def test_orient_requires_an_existing_nodes_directory(
     result = run_bt("orient", env=_env(tmp_path, tmp_path / "missing"))
     assert result.returncode == 1
     assert "nodes directory does not exist" in result.stdout
+
+
+def _seed_search_filters(vault: Path) -> None:
+    """Seed nodes that share the query term ``token`` but differ on every filter."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "active").mkdir()
+    (vault / "proposed").mkdir()
+    _write(
+        vault / "resolved" / "IDX-001-root.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\nsummary: Root hub.\n---\n",
+    )
+    _write(
+        vault / "resolved" / "DEF-001-contract.md",
+        "---\ncontext_rev: 2\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Auth token contract.\n---\n\n# Invariant\n\nThe token is signed.\n",
+    )
+    _write(
+        vault / "active" / "TAS-001-consumer.md",
+        "---\ncontext_rev: 1\npriority: P1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Consume the auth token.\nnext: Reconcile the token.\n---\n\n"
+        "# Context\n\nParent [[IDX-001-root]].\n\n"
+        "Depends on [[DEF-001-contract]] at context_rev 2.\n",
+    )
+    _write(
+        vault / "proposed" / "TAS-002-draft.md",
+        "---\ncontext_rev: 1\npriority: P2\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Draft the next token flow.\nnext: Draft the token flow.\n---\n\n"
+        "# Context\n\nParent [[TAS-001-consumer]].\n",
+    )
+    _write(
+        vault / "proposed" / "THO-010-theory.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: A theory about token rotation.\n---\n\n# Question\n\nWhy?\n",
+    )
+
+
+def _search_ids(output: str) -> list[str]:
+    return [row[0] for row in _toon_rows(output, "nodes")]
+
+
+def test_search_filters_by_status_type_and_priority(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """A structured filter narrows the ranked matches on its Markdown field."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_search_filters(vault)
+    env = _env(tmp_path, vault)
+    assert _search_ids(run_bt("search", "token", "--status", "active", env=env).stdout) == [
+        "TAS-001"
+    ]
+    assert _search_ids(run_bt("search", "token", "--type", "THO", env=env).stdout) == [
+        "THO-010"
+    ]
+    assert _search_ids(run_bt("search", "token", "--priority", "P2", env=env).stdout) == [
+        "TAS-002"
+    ]
+
+
+def test_search_filters_by_parent_and_dependency(tmp_path: Path, run_bt: RunBt) -> None:
+    """Parent resolves a bare ID or full name; dependency follows context edges."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_search_filters(vault)
+    env = _env(tmp_path, vault)
+    assert _search_ids(run_bt("search", "token", "--parent", "IDX-001", env=env).stdout) == [
+        "TAS-001"
+    ]
+    assert _search_ids(
+        run_bt("search", "token", "--parent", "IDX-001-root", env=env).stdout
+    ) == ["TAS-001"]
+    assert _search_ids(
+        run_bt("search", "token", "--parent", "TAS-001", env=env).stdout
+    ) == ["TAS-002"]
+    assert _search_ids(
+        run_bt("search", "token", "--dependency", "DEF-001", env=env).stdout
+    ) == ["TAS-001"]
+
+
+def test_search_combines_filters_and_reports_zero(tmp_path: Path, run_bt: RunBt) -> None:
+    """Filters AND together, and an unmatched filter states zero explicitly."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_search_filters(vault)
+    env = _env(tmp_path, vault)
+    combined = run_bt("search", "token", "--status", "active", "--parent", "IDX-001", env=env)
+    assert _search_ids(combined.stdout) == ["TAS-001"]
+    unfiltered = run_bt("search", "token", env=env)
+    assert set(_search_ids(unfiltered.stdout)) == {
+        "DEF-001",
+        "TAS-001",
+        "TAS-002",
+        "THO-010",
+    }
+    zero = run_bt("search", "token", "--status", "resolved", "--type", "TAS", env=env)
+    assert zero.returncode == 0
+    assert zero.stdout.strip() == "nodes: 0 matching nodes"
+
+
+def test_search_rejects_invalid_filters(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_search_filters(vault)
+    env = _env(tmp_path, vault)
+    bad_status = run_bt("search", "token", "--status", "bogus", env=env)
+    assert bad_status.returncode == 2
+    assert 'error: "--status must be one of' in bad_status.stdout
+    bad_priority = run_bt("search", "token", "--priority", "P9", env=env)
+    assert bad_priority.returncode == 2
+    assert 'error: "--priority must be one of' in bad_priority.stdout
+    duplicate = run_bt("search", "token", "--status", "active", "--status", "active", env=env)
+    assert duplicate.returncode == 2
+    assert 'error: "duplicate --status"' in duplicate.stdout
+    missing_value = run_bt("search", "token", "--parent", env=env)
+    assert missing_value.returncode == 2
+    assert 'error: "--parent requires a value"' in missing_value.stdout
+
+
+def _seed_similar(vault: Path) -> None:
+    """Seed a near-duplicate pair plus an unrelated node."""
+    (vault / "resolved").mkdir(parents=True)
+    (vault / "proposed").mkdir()
+    _write(
+        vault / "resolved" / "DEF-001-grant-contract.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Reject expired authentication grants.\n---\n\n# Invariant\n\n"
+        "Reject expired authentication grants before issuing a session.\n",
+    )
+    _write(
+        vault / "proposed" / "TAS-001-reject-grants.md",
+        "---\ncontext_rev: 1\npriority: P1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Reject expired authentication grants.\nnext: Implement it.\n---\n\n"
+        "# Outcome\n\nReject expired authentication grants.\n",
+    )
+    _write(
+        vault / "resolved" / "DEF-002-cache-policy.md",
+        "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
+        "summary: Cache eviction policy.\n---\n\n# Invariant\n\n"
+        "The cache evicts cold entries.\n",
+    )
+
+
+def test_similar_ranks_the_near_duplicate_pair(tmp_path: Path, run_bt: RunBt) -> None:
+    """The nearest existing nodes to a draft summary are its near-duplicates."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed_similar(vault)
+    result = run_bt(
+        "similar", "Reject expired authentication grants", env=_env(tmp_path, vault)
+    )
+    assert result.returncode == 0
+    rows = _toon_rows(result.stdout, "similar")
+    assert {row[0] for row in rows} == {"DEF-001", "TAS-001"}
+    scores = [float(row[2]) for row in rows]
+    assert scores == sorted(scores, reverse=True)
+    assert all(score > 0.5 for score in scores)
+    assert {row[1] for row in rows} == {"resolved", "proposed"}
+
+
+def test_similar_is_bounded_and_reports_zero(tmp_path: Path, run_bt: RunBt) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_similar(vault)
+    env = _env(tmp_path, vault)
+    bounded = run_bt(
+        "similar", "Reject expired authentication grants", "--limit", "1", env=env
+    )
+    rows = _toon_rows(bounded.stdout, "similar")
+    assert len(rows) == 1
+    assert rows[0][0] == "TAS-001"
+    zero = run_bt("similar", "unrelated zebra migration", env=env)
+    assert zero.returncode == 0
+    assert zero.stdout.strip() == "similar: 0 matching nodes"
+
+
+def test_similar_reads_the_candidate_text_from_a_file(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_similar(vault)
+    draft = tmp_path / "draft.md"
+    _write(draft, "Reject expired authentication grants")
+    env = _env(tmp_path, vault)
+    inline = run_bt("similar", "Reject expired authentication grants", env=env)
+    from_file = run_bt("similar", "--file", str(draft), env=env)
+    assert from_file.returncode == 0
+    assert from_file.stdout == inline.stdout
+
+
+def test_similar_rejects_conflicting_or_missing_input(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed_similar(vault)
+    env = _env(tmp_path, vault)
+    missing = run_bt("similar", env=env)
+    assert missing.returncode == 2
+    assert 'error: "similar requires TEXT or --file PATH"' in missing.stdout
+    both = run_bt("similar", "text", "--file", "path", env=env)
+    assert both.returncode == 2
+    assert 'error: "similar accepts TEXT or --file PATH, not both"' in both.stdout
+    unreadable = run_bt("similar", "--file", str(tmp_path / "absent.md"), env=env)
+    assert unreadable.returncode == 1
+    assert 'error: "cannot read file:' in unreadable.stdout

@@ -37,7 +37,12 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("claim NODE AGENT --base-hash HASH", "acquire or renew an exclusive lease"),
     ("release NODE AGENT --base-hash HASH", "release the matching unexpired lease"),
     ("index [NODES]", "rebuild the derived index from Markdown"),
-    ("search QUERY [--limit N]", "full-text search derived Markdown content"),
+    (
+        "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
+        "[--parent REF] [--dependency REF]",
+        "full-text search derived Markdown content",
+    ),
+    ("similar TEXT|--file PATH [--limit N]", "rank nodes by lexical similarity"),
     ("backlinks NODE", "list derived incoming graph edges"),
     ("hash NODE", "print the raw-content SHA-256 of a node file"),
     ("stale", "find missing or outdated dependency pins"),
@@ -61,6 +66,7 @@ _COORDINATION_COMMANDS = frozenset(
         "release",
         "index",
         "search",
+        "similar",
         "backlinks",
         "hash",
         "stale",

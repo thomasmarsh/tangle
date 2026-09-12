@@ -23,8 +23,10 @@ _USAGE = (
     "braintree [status|location|init|allocate PREFIX|"
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
     "release NODE AGENT --base-hash HASH|index [NODES]|"
-    "search QUERY [--limit N]|backlinks NODE|hash NODE|stale|frontier|node NODE|"
-    "impact NODE|orient [--section NAME] [--limit N]]"
+    "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
+    "[--parent REF] [--dependency REF]|"
+    "similar TEXT|--file PATH [--limit N]|backlinks NODE|hash NODE|stale|frontier|"
+    "node NODE|impact NODE|orient [--section NAME] [--limit N]]"
 )
 
 _COMMANDS: tuple[tuple[str, str], ...] = (
@@ -35,7 +37,12 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("claim NODE AGENT --base-hash HASH", "acquire or renew an exclusive lease"),
     ("release NODE AGENT --base-hash HASH", "release the matching unexpired lease"),
     ("index [NODES]", "rebuild derived nodes, edges, and FTS from Markdown"),
-    ("search QUERY [--limit N]", "full-text search derived Markdown content"),
+    (
+        "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
+        "[--parent REF] [--dependency REF]",
+        "full-text search derived Markdown content",
+    ),
+    ("similar TEXT|--file PATH [--limit N]", "rank nodes by lexical similarity"),
     ("backlinks NODE", "list derived incoming graph edges"),
     ("hash NODE", "print the raw-content SHA-256 of a node file"),
     ("stale", "find missing or outdated dependency pins"),
@@ -47,6 +54,17 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
 
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
 _POSITIVE_INTEGER = re.compile(r"[0-9]+\Z")
+_STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
+_PRIORITY = re.compile(r"P[0-3]\Z")
+_NODE_TYPE = re.compile(r"[A-Z][A-Z0-9_]*\Z")
+# The structured search filter flags map to ``index.SearchFilters`` fields.
+_SEARCH_FILTERS: dict[str, str] = {
+    "--status": "status",
+    "--type": "type",
+    "--priority": "priority",
+    "--parent": "parent",
+    "--dependency": "dependency",
+}
 
 
 def _print_usage() -> None:
@@ -202,36 +220,122 @@ def _release(args: list[str]) -> int:
 
 
 def _search(args: list[str]) -> int:
-    if len(args) < 2 or args[1] == "--limit":
+    if len(args) < 2 or args[1].startswith("--"):
         return _usage_error("search requires QUERY")
     query = args[1]
     limit_raw = "20"
+    values: dict[str, str] = {}
     index_arg = 2
     while index_arg < len(args):
-        if args[index_arg] != "--limit":
-            return _usage_error(f"unknown argument for search: {args[index_arg]}")
-        index_arg += 1
-        if index_arg >= len(args):
-            return _usage_error("--limit requires N")
-        limit_raw = args[index_arg]
+        argument = args[index_arg]
+        if argument == "--limit":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--limit requires N")
+            limit_raw = args[index_arg]
+        elif argument in _SEARCH_FILTERS:
+            name = _SEARCH_FILTERS[argument]
+            if name in values:
+                return _usage_error(f"duplicate {argument}")
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error(f"{argument} requires a value")
+            values[name] = args[index_arg]
+        else:
+            return _usage_error(f"unknown argument for search: {argument}")
         index_arg += 1
     if _POSITIVE_INTEGER.fullmatch(limit_raw) is None or int(limit_raw) <= 0:
         return _usage_error("--limit must be a positive integer")
+    status = values.get("status", "").lower()
+    if status and status not in _STATUSES:
+        return _usage_error("--status must be one of: proposed, active, blocked, resolved")
+    priority = values.get("priority", "").upper()
+    if priority and _PRIORITY.fullmatch(priority) is None:
+        return _usage_error("--priority must be one of: P0, P1, P2, P3")
+    node_type = values.get("type", "").upper()
+    if node_type and _NODE_TYPE.fullmatch(node_type) is None:
+        return _usage_error("--type must be an uppercase node-type prefix such as TAS or DEF")
+    filters = index.SearchFilters(
+        status=status,
+        type=node_type,
+        priority=priority,
+        parent=values.get("parent", ""),
+        dependency=values.get("dependency", ""),
+    )
+    root = _nodes_directory()
+    match: Callable[[str], bool] | None = None
+    if filters.any():
+        if _require_nodes_directory() is None:
+            return 1
+        match = index.search_filter(root, filters)
 
     def query_index() -> list[tuple[str, str, str]]:
-        print_rows: list[tuple[str, str, str]] = []
         conn = sidecar.open_connection()
         try:
-            index.reindex(conn, _nodes_directory())
-            print_rows = index.search(conn, query, int(limit_raw))
+            index.reindex(conn, root)
+            return index.search(conn, query, int(limit_raw), match)
         finally:
             conn.close()
-        return print_rows
 
     rows = _index_guard(query_index)
     print(
         index.format_table(
             "nodes", "id,status,summary", "nodes: 0 matching nodes", rows
+        )
+    )
+    return 0
+
+
+def _similar(args: list[str]) -> int:
+    positional: list[str] = []
+    file_path = ""
+    limit_raw = "10"
+    index_arg = 1
+    while index_arg < len(args):
+        argument = args[index_arg]
+        if argument == "--limit":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--limit requires N")
+            limit_raw = args[index_arg]
+        elif argument == "--file":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--file requires PATH")
+            file_path = args[index_arg]
+        elif argument.startswith("--"):
+            return _usage_error(f"unknown argument for similar: {argument}")
+        else:
+            positional.append(argument)
+        index_arg += 1
+    if _POSITIVE_INTEGER.fullmatch(limit_raw) is None or int(limit_raw) <= 0:
+        return _usage_error("--limit must be a positive integer")
+    if positional and file_path:
+        return _usage_error("similar accepts TEXT or --file PATH, not both")
+    if len(positional) > 1:
+        return _usage_error("similar requires TEXT or --file PATH")
+    if file_path:
+        try:
+            with open(file_path, encoding="utf-8") as handle:
+                text = handle.read()
+        except OSError:
+            print(field("error", f"cannot read file: {file_path}"))
+            print(field("help", "Check the path and retry with readable UTF-8 text."))
+            return 1
+    elif positional:
+        text = positional[0]
+    else:
+        return _usage_error("similar requires TEXT or --file PATH")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    rows = index.similar(root, text, int(limit_raw))
+    print(
+        index.format_table(
+            "similar",
+            "id,status,score,summary",
+            "similar: 0 matching nodes",
+            [(row.id, row.status, f"{row.score:.4f}", row.summary) for row in rows],
         )
     )
     return 0
@@ -517,6 +621,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return 0
     if command == "search":
         return _search(args)
+    if command == "similar":
+        return _similar(args)
     if command == "backlinks":
         return _backlinks(args)
     if command == "hash":
