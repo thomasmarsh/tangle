@@ -14,7 +14,12 @@ from pathlib import Path
 
 from . import __version__
 
-__all__ = ["RECORD_NAME", "recorded_revision", "reported_version"]
+__all__ = [
+    "RECORD_NAME",
+    "feedback_revision",
+    "recorded_revision",
+    "reported_version",
+]
 
 # The generated install record sits beside this module so it travels with the
 # package, including when ``uv`` builds and installs a wheel.
@@ -37,3 +42,14 @@ def recorded_revision() -> str | None:
 def reported_version() -> str:
     """Return the recorded revision when installed, else the declared version."""
     return recorded_revision() or __version__
+
+
+def feedback_revision() -> str:
+    """Return the revision to stamp into ``FBK`` feedback frontmatter.
+
+    The install record is used verbatim when it is present. A checkout with no
+    record degrades explicitly to the declared version with an ``unknown``
+    revision, matching the installer's own ``<version>+unknown`` fallback and
+    the ``braintree_revision`` convention ``graph-check`` accepts.
+    """
+    return recorded_revision() or f"{__version__}+unknown"

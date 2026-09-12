@@ -94,9 +94,18 @@ uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/other-
 
 It prints compact TOON with each feedback node's vault, id, status, Braintree revision, and summary, and states `feedback: 0 nodes` when there is none.
 
+The `feedback-record` writer is the recording half of the same mechanism. Run from a consuming project's vault root, it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub unless `--route` overrides it, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md`:
+
+```sh
+uv run --project .agents/skills/braintree --frozen feedback-record \
+  --attempted '...' --friction '...' --improvement '...'
+```
+
+`--nodes` selects a `nodes/` directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `graph-check` accepts.
+
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt`, `graph-check`, and `feedback-scan` console scripts, leaving repository graph state and development files behind. The project has one semantic version, declared in `pyproject.toml`. The installer also writes a generated `installed-revision` stamp recording that version plus the source revision it was copied from, and the installed `bt --version` and `graph-check --version` report it (`0.4.0+g1b58d57`, or `0.4.0+unknown` when the source revision cannot be determined). Compare the public `<version>` when deciding whether an installed skill and a vault are compatible; the `+<short-sha>` build metadata is provenance, not a compatibility ordering.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt`, `graph-check`, `feedback-scan`, and `feedback-record` console scripts, leaving repository graph state and development files behind. The project has one semantic version, declared in `pyproject.toml`. The installer also writes a generated `installed-revision` stamp recording that version plus the source revision it was copied from, and the installed `bt --version` and `graph-check --version` report it (`0.4.0+g1b58d57`, or `0.4.0+unknown` when the source revision cannot be determined). Compare the public `<version>` when deciding whether an installed skill and a vault are compatible; the `+<short-sha>` build metadata is provenance, not a compatibility ordering.
 
 A vault uses this shape:
 

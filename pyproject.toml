@@ -10,6 +10,7 @@ dependencies = []
 bt = "braintree.cli:main"
 graph-check = "braintree.graph_check:main"
 feedback-scan = "braintree.feedback_scan:main"
+feedback-record = "braintree.feedback_record:main"
 behavioral-benchmark = "braintree.behavioral_benchmark:main"
 storage-comparison = "braintree.storage_comparison:main"
 token-benchmark = "braintree.token_benchmark:main"

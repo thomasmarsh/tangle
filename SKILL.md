@@ -142,6 +142,15 @@ A consuming project records Braintree friction as an `FBK` node. The `FBK` type 
 
 `graph-check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
 
+Record feedback with the writing half of the mechanism. Run `feedback-record` from the consuming project's vault root and it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md` in one step:
+
+```sh
+uv run --project .agents/skills/braintree --frozen feedback-record \
+  --attempted '...' --friction '...' --improvement '...'
+```
+
+`--nodes` points at the vault's `nodes/` directory when it is not the current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from `index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the summary derived from the friction, and the derived slug. The command reads the installed `installed-revision` record and degrades explicitly to `<version>+unknown` when no record is present, so the node always names the Braintree version in use. The result is a valid, routed `FBK` node that `graph-check` accepts.
+
 To collect feedback from another vault, run the read-only `feedback-scan` command over one or more vault roots:
 
 ```sh

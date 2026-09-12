@@ -58,6 +58,22 @@ def test_graph_check_reports_the_recorded_revision(
         assert capsys.readouterr().out.strip() == "0.4.0+g1b58d57"
 
 
+def test_feedback_revision_uses_the_record(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _use_record(monkeypatch, tmp_path, "0.4.0+g1b58d57")
+    assert revision.feedback_revision() == "0.4.0+g1b58d57"
+
+
+def test_feedback_revision_degrades_to_unknown_without_a_record(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(revision, "_record_path", lambda: tmp_path / revision.RECORD_NAME)
+    value = revision.feedback_revision()
+    assert value == f"{__version__}+unknown"
+    assert graph_check._BRAINTREE_REVISION.match(value) is not None
+
+
 def test_recorded_revision_matches_the_feedback_convention() -> None:
     # The record value is the exact string a consuming project writes into
     # `braintree_revision:` frontmatter.

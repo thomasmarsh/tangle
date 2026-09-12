@@ -53,6 +53,35 @@ run_installed() {
   uv run --project "$destination" --frozen --quiet feedback-scan "$repo_root/nodes" >/dev/null
   [ "$(uv run --project "$destination" --frozen --quiet bt --version)" = "$expected_record" ]
   [ "$(uv run --project "$destination" --frozen --quiet graph-check --version)" = "$expected_record" ]
+  run_installed_feedback_record "$destination"
+}
+
+# The recording half of the feedback mechanism must work from an installed
+# skill in a consuming project, not only from this source repository.
+run_installed_feedback_record() {
+  destination=$1
+  vault=$(mktemp -d "$test_root/feedback.XXXXXX")
+  mkdir -p "$vault/nodes/resolved"
+  cat >"$vault/nodes/index-map.md" <<'EOF'
+# Root hubs
+
+- Indexes [[IDX-001-root]]
+EOF
+  cat >"$vault/nodes/resolved/IDX-001-root.md" <<'EOF'
+---
+context_rev: 1
+updated: 2026-09-12T00:00:00Z
+summary: Root hub.
+---
+EOF
+  uv run --project "$destination" --frozen --quiet feedback-record \
+    --nodes "$vault/nodes" \
+    --attempted 'Ran the installed command.' \
+    --friction 'The installed recording path was untested.' \
+    --improvement 'Exercise it in the install test.' >/dev/null
+  uv run --project "$destination" --frozen --quiet graph-check "$vault/nodes" >/dev/null
+  grep -q "braintree_revision: $expected_record" "$vault"/nodes/proposed/FBK-001-*.md
+  rm -rf "$vault"
 }
 
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)
