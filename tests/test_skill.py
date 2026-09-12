@@ -223,6 +223,21 @@ _VERIFICATION_EVIDENCE_CONTRACT: tuple[str, ...] = (
     "it can never be the sole sign-off",
 )
 
+# A slice's write set bounds what a worker may author: the minimal primitive or
+# seam a gate needs is in scope, a change to another node's landed seam or the
+# public schema contract is escalated, and the coordinating task names the seam
+# up front so the worker never has to infer it.
+_SLICE_PRIMITIVE_SCOPE_CONTRACT: tuple[str, ...] = (
+    "A worker may author the minimal primitive or seam",
+    "a gate or `Done when` criterion needs",
+    "inside its declared write set",
+    "records that authored piece in the node's `# Result`",
+    "alters a landed seam another node owns, or the public schema contract",
+    "is escalated rather than authored",
+    "A coordinating task names any primitive or seam its slice must introduce",
+    "so the worker does not have to infer it",
+)
+
 _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "mechanical change with no independently resumable outcome",
     "enclosing node's `next` or result",
@@ -479,6 +494,10 @@ def test_skill_resolution_claim_contract() -> None:
 
 def test_skill_verification_evidence_contract() -> None:
     _assert_present(_read(_SKILL), _VERIFICATION_EVIDENCE_CONTRACT)
+
+
+def test_skill_slice_primitive_scope_contract() -> None:
+    _assert_present(_read(_SKILL), _SLICE_PRIMITIVE_SCOPE_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:
