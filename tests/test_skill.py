@@ -223,6 +223,15 @@ _PLAN_TEXT_GATE_CONTRACT: tuple[str, ...] = (
     "including prerequisite plan text that no node owns",
 )
 
+# Markdown code is quoted text, not graph syntax: a node may reproduce the
+# skill's own link-shaped grammar in an inline span or a fenced block without
+# the checker reporting a broken link.
+_CODE_MASKING_CONTRACT: tuple[str, ...] = (
+    "Link scanning ignores wikilink-shaped tokens inside inline code spans "
+    "and fenced code blocks",
+    "without a false `broken link` finding",
+)
+
 _SKILL_REMOVED_RECIPES: tuple[str, ...] = (
     r"rg --files-without-match '^next:.*\[\['",
     "rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev ' nodes",
@@ -374,6 +383,10 @@ def test_skill_frontier_candidate_contract() -> None:
 
 def test_skill_plan_text_gate_status() -> None:
     _assert_present(_read(_SKILL), _PLAN_TEXT_GATE_CONTRACT)
+
+
+def test_skill_code_masking_status() -> None:
+    _assert_present(_read(_SKILL), _CODE_MASKING_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:

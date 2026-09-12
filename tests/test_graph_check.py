@@ -166,6 +166,51 @@ def test_broken_link(nodes: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert "broken link [[TAS-999-missing]]" in err
 
 
+def test_inline_code_span_hides_a_link_shaped_token(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        child.read_text(encoding="utf-8")
+        + "The grammar is `[[TAS-999-missing]]` and the contract is [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("fence", ["```", "~~~"])
+def test_fenced_code_block_hides_a_link_shaped_token(
+    nodes: Path, capsys: pytest.CaptureFixture[str], fence: str
+) -> None:
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        child.read_text(encoding="utf-8")
+        + f"{fence}markdown\nThe grammar is [[TAS-999-missing]].\n{fence}\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_real_link_beside_quoted_tokens_still_fails(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        child.read_text(encoding="utf-8")
+        + "The grammar is `[[TAS-999-missing]]`.\n"
+        + "```markdown\n[[TAS-998-missing]]\n```\n"
+        + "Related to [[TAS-997-missing]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "broken link [[TAS-997-missing]]" in err
+    assert "TAS-999-missing" not in err
+    assert "TAS-998-missing" not in err
+
+
 def test_unfinished_task_requires_next(nodes: Path, capsys: pytest.CaptureFixture[str]) -> None:
     child = nodes / "active" / "TAS-002-child.md"
     child.write_text(

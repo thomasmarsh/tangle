@@ -179,6 +179,71 @@ _BRAINTREE_REVISION = re.compile(r"\d+\.\d+\.\d+(?:[+\-][0-9A-Za-z.\-]+)?\Z")
 _UNKNOWN_REVISION = "unknown"
 _NUMBER = re.compile(r"-?\d+")
 
+# Markdown code is quoted text, not graph syntax: a wikilink-shaped token inside
+# an inline code span or a fenced code block documents the grammar, so link
+# scanning reads a copy with those regions blanked. Masking preserves length and
+# line breaks, so the scan sees the same structure without the quoted tokens.
+_FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+_FENCE_RUN = re.compile(r"^ {0,3}([`~]+)[ \t]*$")
+_BACKTICK_RUN = re.compile(r"`+")
+
+
+def _mask_inline_code(line: str) -> str:
+    """Blank backtick-delimited code spans on one line, preserving length.
+
+    A code span closes on the next run of exactly the opening backtick count,
+    so a shorter or longer run stays literal text and never opens a span.
+    """
+    runs = list(_BACKTICK_RUN.finditer(line))
+    if not runs:
+        return line
+    chars = list(line)
+    index = 0
+    while index < len(runs):
+        opening = runs[index]
+        closing_index = index + 1
+        while closing_index < len(runs) and len(
+            runs[closing_index].group(0)
+        ) != len(opening.group(0)):
+            closing_index += 1
+        if closing_index == len(runs):
+            index += 1
+            continue
+        closing = runs[closing_index]
+        chars[opening.start() : closing.end()] = " " * (
+            closing.end() - opening.start()
+        )
+        index = closing_index + 1
+    return "".join(chars)
+
+
+def _mask_code(text: str) -> str:
+    """Blank inline code spans and fenced code blocks, preserving offsets."""
+    masked: list[str] = []
+    fence_char: str | None = None
+    fence_len = 0
+    for line in text.splitlines(keepends=True):
+        content = line.rstrip("\r\n")
+        tail = line[len(content) :]
+        if fence_char is not None:
+            closing = _FENCE_RUN.match(content)
+            if (
+                closing is not None
+                and closing.group(1)[0] == fence_char
+                and len(closing.group(1)) >= fence_len
+            ):
+                fence_char = None
+            masked.append(" " * len(content) + tail)
+            continue
+        opening = _FENCE_OPEN.match(content)
+        if opening is not None:
+            fence_char = opening.group(1)[0]
+            fence_len = len(opening.group(1))
+            masked.append(" " * len(content) + tail)
+            continue
+        masked.append(_mask_inline_code(content) + tail)
+    return "".join(masked)
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -511,7 +576,7 @@ def _check_links(
     nodes: list[_Node], by_name: dict[str, list[_Node]], errors: list[Finding]
 ) -> None:
     for node in nodes:
-        for target in _WIKILINK.findall(node.text):
+        for target in _WIKILINK.findall(_mask_code(node.text)):
             if target not in by_name:
                 errors.append(
                     Finding(

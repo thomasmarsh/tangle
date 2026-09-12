@@ -128,7 +128,7 @@ braintree index nodes
 braintree search 'authentication' --limit 10
 ```
 
-Run from the project root. The checker validates links, headers and lifecycle rules, canonical edges and frontiers, dependency-pin syntax and revision mismatch, primary-route reachability, and parent cycles.
+Run from the project root. The checker validates links, headers and lifecycle rules, canonical edges and frontiers, dependency-pin syntax and revision mismatch, primary-route reachability, and parent cycles. Link scanning ignores wikilink-shaped tokens inside inline code spans and fenced code blocks, so a node can quote the skill's own grammar in code without a false `broken link` finding.
 
 ## Mutation rules
 
