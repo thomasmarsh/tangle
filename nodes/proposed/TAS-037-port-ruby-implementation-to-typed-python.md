@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T00:17:02Z
+updated: 2026-09-12T00:25:45Z
 summary: Replace the Ruby Braintree implementation with a fully typed uv-managed Python project while preserving command behavior and Markdown authority.
-next: Integrate [[TAS-041-port-benchmark-harnesses-to-python]].
+next: Integrate [[TAS-042-retarget-installers-tests-docs-and-remove-ruby]].
 ---
 
 # Context

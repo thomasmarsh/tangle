@@ -2,4 +2,4 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-ruby "$repo_root/scripts/behavioral-benchmark.rb" --verify >/dev/null
+"$repo_root/scripts/behavioral-benchmark" --verify >/dev/null

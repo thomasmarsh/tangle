@@ -1,0 +1,12 @@
+#!/bin/sh
+# Launch the typed Python storage-representation comparison.
+set -eu
+here=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+if [ -x "$here/.venv/bin/python" ]; then
+  python=$here/.venv/bin/python
+else
+  python=${PYTHON:-python3}
+fi
+PYTHONPATH="$here/src${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+exec "$python" -m braintree.storage_comparison "$@"
