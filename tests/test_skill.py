@@ -166,6 +166,24 @@ _FEEDBACK_CONTRACT: tuple[str, ...] = (
 )
 
 
+# A worker's node addressing and hash operand are unambiguous: the commands
+# take a bare ID or full node name (never a path), `content_hash` is the
+# operand, and the frontier transition belongs to the claimed edit.
+_HASH_ADDRESSING_CONTRACT: tuple[str, ...] = (
+    "NODE is a bare ID (`TAS-085`) or a full node name, the filename stem",
+    "a path (`nodes/proposed/TAS-085-hash-addressing-and-operand.md`) is not accepted",
+    "the error names the two accepted forms",
+    "they treat NODE as the opaque claim key",
+    "The `content_hash` value is the operand",
+    "never pass the `node:`/`content_hash:` block",
+    "the status move and the `# Context` edit that take the frontier",
+    "is part of the claimed edit, not a precondition",
+    "names the node content exactly as handed off, before that transition",
+    "never the path the handoff supplies",
+    "`claim` and `release` treat NODE as the same opaque claim key",
+    "belongs to the claimed edit, not to the handoff",
+)
+
 _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "mechanical change with no independently resumable outcome",
     "enclosing node's `next` or result",
@@ -387,6 +405,10 @@ def test_skill_plan_text_gate_status() -> None:
 
 def test_skill_code_masking_status() -> None:
     _assert_present(_read(_SKILL), _CODE_MASKING_CONTRACT)
+
+
+def test_skill_hash_addressing_and_operand_contract() -> None:
+    _assert_present(_read(_SKILL), _HASH_ADDRESSING_CONTRACT)
 
 
 def test_index_map_queries_use_the_direct_answer_verbs() -> None:

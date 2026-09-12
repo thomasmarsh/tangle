@@ -251,6 +251,48 @@ def test_hash_matches_raw_sha256_algorithm(tmp_path: Path, run_bt: RunBt) -> Non
     assert 'error: "unknown node: TAS-999"' in unknown.stdout
 
 
+def test_hash_rejects_a_path_and_names_the_accepted_forms(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed(vault)
+    env = _env(tmp_path, vault)
+    node_path = "nodes/active/TAS-001-consumer.md"
+
+    path_shaped = run_bt("hash", node_path, env=env)
+    assert path_shaped.returncode == 1
+    assert f'error: "unknown node: {node_path}"' in path_shaped.stdout
+    assert "'TAS-001'" in path_shaped.stdout
+    assert "'TAS-001-consumer'" in path_shaped.stdout
+    assert "not a path" in path_shaped.stdout
+
+    # The suggested forms are exactly what the command accepts.
+    assert run_bt("hash", "TAS-001", env=env).returncode == 0
+    assert run_bt("hash", "TAS-001-consumer", env=env).returncode == 0
+
+
+def test_hash_content_hash_is_the_claim_and_release_operand(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    _seed(vault)
+    env = _env(tmp_path, vault)
+
+    hashed = run_bt("hash", "TAS-001", env=env)
+    assert hashed.returncode == 0
+    match = re.search(r'^content_hash: "([0-9a-f]{64})"$', hashed.stdout, re.MULTILINE)
+    assert match is not None, hashed.stdout
+    digest = match.group(1)
+
+    claimed = run_bt("claim", "TAS-001", "worker", "--base-hash", digest, env=env)
+    assert claimed.returncode == 0
+    assert f'base_hash: "{digest}"' in claimed.stdout
+
+    released = run_bt("release", "TAS-001", "worker", "--base-hash", digest, env=env)
+    assert released.returncode == 0
+    assert 'result: "released"' in released.stdout
+
+
 def test_stale_without_stale_pins_names_them(tmp_path: Path, run_bt: RunBt) -> None:
     vault = tmp_path / "vault" / "nodes"
     (vault / "resolved").mkdir(parents=True)

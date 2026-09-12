@@ -66,6 +66,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
 _PREFIX = re.compile(r"[A-Z0-9_-]*\Z")
 _POSITIVE_INTEGER = re.compile(r"[0-9]+\Z")
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
+_NODE_STEM = re.compile(r"([A-Z][A-Z0-9_]*-\d+)-")
 _PRIORITY = re.compile(r"P[0-3]\Z")
 _NODE_TYPE = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 # The structured search filter flags map to ``index.SearchFilters`` fields.
@@ -118,6 +119,37 @@ def _require_nodes_directory() -> str | None:
     print(field("error", f"nodes directory does not exist: {os.path.abspath(root)}"))
     print(field("help", "Run from the project root or set BT_NODES_DIR."))
     return None
+
+
+def _unknown_node(node: str) -> int:
+    """Print the unknown-node error and name the accepted addressing forms.
+
+    A path-shaped operand is the common handoff mistake, so when the operand
+    looks like a path the help names the bare ID and full node name derived
+    from it instead of repeating the generic form.
+    """
+    print(field("error", f"unknown node: {node}"))
+    if "/" not in node and not node.endswith(".md"):
+        print(field("help", "Use a bare ID or a full node name from the vault."))
+        return 1
+    stem = os.path.basename(node.removesuffix(".md"))
+    match = _NODE_STEM.match(stem)
+    if match is None:
+        print(
+            field(
+                "help",
+                "Use a bare ID or a full node name from the vault, not a path.",
+            )
+        )
+        return 1
+    print(
+        field(
+            "help",
+            f"Use the bare ID '{match.group(1)}' or the full node name "
+            f"'{stem}', not a path.",
+        )
+    )
+    return 1
 
 
 def _index_guard[T](operation: Callable[[], T]) -> T:
@@ -383,9 +415,7 @@ def _backlinks(args: list[str]) -> int:
 
     found, rows = _index_guard(query_index)
     if not found:
-        print(field("error", f"unknown node: {node}"))
-        print(field("help", "Use a bare ID or a full node name from the vault."))
-        return 1
+        return _unknown_node(node)
     print(
         index.format_table(
             "backlinks",
@@ -403,9 +433,7 @@ def _hash(args: list[str]) -> int:
     node = args[1]
     value = index.node_hash(_nodes_directory(), node)
     if value is None:
-        print(field("error", f"unknown node: {node}"))
-        print(field("help", "Use a bare ID or a full node name from the vault."))
-        return 1
+        return _unknown_node(node)
     print(field("node", node))
     print(field("content_hash", value))
     return 0
@@ -566,9 +594,7 @@ def _node(args: list[str]) -> int:
         return 1
     view = index.node_view(root, args[1])
     if view is None:
-        print(field("error", f"unknown node: {args[1]}"))
-        print(field("help", "Use a bare ID or a full node name from the vault."))
-        return 1
+        return _unknown_node(args[1])
     node = view.node
     print(field("node", node.id))
     print(field("name", node.name))
@@ -624,9 +650,7 @@ def _impact(args: list[str]) -> int:
         return 1
     view = index.impact(root, args[1])
     if view is None:
-        print(field("error", f"unknown node: {args[1]}"))
-        print(field("help", "Use a bare ID or a full node name from the vault."))
-        return 1
+        return _unknown_node(args[1])
     print(field("target", view.target))
     print(field("target_context_rev", str(view.target_context_rev)))
     print(
