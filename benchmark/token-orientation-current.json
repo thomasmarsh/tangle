@@ -1,0 +1,56 @@
+{
+  "protocol": "codex-session-token-v2",
+  "correctness": true,
+  "samples": [
+    {
+      "input_tokens": 206229,
+      "cached_input_tokens": 184320,
+      "output_tokens": 1936,
+      "reasoning_output_tokens": 741,
+      "total_tokens": 208165,
+      "uncached_input_tokens": 21909
+    }
+  ],
+  "median": {
+    "input_tokens": 206229,
+    "cached_input_tokens": 184320,
+    "output_tokens": 1936,
+    "reasoning_output_tokens": 741,
+    "total_tokens": 208165,
+    "uncached_input_tokens": 21909
+  },
+  "metadata": {
+    "requested_model": "gpt-5.6-terra",
+    "requested_reasoning_effort": "medium",
+    "representation": "graph",
+    "scale": "small",
+    "benchmark_case": "composite",
+    "requested_codex_version": "codex-cli 0.154.0",
+    "fixture_version": "graph-retrieval-v3",
+    "fixture_seed": "tas-020-2026-09-10",
+    "fixture_sha256": "865d9738cd9aedaf0e32afc2a6c663602d49b0c0046d14051086dcda6f59babc",
+    "skill_sha256": "277b9a05269c337d09293ec5795b95016ab9f00904d78d7ab5e9f0328d7fd78d",
+    "observed_session_telemetry": {
+      "observed_agent_path": [],
+      "observed_cli_version": [
+        "0.154.0"
+      ],
+      "observed_session_cwd": [
+        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/bt-token-benchmark-vwyefw51"
+      ],
+      "observed_turn_cwd": [
+        "/var/folders/8r/_g90218s5vg3gtnps6h8v9080000gn/T/bt-token-benchmark-vwyefw51"
+      ],
+      "observed_model": [
+        "gpt-5.6-terra"
+      ],
+      "observed_reasoning_effort": [
+        "medium"
+      ],
+      "token_usage_payload_shapes": {
+        "response_id,root_turn_id,session_id,thread_id,thread_token_usage,turn_id,turn_token_usage,usage": 8
+      }
+    },
+    "source": "fresh-codex-session"
+  }
+}
