@@ -1,19 +1,13 @@
 [project]
 name = "braintree"
-version = "0.4.0"
+version = "0.5.0"
 description = "Typed Python implementation of the Braintree Markdown graph tooling."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
 
 [project.scripts]
-bt = "braintree.cli:main"
-graph-check = "braintree.graph_check:main"
-feedback-scan = "braintree.feedback_scan:main"
-feedback-record = "braintree.feedback_record:main"
-behavioral-benchmark = "braintree.behavioral_benchmark:main"
-storage-comparison = "braintree.storage_comparison:main"
-token-benchmark = "braintree.token_benchmark:main"
+braintree = "braintree.main:main"
 
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]

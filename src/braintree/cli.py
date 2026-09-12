@@ -1,9 +1,9 @@
-"""The ``bt`` sidecar and query command line interface.
+"""The sidecar and index query command group behind ``braintree``.
 
-Typed Python port of ``scripts/bt`` widening the scaffold: the ten command
-names, their arguments, the TOON field styling, and the ``0``/``1``/``2``
-exit codes are preserved. Coordination lives in :mod:`braintree.sidecar` and
-the rebuildable Markdown index in :mod:`braintree.index`.
+The eleven command names, their arguments, the TOON field styling, and the
+``0``/``1``/``2`` exit codes are the internal engine the unified
+``braintree`` command fronts. Coordination lives in :mod:`braintree.sidecar`
+and the rebuildable Markdown index in :mod:`braintree.index`.
 """
 
 from __future__ import annotations
@@ -20,9 +20,9 @@ from .toon import escape, field
 __all__ = ["main"]
 
 _USAGE = (
-    "bt [status|location|init|allocate PREFIX|"
+    "braintree [status|location|init|allocate PREFIX|"
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
-    "release NODE AGENT --base-hash HASH|reindex [NODES]|"
+    "release NODE AGENT --base-hash HASH|index [NODES]|"
     "search QUERY [--limit N]|backlinks NODE|hash NODE|stale]"
 )
 
@@ -33,7 +33,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
     ("claim NODE AGENT --base-hash HASH", "acquire or renew an exclusive lease"),
     ("release NODE AGENT --base-hash HASH", "release the matching unexpired lease"),
-    ("reindex [NODES]", "rebuild derived nodes, edges, and FTS from Markdown"),
+    ("index [NODES]", "rebuild derived nodes, edges, and FTS from Markdown"),
     ("search QUERY [--limit N]", "full-text search derived Markdown content"),
     ("backlinks NODE", "list derived incoming graph edges"),
     ("hash NODE", "print the raw-content SHA-256 of a node file"),
@@ -58,7 +58,7 @@ def _print_usage() -> None:
 
 def _usage_error(message: str) -> int:
     print(field("error", message))
-    print(field("help", "Run `bt --help` for command usage."))
+    print(field("help", "Run `braintree --help` for command usage."))
     return 2
 
 
@@ -178,7 +178,7 @@ def _release(args: list[str]) -> int:
         print(
             field(
                 "help",
-                "Release with the agent and starting hash recorded by `bt claim`.",
+                "Release with the agent and starting hash recorded by `braintree claim`.",
             )
         )
         return 1
@@ -326,9 +326,9 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _claim(args)
     if command == "release":
         return _release(args)
-    if command == "reindex":
+    if command == "index":
         if len(args) > 2:
-            return _usage_error("reindex accepts at most one NODES directory")
+            return _usage_error("index accepts at most one NODES directory")
         root = args[1] if len(args) == 2 else _nodes_directory()
         nodes, edges, absolute_root = _index_guard(lambda: _run_reindex(root))
         print(f"nodes: {nodes}")
@@ -345,7 +345,7 @@ def _dispatch(command: str, args: list[str]) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the ``bt`` command and return the process exit code."""
+    """Run the sidecar/index command group and return the process exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
     if len(args) == 1 and args[0] in {"--version", "-v", "-V"}:
         print(reported_version())

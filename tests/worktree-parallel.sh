@@ -2,7 +2,7 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-checker="$repo_root/scripts/graph-check"
+checker="$repo_root/scripts/braintree"
 root=$(mktemp -d "${TMPDIR:-/tmp}/bt-worktree-parallel.XXXXXX")
 repo="$root/repo"
 trees=""
@@ -25,7 +25,7 @@ printf '\n# Result\n\nAlpha evidence.\n' >>"$a/nodes/active/TAS-001-alpha.md"; c
 printf '\n# Result\n\nBeta evidence.\n' >>"$b/nodes/active/TAS-002-beta.md"; commit "$b" beta
 git -C "$repo" merge -q --no-edit disjoint-a && git -C "$repo" merge -q --no-edit disjoint-b
 grep -q 'Alpha evidence.' "$repo/nodes/active/TAS-001-alpha.md" && grep -q 'Beta evidence.' "$repo/nodes/active/TAS-002-beta.md" || fail 'disjoint evidence lost'
-"$checker" "$repo/nodes" >/dev/null || fail 'disjoint merge invalid'
+"$checker" check "$repo/nodes" >/dev/null || fail 'disjoint merge invalid'
 pass disjoint-assigned-edits
 
 # 2: identical Focus observations are advisory; coordinator direct assignment rejects duplicate work.
@@ -43,7 +43,7 @@ node "$da/nodes/active/TAS-100-alpha.md" 'Duplicate alpha.' 'Finish.' 'Area [[ID
 node "$db/nodes/active/TAS-100-beta.md" 'Duplicate beta.' 'Finish.' 'Area [[IDX-001-root]].'; commit "$db" duplicate-b
 git -C "$repo" merge -q --no-edit duplicate-a && git -C "$repo" merge -q --no-edit duplicate-b
 [ -f "$repo/nodes/active/TAS-100-alpha.md" ] && [ -f "$repo/nodes/active/TAS-100-beta.md" ] || fail 'Git did not retain duplicate paths'
-if "$checker" "$repo/nodes" >"$root/duplicate.out" 2>&1; then fail 'checker accepted duplicate numeric ID'; fi
+if "$checker" check "$repo/nodes" >"$root/duplicate.out" 2>&1; then fail 'checker accepted duplicate numeric ID'; fi
 grep -q 'duplicate node identity: TAS-100' "$root/duplicate.out" || fail 'checker did not report identity duplication'
 pass duplicate-numeric-id
 
@@ -60,7 +60,7 @@ pass rename-versus-edit-divergence
 # 5: integrated dependency context changes are detected before consumer execution.
 setup; node "$repo/nodes/resolved/DEF-010-contract.md" 'Initial contract.' '' 'Area [[IDX-001-root]].'; node "$repo/nodes/active/TAS-011-consumer.md" 'Consumer.' 'Execute consumer.' 'Area [[IDX-001-root]].'; printf '\nDepends on [[DEF-010-contract]] at context_rev 1.\n' >>"$repo/nodes/active/TAS-011-consumer.md"; git -C "$repo" add . && git -C "$repo" commit -qm consumer
 dep=$(tree dependency); consumer=$(tree consumer); sed -i.bak 's/context_rev: 1/context_rev: 2/' "$dep/nodes/resolved/DEF-010-contract.md"; rm "$dep/nodes/resolved/DEF-010-contract.md.bak"; commit "$dep" dependency; git -C "$repo" merge -q --no-edit dependency
-if "$checker" "$repo/nodes" >"$root/stale.out" 2>&1; then fail 'stale consumer passed'; fi
+if "$checker" check "$repo/nodes" >"$root/stale.out" 2>&1; then fail 'stale consumer passed'; fi
 grep -q 'context_rev mismatch' "$root/stale.out" && [ -z "$(git -C "$consumer" status --porcelain)" ] || fail 'drift was not caught before execution'
 pass dependency-context-drift
 

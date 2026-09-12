@@ -165,7 +165,7 @@ def test_reindex_is_read_only_and_recovers(
     before = {
         path: path.read_bytes() for path in sorted(vault.rglob("*.md"))
     }
-    subprocess.run([*command, "reindex", str(vault)], env=env, capture_output=True, check=True)
+    subprocess.run([*command, "index", str(vault)], env=env, capture_output=True, check=True)
     search = subprocess.run([*command, "search", "needle"], env=env, capture_output=True, text=True)
     assert '"DEF-001","resolved"' in search.stdout
     backlinks = subprocess.run(
@@ -181,7 +181,7 @@ def test_reindex_is_read_only_and_recovers(
 
     database = tmp_path / "sidecar" / "projects" / "verification-test" / "graph.sqlite3"
     database.unlink()
-    subprocess.run([*command, "reindex", str(vault)], env=env, capture_output=True, check=True)
+    subprocess.run([*command, "index", str(vault)], env=env, capture_output=True, check=True)
     recovered = subprocess.run(
         [*command, "search", "needle"], env=env, capture_output=True, text=True
     )

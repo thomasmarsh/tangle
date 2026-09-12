@@ -128,7 +128,7 @@ def test_scan_missing_vault_errors(
 
 def test_scan_requires_a_vault(capsys: pytest.CaptureFixture[str]) -> None:
     assert feedback_scan.main([]) == 2
-    assert "feedback-scan requires at least one vault" in capsys.readouterr().out
+    assert "braintree feedback scan requires at least one vault" in capsys.readouterr().out
 
 
 def test_scan_rejects_bad_limit(capsys: pytest.CaptureFixture[str]) -> None:
@@ -144,4 +144,4 @@ def test_scan_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> No
 def test_scan_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert feedback_scan.main(["--help"]) == 0
     assert feedback_scan.main(["-h"]) == 0
-    assert "usage: feedback-scan" in capsys.readouterr().out
+    assert "usage: braintree feedback scan" in capsys.readouterr().out

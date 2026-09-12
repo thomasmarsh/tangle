@@ -18,10 +18,7 @@ _AGENTS = _ROOT / "AGENTS.md"
 _NODES = _ROOT / "nodes"
 _INDEX = _NODES / "index-map.md"
 
-_GRAPH_CHECK_COMMAND = (
-    "After each integration, run "
-    "`uv run --project .agents/skills/braintree --frozen graph-check nodes`"
-)
+_GRAPH_CHECK_COMMAND = "After each integration, run `braintree check nodes`"
 
 _HYBRID_CONTRACT: tuple[str, ...] = (
     "nodes/proposed/",
@@ -30,18 +27,18 @@ _HYBRID_CONTRACT: tuple[str, ...] = (
     "nodes/resolved/",
     "Markdown is the durable, human-visible authority",
     "Obsidian-compatible",
-    "installed `bt` command",
+    "installed `braintree` command",
     "workers read or write SQLite directly",
-    "bt reindex [nodes]",
+    "braintree index [nodes]",
     "FTS data from Markdown",
     "authoritative only for local operational coordination",
-    "bt allocate PREFIX",
-    "bt claim NODE AGENT",
-    "bt hash NODE",
+    "braintree allocate PREFIX",
+    "braintree claim NODE AGENT",
+    "braintree hash NODE",
     "SHA-256 hex digest of the node file's raw UTF-8 bytes",
     "frontmatter included",
     "Loss of the database may lose claims and indexes",
-    "`bt init` then `bt reindex`",
+    "`braintree init` then `braintree index`",
     "one host and a local filesystem",
     "network-mounted",
     "PostgreSQL",
@@ -78,10 +75,10 @@ _PARALLEL_CONTRACT: tuple[str, ...] = (
     "Coordinator preallocation",
     "explicitly disjoint numeric ranges",
     "checks for an existing collision only; it is never an ID reservation",
-    "`bt allocate PREFIX` to atomically reserve an ID",
+    "`braintree allocate PREFIX` to atomically reserve an ID",
     "Branch-local `owner` or claim metadata is insufficient",
     "worker records the integration base and its assigned node path and write set",
-    "hashes its starting Markdown node with `bt hash`, and claims it with `bt claim`",
+    "hashes its starting Markdown node with `braintree hash`, and claims it with `braintree claim`",
     "then release the matching claim",
     "A worktree slice is not a node boundary: a fresh worker may continue the assigned node",
     "content update and its status move coherent in one commit or handoff bundle",
@@ -113,12 +110,12 @@ _CANONICAL_CONTRACT: tuple[str, ...] = (
     "A `DEC` node records a settled choice",
     "resolved `DEF` or `DEC` is current knowledge",
     "A settled `DEF` or `DEC` is `resolved`",
-    "`graph-check` reports a pinned dependency whose target is "
+    "`braintree check` reports a pinned dependency whose target is "
     "`proposed`, `active`, or `blocked`",
     "`--allow-stale` does not relax that check",
     "The bump commit shape:",
     "commit the semantic `context_rev` bump with the bumped node alone",
-    "sanctioned staged-staleness gate `graph-check --allow-stale nodes`",
+    "sanctioned staged-staleness gate `braintree check --allow-stale nodes`",
     "still rejects a missing or malformed pin",
     "relaxes only the revision equality",
     "Reconciliation is separate work",
@@ -142,27 +139,25 @@ _FEEDBACK_CONTRACT: tuple[str, ...] = (
     "from Markdown alone, with no sidecar, network, or write to the scanned vault",
     "`FBK-<n>-<slug>.md`",
     "braintree_revision:",
-    "braintree_revision: 0.4.0+g1b58d57",
+    "braintree_revision: 0.5.0+g1b58d57",
     "braintree_revision: unknown",
-    "Read the revision to record with `bt --version`",
-    "`graph-check --version`",
+    "Read the revision to record with `braintree --version`",
     "generated `installed-revision` stamp",
     "`<version>+g<short-sha>`",
     "`<version>+unknown`",
-    "single-sourced in `pyproject.toml`",
     "Treat the public `<version>` as the compatibility signal",
     "`+g<short-sha>` as provenance",
     "never resolve the source revision against the remote",
     "one `# Feedback` section",
     "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
-    "`graph-check` rejects an `FBK` node that omits or malforms `braintree_revision`",
+    "`braintree check` rejects an `FBK` node that omits or malforms `braintree_revision`",
     "Record feedback with the writing half of the mechanism",
-    "`feedback-record`",
+    "`braintree feedback record`",
     "allocates the next `FBK` id from Markdown",
     "routes the node to the vault's root hub",
     "degrades explicitly to `<version>+unknown` when no record is present",
-    "valid, routed `FBK` node that `graph-check` accepts",
-    "read-only `feedback-scan` command over one or more vault roots",
+    "valid, routed `FBK` node that `braintree check` accepts",
+    "read-only `braintree feedback scan` command over one or more vault roots",
     "feedback: 0 nodes",
     "no sidecar or network",
     "Triage each scanned result into this graph",
@@ -182,6 +177,25 @@ _ABSENT_CONTRACT: tuple[str, ...] = (
     "sequence ledger",
     "vault-wide revision",
     "increment it on every write",
+)
+
+# The unified `braintree` command must hide the implementation: no documented
+# surface may name the runtime, toolchain, package layout, or internal command
+# names.
+_IMPLEMENTATION_LEAKS: tuple[str, ...] = (
+    "uv run",
+    "--frozen",
+    "pyproject",
+    "uv.lock",
+    "python",
+    "Python",
+    ".venv",
+    "graph-check",
+    "feedback-scan",
+    "feedback-record",
+    ".agents/skills",
+    ".claude/skills",
+    ".pi/skills",
 )
 
 
@@ -233,6 +247,13 @@ def test_skill_frontmatter_and_hybrid_contract() -> None:
     assert re.search(r"^description: .+", header, re.MULTILINE)
     _assert_present(text, _HYBRID_CONTRACT)
     _assert_absent(text, _ABSENT_CONTRACT)
+
+
+def test_documented_surfaces_hide_the_implementation() -> None:
+    for path in (_SKILL, _AGENTS, _ROOT / "README.md"):
+        text = _read(path)
+        leaks = [value for value in _IMPLEMENTATION_LEAKS if value in text]
+        assert not leaks, f"{path.name} leaks implementation detail: {leaks!r}"
 
 
 def test_skill_admission_and_parallel_contract() -> None:

@@ -816,17 +816,17 @@ def _emit_historical_accounting(runs: list[list[Json]], provenance: list[Json]) 
 def _protocol() -> None:
     print("token_benchmark{status,live_calls,baseline}: ready,0,absent")
     print(
-        "record: uv run token-benchmark --record --model MODEL "
+        "record: braintree benchmark token --record --model MODEL "
         "--reasoning-effort low --representation graph --scale small "
         "--repetitions 3 --output benchmark/token-baseline.json"
     )
     print(
-        "control: uv run token-benchmark --record --model MODEL "
+        "control: braintree benchmark token --record --model MODEL "
         "--reasoning-effort low --representation plan --scale small "
         "--repetitions 3 --output benchmark/token-plan-control.json"
     )
     print(
-        "historical accounting: uv run token-benchmark --session PATH "
+        "historical accounting: braintree benchmark token --session PATH "
         "[--task-path /root/task]"
     )
 
@@ -1069,7 +1069,7 @@ def _run_record(options: argparse.Namespace) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="token-benchmark",
+        prog="braintree benchmark token",
         description="Opt-in Codex token benchmark with a zero-live-call protocol.",
     )
     parser.add_argument("--protocol", action="store_true", help="Print the no-live-call protocol")

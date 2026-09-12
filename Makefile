@@ -18,10 +18,10 @@ test:
 	exit $$status
 
 benchmark:
-	uv run token-benchmark --protocol
+	uv run braintree benchmark token --protocol
 
 diagnostic-benchmark:
-	uv run behavioral-benchmark --verify
+	uv run braintree benchmark behavioral --verify
 
 storage-comparison:
-	uv run storage-comparison --verify
+	uv run braintree benchmark storage --verify

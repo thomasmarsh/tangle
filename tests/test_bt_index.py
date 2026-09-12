@@ -66,7 +66,7 @@ def test_reindex_counts_and_queries(tmp_path: Path, run_bt: RunBt) -> None:
     _seed(vault)
     env = _env(tmp_path, vault)
 
-    output = run_bt("reindex", env=env)
+    output = run_bt("index", env=env)
     assert output.stdout.splitlines()[:2] == ["nodes: 4", "edges: 5"]
 
     search = run_bt("search", "durable", env=env)
@@ -84,9 +84,9 @@ def test_reindex_recovers_after_database_loss(tmp_path: Path, run_bt: RunBt) -> 
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    run_bt("reindex", env=env)
+    run_bt("index", env=env)
     _database(tmp_path).unlink()
-    run_bt("reindex", env=env)
+    run_bt("index", env=env)
     assert '"DEF-001"' in run_bt("search", "protocol", env=env).stdout
 
 
@@ -99,7 +99,7 @@ def test_explicit_nodes_argument_overrides_environment(
         "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
         "BT_PROJECT_ID": "index-arg-test",
     }
-    output = run_bt("reindex", str(vault), env=env)
+    output = run_bt("index", str(vault), env=env)
     assert output.stdout.splitlines()[:2] == ["nodes: 4", "edges: 5"]
 
 

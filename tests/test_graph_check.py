@@ -390,7 +390,7 @@ def test_allow_orphan_suppresses_orphan(
 def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["--help"]) == 0
     assert graph_check.main(["-h"]) == 0
-    assert "usage: graph-check" in capsys.readouterr().out
+    assert "usage: braintree check" in capsys.readouterr().out
 
 
 def test_unknown_option_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
@@ -400,7 +400,7 @@ def test_unknown_option_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_extra_argument_exits_two(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["nodes", "extra"]) == 2
-    assert "usage: graph-check" in capsys.readouterr().out
+    assert "usage: braintree check" in capsys.readouterr().out
 
 
 def test_missing_directory_exits_one(capsys: pytest.CaptureFixture[str]) -> None:

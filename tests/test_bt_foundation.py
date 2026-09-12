@@ -150,7 +150,7 @@ def test_reindex_seeds_reservations(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
     env["BT_NODES_DIR"] = str(vault)
 
-    assert run_bt("reindex", str(vault), env=env).returncode == 0
+    assert run_bt("index", str(vault), env=env).returncode == 0
     assert run_bt("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-008"'
 
 

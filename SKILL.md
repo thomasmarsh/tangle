@@ -9,13 +9,13 @@ Markdown is the durable, human-visible authority: keep the vault directly editab
 
 ## Hybrid sidecar contract
 
-Use the installed `bt` command for graph indexes and live coordination: `uv run --project .agents/skills/braintree --frozen bt ...` (`.claude/skills/braintree` for Claude, `.pi/skills/braintree` for pi). Do not have workers read or write SQLite directly. The sidecar is an untracked external SQLite database keyed by the Git common directory and shared by all worktrees; `BT_SIDECAR_DIR`/`BT_PROJECT_ID` override it for tests.
+Use the installed `braintree` command for graph indexes and live coordination. Do not have workers read or write SQLite directly. The sidecar is an untracked external SQLite database keyed by the Git common directory and shared by all worktrees; `BT_SIDECAR_DIR`/`BT_PROJECT_ID` override it for tests.
 
 - Markdown stays authoritative; SQLite is authoritative only for local operational coordination.
-- `bt reindex [nodes]` rebuilds derived node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown; `bt search`, `bt backlinks`, and `bt stale` reconcile first.
-- `bt allocate PREFIX` atomically reserves an ID; `bt claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease, and `bt release NODE AGENT --base-hash HASH` releases it. The release hash must be the starting hash recorded by the claim: a hash or owner mismatch fails non-zero and names the cause, while `no-op` means the node holds no unexpired lease.
-- `bt hash NODE` prints the base hash a claim records: the SHA-256 hex digest of the node file's raw UTF-8 bytes, frontmatter included. Get it from `bt hash` rather than reimplementing the algorithm, and pass that same starting value to `bt claim` and `bt release`.
-- Run `bt init` before coordinated work. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `bt init` then `bt reindex`.
+- `braintree index [nodes]` rebuilds derived node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown; `braintree search`, `braintree backlinks`, and `braintree stale` reconcile first.
+- `braintree allocate PREFIX` atomically reserves an ID; `braintree claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease, and `braintree release NODE AGENT --base-hash HASH` releases it. The release hash must be the starting hash recorded by the claim: a hash or owner mismatch fails non-zero and names the cause, while `no-op` means the node holds no unexpired lease.
+- `braintree hash NODE` prints the base hash a claim records: the SHA-256 hex digest of the node file's raw UTF-8 bytes, frontmatter included. Get it from `braintree hash` rather than reimplementing the algorithm, and pass that same starting value to `braintree claim` and `braintree release`.
+- Run `braintree init` before coordinated work. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `braintree init` then `braintree index`.
 - The sidecar is for concurrent processes on one host and a local filesystem; it refuses a network-mounted location unless overridden. For multi-host coordination use a server database such as PostgreSQL; SQLite/WAL is not that service.
 - Keep status directories and Markdown pointers. A stationary-path/status-in-database migration is deferred.
 
@@ -64,13 +64,13 @@ next: Add the failing boundary test.
 - One agent writes a node and its status path at a time. Shared parents, `index-map.md`, definitions, and root hubs are coordinator-owned unless their writes are explicitly serialized.
 - A worktree is a snapshot, not global truth; workers do not assume unseen work or IDs are unclaimed.
 - The coordinator integrates child evidence, reconciles upstream change, and alone resolves a coordinating parent after all required child work is integrated.
-- For parallel creation, use `bt allocate PREFIX` to atomically reserve an ID; Coordinator preallocation or explicitly disjoint numeric ranges are valid offline alternatives. A local `find` checks for an existing collision only; it is never an ID reservation. Branch-local `owner` or claim metadata is insufficient because separate worktrees can make the same claim without seeing each other.
+- For parallel creation, use `braintree allocate PREFIX` to atomically reserve an ID; Coordinator preallocation or explicitly disjoint numeric ranges are valid offline alternatives. A local `find` checks for an existing collision only; it is never an ID reservation. Branch-local `owner` or claim metadata is insufficient because separate worktrees can make the same claim without seeing each other.
 
-Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node with `bt hash`, and claims it with `bt claim`. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
+Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node with `braintree hash`, and claims it with `braintree claim`. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
 
-Serial work uses the same discipline without branches: self-assign one node and write set, claim it, keep content and status coherent, run `uv run --project .agents/skills/braintree --frozen graph-check nodes`, and do not leave a resolved status move uncommitted.
+Serial work uses the same discipline without branches: self-assign one node and write set, claim it, keep content and status coherent, run `braintree check nodes`, and do not leave a resolved status move uncommitted.
 
-The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `uv run --project .agents/skills/braintree --frozen graph-check nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
+The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `braintree check nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
 
 ## Reachability contract
 
@@ -86,9 +86,9 @@ A direct child is a node whose primary `Parent` or `Area` is the current node. A
 
 ## Dependency revisions and staleness
 
-Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at context_rev 7.` The pin must terminate its line; trailing text after `at context_rev N.` is invalid. Do not pin navigation links. A node is `Stale` when a dependency is missing, its current `context_rev` differs from the pin, or the link lacks a pin; do not add `stale` to status or frontmatter. A semantic change leaves dependents' pins unchanged so one exact backlink search finds the reconciliation work. Confirm each pinned dependency is `resolved` before executing; resolution does not change `context_rev`, so completion is detected from the status directory. `graph-check` reports a pinned dependency whose target is `proposed`, `active`, or `blocked`, and `--allow-stale` does not relax that check because it only relaxes the revision equality.
+Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at context_rev 7.` The pin must terminate its line; trailing text after `at context_rev N.` is invalid. Do not pin navigation links. A node is `Stale` when a dependency is missing, its current `context_rev` differs from the pin, or the link lacks a pin; do not add `stale` to status or frontmatter. A semantic change leaves dependents' pins unchanged so one exact backlink search finds the reconciliation work. Confirm each pinned dependency is `resolved` before executing; resolution does not change `context_rev`, so completion is detected from the status directory. `braintree check` reports a pinned dependency whose target is `proposed`, `active`, or `blocked`, and `--allow-stale` does not relax that check because it only relaxes the revision equality.
 
-The bump commit shape: commit the semantic `context_rev` bump with the bumped node alone, leaving pinned consumers stale on purpose so the exact backlink search finds them. That commit runs the sanctioned staged-staleness gate `graph-check --allow-stale nodes`, which still rejects a missing or malformed pin and relaxes only the revision equality; plain `graph-check nodes` remains the normal gate everywhere else. Reconciliation is separate work owned by each consumer: reread the dependency, update assumptions, reset the pin to the current `context_rev`, and pass the plain gate before that consumer executes. `--allow-stale` is sanctioned only for a deliberate staged-staleness commit: never use it to silence a pin you can reconcile now, and never leave a consumer stale across its own execution.
+The bump commit shape: commit the semantic `context_rev` bump with the bumped node alone, leaving pinned consumers stale on purpose so the exact backlink search finds them. That commit runs the sanctioned staged-staleness gate `braintree check --allow-stale nodes`, which still rejects a missing or malformed pin and relaxes only the revision equality; plain `braintree check nodes` remains the normal gate everywhere else. Reconciliation is separate work owned by each consumer: reread the dependency, update assumptions, reset the pin to the current `context_rev`, and pass the plain gate before that consumer executes. `--allow-stale` is sanctioned only for a deliberate staged-staleness commit: never use it to silence a pin you can reconcile now, and never leave a consumer stale across its own execution.
 
 ## Read and execute loop
 
@@ -117,20 +117,20 @@ Prefer bounded results. Direct backlink search is authoritative for explicit edg
 
 ## Integrity and sidecar commands
 
-`graph-check` is a portable read-only Markdown validator needing no sidecar; `feedback-scan` is a portable read-only collector for external feedback; `bt` provides the optional hybrid index and same-host coordination:
+`braintree check` is a portable read-only Markdown validator needing no sidecar; `braintree feedback scan` is a portable read-only collector for external feedback; the coordination verbs provide the optional hybrid index and same-host coordination:
 
 ```sh
-uv run --project .agents/skills/braintree --frozen graph-check nodes
-uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/other-vault
-uv run --project .agents/skills/braintree --frozen bt reindex nodes
-uv run --project .agents/skills/braintree --frozen bt search 'authentication' --limit 10
+braintree check nodes
+braintree feedback scan /path/to/other-vault
+braintree index nodes
+braintree search 'authentication' --limit 10
 ```
 
 Run from the project root. The checker validates links, headers and lifecycle rules, canonical edges and frontiers, dependency-pin syntax and revision mismatch, primary-route reachability, and parent cycles.
 
 ## Mutation rules
 
-- Use `find` (or `bt allocate PREFIX` in parallel) to avoid ID collisions; a local `find` detects collisions only and never reserves an ID.
+- Use `find` (or `braintree allocate PREFIX` in parallel) to avoid ID collisions; a local `find` detects collisions only and never reserves an ID.
 - Refresh only the mutated node's `updated`; increment `context_rev` only for a consumer-relevant semantic change. Never update unrelated nodes or the index as bookkeeping.
 - Advancing a coordinating parent's `next` after its frontier child is resolved is part of that resolution rather than bookkeeping, so the resolving worker owns that edit; refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation.
 - Change status by moving the unchanged filename between status directories; wikilinks use the basename and stay stable.
@@ -145,25 +145,25 @@ Run from the project root. The checker validates links, headers and lifecycle ru
 A consuming project records Braintree friction as an `FBK` node. The `FBK` type is the one feedback marker, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, with no sidecar, network, or write to the scanned vault.
 
 - Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route into its own vault, like any node.
-- Carry the installed Braintree revision as `braintree_revision:` frontmatter, for example `braintree_revision: 0.4.0+g1b58d57`; write `braintree_revision: unknown` when no revision can be determined.
-- Read the revision to record with `bt --version` (or `graph-check --version`): an installed skill prints the installer's generated `installed-revision` stamp, `<version>+g<short-sha>`, or `<version>+unknown` when the source revision could not be determined. The declared semantic version stays single-sourced in `pyproject.toml`. Treat the public `<version>` as the compatibility signal and the `+g<short-sha>` as provenance: decide compatibility from the version, and never resolve the source revision against the remote, which the offline record cannot support.
+- Carry the installed Braintree revision as `braintree_revision:` frontmatter, for example `braintree_revision: 0.5.0+g1b58d57`; write `braintree_revision: unknown` when no revision can be determined.
+- Read the revision to record with `braintree --version`: an installed skill prints the installer's generated `installed-revision` stamp, `<version>+g<short-sha>`, or `<version>+unknown` when the source revision could not be determined. Treat the public `<version>` as the compatibility signal and the `+g<short-sha>` as provenance: decide compatibility from the version, and never resolve the source revision against the remote, which the offline record cannot support.
 - State the friction in one `# Feedback` section with an `Attempted:`, a `Friction:`, and an `Improvement:` line.
 
-`graph-check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
+`braintree check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
 
-Record feedback with the writing half of the mechanism. Run `feedback-record` from the consuming project's vault root and it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md` in one step:
+Record feedback with the writing half of the mechanism. Run `braintree feedback record` from the consuming project's vault root and it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md` in one step:
 
 ```sh
-uv run --project .agents/skills/braintree --frozen feedback-record \
+braintree feedback record \
   --attempted '...' --friction '...' --improvement '...'
 ```
 
-`--nodes` points at the vault's `nodes/` directory when it is not the current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from `index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the summary derived from the friction, and the derived slug. The command reads the installed `installed-revision` record and degrades explicitly to `<version>+unknown` when no record is present, so the node always names the Braintree version in use. The result is a valid, routed `FBK` node that `graph-check` accepts.
+`--nodes` points at the vault's `nodes/` directory when it is not the current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from `index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the summary derived from the friction, and the derived slug. The command reads the installed `installed-revision` record and degrades explicitly to `<version>+unknown` when no record is present, so the node always names the Braintree version in use. The result is a valid, routed `FBK` node that `braintree check` accepts.
 
-To collect feedback from another vault, run the read-only `feedback-scan` command over one or more vault roots:
+To collect feedback from another vault, run the read-only `braintree feedback scan` command over one or more vault roots:
 
 ```sh
-uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/vault
+braintree feedback scan /path/to/vault
 ```
 
 It reads only `FBK-*.md` frontmatter and prints compact TOON with each node's vault, id, status, Braintree revision, and summary; it prints `feedback: 0 nodes` when there is none. It works on a read-only checkout with no sidecar or network, and never writes to the scanned vault.

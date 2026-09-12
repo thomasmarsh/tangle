@@ -1,0 +1,5 @@
+#!/bin/sh
+# Run the unified Braintree command from this checkout.
+set -eu
+here=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+exec uv run --project "$here" --frozen braintree "$@"

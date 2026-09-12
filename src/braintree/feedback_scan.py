@@ -20,7 +20,7 @@ from .toon import field, row
 __all__ = ["main"]
 
 _USAGE = (
-    "usage: feedback-scan [--limit N] VAULT [VAULT ...]\n"
+    "usage: braintree feedback scan [--limit N] VAULT [VAULT ...]\n"
     "Scan external vaults for FBK feedback nodes without writing state."
 )
 
@@ -88,7 +88,7 @@ def _print_results(rows: Sequence[tuple[str, str, str, str, str]]) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the ``feedback-scan`` command and return the process exit code."""
+    """Run the ``braintree feedback scan`` command and return the exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
     limit: int | None = None
     vaults: list[str] = []
@@ -112,8 +112,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             vaults.append(argument)
     if not vaults:
-        print(field("error", "feedback-scan requires at least one vault"))
-        print(field("help", "Run `feedback-scan --help` for usage."))
+        print(field("error", "braintree feedback scan requires at least one vault"))
+        print(field("help", "Run `braintree feedback scan --help` for usage."))
         return 2
     rows: list[tuple[str, str, str, str, str]] = []
     for vault in vaults:

@@ -23,7 +23,7 @@ from .toon import field
 __all__ = ["main"]
 
 _USAGE = (
-    "usage: feedback-record [--nodes DIR] [--route ROUTE] [--id FBK-NNN] "
+    "usage: braintree feedback record [--nodes DIR] [--route ROUTE] [--id FBK-NNN] "
     "[--summary TEXT] [--slug SLUG] --attempted TEXT --friction TEXT "
     "--improvement TEXT\n"
     "Write one routed, revision-stamped FBK feedback node without a sidecar."
@@ -132,7 +132,7 @@ def _write_new(path: str, content: str) -> bool:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the ``feedback-record`` command and return the process exit code."""
+    """Run the ``braintree feedback record`` command and return the exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
     nodes_dir = os.environ.get("BT_NODES_DIR", "nodes")
     route: str | None = None
@@ -182,7 +182,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not value
     ]
     if missing:
-        print(field("error", f"feedback-record requires {', '.join(missing)}"))
+        print(field("error", f"braintree feedback record requires {', '.join(missing)}"))
         return 2
 
     if not os.path.isdir(nodes_dir):

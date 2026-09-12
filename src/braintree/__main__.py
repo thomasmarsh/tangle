@@ -1,7 +1,7 @@
-"""Enable ``python -m braintree`` to run the ``bt`` command."""
+"""Enable ``python -m braintree`` to run the unified ``braintree`` command."""
 
 from __future__ import annotations
 
-from .cli import main
+from .main import main
 
 raise SystemExit(main())

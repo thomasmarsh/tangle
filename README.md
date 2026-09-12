@@ -20,16 +20,16 @@ It is compatible with Codex, Claude Code, and pi because all consume the standar
 
 ## Hybrid local sidecar
 
-Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `bt` command hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
+Markdown is authoritative for prose, wikilinks, context revisions and dependency pins, status directories, priority, and next actions. The installed `braintree` command hides SQLite behind specialized commands. It rebuilds derived nodes, edges, backlinks, stale-pin checks, and FTS search from Markdown, while making local claims, expiring leases, and numeric ID allocation atomic.
 
 ```sh
-uv run bt init
-uv run bt reindex nodes
-uv run bt search 'authentication' --limit 10
-uv run bt allocate TAS
+braintree init
+braintree index nodes
+braintree search 'authentication' --limit 10
+braintree allocate TAS
 ```
 
-The sidecar is external and untracked, keyed by the Git common directory under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all local worktrees share it. It is rebuildable: database loss loses only indexes and leases, recovered by `bt init` and `bt reindex`. SQLite WAL is limited to concurrent processes on one host and a local filesystem. Do not place it on a network or synchronization filesystem. Cross-host coordination needs a server database (for example PostgreSQL) behind the same command interface. Status directories remain Markdown-authoritative; a stationary-path migration is deferred pending evidence that status-renames still cause material churn.
+The sidecar is external and untracked, keyed by the Git common directory under `$XDG_STATE_HOME/braintree` or `~/.local/state/braintree`; all local worktrees share it. It is rebuildable: database loss loses only indexes and leases, recovered by `braintree init` and `braintree index`. SQLite WAL is limited to concurrent processes on one host and a local filesystem. Do not place it on a network or synchronization filesystem. Cross-host coordination needs a server database (for example PostgreSQL) behind the same command interface. Status directories remain Markdown-authoritative; a stationary-path migration is deferred pending evidence that status-renames still cause material churn.
 
 ## Install
 
@@ -55,7 +55,7 @@ The generic installer retains the equivalent legacy Claude Code entry point:
 ./scripts/install.sh --claude --project /path/to/project
 ```
 
-The destination is `<root>/.agents/skills/braintree` for Codex, `<root>/.claude/skills/braintree` for Claude Code, or `<root>/.pi/skills/braintree` for a pi project (global pi installs use `<home>/.pi/agent/skills/braintree`). Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
+The installer places the skill where the selected coding agent discovers it and writes the single `braintree` command to `<root>/.local/bin/braintree`; a `--home` install therefore places it at `~/.local/bin/braintree`. Put `<root>/.local/bin` on `PATH` so consuming projects run bare `braintree`. Re-running an unchanged install reports a structured `no-op` result and exits successfully. Inspect a planned destination without writes:
 
 ```sh
 ./scripts/install.sh --codex --project /path/to/project --dry-run
@@ -71,41 +71,38 @@ The offline test uses only temporary directories; it never creates or updates a 
 make test
 ```
 
-## Optional graph check
+## Validate and collect feedback
 
-Installed projects can validate the current graph with the bundled Markdown checker (which needs no sidecar) or use the optional sidecar commands from the project root:
+Installed projects validate the current graph with the bundled Markdown checker (which needs no sidecar) and query the optional index from any project root:
 
 ```sh
-uv run --project .agents/skills/braintree --frozen graph-check nodes
-# or, for a Claude Code installation
-uv run --project .claude/skills/braintree --frozen graph-check nodes
-# or, for a pi installation
-uv run --project .pi/skills/braintree --frozen graph-check nodes
-uv run --project .agents/skills/braintree --frozen bt reindex nodes
+braintree check nodes
+braintree index nodes
+braintree search 'authentication' --limit 10
 ```
 
-It is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
+`braintree check` is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
 
-The read-only `feedback-scan` collector gathers `FBK` feedback from one or more external vaults without a sidecar or network access, and never writes to the scanned vault:
+The read-only `braintree feedback scan` collector gathers `FBK` feedback from one or more external vaults without a sidecar or network access, and never writes to the scanned vault:
 
 ```sh
-uv run --project .agents/skills/braintree --frozen feedback-scan /path/to/other-vault
+braintree feedback scan /path/to/other-vault
 ```
 
 It prints compact TOON with each feedback node's vault, id, status, Braintree revision, and summary, and states `feedback: 0 nodes` when there is none.
 
-The `feedback-record` writer is the recording half of the same mechanism. Run from a consuming project's vault root, it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub unless `--route` overrides it, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md`:
+The `braintree feedback record` writer is the recording half of the same mechanism. Run from a consuming project's vault root, it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub unless `--route` overrides it, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md`:
 
 ```sh
-uv run --project .agents/skills/braintree --frozen feedback-record \
+braintree feedback record \
   --attempted '...' --friction '...' --improvement '...'
 ```
 
-`--nodes` selects a `nodes/` directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `graph-check` accepts.
+`--nodes` selects a `nodes/` directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `braintree check` accepts.
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors. They install the `uv` project (package, lockfile, and metadata) that provides the `bt`, `graph-check`, `feedback-scan`, and `feedback-record` console scripts, leaving repository graph state and development files behind. The project has one semantic version, declared in `pyproject.toml`. The installer also writes a generated `installed-revision` stamp recording that version plus the source revision it was copied from, and the installed `bt --version` and `graph-check --version` report it (`0.4.0+g1b58d57`, or `0.4.0+unknown` when the source revision cannot be determined). Compare the public `<version>` when deciding whether an installed skill and a vault are compatible; the `+<short-sha>` build metadata is provenance, not a compatibility ordering.
+`SKILL.md` is the portable instruction entrypoint. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors, copy the skill into place, and generate the `<root>/.local/bin/braintree` command. `braintree` exposes `check`, `feedback scan`, `feedback record`, the index and coordination verbs, and a `benchmark` group for the development benchmarks; it hides the implementation language, package layout, and toolchain behind one command. The installer also writes a generated `installed-revision` stamp recording the semantic version plus the source revision it was copied from, and `braintree --version` reports it (`0.5.0+g1b58d57`, or `0.5.0+unknown` when the source revision cannot be determined). Compare the public `<version>` when deciding whether an installed skill and a vault are compatible; the `+<short-sha>` build metadata is provenance, not a compatibility ordering.
 
 A vault uses this shape:
 
@@ -120,7 +117,7 @@ nodes/
 
 The status directory and node filename are authoritative. Node frontmatter stores only a semantic `context_rev`, update time, a concise summary, and optional priority, next action, or exceptional disposition. `context_rev` changes only when a pinned consumer should reread the node; `updated` changes for every mutation, while Git retains edit history. Context-bearing links pin the dependency context revision they were last reconciled against. `nodes/index-map.md` holds focus, root-hub routes, and query recipes; it is not a copied node catalog and is not rewritten after every mutation. Hubs do not catalog members: `Parent` and `Area` backlinks provide membership, while a parent’s `next` may deliberately route to one child at the current execution frontier.
 
-`DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. `FBK` nodes record Braintree friction for cross-project collection: they carry the installed `braintree_revision` and an `Attempted:`/`Friction:`/`Improvement:` `# Feedback` section, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, and the read-only `feedback-scan` collector gathers those nodes from external vaults for triage into this graph. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
+`DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. `FBK` nodes record Braintree friction for cross-project collection: they carry the installed `braintree_revision` and an `Attempted:`/`Friction:`/`Improvement:` `# Feedback` section, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, and the read-only `braintree feedback scan` collector gathers those nodes from external vaults for triage into this graph. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
 
 Decompose only when work reaches an independently resumable outcome, blocker, dependency, or verification boundary that also has durable execution-memory value; do not create a speculative child tree. A coordinating task states its own outcome and completion criteria, and its `next` names one current action or direct child frontier rather than cataloging children. Child completion is evidence, not an automatic parent resolution: resolve the parent only when its own criteria and evidence are complete and its created children are resolved or explicitly disposed.
 

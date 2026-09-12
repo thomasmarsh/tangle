@@ -26,7 +26,7 @@ _CONTEXT_REV = re.compile(r"^context_rev: (\d+)$", re.MULTILINE)
 _DEPENDENCY_PIN = re.compile(r"Depends on \[\[DEF-900-routing\]\] at context_rev (\d+)\.")
 _PRIMARY_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
 _USAGE = (
-    "usage: behavioral-benchmark [--scales N,N] [--verify]\n"
+    "usage: braintree benchmark behavioral [--scales N,N] [--verify]\n"
     "Generate temporary fixtures and report secondary filesystem diagnostics."
 )
 

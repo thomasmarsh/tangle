@@ -308,7 +308,7 @@ def test_record_missing_nodes_directory(
 def test_record_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert feedback_record.main(["--help"]) == 0
     assert feedback_record.main(["-h"]) == 0
-    assert "usage: feedback-record" in capsys.readouterr().out
+    assert "usage: braintree feedback record" in capsys.readouterr().out
 
 
 def test_record_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> None:

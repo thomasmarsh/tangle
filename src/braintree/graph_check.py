@@ -20,7 +20,7 @@ from .revision import reported_version
 __all__ = ["main"]
 
 _USAGE = (
-    "usage: graph-check [--version] [--allow-stale] [--allow-orphan NODE] "
+    "usage: braintree check [--version] [--allow-stale] [--allow-orphan NODE] "
     "[nodes-directory]\n"
     "Validate a file-only Braintree vault without writing state."
 )
@@ -390,7 +390,7 @@ def _validate(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the ``graph-check`` command and return the process exit code."""
+    """Run the ``braintree check`` command and return the process exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
     allow_stale = False
     allowed_orphans: list[str | None] = []

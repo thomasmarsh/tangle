@@ -17,8 +17,8 @@ Every commit in this repository MUST use the
 
 - Use one of: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
   `build`, `ci`, `chore`, `revert`.
-- Use a scope when it clarifies the area, for example `graph`, `skill`, `bt`,
-  `graph-check`, `installer`, `python`, `obsidian`, `benchmark`, or
+- Use a scope when it clarifies the area, for example `graph`, `skill`,
+  `braintree`, `check`, `index`, `installer`, `obsidian`, `benchmark`, or
   `token-benchmark`.
 - Write the description in the imperative mood, lowercase, with no trailing
   period, and keep the header at or under 72 characters.
@@ -37,10 +37,10 @@ Every commit in this repository MUST use the
 Examples:
 
 ```text
-feat(bt): add atomic ID reservation
-fix(graph-check): reject unpinned context dependencies
+feat(braintree): add atomic ID reservation
+fix(check): reject unpinned context dependencies
 docs(skill): clarify frontier discovery
-refactor(python): port the sidecar to typed Python
+refactor(index): rebuild edges without a sidecar round-trip
 ```
 
 ## This project uses its own Braintree skill
@@ -65,13 +65,13 @@ or ad hoc notes.
 5. Validate graph mutations before finishing:
 
    ```sh
-   uv run graph-check nodes
-   uv run bt reindex nodes   # optional hybrid sidecar index
+   braintree check nodes
+   braintree index nodes   # optional hybrid sidecar index
    ```
 
    A commit that deliberately stages a semantic `context_rev` bump without yet
    reconciling its pinned consumers runs the sanctioned staged-staleness gate
-   instead: `uv run graph-check --allow-stale nodes`. It still requires every
+   instead: `braintree check --allow-stale nodes`. It still requires every
    context edge to be pinned and relaxes only the revision equality. Reconcile
    each consumer before it executes and before finishing, so the plain gate
    passes and a shipped vault has no staged staleness.
@@ -79,7 +79,7 @@ or ad hoc notes.
 6. When the skill is installed into another project, use the documented
    installer (`./scripts/install.sh --codex|--claude|--pi --project <root>` or
    `./scripts/install-claude.sh --project <root>`) and the installed
-   `graph-check` / `bt` console scripts from that project root.
+   `braintree` command from that project root.
 
 Changes to `SKILL.md` change the skill contract and are covered by
 `tests/test_skill.py`; keep those contract strings and the live vault valid.

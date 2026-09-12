@@ -19,7 +19,7 @@ _COMMANDS = (
     "allocate",
     "claim",
     "release",
-    "reindex",
+    "index",
     "search",
     "backlinks",
     "hash",
@@ -69,4 +69,4 @@ def test_bt_status_reports_uninitialized_sidecar(
 
 def test_graph_check_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["--help"]) == 0
-    assert "usage: graph-check" in capsys.readouterr().out
+    assert "usage: braintree check" in capsys.readouterr().out

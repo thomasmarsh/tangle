@@ -22,8 +22,9 @@ if command -v git >/dev/null 2>&1; then
 fi
 expected_record="$expected_version+$expected_revision"
 
-# Every installed skill is a `uv` project. Compare its copied package tree with
-# the repository sources, then prove the installed console script runs.
+# Every installed skill is a `uv` project, and every install also generates
+# the single `braintree` command. Compare its copied package tree with the
+# repository sources, then prove the installed console script and launcher run.
 package_files="pyproject.toml uv.lock .python-version README.md"
 for file in "$repo_root"/src/braintree/*; do
   [ -f "$file" ] || continue
@@ -47,12 +48,19 @@ mtime() {
   stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"
 }
 
+# Every install writes the single `braintree` command to <root>/.local/bin and
+# it must expose the same revision as the installed console script.
+check_launcher() {
+  launcher="$1/.local/bin/braintree"
+  [ -x "$launcher" ]
+  [ "$("$launcher" --version)" = "$expected_record" ]
+}
+
 run_installed() {
   destination=$1
-  uv run --project "$destination" --frozen --quiet graph-check "$repo_root/nodes" >/dev/null
-  uv run --project "$destination" --frozen --quiet feedback-scan "$repo_root/nodes" >/dev/null
-  [ "$(uv run --project "$destination" --frozen --quiet bt --version)" = "$expected_record" ]
-  [ "$(uv run --project "$destination" --frozen --quiet graph-check --version)" = "$expected_record" ]
+  uv run --project "$destination" --frozen --quiet braintree check "$repo_root/nodes" >/dev/null
+  uv run --project "$destination" --frozen --quiet braintree feedback scan "$repo_root/nodes" >/dev/null
+  [ "$(uv run --project "$destination" --frozen --quiet braintree --version)" = "$expected_record" ]
   run_installed_feedback_record "$destination"
 }
 
@@ -74,12 +82,12 @@ updated: 2026-09-12T00:00:00Z
 summary: Root hub.
 ---
 EOF
-  uv run --project "$destination" --frozen --quiet feedback-record \
+  uv run --project "$destination" --frozen --quiet braintree feedback record \
     --nodes "$vault/nodes" \
     --attempted 'Ran the installed command.' \
     --friction 'The installed recording path was untested.' \
     --improvement 'Exercise it in the install test.' >/dev/null
-  uv run --project "$destination" --frozen --quiet graph-check "$vault/nodes" >/dev/null
+  uv run --project "$destination" --frozen --quiet braintree check "$vault/nodes" >/dev/null
   grep -q "braintree_revision: $expected_record" "$vault"/nodes/proposed/FBK-001-*.md
   rm -rf "$vault"
 }
@@ -87,6 +95,7 @@ EOF
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)
 case "$dry_run" in *"$project/.agents/skills/braintree"*) ;; *) exit 1;; esac
 [ ! -e "$project/.agents" ]
+[ ! -e "$project/.local" ]
 
 $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
 codex_destination="$project/.agents/skills/braintree"
@@ -94,13 +103,17 @@ check_tree "$codex_destination"
 check_record "$codex_destination"
 cmp -s "$repo_root/agents/openai.yaml" "$codex_destination/agents/openai.yaml"
 run_installed "$codex_destination"
+check_launcher "$project"
 
 record_path="$codex_destination/src/braintree/installed-revision"
 record_mtime=$(mtime "$record_path")
+launcher_path="$project/.local/bin/braintree"
+launcher_mtime=$(mtime "$launcher_path")
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 [ "$(cat "$record_path")" = "$expected_record" ]
 [ "$(mtime "$record_path")" = "$record_mtime" ]
+[ "$(mtime "$launcher_path")" = "$launcher_mtime" ]
 
 # A changed installed revision is detected and restamped, not reported no-op.
 printf '%s\n' '0.0.0+gold' >"$record_path"
@@ -110,6 +123,7 @@ check_record "$codex_destination"
 
 $repo_root/scripts/install.sh --codex --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/braintree/SKILL.md"
+check_launcher "$home_root"
 
 pi_dry_run=$($repo_root/scripts/install.sh --pi --project "$project" --dry-run)
 case "$pi_dry_run" in *'result: "dry-run"'*"$project/.pi/skills/braintree"*) ;; *) exit 1;; esac
@@ -147,6 +161,7 @@ mkdir -p "$claude_project" "$claude_home"
 claude_dry_run=$($repo_root/scripts/install-claude.sh --project "$claude_project" --dry-run)
 case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/braintree"*) ;; *) exit 1;; esac
 [ ! -e "$claude_project/.claude" ]
+[ ! -e "$claude_project/.local" ]
 
 $repo_root/scripts/install-claude.sh --project "$claude_project" >/dev/null
 wrapper_destination="$claude_project/.claude/skills/braintree"
@@ -154,6 +169,7 @@ check_tree "$wrapper_destination"
 check_record "$wrapper_destination"
 [ ! -e "$wrapper_destination/agents" ]
 run_installed "$wrapper_destination"
+check_launcher "$claude_project"
 claude_repeat=$($repo_root/scripts/install-claude.sh --project "$claude_project")
 case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; esac
 
@@ -176,12 +192,12 @@ for installer in "$repo_root/scripts/install.sh" "$repo_root/scripts/install-cla
 done
 
 help=$($repo_root/scripts/install.sh --help)
-for expected in 'options[9]{flag,meaning}:' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[4]{command,purpose}:' '--codex --project /path/to/project --dry-run' '--claude --project /path/to/project' '--pi --project /path/to/project' '--codex --home $HOME'; do
+for expected in 'options[9]{flag,meaning}:' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[4]{command,purpose}:' '--codex --project /path/to/project --dry-run' '--claude --project /path/to/project' '--pi --project /path/to/project' '--codex --home $HOME'; do
   case "$help" in *"$expected"*) ;; *) exit 1;; esac
 done
 
 claude_help=$($repo_root/scripts/install-claude.sh --help)
-for expected in 'usage: "scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run]"' 'options[6]{flag,meaning}:' 'examples[3]{command,purpose}:' './scripts/install-claude.sh --project /path/to/project --dry-run' './scripts/install-claude.sh --home $HOME'; do
+for expected in 'usage: "scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run]"' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'options[6]{flag,meaning}:' 'examples[3]{command,purpose}:' './scripts/install-claude.sh --project /path/to/project --dry-run' './scripts/install-claude.sh --home $HOME'; do
   case "$claude_help" in *"$expected"*) ;; *) exit 1;; esac
 done
 case "$claude_help" in *'--claude'*|*'--codex'*|*'--pi'*) exit 1;; esac
