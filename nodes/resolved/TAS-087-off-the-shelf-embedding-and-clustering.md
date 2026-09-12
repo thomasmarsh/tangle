@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T19:37:00Z
+updated: 2026-09-12T19:40:11Z
 summary: Add an optional off-the-shelf embedding and manifold-clustering retrieval layer behind the DEC-006 capability boundary without training any model.
-next: "Roll up the parent from the integrated TAS-088..TAS-094 and THO-012 evidence."
 ---
 
 # Context
@@ -69,3 +68,41 @@ with no model training and no change to the default install.
 - The chosen embedding models, reduction, and clustering are off-the-shelf and
   documented with their versions.
 - `make test` passes.
+
+# Result
+
+All eight children resolved; none was disposed or blocked. The thrust landed an
+opt-in, derived, advisory layer behind
+[[DEC-006-semantic-layer-capability-boundary]]; nothing in it is authoritative
+and the default install is unchanged.
+
+- [[TAS-088-optional-embedding-extra]] - a `semantic` extra pins the shipped
+  inference and clustering libraries while `dependencies = []` is preserved,
+  with a documented offline model cache.
+- [[TAS-089-embedding-model-selection]] - fastembed on ONNX Runtime is the
+  shipped runtime, `sentence-transformers/all-MiniLM-L6-v2` is the default and
+  `BAAI/bge-small-en-v1.5` the fallback; no candidate beat the lexical baseline
+  across the fixed corpus.
+- [[TAS-090-native-embedding-provider]] - `braintree semantic embed` speaks the
+  existing stdin/stdout seam, loads the model once per process, reads only the
+  local cache, and degrades to lexical on a cold cache.
+- [[TAS-091-manifold-reduction]] - deterministic UMAP with PCA and t-SNE
+  comparisons, cached by content hash and parameters.
+- [[TAS-092-density-clustering]] - advisory HDBSCAN over the raw and reduced
+  spaces with explicit noise and a separate outlier view.
+- [[TAS-093-cluster-answer-verbs]] - bounded `clusters`, embedding-reranked
+  `similar`, and a graph-only `digest`, byte-identical when the capability is
+  absent.
+- [[TAS-094-clustering-quality-gate]] - `braintree benchmark quality` records
+  stability, route agreement, retrieval, outlier, and token evidence and
+  decides retrieval -> revise, clustering -> revise, digest -> keep.
+- [[THO-012-embedding-clustering-retrieval-theory]] - the strong hypothesis is
+  rejected (embeddings lose near-duplicate retrieval and clusters do not
+  recover the graph's routes) and the narrow one accepted (paraphrase recall and
+  a bounded advisory answer surface at zero training and zero default
+  dependencies).
+
+The default install keeps `dependencies = []`, the dev environment imports no
+heavy module, and every capability-absent answer is byte-identical to the
+lexical baseline. `braintree check nodes`, `braintree index nodes`, `make test`
+(370 passed, 3 heavy-module skips), and `make verb-benchmark` pass.
