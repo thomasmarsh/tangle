@@ -74,5 +74,22 @@ sed 's/Parent \[\[TAS-777-missing\]\]\./Parent [[TAS-001-parent]]./' "$nodes/act
 
 sed 's/Parent \[\[TAS-001-parent\]\]\./Parent [[TAS-002-child]]./' "$nodes/active/TAS-002-child.md" >"$test_root/node" && mv "$test_root/node" "$nodes/active/TAS-002-child.md"
 expect_error parent-cycle 'parent cycle'
+sed 's/Parent \[\[TAS-002-child\]\]\./Parent [[TAS-001-parent]]./' "$nodes/active/TAS-002-child.md" >"$test_root/node" && mv "$test_root/node" "$nodes/active/TAS-002-child.md"
+
+# Lifecycle rules: every task needs next, blocked nodes need a # Blocked
+# section, and disposition is a resolved-only enumerable value.
+write_node "$nodes/active/BUG-001-defect.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Defect.' '---' '' 'Area [[IDX-001-root]].'
+expect_error task-next 'unfinished task requires next'
+rm "$nodes/active/BUG-001-defect.md"
+
+write_node "$nodes/blocked/TAS-003-waiting.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Waiting.' '---' '' 'Area [[IDX-001-root]].'
+expect_error blocked-section 'blocked node requires a # Blocked section'
+write_node "$nodes/blocked/TAS-003-waiting.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Waiting.' '---' '' 'Area [[IDX-001-root]].' '' '# Blocked' '' 'Blocked by the owner decision. Unblocks when the owner selects a rule.'
+"$repo_root/scripts/graph-check" "$nodes" >/dev/null
+rm "$nodes/blocked/TAS-003-waiting.md"
+
+write_node "$nodes/resolved/TAS-004-old.md" '---' 'context_rev: 1' 'updated: 2026-09-10T00:00:00Z' 'summary: Old.' 'disposition: current' '---' '' 'Area [[IDX-001-root]].'
+expect_error disposition 'disposition must be abandoned, deprecated, or superseded'
+rm "$nodes/resolved/TAS-004-old.md"
 
 printf 'graph checker tests: passed\n'

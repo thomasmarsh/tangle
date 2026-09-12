@@ -25,6 +25,9 @@ _USAGE = (
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
 _CONTEXT_EDGES = ("Depends on", "Implements", "Requires", "Governed by")
 _FORBIDDEN_FIELDS = ("id", "type", "status", "seq", "mtime", "rev")
+# Types that record knowledge rather than executable work; only tasks require `next`.
+_KNOWLEDGE_TYPES = frozenset({"THO", "DEF", "DEC", "IDX"})
+_DISPOSITIONS = frozenset({"abandoned", "deprecated", "superseded"})
 
 _RECIPROCAL_EDGE = re.compile(
     r"(?:Child|Parent of|Indexed by|Depended on by|Supersedes|Backlink)\s+\[\["
@@ -41,6 +44,7 @@ _PRIMARY_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE
 _NODE_ID = re.compile(r"[A-Z]+-\d+")
 _ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
 _FOCUS_BLOCK = re.compile(r"^# Focus\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
+_BLOCKED_BLOCK = re.compile(r"^# Blocked\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _INDEX_TABLE = re.compile(r"^\| .*\[\[", re.MULTILINE)
 _INDEX_LINK = re.compile(r"\[\[([A-Z]+-\d+[^\]]*)\]\]")
 _ID_ANCHOR = re.compile(r"IDX-\d+")
@@ -150,15 +154,36 @@ def _collect_nodes(nodes_dir: str, errors: list[str]) -> list[_Node]:
         forbidden = [key for key in metadata if key in _FORBIDDEN_FIELDS]
         if forbidden:
             errors.append(f"{path}: duplicated authority fields: {', '.join(forbidden)}")
-        if status in {"active", "proposed"} and name.startswith("TAS-"):
+        id_match = _NODE_ID.match(name)
+        node_type = id_match.group(0).split("-")[0] if id_match else None
+        if (
+            status in {"active", "proposed"}
+            and node_type is not None
+            and node_type not in _KNOWLEDGE_TYPES
+        ):
             next_value = metadata.get("next")
             if not (isinstance(next_value, str) and next_value != ""):
                 errors.append(f"{path}: unfinished task requires next")
+        if status == "blocked":
+            blocked_match = _BLOCKED_BLOCK.search(text)
+            blocked_section = blocked_match.group(1) if blocked_match else ""
+            if "Blocked by" not in blocked_section or "Unblocks when" not in blocked_section:
+                errors.append(
+                    f"{path}: blocked node requires a # Blocked section with "
+                    "Blocked by and Unblocks when"
+                )
+        disposition = metadata.get("disposition")
+        if disposition is not None:
+            if not (isinstance(disposition, str) and disposition in _DISPOSITIONS):
+                errors.append(
+                    f"{path}: disposition must be abandoned, deprecated, or superseded"
+                )
+            elif status != "resolved":
+                errors.append(f"{path}: disposition requires a resolved node")
         if status == "resolved" and "next" in metadata:
             errors.append(f"{path}: resolved node must omit next")
         if _RECIPROCAL_EDGE.search(text):
             errors.append(f"{path}: stored reciprocal edge")
-        id_match = _NODE_ID.match(name)
         nodes.append(
             _Node(
                 path=path,

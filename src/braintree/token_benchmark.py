@@ -406,6 +406,8 @@ def _generate_fixture(root: str, representation: str, scale: str, benchmark_case
                 _node(
                     summary="Wait for vendor credentials.",
                     next_action="Request vendor credentials.",
+                    extra="# Blocked\n\nBlocked by missing vendor credentials. "
+                    "Unblocks when the vendor issues credentials.",
                 ),
             )
             _write(

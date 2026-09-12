@@ -177,6 +177,100 @@ def test_unfinished_task_requires_next(nodes: Path, capsys: pytest.CaptureFixtur
     assert "unfinished task requires next" in err
 
 
+def test_non_task_type_requires_next(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "active" / "BUG-001-defect.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Defect.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "unfinished task requires next" in err
+
+
+def test_blocked_node_requires_blocked_section(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "blocked" / "TAS-003-waiting.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Waiting.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "blocked node requires a # Blocked section" in err
+
+
+def test_blocked_section_satisfies_contract(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "blocked" / "TAS-003-waiting.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Waiting.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+        "",
+        "# Blocked",
+        "",
+        "Blocked by the owner decision. Unblocks when the owner selects a rule.",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_invalid_disposition(nodes: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    _write(
+        nodes / "resolved" / "TAS-003-done.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Done.",
+        "disposition: current",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "disposition must be abandoned, deprecated, or superseded" in err
+
+
+def test_disposition_requires_resolved(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "active" / "TAS-003-current.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Current.",
+        "next: Continue.",
+        "disposition: abandoned",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "disposition requires a resolved node" in err
+
+
 def test_context_rev_mismatch(nodes: Path, capsys: pytest.CaptureFixture[str]) -> None:
     _replace(nodes / "active" / "TAS-001-parent.md", "context_rev 1.", "context_rev 2.")
     code, err = _run(nodes, capsys)
