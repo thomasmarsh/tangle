@@ -8,9 +8,12 @@ the same Markdown. The same derivation also ranks the frontier for ``next``
 and clusters it into advisory workstreams for ``frontier --group``. The
 structured ``search`` filters and the lexical ``similar`` baseline are likewise
 derived from Markdown, so an admission or filter decision never depends on a
-derived sidecar column. The ``reconcile`` planner reads that same Markdown out
-of Git snapshots to classify the integration hazards a coordinator resolves by
-hand before a merge.
+derived sidecar column. The ``digest`` answer bounds a hub's or coordinating
+node's unresolved direct members, and ``cluster_source`` gathers only the
+per-node embedding inputs the optional clustering verb feeds to the derived
+layer. The ``reconcile`` planner reads that same Markdown out of Git snapshots
+to classify the integration hazards a coordinator resolves by hand before a
+merge.
 """
 
 from __future__ import annotations
@@ -38,7 +41,10 @@ from .sidecar import SidecarError, content_hash
 
 __all__ = [
     "Backlink",
+    "ClusterSource",
     "ContextEdge",
+    "Digest",
+    "DigestMember",
     "FrontierEntry",
     "FrontierGroups",
     "GroupedCandidate",
@@ -57,6 +63,8 @@ __all__ = [
     "SearchFilters",
     "SimilarCandidate",
     "backlinks",
+    "cluster_source",
+    "digest",
     "ensure_index_schema",
     "existing_allocations",
     "format_table",
@@ -586,6 +594,50 @@ class SimilarCandidate:
     summary: str
 
 
+@dataclass(frozen=True)
+class ClusterSource:
+    """One node's embedding input for the advisory clustering answer.
+
+    ``content_hash`` is the sidecar's raw-content digest of the embedded text,
+    so the vector cache and the clustering keys agree; ``text`` is the
+    summary-plus-body text the provider embeds; ``route`` is the node's resolved
+    primary ``Parent``/``Area`` reference, which becomes its cluster route hint.
+    """
+
+    id: str
+    content_hash: str
+    text: str
+    route: str
+
+
+@dataclass(frozen=True)
+class DigestMember:
+    """One unresolved direct member in a ``braintree digest`` answer."""
+
+    id: str
+    status: str
+    priority: str
+    updated: str
+    summary: str
+    next: str
+
+
+@dataclass(frozen=True)
+class Digest:
+    """The bounded unresolved-member digest ``braintree digest`` prints.
+
+    ``total`` is the unbounded member count while ``members`` is truncated to
+    the caller's limit, so one call answers what remains under a hub or
+    coordinating node without dumping the subtree. It carries only the node's
+    own summary and ``next``; no generative summary is involved.
+    """
+
+    target: str
+    status: str
+    total: int
+    members: tuple[DigestMember, ...]
+
+
 class ReconcileError(Exception):
     """A reconcile input the planner cannot read, such as an unknown Git ref."""
 
@@ -1013,6 +1065,85 @@ def similar(
         if reranked is not None:
             return reranked
     return _similar_lexical(nodes, text, limit)
+
+
+def cluster_source(root: str, limit: int) -> list[ClusterSource]:
+    """Return the bounded per-node embedding inputs for the clustering answer.
+
+    The result is ordered by content hash and truncated to ``limit``, matching
+    the clustering layer's own bound, so both agree on which nodes survive the
+    sample cap. ``route`` is the node's resolved primary ``Parent``/``Area``
+    reference, so the derived layer can label a cluster without reading
+    Markdown itself. This is Markdown plus the raw-content digest only: it
+    imports no heavy module and needs no embedding capability.
+    """
+    if limit < 1:
+        raise SidecarError("cluster source limit must be positive")
+    nodes = _read_nodes(root)
+    by_reference: dict[str, IndexedNode] = {}
+    for candidate in nodes:
+        by_reference[candidate.name] = candidate
+        by_reference[candidate.id] = candidate
+    sources = [
+        ClusterSource(
+            id=node.id,
+            content_hash=content_hash(_similar_text(node).encode("utf-8")),
+            text=_similar_text(node),
+            route=_primary_route_id(node, by_reference),
+        )
+        for node in nodes
+    ]
+    sources.sort(key=lambda source: source.content_hash)
+    return sources[:limit]
+
+
+def digest(root: str, node: str, limit: int) -> Digest | None:
+    """Return the bounded unresolved direct members of a hub or coordinating node.
+
+    A member is an unfinished node whose primary ``Parent``/``Area`` reference
+    resolves to ``node``; resolved members are omitted because the digest answers
+    what still remains under the target. ``total`` is the unbounded member count
+    while ``members`` is truncated to ``limit`` and ordered by priority then id.
+    Pure Markdown with no embedding and no heavy module, so it stays on the fast
+    path, and it reproduces only each member's own summary and ``next`` rather
+    than generating text. Returns ``None`` when the target does not resolve.
+    """
+    if limit < 1:
+        raise SidecarError("digest limit must be positive")
+    nodes = _read_nodes(root)
+    by_reference: dict[str, IndexedNode] = {}
+    for candidate in nodes:
+        by_reference[candidate.name] = candidate
+        by_reference[candidate.id] = candidate
+    target = by_reference.get(node)
+    if target is None:
+        return None
+    members = [
+        DigestMember(
+            id=candidate.id,
+            status=candidate.status,
+            priority=candidate.metadata.get("priority", ""),
+            updated=candidate.metadata.get("updated", ""),
+            summary=candidate.metadata.get("summary", ""),
+            next=candidate.metadata.get("next", ""),
+        )
+        for candidate in nodes
+        if candidate.id != target.id
+        and candidate.status != "resolved"
+        and _primary_route_id(candidate, by_reference) == target.id
+    ]
+    members.sort(
+        key=lambda member: (
+            _PRIORITY_ORDER.get(member.priority, len(_PRIORITY_ORDER)),
+            member.id,
+        )
+    )
+    return Digest(
+        target=target.id,
+        status=target.status,
+        total=len(members),
+        members=tuple(members[:limit]),
+    )
 
 
 def stale_pins(root: str) -> list[tuple[str, str, str, str, str, str, str]]:

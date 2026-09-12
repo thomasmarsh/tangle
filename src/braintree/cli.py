@@ -12,6 +12,7 @@ import os
 import re
 import sqlite3
 import sys
+import time
 from collections.abc import Callable, Sequence
 
 from . import index, semantic, sidecar
@@ -29,6 +30,7 @@ _USAGE = (
     "similar TEXT|--file PATH [--limit N]|backlinks NODE|hash NODE|stale|"
     "frontier [--group] [--limit N]|node NODE|impact NODE|"
     "orient [--section NAME] [--limit N]|next [--rank] [--limit N]|"
+    "clusters [--limit N]|digest NODE [--limit N]|"
     "reconcile [--base REF] [--head REF ...] [NODES]]"
 )
 
@@ -58,6 +60,11 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
     (
+        "clusters [--limit N]",
+        "list advisory clusters, over-broad routes, and outlier nodes",
+    ),
+    ("digest NODE [--limit N]", "digest a hub's or node's unresolved direct members"),
+    (
         "reconcile [--base REF] [--head REF ...] [NODES]",
         "plan duplicate, divergence, and stale-pin repairs from a Git change set",
     ),
@@ -77,6 +84,16 @@ _SEARCH_FILTERS: dict[str, str] = {
     "--parent": "parent",
     "--dependency": "dependency",
 }
+
+# ``clusters`` is an explicit, derived answer: it states its advisory status on
+# every path and is bounded by ``--limit`` rows plus this wall-clock budget. The
+# semantic seam already caps each provider call at its own timeout and the
+# derived layer caps the sample count, so the budget only stops the heavy fit
+# when the embedding phase alone has already exhausted it.
+_CLUSTERS_ADVISORY = "clusters are advisory, derived, and are not work claims"
+_CLUSTERS_TIME_BUDGET_SECONDS = 60.0
+_CLUSTERS_DEFAULT_LIMIT = "10"
+_DIGEST_DEFAULT_LIMIT = "20"
 
 
 def _print_usage() -> None:
@@ -720,6 +737,195 @@ def _orient(args: list[str]) -> int:
     return 0
 
 
+def _clusters(args: list[str]) -> int:
+    limit_raw = _CLUSTERS_DEFAULT_LIMIT
+    index_arg = 1
+    while index_arg < len(args):
+        argument = args[index_arg]
+        if argument == "--limit":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--limit requires N")
+            limit_raw = args[index_arg]
+        else:
+            return _usage_error(f"unknown argument for clusters: {argument}")
+        index_arg += 1
+    if _POSITIVE_INTEGER.fullmatch(limit_raw) is None or int(limit_raw) <= 0:
+        return _usage_error("--limit must be a positive integer")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    # The capability is probed cheaply before any heavy import: an absent extra
+    # or provider answers with an advisory line and no model load.
+    extra = semantic.extra()
+    provider = semantic.probe() if extra is not None else None
+    if provider is None:
+        print(field("advisory", _CLUSTERS_ADVISORY))
+        print(field("clusters", "capability absent"))
+        print(
+            field(
+                "help",
+                "Install the semantic extra and set BT_SEMANTIC_PROVIDER to cluster.",
+            )
+        )
+        return 0
+    started = time.monotonic()
+    try:
+        connection = sidecar.open_connection()
+    except sidecar.SidecarError:
+        print(field("advisory", _CLUSTERS_ADVISORY))
+        print(field("clusters", "capability absent"))
+        print(field("help", "Run `braintree init` to create the vector cache."))
+        return 0
+    try:
+        # The clustering layer is imported lazily, so the absent path above
+        # never binds it and a plain install loads no heavy module.
+        from . import clustering
+
+        sources = index.cluster_source(root, clustering.MAX_SAMPLES)
+        items = [(source.content_hash, source.text) for source in sources]
+        vectors = semantic.vectors(provider, connection, items)
+        if vectors is not None and time.monotonic() - started <= _CLUSTERS_TIME_BUDGET_SECONDS:
+            answer = clustering.answer(
+                vectors,
+                provider.key,
+                connection,
+                {
+                    source.content_hash: clustering.NodeFacts(
+                        node_id=source.id, route=source.route
+                    )
+                    for source in sources
+                },
+                int(limit_raw),
+            )
+        else:
+            answer = None
+    finally:
+        connection.close()
+    print(field("advisory", _CLUSTERS_ADVISORY))
+    if vectors is None:
+        print(field("clusters", "no embeddings"))
+        print(field("help", "Check the provider command and retry."))
+        return 0
+    if answer is None:
+        print(field("clusters", "time budget exhausted"))
+        print(field("help", "Reduce the vault or provider latency and retry."))
+        return 0
+    if not answer.available:
+        print(field("clusters", "no embeddings"))
+        return 0
+    print(field("limit", limit_raw))
+    print(field("space", answer.space))
+    if answer.method:
+        print(field("method", answer.method))
+    print(
+        field(
+            "params",
+            f"min_cluster_size={answer.params.min_cluster_size},"
+            f"min_samples={answer.params.min_samples}",
+        )
+    )
+    print(
+        index.format_table(
+            "stability",
+            "space,runs,ari",
+            "stability: 0 spaces",
+            [(row.space, str(row.runs), f"{row.ari:.4f}") for row in answer.stability],
+        )
+    )
+    print(field("clusters_total", str(answer.total_clusters)))
+    print(
+        index.format_table(
+            "clusters",
+            "id,representative,route,members",
+            "clusters: 0 clusters",
+            [
+                (str(cluster.id), cluster.representative, cluster.route, str(len(cluster.members)))
+                for cluster in answer.clusters
+            ],
+        )
+    )
+    print(field("over_broad_total", str(answer.total_over_broad)))
+    print(
+        index.format_table(
+            "over_broad",
+            "route,clusters,members",
+            "over_broad: 0 over-broad routes",
+            [
+                (row.route, str(row.clusters), str(row.members))
+                for row in answer.over_broad
+            ],
+        )
+    )
+    print(field("noise_total", str(answer.total_noise)))
+    print(
+        index.format_table(
+            "noise",
+            "node",
+            "noise: 0 orphan nodes",
+            [(member,) for member in answer.noise],
+        )
+    )
+    print(field("outliers_total", str(answer.total_outliers)))
+    print(
+        index.format_table(
+            "outliers",
+            "node",
+            "outliers: 0 outliers",
+            [(member,) for member in answer.outliers],
+        )
+    )
+    return 0
+
+
+def _digest(args: list[str]) -> int:
+    if len(args) < 2 or args[1].startswith("--"):
+        return _usage_error("digest requires NODE")
+    node = args[1]
+    limit_raw = _DIGEST_DEFAULT_LIMIT
+    index_arg = 2
+    while index_arg < len(args):
+        argument = args[index_arg]
+        if argument == "--limit":
+            index_arg += 1
+            if index_arg >= len(args):
+                return _usage_error("--limit requires N")
+            limit_raw = args[index_arg]
+        else:
+            return _usage_error(f"unknown argument for digest: {argument}")
+        index_arg += 1
+    if _POSITIVE_INTEGER.fullmatch(limit_raw) is None or int(limit_raw) <= 0:
+        return _usage_error("--limit must be a positive integer")
+    root = _require_nodes_directory()
+    if root is None:
+        return 1
+    result = index.digest(root, node, int(limit_raw))
+    if result is None:
+        return _unknown_node(node)
+    print(field("target", result.target))
+    print(field("status", result.status))
+    print(field("total", str(result.total)))
+    print(
+        index.format_table(
+            "members",
+            "id,status,priority,updated,summary,next",
+            "members: 0 unresolved members",
+            [
+                (
+                    member.id,
+                    member.status,
+                    member.priority,
+                    member.updated,
+                    member.summary,
+                    member.next,
+                )
+                for member in result.members
+            ],
+        )
+    )
+    return 0
+
+
 def _reconcile(args: list[str]) -> int:
     base = "HEAD"
     heads: list[str] = []
@@ -856,6 +1062,10 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _orient(args)
     if command == "next":
         return _next(args)
+    if command == "clusters":
+        return _clusters(args)
+    if command == "digest":
+        return _digest(args)
     if command == "reconcile":
         return _reconcile(args)
     return _stale(args)

@@ -21,6 +21,14 @@
     "check-toon": {
       "exit": 1,
       "stdout": "result: \"failed\"\nnodes: \"7\"\nfindings[1]{code,node,detail}:\n  \"context-rev-mismatch\",\"<nodes>/resolved/TAS-000-foundation.md\",\"<nodes>/resolved/TAS-000-foundation.md: context_rev mismatch for [[DEF-010-parser-contract]] (pinned 2, current 3)\"\n"
+    },
+    "digest": {
+      "exit": 0,
+      "stdout": "target: \"IDX-001\"\nstatus: \"resolved\"\ntotal: \"1\"\nmembers[1]{id,status,priority,updated,summary,next}:\n  \"TAS-001\",\"active\",\"P1\",\"2024-01-04T00:00:00Z\",\"Coordinate parser hardening.\",\"[[TAS-002-implement-parser]]\"\n"
+    },
+    "clusters": {
+      "exit": 0,
+      "stdout": "advisory: \"clusters are advisory, derived, and are not work claims\"\nclusters: \"capability absent\"\nhelp: \"Install the semantic extra and set BT_SEMANTIC_PROVIDER to cluster.\"\n"
     }
   }
 }

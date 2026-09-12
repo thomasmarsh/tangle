@@ -58,6 +58,11 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
     (
+        "clusters [--limit N]",
+        "list advisory clusters, over-broad routes, and outlier nodes",
+    ),
+    ("digest NODE [--limit N]", "digest a hub's or node's unresolved direct members"),
+    (
         "reconcile [--base REF] [--head REF ...] [NODES]",
         "plan duplicate, divergence, and stale-pin repairs from a Git change set",
     ),
@@ -93,6 +98,8 @@ _COORDINATION_COMMANDS = frozenset(
         "impact",
         "orient",
         "next",
+        "clusters",
+        "digest",
         "reconcile",
     }
 )

@@ -12,7 +12,7 @@ from braintree import verb_benchmark
 def test_verify_matches_tracked_baseline(capsys: pytest.CaptureFixture[str]) -> None:
     assert verb_benchmark.main(["--verify"]) == 0
     out = capsys.readouterr().out
-    assert out.count("verb_gate{") == 5
+    assert out.count("verb_gate{") == 7
     assert out.strip().endswith("verification: passed")
 
 

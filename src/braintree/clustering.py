@@ -33,6 +33,11 @@ labeled from the member nearest its centroid plus the primary ``Parent``/``Area`
 route its members share, so the label is reproducible and no generative summary
 is involved. An empty embedding set is the capability-absent path and returns
 an explicit unavailable result instead of raising.
+
+:func:`answer` is the bounded presentation boundary the ``braintree clusters``
+verb prints: it clusters exactly as :func:`clusters` does and truncates the
+clusters, over-broad routes, noise, and outliers to a caller limit while keeping
+each unbounded total. Everything it returns stays advisory.
 """
 
 from __future__ import annotations
@@ -52,15 +57,19 @@ __all__ = [
     "MAX_SAMPLES",
     "NOISE",
     "Cluster",
+    "ClusterAnswer",
     "ClusterError",
     "ClusterMember",
     "ClusterParams",
     "Clusterer",
     "Clustering",
     "NodeFacts",
+    "OverBroadRoute",
     "Stability",
+    "answer",
     "clusters",
     "hdbscan",
+    "over_broad_routes",
     "parameters",
 ]
 
@@ -224,6 +233,49 @@ class Clustering:
     noise: tuple[str, ...]
     outliers: tuple[str, ...]
     stability: tuple[Stability, ...]
+
+
+@dataclass(frozen=True)
+class OverBroadRoute:
+    """One primary route whose members the clustering split across clusters.
+
+    A route that owns members in more than one cluster is a candidate for being
+    too broad: the hub groups work the embeddings separate. ``clusters`` is how
+    many distinct clusters its members landed in and ``members`` is how many of
+    its clustered members there are. It is advisory evidence for a human, never
+    a claim that the route or the work should change.
+    """
+
+    route: str
+    clusters: int
+    members: int
+
+
+@dataclass(frozen=True)
+class ClusterAnswer:
+    """The bounded, advisory answer the ``braintree clusters`` verb prints.
+
+    Every tuple is truncated to the caller's ``limit`` while its ``total_``
+    field keeps the unbounded count, so one call answers without dumping the
+    corpus. ``available`` is false only for an empty, unusable embedding set and
+    ``reason`` says why. Nothing here is a claim or assignment: clusters,
+    over-broad routes, noise, and outliers are all advisory evidence.
+    """
+
+    available: bool
+    reason: str
+    space: str
+    method: str
+    params: ClusterParams
+    stability: tuple[Stability, ...]
+    clusters: tuple[Cluster, ...]
+    total_clusters: int
+    over_broad: tuple[OverBroadRoute, ...]
+    total_over_broad: int
+    noise: tuple[str, ...]
+    total_noise: int
+    outliers: tuple[str, ...]
+    total_outliers: int
 
 
 def parameters(count: int, params: ClusterParams | None = None) -> ClusterParams:
@@ -626,3 +678,68 @@ def clusters(
         matrices, method = reduced
         spaces["reduced"] = _space("reduced", matrices, effective, fit, method=method)
     return _report(spaces, effective, content_hashes, facts)
+
+
+def over_broad_routes(result: Clustering) -> tuple[OverBroadRoute, ...]:
+    """Return the routes whose clustered members span more than one cluster.
+
+    Read from the per-member routes, so a route whose nodes the clustering
+    separates is named with the number of clusters it reaches and how many
+    clustered members it owns. Noise members carry no cluster and are ignored,
+    and the result is ordered by reach, then membership, then route id so the
+    strongest candidate is first.
+    """
+    clusters: dict[str, set[int]] = {}
+    members: dict[str, int] = {}
+    for member in result.members:
+        if not member.route or member.cluster == NOISE:
+            continue
+        clusters.setdefault(member.route, set()).add(member.cluster)
+        members[member.route] = members.get(member.route, 0) + 1
+    over_broad = [
+        OverBroadRoute(route=route, clusters=len(found), members=members[route])
+        for route, found in clusters.items()
+        if len(found) > 1
+    ]
+    over_broad.sort(key=lambda item: (-item.clusters, -item.members, item.route))
+    return tuple(over_broad)
+
+
+def answer(
+    vectors: Mapping[str, Sequence[float]],
+    provider: str,
+    connection: sqlite3.Connection,
+    nodes: Mapping[str, NodeFacts] | None,
+    limit: int,
+    params: ClusterParams | None = None,
+    reducer: reduction.Reducer | None = None,
+    clusterer: Clusterer | None = None,
+) -> ClusterAnswer:
+    """Return the bounded advisory cluster answer for one embedding set.
+
+    A thin presentation boundary over :func:`clusters`: it clusters exactly as
+    that function does and then truncates the clusters, over-broad routes,
+    noise, and outliers to ``limit`` while keeping each unbounded total. The
+    whole answer stays advisory; nothing here states a claim, assignment, or
+    authority, and an empty embedding set is the explicit unavailable result.
+    """
+    if limit < 1:
+        raise ClusterError("limit must be positive")
+    result = clusters(vectors, provider, connection, nodes, params, reducer, clusterer)
+    over_broad = over_broad_routes(result)
+    return ClusterAnswer(
+        available=result.available,
+        reason=result.reason,
+        space=result.space,
+        method=result.method,
+        params=result.params,
+        stability=result.stability,
+        clusters=result.clusters[:limit],
+        total_clusters=len(result.clusters),
+        over_broad=over_broad[:limit],
+        total_over_broad=len(over_broad),
+        noise=result.noise[:limit],
+        total_noise=len(result.noise),
+        outliers=result.outliers[:limit],
+        total_outliers=len(result.outliers),
+    )

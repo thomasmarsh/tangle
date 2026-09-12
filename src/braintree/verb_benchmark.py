@@ -221,6 +221,8 @@ def _cases(nodes_dir: str) -> list[tuple[str, list[str]]]:
         ("impact", ["impact", "DEF-010-parser-contract"]),
         ("orient", ["orient"]),
         ("check-toon", ["check", "--format", "toon", nodes_dir]),
+        ("digest", ["digest", "IDX-001-engine"]),
+        ("clusters", ["clusters"]),
     ]
 
 

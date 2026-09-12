@@ -117,10 +117,19 @@ braintree frontier  # frontier
 braintree node ID  # one node
 braintree impact ID  # dependency impact
 braintree orient  # orientation packet
+braintree digest ID  # unresolved direct members of a hub or node
+braintree clusters  # advisory clusters, over-broad routes, and outliers
 find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'          # unfinished
 find nodes -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +  # actionable P0
 rg -n '^(Parent|Area) \[\[' nodes                                               # primary routes
 ```
+
+`braintree digest ID` bounds the summaries and `next` of one hub's or
+coordinating node's unresolved direct members. `braintree clusters` returns
+advisory cluster groupings, over-broad routes, noise, and outliers, and only
+when the optional semantic capability is installed; without it, it prints one
+advisory line and exits zero. Neither answer is a claim, assignment, or
+authority.
 
 Prefer bounded results. Do not repeat a backlink search through returned dependents; `braintree impact ID` traverses the chain directly.
 
