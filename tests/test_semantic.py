@@ -6,23 +6,55 @@ node vectors in the disposable sidecar keyed by content hash; when the provider
 is absent or fails, the answer is the lexical baseline byte for byte. A small
 deterministic stub provider stands in for a real embedding model so the tests
 are hermetic and never touch the network.
+
+Inference and clustering libraries are the opt-in ``semantic`` extra, which is
+not installed here: the same tests pin that the default path loads no heavy
+module and that the capability probe reports the extra absent, with the weights
+read offline from a documented local cache.
 """
 
 from __future__ import annotations
 
 import csv
 import hashlib
+import importlib.util
 import json
+import os
 import shlex
 import sqlite3
 import subprocess
 import sys
 from collections.abc import Callable
+from importlib.machinery import ModuleSpec
 from pathlib import Path
+
+import pytest
 
 from braintree import semantic
 
 RunBt = Callable[..., subprocess.CompletedProcess[str]]
+
+_ROOT = Path(__file__).resolve().parents[1]
+
+# The heavy modules only the opt-in ``semantic`` extra provides. A plain install
+# has none of them, and driving the commands must never import one.
+_HEAVY_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "torch", "sentence_transformers")
+
+# Driving the commands in a fresh interpreter is the only way to observe the
+# real import graph. The script answers on the default install without a
+# configured provider, then reports every heavy module it loaded, which must be
+# none of them. It runs the installed entry point so dispatch is covered too.
+_IMPORT_PROBE = """\
+import sys
+from braintree import main, semantic
+
+assert semantic.probe() is None
+assert main.main(["--help"]) == 0
+assert main.main(["check", "nodes"]) == 0
+assert main.main(["frontier"]) == 0
+assert main.main(["similar", "grant"]) == 0
+print("heavy:" + ",".join(name for name in sys.argv[1:] if name in sys.modules))
+"""
 
 # A deterministic stand-in for an embedding provider: it canonicalizes a few
 # synonyms and projects each canonical token onto a small fixed vocabulary, so a
@@ -89,6 +121,15 @@ def _env(tmp_path: Path, vault: Path) -> dict[str, str]:
         "BT_PROJECT_ID": "semantic-test",
         "BT_NODES_DIR": str(vault),
     }
+
+
+def _plain_env(tmp_path: Path) -> dict[str, str]:
+    """Return a default-install environment: no provider, no extra, no cache."""
+    env = os.environ.copy()
+    env.update(_env(tmp_path, _ROOT / "nodes"))
+    for name in ("BT_SEMANTIC_PROVIDER", "BT_MODEL_CACHE", "HF_HOME"):
+        env.pop(name, None)
+    return env
 
 
 def _write(path: Path, text: str) -> None:
@@ -257,3 +298,78 @@ def test_cache_rows_are_keyed_by_provider_and_content_hash(
     assert {row[0] for row in rows} == {provider.key}
     assert {row[2] for row in rows} == {provider.dimensions}
     assert len({row[1] for row in rows}) == 4
+
+
+def test_default_install_runs_without_the_semantic_extra(tmp_path: Path) -> None:
+    """Every default entry point runs with no provider and imports no heavy module."""
+    probe = subprocess.run(
+        [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
+        cwd=str(_ROOT),
+        env=_plain_env(tmp_path),
+        capture_output=True,
+        text=True,
+    )
+    assert probe.returncode == 0, probe.stderr
+    # The probe reports the heavy modules it loaded on one sentinel line.
+    report = [line for line in probe.stdout.splitlines() if line.startswith("heavy:")]
+    assert report == ["heavy:"]
+
+
+def test_extra_probe_matches_the_installed_modules() -> None:
+    """A missing module makes the extra absent; a complete set reports it present."""
+    missing = [name for name in _HEAVY_MODULES if importlib.util.find_spec(name) is None]
+    extra = semantic.extra()
+    if missing:
+        assert extra is None
+    else:
+        assert extra is not None
+        assert extra.modules == semantic._EXTRA_MODULES
+
+
+def test_extra_probe_reports_the_extra_without_importing_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Stand-in modules satisfy the probe, which must locate them without importing."""
+    site = tmp_path / "site"
+    site.mkdir()
+    for name in semantic._EXTRA_MODULES:
+        (site / f"{name}.py").write_text(
+            f"raise AssertionError('{name} was imported')\n", encoding="utf-8"
+        )
+    monkeypatch.syspath_prepend(str(site))
+    monkeypatch.delenv("BT_MODEL_CACHE", raising=False)
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "hf"))
+
+    extra = semantic.extra()
+
+    assert extra is not None
+    assert extra.modules == semantic._EXTRA_MODULES
+    assert extra.model_cache == tmp_path / "hf" / "hub"
+
+
+def test_extra_probe_reports_the_capability_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One missing module makes the whole extra absent."""
+    monkeypatch.setattr(
+        semantic,
+        "find_spec",
+        lambda name: ModuleSpec(name, None) if name == "numpy" else None,
+    )
+    assert semantic.extra() is None
+
+
+def test_model_cache_prefers_the_explicit_directory_then_hf_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The documented offline cache resolves from BT_MODEL_CACHE, then HF_HOME."""
+    monkeypatch.setenv("BT_MODEL_CACHE", str(tmp_path / "models"))
+    assert semantic.model_cache() == tmp_path / "models"
+
+    monkeypatch.delenv("BT_MODEL_CACHE")
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "hf"))
+    assert semantic.model_cache() == tmp_path / "hf" / "hub"
+
+    monkeypatch.delenv("HF_HOME")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    assert semantic.model_cache() == tmp_path / "home" / ".cache" / "huggingface" / "hub"

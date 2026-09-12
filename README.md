@@ -71,6 +71,27 @@ The offline test uses only temporary directories; it never creates or updates a 
 make test
 ```
 
+## Optional semantic extra
+
+A plain install has no third-party runtime dependency and every command answers on the deterministic lexical baseline. Embedding inference for the optional semantic layer installs separately through the explicit `semantic` extra:
+
+```sh
+uv sync --extra semantic
+
+# or, where the package is installed as a dependency
+pip install 'braintree[semantic]'
+```
+
+The extra names pinned lower bounds for the off-the-shelf inference and clustering libraries: `sentence-transformers` and `torch` for CPU inference, with `numpy`, `scikit-learn`, `umap-learn` for UMAP reduction, and `hdbscan` for density clustering. No model is trained, fine-tuned, or shipped here; the extra only makes published models usable. Capability probing is a `find_spec` lookup that never imports or loads any of them, so `braintree check`, `braintree frontier`, `braintree orient`, `braintree search`, and every other interactive verb answer exactly as before while the extra is absent.
+
+Model weights are read offline from a local cache, and nothing downloads at query time. Pre-fetch the weights once into the cache, then run offline:
+
+```sh
+BT_MODEL_CACHE=/path/to/model-cache braintree similar 'expired authentication grants'
+```
+
+`BT_MODEL_CACHE` names the cache directory explicitly. When it is unset, the Hugging Face cache convention applies: `HF_HOME` when set, otherwise `~/.cache/huggingface`, with weights under its `hub/` subdirectory. Point the cache at a directory that already holds the pre-fetched weights; nothing downloads during a query.
+
 ## Validate and collect feedback
 
 Installed projects validate the current graph with the bundled Markdown checker (which needs no sidecar) and query the optional index from any project root:

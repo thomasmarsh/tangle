@@ -12,6 +12,12 @@ array of texts on stdin and writes a JSON array of numeric vectors, one per
 text and all the same length, on stdout. Nothing here is a required dependency:
 with no provider configured, no process runs and no vector is read, so the
 default answer is the lexical baseline byte for byte.
+
+The inference runtime and the clustering libraries are the optional ``semantic``
+extra, which a plain install never has. :func:`extra` reports whether that extra
+is importable using ``importlib.util.find_spec`` alone, so probing it never
+imports a heavy module, and :func:`model_cache` names the local directory
+pre-fetched weights are read from offline.
 """
 
 from __future__ import annotations
@@ -25,15 +31,26 @@ import subprocess
 from collections.abc import Sequence
 from dataclasses import dataclass
 from hashlib import sha256
+from importlib.util import find_spec
+from pathlib import Path
 
 __all__ = [
+    "SemanticExtra",
     "SemanticProvider",
     "cosine",
+    "extra",
+    "model_cache",
     "probe",
     "vectors",
 ]
 
 _ENV_PROVIDER = "BT_SEMANTIC_PROVIDER"
+_ENV_MODEL_CACHE = "BT_MODEL_CACHE"
+_ENV_HF_HOME = "HF_HOME"
+# The optional extra, as the top-level modules a plain install must not need:
+# CPU inference through sentence-transformers and torch, with numpy and
+# scikit-learn, umap-learn for UMAP, and the hdbscan package for HDBSCAN.
+_EXTRA_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "torch", "sentence_transformers")
 _PROBE_TEXT = "braintree semantic probe"
 _TIMEOUT_SECONDS = 10
 # The vector cache is disposable derived state keyed by provider identity and
@@ -55,6 +72,51 @@ class SemanticProvider:
     command: str
     key: str
     dimensions: int
+
+
+@dataclass(frozen=True)
+class SemanticExtra:
+    """The installed optional inference extra and the cache it reads."""
+
+    modules: tuple[str, ...]
+    model_cache: Path
+
+
+def model_cache() -> Path:
+    """Return the local directory holding the pre-fetched model weights.
+
+    ``BT_MODEL_CACHE`` names it explicitly. Otherwise the Hugging Face cache
+    convention applies: ``HF_HOME`` when set, else ``~/.cache/huggingface``,
+    with weights under the ``hub`` subdirectory. Inference reads weights from
+    here and never downloads at query time, so an operator pre-fetches once
+    into this directory and every later command runs offline.
+    """
+    explicit = os.environ.get(_ENV_MODEL_CACHE, "").strip()
+    if explicit:
+        return Path(explicit).expanduser()
+    hf_home = os.environ.get(_ENV_HF_HOME, "").strip()
+    base = Path(hf_home).expanduser() if hf_home else Path.home() / ".cache" / "huggingface"
+    return base / "hub"
+
+
+def extra() -> SemanticExtra | None:
+    """Return the installed optional extra, or ``None`` when it is missing.
+
+    Presence is decided with ``importlib.util.find_spec``, which never imports
+    the module it locates. A plain install therefore stays free of torch and
+    every other heavy module, and each interactive verb keeps answering
+    byte-identically without loading a model.
+    """
+    found: list[str] = []
+    for name in _EXTRA_MODULES:
+        try:
+            location = find_spec(name)
+        except (ImportError, ValueError):
+            location = None
+        if location is None:
+            return None
+        found.append(name)
+    return SemanticExtra(modules=tuple(found), model_cache=model_cache())
 
 
 def _provider_key(command: str) -> str:

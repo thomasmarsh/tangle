@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T17:22:00Z
+updated: 2026-09-12T17:38:06Z
 summary: Add an optional off-the-shelf embedding and manifold-clustering retrieval layer behind the DEC-006 capability boundary without training any model.
-next: "[[TAS-088-optional-embedding-extra]]"
+next: "[[TAS-089-embedding-model-selection]]"
 ---
 
 # Context

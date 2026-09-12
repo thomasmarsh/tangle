@@ -9,6 +9,21 @@ dependencies = []
 [project.scripts]
 braintree = "braintree.main:main"
 
+# Optional off-the-shelf semantic layer: CPU embedding inference through
+# sentence-transformers and torch, with numpy, scikit-learn, umap-learn for
+# UMAP, and the hdbscan package for HDBSCAN. A plain install stays
+# dependency-free; install the extra with `uv sync --extra semantic` or
+# `pip install 'braintree[semantic]'`.
+[project.optional-dependencies]
+semantic = [
+    "hdbscan>=0.8.38",
+    "numpy>=2.0",
+    "scikit-learn>=1.5",
+    "sentence-transformers>=3.0",
+    "torch>=2.4",
+    "umap-learn>=0.5.6",
+]
+
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]
 build-backend = "uv_build"
