@@ -348,6 +348,26 @@ def test_allow_stale_still_rejects_missing_pin(
     assert "invalid or missing context_rev pin" in capsys.readouterr().err
 
 
+def test_pinned_dependency_not_resolved(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = nodes / "resolved" / "DEF-001-contract.md"
+    source.rename(nodes / "proposed" / source.name)
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "pinned dependency [[DEF-001-contract]] is proposed, not resolved" in err
+
+
+def test_allow_stale_still_rejects_unresolved_pin(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = nodes / "resolved" / "DEF-001-contract.md"
+    source.rename(nodes / "proposed" / source.name)
+    assert graph_check.main(["--allow-stale", str(nodes)]) == 1
+    err = capsys.readouterr().err
+    assert "pinned dependency [[DEF-001-contract]] is proposed, not resolved" in err
+
+
 def test_allow_orphan_suppresses_orphan(
     nodes: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -293,6 +293,11 @@ def _check_context_edges(
             target_nodes = by_name.get(target)
             if target_nodes is None:
                 continue
+            if target_nodes[0].status != "resolved":
+                errors.append(
+                    f"{node.path}: pinned dependency [[{target}]] is "
+                    f"{target_nodes[0].status}, not resolved"
+                )
             current = target_nodes[0].metadata.get("context_rev")
             if not allow_stale and current != pin:
                 label = current if isinstance(current, int) else ""

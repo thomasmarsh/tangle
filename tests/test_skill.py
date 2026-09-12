@@ -110,6 +110,10 @@ _CANONICAL_CONTRACT: tuple[str, ...] = (
     "resolving children alone does not complete the parent",
     "A `DEC` node records a settled choice",
     "resolved `DEF` or `DEC` is current knowledge",
+    "A settled `DEF` or `DEC` is `resolved`",
+    "`graph-check` reports a pinned dependency whose target is "
+    "`proposed`, `active`, or `blocked`",
+    "`--allow-stale` does not relax that check",
     "The bump commit shape:",
     "commit the semantic `context_rev` bump with the bumped node alone",
     "sanctioned staged-staleness gate `graph-check --allow-stale nodes`",
