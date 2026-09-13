@@ -9,6 +9,7 @@ and ``node record`` for ``THO``, ``DEF``, ``DEC``, and ``TAS``.
 from __future__ import annotations
 
 import re
+import threading
 from pathlib import Path
 
 import pytest
@@ -403,6 +404,51 @@ def test_capture_quotes_a_wikilink_next_and_keeps_an_action_next(tmp_path: Path)
     action = (nodes / "proposed" / "TAS-002-capture-one-tas-node.md").read_text(encoding="utf-8")
     assert 'next: "[[TAS-002-validate-manifests]]"' in linked
     assert "next: Add the boundary test." in action
+
+
+# The capture paths reserve the automatically chosen id before writing, so two
+# parallel callers with different slugs cannot both claim the same number. With
+# no sidecar this falls back to a vault-local exclusive-create reservation.
+def test_concurrent_capture_with_different_slugs_never_duplicates_an_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    nodes = _hub(tmp_path / "consumer")
+    # Pin the sidecar to an absent location so the test exercises the portable
+    # vault-local reservation instead of any sidecar on the machine.
+    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "absent-sidecar"))
+    monkeypatch.setenv("BT_PROJECT_ID", "capture-concurrency")
+    workers = 8
+    ready = threading.Barrier(workers)
+    codes: list[int] = []
+    lock = threading.Lock()
+
+    def capture(index: int) -> None:
+        ready.wait(timeout=30)
+        code = node_record.main(
+            _capture_args(
+                nodes,
+                "TAS",
+                **{"--slug": f"worker-{index}", "--next": "Add the boundary test."},
+            )
+        )
+        with lock:
+            codes.append(code)
+
+    threads = [threading.Thread(target=capture, args=(index,)) for index in range(workers)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+
+    assert codes == [0] * workers
+    recorded = sorted((nodes / "proposed").glob("TAS-*.md"))
+    assert len(recorded) == workers
+    numbers = [path.name.split("-")[1] for path in recorded]
+    assert len(set(numbers)) == workers
+    # The reservation directory is local coordination state, not a node, so the
+    # checker still accepts the vault with it present.
+    assert (nodes / ".braintree" / "reservations").is_dir()
+    assert graph_check.main([str(nodes)]) == 0
 
 
 def test_capture_allocates_the_next_id_from_markdown(tmp_path: Path) -> None:

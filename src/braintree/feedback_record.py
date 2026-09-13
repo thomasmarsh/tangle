@@ -1,13 +1,13 @@
 """Record a routed Braintree ``FBK`` feedback node in a consuming project.
 
 This is the writing half of the feedback mechanism. It stamps the installed
-Braintree revision, allocates the next ``FBK`` id from Markdown, discovers a
+Braintree revision, reserves the next ``FBK`` id atomically, discovers a
 primary route to the vault's root hub, and writes a valid feedback node in one
-step. The id allocation, route discovery, and non-clobbering write are the
-shared Markdown-node primitives of :mod:`braintree.node_record`, so both
-capture paths cannot disagree. It is stdlib-only: it never opens the sidecar,
-never touches the network, and reads the installed revision record through
-:func:`braintree.revision.feedback_revision`.
+step. The id reservation, route discovery, and non-clobbering write are the
+shared capture primitives of :mod:`braintree.node_record`, so both capture
+paths cannot disagree. It depends only on the standard library, opening the
+sidecar solely through that shared reservation, and reads the installed
+revision record through :func:`braintree.revision.feedback_revision`.
 """
 
 from __future__ import annotations
@@ -16,12 +16,14 @@ import os
 import sys
 from collections.abc import Sequence
 
+from . import sidecar
 from .node_record import (
+    AllocationError,
     discover_route,
     existing_ids,
     id_number,
-    next_number,
     normalize_route,
+    reserve_number,
     single_line,
     slugify,
     utc_now,
@@ -36,7 +38,8 @@ _USAGE = (
     "usage: braintree feedback record [--nodes DIR] [--route ROUTE] [--id FBK-NNN] "
     "[--summary TEXT] [--slug SLUG] --attempted TEXT --friction TEXT "
     "--improvement TEXT\n"
-    "Write one routed, revision-stamped FBK feedback node without a sidecar."
+    "Write one routed, revision-stamped FBK feedback node, reserving its id "
+    "atomically and falling back to a vault-local reservation without a sidecar."
 )
 
 _FEEDBACK_TYPE = "FBK"
@@ -166,17 +169,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     slug = slugify(slug if slug is not None else summary, "feedback")
 
     existing = existing_ids(nodes_dir, _FEEDBACK_TYPE)
+    number = 0
     if explicit_id is not None:
         explicit_id = single_line(explicit_id)
-        number = id_number(explicit_id, _FEEDBACK_TYPE)
-        if number is None:
+        reserved_id = id_number(explicit_id, _FEEDBACK_TYPE)
+        if reserved_id is None:
             print(field("error", "id must look like FBK-001"))
             return 2
         if explicit_id in existing:
             print(field("error", f"feedback node already exists: {existing[explicit_id]}"))
             return 1
-    else:
-        number = next_number(nodes_dir, _FEEDBACK_TYPE)
+        number = reserved_id
 
     proposed = os.path.join(nodes_dir, "proposed")
     try:
@@ -188,6 +191,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     revision = feedback_revision()
     updated = utc_now()
     for _ in range(100):
+        if explicit_id is None:
+            try:
+                number = reserve_number(nodes_dir, _FEEDBACK_TYPE)
+            except (AllocationError, sidecar.SidecarError) as error:
+                print(field("error", str(error)))
+                print(
+                    field(
+                        "help",
+                        "Repair or remove the sidecar, or check the vault is writable.",
+                    )
+                )
+                return 1
         node_id = f"{_FEEDBACK_TYPE}-{number:03d}"
         path = os.path.join(proposed, f"{node_id}-{slug}.md")
         body = _render(route, summary, revision, attempted, friction, improvement, updated)
@@ -200,7 +215,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         if explicit_id is not None:
             print(field("error", f"feedback node already exists: {path}"))
             return 1
-        number += 1
 
     print(field("error", "unable to allocate a free FBK id"))
     return 1

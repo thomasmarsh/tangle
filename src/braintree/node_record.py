@@ -2,12 +2,13 @@
 
 This is the generic capture path behind ``braintree node record``. It supplies
 the id, route, timestamp, and required frontmatter a caller would otherwise
-hand-author: it allocates the next id from Markdown and discovers the primary
+hand-author: it reserves the next id atomically and discovers the primary
 route to the vault's root hub the way ``braintree feedback record`` does for
 ``FBK``. The Markdown-node writer primitives it holds are the single spelling
 of allocation, route discovery, and non-clobbering writes shared with that
-command. It is stdlib-only: it never opens the sidecar, never touches the
-network.
+command. It depends only on the standard library and opens the sidecar solely
+to reserve an id when that sidecar exists and owns the target vault; it never
+touches the network.
 """
 
 from __future__ import annotations
@@ -15,21 +16,28 @@ from __future__ import annotations
 import glob
 import os
 import re
+import subprocess
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
+from . import sidecar
 from .toon import field
 
 __all__ = [
+    "AllocationError",
     "discover_route",
     "existing_ids",
     "id_number",
     "main",
     "next_number",
     "normalize_route",
+    "reservation_dir",
+    "reserve_number",
+    "reserved_numbers",
     "single_line",
     "slugify",
+    "taken_numbers",
     "utc_now",
     "write_new",
 ]
@@ -38,8 +46,14 @@ _USAGE = (
     "usage: braintree node record --type TYPE --summary TEXT --body TEXT "
     "[--status proposed|active|blocked|resolved] [--next TEXT] [--nodes DIR] "
     "[--route ROUTE] [--id ID] [--slug SLUG]\n"
-    "Write one routed, stamped node of the named type without a sidecar."
+    "Write one routed, stamped node of the named type, reserving its id "
+    "atomically and falling back to a vault-local reservation without a sidecar."
 )
+
+
+class AllocationError(Exception):
+    """A capture path could not reserve a free id."""
+
 
 # The capture types the vault documents, split by the ``next`` rule the checker
 # enforces: a knowledge type records a question, invariant, or decision, while
@@ -60,6 +74,13 @@ _NON_SLUG = re.compile(r"[^a-z0-9]+")
 _WHITESPACE = re.compile(r"\s+")
 _SUMMARY_LIMIT = 96
 _SLUG_LIMIT = 48
+
+# The portable fallback keeps one ``PREFIX-NNN`` marker per reserved number in a
+# hidden directory under the vault. The directory is deliberately dot-prefixed
+# so the checker's ``nodes/*/*.md`` status-directory scan ignores it.
+_RESERVATION_ROOT = ".braintree"
+_RESERVATION_SUBDIR = "reservations"
+_ALLOCATION_ATTEMPTS = 1000
 _VALUE_OPTIONS = frozenset(
     {
         "--nodes",
@@ -142,6 +163,123 @@ def write_new(path: str, content: str) -> bool:
 def utc_now() -> str:
     """Return the current UTC timestamp in the vault's frontmatter format."""
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def reservation_dir(nodes_dir: str) -> str:
+    """Return the portable reservation directory inside a vault's ``nodes`` dir.
+
+    It holds one ``PREFIX-NNN`` marker per number the no-sidecar fallback has
+    reserved. It is local coordination state, not vault Markdown: the hidden
+    directory is outside the checker's status-directory scan.
+    """
+    return os.path.join(nodes_dir, _RESERVATION_ROOT, _RESERVATION_SUBDIR)
+
+
+def reserved_numbers(nodes_dir: str, prefix: str) -> set[int]:
+    """Return the numbers the portable fallback already reserved for ``prefix``."""
+    numbers: set[int] = set()
+    for path in glob.glob(os.path.join(reservation_dir(nodes_dir), f"{prefix}-*")):
+        number = id_number(os.path.basename(path), prefix)
+        if number is not None:
+            numbers.add(number)
+    return numbers
+
+
+def taken_numbers(nodes_dir: str, prefix: str) -> set[int]:
+    """Return every number already taken for ``prefix`` by a node or a reservation."""
+    on_disk = {int(node_id.split("-", 1)[1]) for node_id in existing_ids(nodes_dir, prefix)}
+    return on_disk | reserved_numbers(nodes_dir, prefix)
+
+
+def _vault_in_current_worktree(nodes_dir: str) -> bool:
+    """Return whether ``nodes_dir`` lies inside the current Git worktree.
+
+    The sidecar counter is scoped to one project, so it only governs that
+    project's own vault. Numbering an unrelated vault from it would advance an
+    identity space the vault does not share, so capture falls back to a
+    vault-local reservation there instead.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    root = os.path.realpath(completed.stdout.strip() or os.sep)
+    nodes = os.path.realpath(nodes_dir)
+    return nodes == root or nodes.startswith(root + os.sep)
+
+
+def _sidecar_reserve(nodes_dir: str, prefix: str, taken: set[int]) -> int | None:
+    """Reserve ``prefix`` through the hybrid sidecar when it governs the vault.
+
+    Returns ``None`` when no sidecar exists or the target vault is outside the
+    sidecar's project, which selects the portable fallback. A sidecar that
+    exists and governs the vault is authoritative: an allocation error is
+    raised rather than silently mixed with the fallback, which could hand out a
+    number the sidecar had already reserved.
+    """
+    try:
+        if not sidecar.database_path().is_file():
+            return None
+    except sidecar.SidecarError:
+        return None
+    if not _vault_in_current_worktree(nodes_dir):
+        return None
+    return sidecar.allocate(prefix, taken)
+
+
+def _reserve_on_disk(nodes_dir: str, prefix: str, taken: set[int]) -> int:
+    """Reserve the next free number with an exclusive-create marker file.
+
+    ``taken`` is a snapshot used to skip known numbers; the exclusive create is
+    what makes the reservation atomic, so a marker another writer created after
+    the snapshot still fails and advances the candidate. A marker is never
+    released: the written node file supersedes it, and a writer that fails
+    leaves a wasted number rather than a duplicate identity.
+    """
+    directory = reservation_dir(nodes_dir)
+    try:
+        os.makedirs(directory, exist_ok=True)
+    except OSError as error:
+        raise AllocationError(
+            f"unable to create the reservation directory {directory}"
+        ) from error
+    number = next_number(nodes_dir, prefix)
+    for _ in range(_ALLOCATION_ATTEMPTS):
+        if number not in taken:
+            marker = os.path.join(directory, f"{prefix}-{number:03d}")
+            try:
+                descriptor = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+            except FileExistsError:
+                pass
+            else:
+                os.close(descriptor)
+                return number
+        number += 1
+    raise AllocationError(f"unable to reserve a free {prefix} id")
+
+
+def reserve_number(nodes_dir: str, prefix: str) -> int:
+    """Atomically reserve and return the next free ``PREFIX-NNN`` number.
+
+    This is the one allocation contract shared by ``braintree node record`` and
+    ``braintree feedback record``: a number is reserved before its node file is
+    written, so two concurrent callers with different slugs cannot both choose
+    the same number. When the project's sidecar exists and owns the vault, the
+    number comes from the same atomic counter ``braintree allocate`` uses, so
+    the reservation spans worktrees; otherwise the portable vault-local fallback
+    above reserves it. A number already taken by a node or an earlier
+    reservation is always skipped.
+    """
+    taken = taken_numbers(nodes_dir, prefix)
+    sidecar_number = _sidecar_reserve(nodes_dir, prefix, taken)
+    if sidecar_number is not None:
+        return sidecar_number
+    return _reserve_on_disk(nodes_dir, prefix, taken)
 
 
 def _next_field(value: str) -> str:
@@ -287,18 +425,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     route = normalized
 
-    existing = existing_ids(nodes_dir, node_type)
+    number = 0
     if explicit_id is not None:
         explicit_id = single_line(explicit_id)
-        number = id_number(explicit_id, node_type)
-        if number is None:
+        existing = existing_ids(nodes_dir, node_type)
+        reserved_id = id_number(explicit_id, node_type)
+        if reserved_id is None:
             print(field("error", f"id must look like {node_type}-001"))
             return 2
         if explicit_id in existing:
             print(field("error", f"node already exists: {existing[explicit_id]}"))
             return 1
-    else:
-        number = next_number(nodes_dir, node_type)
+        number = reserved_id
 
     directory = os.path.join(nodes_dir, status)
     try:
@@ -310,6 +448,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     slug = slugify(slug if slug is not None else summary, "node")
     updated = utc_now()
     for _ in range(100):
+        if explicit_id is None:
+            try:
+                number = reserve_number(nodes_dir, node_type)
+            except (AllocationError, sidecar.SidecarError) as error:
+                print(field("error", str(error)))
+                print(
+                    field(
+                        "help",
+                        "Repair or remove the sidecar, or check the vault is writable.",
+                    )
+                )
+                return 1
         node_id = f"{node_type}-{number:03d}"
         path = os.path.join(directory, f"{node_id}-{slug}.md")
         if write_new(path, _render(route, summary, next_line, body, updated)):
@@ -321,7 +471,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         if explicit_id is not None:
             print(field("error", f"node already exists: {path}"))
             return 1
-        number += 1
 
     print(field("error", f"unable to allocate a free {node_type} id"))
     return 1

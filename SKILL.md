@@ -174,7 +174,7 @@ A consuming project records Braintree friction as an `FBK` node. The `FBK` type 
 
 `braintree check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
 
-Record feedback with the writing half of the mechanism. Run `braintree feedback record` from the consuming project's vault root and it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md` in one step:
+Record feedback with the writing half of the mechanism. Run `braintree feedback record` from the consuming project's vault root and it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md` in one step. The id is reserved atomically by the same capture contract as `braintree node record`; see Capturing a node.
 
 ```sh
 braintree feedback record \
@@ -205,6 +205,7 @@ braintree node record --type THO \
 
 - `--type` is one of `THO`, `DEF`, `DEC`, or `TAS`. `FBK` friction is recorded with `braintree feedback record`, and a root `IDX` hub is declared in `index-map.md`, so neither is a capture target.
 - The command allocates the next id from Markdown, discovers the primary route to the vault's root hub from `index-map.md`, and stamps a positive `context_rev` and the current `updated`, so the result is a routed node the checker accepts.
+- It reserves that id atomically before writing the file, and both one-command capture paths share this one allocation contract. When the project's sidecar exists and the target `nodes/` directory is inside the project's own worktree, the reservation comes from the same atomic counter `braintree allocate PREFIX` uses, so parallel worktrees cannot choose the same number. Otherwise it reserves a vault-local marker under `nodes/.braintree/` with an exclusive create, which is collision-safe for callers sharing that vault but does not span worktrees; preallocate with `braintree allocate PREFIX` and pass `--id` when parallel creation crosses worktrees without an initialized sidecar.
 - `--status` names the status directory and defaults to `proposed`; the caller owns the body the type and status need, so a `blocked` body carries a `# Blocked` section with `Blocked by` and `Unblocks when`.
 - A `TAS` node in an unfinished status requires `--next` carrying its one action, and a `resolved` node must omit `--next`, matching the `next` rule the checker enforces.
 - `--route 'Area [[IDX-...]]'` overrides the discovered route, `--id` and `--slug` override the allocated id and the derived slug, `--summary` overrides the derived summary, and `--nodes` selects a `nodes/` directory other than the current one.

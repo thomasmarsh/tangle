@@ -6,6 +6,7 @@ base-hash conflicts, release idempotence, expiry, and argument validation.
 
 from __future__ import annotations
 
+import os
 import re
 import sqlite3
 import subprocess
@@ -49,6 +50,23 @@ def _seed_allocations(vault: Path) -> None:
 
 def _database(tmp_path: Path) -> Path:
     return tmp_path / "sidecar" / "projects" / "test-project" / "graph.sqlite3"
+
+
+def _write_vault(nodes: Path) -> Path:
+    (nodes / "resolved").mkdir(parents=True)
+    (nodes / "index-map.md").write_text(
+        "# Root hubs\n\n- Indexes [[IDX-001-root]]\n", encoding="utf-8"
+    )
+    (nodes / "resolved" / "IDX-001-root.md").write_text(_FRONTMATTER, encoding="utf-8")
+    return nodes
+
+
+def _record_env(tmp_path: Path, project: str) -> dict[str, str]:
+    """Return a process environment for a capture run pinned to a temp sidecar."""
+    env = {key: value for key, value in os.environ.items() if key != "BT_NODES_DIR"}
+    env["BT_SIDECAR_DIR"] = str(tmp_path / "sidecar")
+    env["BT_PROJECT_ID"] = project
+    return env
 
 
 def _remaining(stdout: str) -> int:
@@ -398,3 +416,120 @@ def test_reconcile_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
     unknown = run_bt("reconcile", "--bogus", env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown argument for reconcile: --bogus"' in unknown.stdout
+
+
+# The one-command capture paths share the sidecar reservation with `allocate`
+# when the sidecar exists and owns the vault, and fall back to a vault-local
+# reservation otherwise, so capture never duplicates an automatically chosen id.
+
+_RECORD_BODY = "# Outcome\n\nReserve the id atomically."
+
+
+def test_record_reserves_through_the_project_sidecar(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    repo = tmp_path / "repo"
+    nodes = _write_vault(repo / "nodes")
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    env = _record_env(tmp_path, "record-sidecar")
+    assert run_bt("init", cwd=repo, env=env).returncode == 0
+
+    recorded = run_bt(
+        "node",
+        "record",
+        "--type",
+        "TAS",
+        "--summary",
+        "Reserve the id through the sidecar.",
+        "--body",
+        _RECORD_BODY,
+        "--next",
+        "Add the boundary test.",
+        cwd=repo,
+        env=env,
+    )
+    assert recorded.returncode == 0, recorded.stdout
+    assert 'id: "TAS-001"' in recorded.stdout
+    assert (nodes / "proposed" / "TAS-001-reserve-the-id-through-the-sidecar.md").is_file()
+    # The sidecar counter advanced and no vault-local fallback marker was made.
+    assert not (nodes / ".braintree").exists()
+    assert '"TAS","2"' in run_bt("status", cwd=repo, env=env).stdout
+
+
+def test_record_falls_back_for_a_vault_outside_the_project(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    repo = tmp_path / "repo"
+    _write_vault(repo / "nodes")
+    external = _write_vault(tmp_path / "external" / "nodes")
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    env = _record_env(tmp_path, "record-external")
+    assert run_bt("init", cwd=repo, env=env).returncode == 0
+    # The project sidecar counter is ahead; it must not number another vault.
+    assert run_bt("allocate", "TAS", cwd=repo, env=env).stdout.strip() == 'id: "TAS-001"'
+
+    recorded = run_bt(
+        "node",
+        "record",
+        "--type",
+        "TAS",
+        "--summary",
+        "Capture into an external vault.",
+        "--body",
+        _RECORD_BODY,
+        "--next",
+        "Add the boundary test.",
+        "--nodes",
+        str(external),
+        cwd=repo,
+        env=env,
+    )
+    assert recorded.returncode == 0, recorded.stdout
+    assert 'id: "TAS-001"' in recorded.stdout
+    assert (external / ".braintree" / "reservations" / "TAS-001").is_file()
+
+
+def test_concurrent_records_share_the_project_sidecar_reservation(
+    tmp_path: Path, run_bt: RunBt, bt_command: Callable[[], list[str]]
+) -> None:
+    repo = tmp_path / "repo"
+    nodes = _write_vault(repo / "nodes")
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    env = _record_env(tmp_path, "record-race")
+    assert run_bt("init", cwd=repo, env=env).returncode == 0
+
+    workers = 4
+    children = [
+        subprocess.Popen(
+            [
+                *bt_command(),
+                "node",
+                "record",
+                "--type",
+                "TAS",
+                "--summary",
+                f"Capture worker {index}.",
+                "--body",
+                _RECORD_BODY,
+                "--next",
+                "Add the boundary test.",
+                "--slug",
+                f"worker-{index}",
+            ],
+            cwd=str(repo),
+            env=env,
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        for index in range(workers)
+    ]
+    ids: list[str] = []
+    for process in children:
+        output, _ = process.communicate(timeout=60)
+        assert process.returncode == 0, output
+        match = re.search(r'^id: "(TAS-\d+)"$', output, re.MULTILINE)
+        assert match is not None, output
+        ids.append(match.group(1))
+
+    assert len(set(ids)) == workers
+    assert not (nodes / ".braintree").exists()

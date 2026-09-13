@@ -183,7 +183,7 @@ braintree feedback record \
   --attempted '...' --friction '...' --improvement '...'
 ```
 
-`--nodes` selects a `nodes/` directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `braintree check` accepts.
+`--nodes` selects a `nodes/` directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `braintree check` accepts. Both capture commands reserve the automatically chosen id atomically before writing the file: through the project sidecar counter when the sidecar exists and the target `nodes/` directory is inside the project's own worktree, and otherwise through a vault-local `nodes/.braintree/` reservation that is collision-safe for callers sharing that vault but does not span worktrees.
 
 ## Layout
 
