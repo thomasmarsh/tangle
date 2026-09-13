@@ -155,6 +155,21 @@ _PARENT_NEXT_OWNERSHIP_RULE = (
     "reports the stale route",
 )
 
+# Proving the absence of a branch on a named mode or scenario accepts a
+# checked-in source-text guard over the module when it is paired with a
+# falsification probe, and it names the exact tokens it forbids and the
+# modules it covers.
+_NEGATIVE_ASSERTION_RULE = (
+    "a checked-in source-text guard over the module is an acceptable negative "
+    "assertion when it is paired with a falsification probe",
+    "a fixture source that carries the forbidden token and that the guard must "
+    "reject",
+    "the test fails when the guard stops detecting rather than when the "
+    "forbidden token merely moves",
+    "names the exact tokens it forbids and the modules it covers",
+    "matches whole tokens rather than substrings",
+)
+
 # A status move and the node's body edit belong in one commit: `git mv` can
 # stage the pre-edit blob, so the destination is `git add`-ed after the move,
 # and the move is the last step before committing that node.
@@ -417,6 +432,10 @@ def test_status_move_is_staged_with_its_body_edit() -> None:
 def test_readme_keeps_the_durable_outcome_boundary() -> None:
     _assert_contains(_read(_README), _README_BOUNDARY)
     _assert_absent(_read(_README), _SIZING_COMMAND_ABSENT)
+
+
+def test_negative_assertion_names_its_probe_tokens_and_modules() -> None:
+    _assert_contains(_reference("authoring"), _NEGATIVE_ASSERTION_RULE)
 
 
 def test_reference_topics_are_canonical() -> None:

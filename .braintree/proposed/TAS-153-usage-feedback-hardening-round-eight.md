@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T21:57:29Z
+updated: 2026-09-13T22:01:14Z
 summary: Fix or dispose the round-eight Tangle feedback findings: timeout recovery, closure completeness, host-clock stamping, negative assertions, just-in-time slices, gate enumeration, and feedback ownership.
-next: "[[TAS-155-negative-assertion-guidance]]"
+next: "[[TAS-156-just-in-time-slice-live-consumer]]"
 ---
 
 # Context

@@ -1,9 +1,10 @@
 # Authoring reference
 
 Load this before writing node bodies, recording feedback, capturing a node with
-one command, decomposing or rolling up work, or editing `index-map.md`. It is the
-canonical Markdown source that `braintree help authoring` prints, and it is
-installed beside `SKILL.md` at the same revision as the `braintree` command.
+one command, decomposing or rolling up work, proving the absence of a branch
+with a negative assertion, or editing `index-map.md`. It is the canonical
+Markdown source that `braintree help authoring` prints, and it is installed
+beside `SKILL.md` at the same revision as the `braintree` command.
 
 ## Node body and status output
 
@@ -44,6 +45,18 @@ A direct child is a node whose primary `Parent` or `Area` is the current node. A
 coordinating task states its outcome and `Done when` criteria; its `next` is
 either one concrete frontier action or one wikilinked direct child at the current
 frontier, never a child list. Roll up from evidence, not child counts.
+
+## Negative assertions
+
+Prove the absence of a branch on a named mode or scenario with an observable
+check when the code offers one. When it does not, a checked-in source-text guard
+over the module is an acceptable negative assertion when it is paired with a
+falsification probe: a fixture source that carries the forbidden token and that
+the guard must reject, so the test fails when the guard stops detecting rather
+than when the forbidden token merely moves. The guard names the exact tokens it
+forbids and the modules it covers, and matches whole tokens rather than
+substrings, because source text is defeatable by string construction and an
+over-broad pattern matches legitimate strings.
 
 ## Direct answers
 
