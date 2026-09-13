@@ -592,6 +592,29 @@ VERBS["benchmark pilot"] = _verb(
 )
 
 
+# The authority rate measurement is zero-live like the pilot, and it owns a
+# dedicated case file rather than the frozen gold corpus.
+VERBS["benchmark authority"] = _verb(
+    "Plan, dry-run, record, or verify the authority injection rate measurement.",
+    usage="braintree benchmark authority plan|dry-run|record|verify",
+    operands=(
+        ("plan", "print the deterministic case plan and its pins"),
+        ("dry-run", "validate the case set, fixtures, keys, and rates offline"),
+        ("record", "ingest raw child outputs as --input and optionally write --output"),
+        ("verify", "re-validate the case set and re-derive the committed result"),
+    ),
+    outputs=(
+        ("plan", "the pins, plan digest, and keyed episodes"),
+        ("dry-run", "a pass line, or findings that exit 1"),
+        ("rates", "write, retrieval, activation, and harmful-action rates"),
+    ),
+    hazards=(
+        "Development only; plan and dry-run make zero live model calls. "
+        "Record consumes already-collected samples and never launches a child.",
+    ),
+)
+
+
 def wants_help(args: Sequence[str]) -> bool:
     """Return whether the raw argv asks for this command's help."""
     return len(args) > 1 and any(argument in _HELP_FLAGS for argument in args[1:])
