@@ -16,6 +16,10 @@ from braintree import memory_corpus, memory_scenario
 _ROOT = Path(__file__).resolve().parents[1]
 _RESULT = _ROOT / "benchmark" / "memory-pilot-result.json"
 
+# Cases the v1 pilot ran that the round-3 corpus repair has since replaced. The
+# result stays frozen historical evidence; these samples have no live grader.
+_HISTORICAL_ONLY = frozenset({"implicit-retrieval-after-decision-derived-membership-001"})
+
 
 def _result() -> dict[str, Any]:
     return cast(dict[str, Any], json.loads(_RESULT.read_text(encoding="utf-8")))
@@ -32,12 +36,13 @@ def test_result_pins_protocol_model_and_verdict() -> None:
 
 def test_result_covers_every_preregistered_case_and_arm() -> None:
     result = _result()
-    subset = {case.case_id for case in memory_corpus.pilot_subset(memory_corpus.load_corpus())}
-    assert result["case_count"] == len(subset)
-    assert result["sample_count"] == 2 * len(subset)
+    cases = {sample["case_id"] for sample in result["samples"]}
+    assert result["case_count"] == len(cases) == 12
+    assert result["sample_count"] == 2 * len(cases) == len(result["samples"])
     keys = {(sample["case_id"], sample["arm"]) for sample in result["samples"]}
-    assert {case_id for case_id, _ in keys} == subset
-    assert {arm for _, arm in keys} == set(memory_corpus.PILOT_ARMS)
+    assert keys == {(case_id, arm) for case_id in cases for arm in memory_corpus.PILOT_ARMS}
+    # The v1 result is historical: its subset predates the round-3 corpus repair.
+    assert _HISTORICAL_ONLY <= cases
 
 
 def test_result_correctness_agrees_with_the_committed_grader() -> None:
@@ -46,7 +51,11 @@ def test_result_correctness_agrees_with_the_committed_grader() -> None:
         case.case_id: case for envelope in memory_corpus.load_corpus() for case in envelope.cases
     }
     for sample in result["samples"]:
-        case = cases[sample["case_id"]]
+        case = cases.get(sample["case_id"])
+        if case is None:
+            # A case the round-3 repair replaced has no live committed grader.
+            assert sample["case_id"] in _HISTORICAL_ONLY
+            continue
         assert sample["control"] == memory_corpus.is_control(case)
         assert sample["expected_outcome"] == case.grading.expected_outcome
         assert sample["correct"] == memory_scenario.grade(case, sample["action"]).correct

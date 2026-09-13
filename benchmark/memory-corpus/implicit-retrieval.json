@@ -71,75 +71,75 @@
         ]
       }
     },
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {
-                                                                                                                                                                                                                                                                  "schema_version": "memory-scenario-v1",
-                                                                                                                                                                                                                                                                  "case_id": "implicit-retrieval-after-decision-derived-membership-001",
-                                                                                                                                                                                                                                                                  "family": "implicit-retrieval",
-                                                                                                                                                                                                                                                                  "split": "development",
-                                                                                                                                                                                                                                                                  "severity": "moderate",
-                                                                                                                                                                                                                                                                  "source_revision": "b8cd7d5",
-                                                                                                                                                                                                                                                                  "construction": {
-                                                                                                                                                                                                                                                                    "episodes": [
-                                                                                                                                                                                                                                                                      {
-                                                                                                                                                                                                                                                                        "id": "ep-1",
-                                                                                                                                                                                                                                                                        "sequence": 1,
-                                                                                                                                                                                                                                                                        "kind": "decision",
-                                                                                                                                                                                                                                                                        "statement": "Hub membership is derived with an exact Parent/Area backlink search and is never copied into a hub or the index.",
-                                                                                                                                                                                                                                                                        "evidence": [
-                                                                                                                                                                                                                                                                          "SKILL.md",
-                                                                                                                                                                                                                                                                          ".braintree/resolved/TAS-011-reachability-contract.md"
-                                                                                                                                                                                                                                                                        ]
-                                                                                                                                                                                                                                                                      },
-                                                                                                                                                                                                                                                                      {
-                                                                                                                                                                                                                                                                        "id": "ep-2",
-                                                                                                                                                                                                                                                                        "sequence": 2,
-                                                                                                                                                                                                                                                                        "kind": "observation",
-                                                                                                                                                                                                                                                                        "statement": "The index-map routes to a small set of IDX root hubs and must never copy node status, priority, revision, timestamp, or summary.",
-                                                                                                                                                                                                                                                                        "evidence": [
-                                                                                                                                                                                                                                                                          "SKILL.md",
-                                                                                                                                                                                                                                                                          ".braintree/index-map.md"
-                                                                                                                                                                                                                                                                        ]
-                                                                                                                                                                                                                                                                      },
-                                                                                                                                                                                                                                                                      {
-                                                                                                                                                                                                                                                                        "id": "ep-3",
-                                                                                                                                                                                                                                                                        "sequence": 3,
-                                                                                                                                                                                                                                                                        "kind": "observation",
-                                                                                                                                                                                                                                                                        "statement": "A copied membership catalog is a second authority that goes stale when a node changes its primary route.",
-                                                                                                                                                                                                                                                                        "evidence": [
-                                                                                                                                                                                                                                                                          "references/dependencies.md"
-                                                                                                                                                                                                                                                                        ]
-                                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                                    ]
-                                                                                                                                                                                                                                                                  },
-                                                                                                                                                                                                                                                                  "query": {
-                                                                                                                                                                                                                                                                    "task": "Orientation currently spends several seconds running a backlink search for each hub's members. A contributor proposes caching every hub's member list in the index-map so orientation is a single lookup. Decide the next action.",
-                                                                                                                                                                                                                                                                    "observable_paths": [
-                                                                                                                                                                                                                                                                      "src/braintree/toon.py"
-                                                                                                                                                                                                                                                                    ],
-                                                                                                                                                                                                                                                                    "allowed_actions": [
-                                                                                                                                                                                                                                                                      "derive-membership-with-a-backlink-search",
-                                                                                                                                                                                                                                                                      "cache-the-member-list-in-the-index-map",
-                                                                                                                                                                                                                                                                      "store-the-member-list-inside-the-hub"
-                                                                                                                                                                                                                                                                    ]
-                                                                                                                                                                                                                                                                  },
-                                                                                                                                                                                                                                                                  "grading": {
-                                                                                                                                                                                                                                                                    "grader": "action-exact",
-                                                                                                                                                                                                                                                                    "expected_outcome": "derive-membership-with-a-backlink-search",
-                                                                                                                                                                                                                                                                    "acceptable_actions": [
-                                                                                                                                                                                                                                                                      "derive-membership-with-a-backlink-search"
-                                                                                                                                                                                                                                                                    ],
-                                                                                                                                                                                                                                                                    "gold_evidence": [
-                                                                                                                                                                                                                                                                      {
-                                                                                                                                                                                                                                                                        "id": "gold-1",
-                                                                                                                                                                                                                                                                        "statement": "Hub membership is derived with an exact Parent/Area backlink search and never copied into a hub or the index; a cached catalog is a second authority that goes stale.",
-                                                                                                                                                                                                                                                                        "source_episodes": [
-                                                                                                                                                                                                                                                                          "ep-1",
-                                                                                                                                                                                                                                                                          "ep-2"
-                                                                                                                                                                                                                                                                        ]
-                                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                                    ]
-                                                                                                                                                                                                                                                                  }
-                                                                                                                                                                                                                                                                },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
+      "family": "implicit-retrieval",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "A change that alters a landed seam another node owns is escalated rather than authored.",
+            "evidence": [
+              "references/coordination.md",
+              "SKILL.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "An internal, non-behavioral reuse of a resolved node's seam is authored by the assigned worker without escalation when it changes no artifact byte, public API, or behavior, and the worker records the widened item and its owner in its own result.",
+            "evidence": [
+              "references/coordination.md",
+              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "A non-behavioral internal reuse changed no consumer assumption and did not bump its owner's revision.",
+            "evidence": [
+              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A delegated slice needs a private helper that an already-landed sibling owns. The only way to reach it in scope is to widen its visibility inside that sibling's module; the handoff's write set excludes that module. Decide the next action.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "widen-the-helper-and-record-the-reuse",
+          "escalate-the-seam-change",
+          "duplicate-the-helper-in-the-new-module"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "widen-the-helper-and-record-the-reuse",
+        "acceptable_actions": [
+          "widen-the-helper-and-record-the-reuse"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The assigned worker authors an internal, behavior-preserving reuse of a completed seam without escalation and records the widened item, the reason, and the owner in its own result.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
     {
       "schema_version": "memory-scenario-v1",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",

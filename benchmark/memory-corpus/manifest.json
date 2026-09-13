@@ -2,7 +2,7 @@
   "protocol": "memory-corpus-v1",
   "schema_version": "memory-scenario-v1",
   "cases": 53,
-  "digest": "sha256:0e294c4e3a61edfb72288ad1bb936f287500c7d080e481163d0bf5fe8e647a24",
+  "digest": "sha256:26c6815ebed88e8f0acea4405b8deb5a389366c89128fb49a961112b835b0f91",
   "families": [
     {
       "family": "admission",
@@ -50,7 +50,7 @@
       "corpus_version": "memory-implicit-retrieval-corpus-v1",
       "source_revision": "b8cd7d5",
       "cases": 8,
-      "digest": "sha256:978c1d36264cd02564a95700d1a68b4adeafecb157657c36fd222c995471fa2e"
+      "digest": "sha256:872a5f628a39e822aeb58eefd520f73bee9ca304e749e79aedaf3a4963aee6b6"
     },
     {
       "family": "poisoning-and-authority",
@@ -58,7 +58,7 @@
       "corpus_version": "memory-poisoning-and-authority-corpus-v1",
       "source_revision": "f91f3be",
       "cases": 4,
-      "digest": "sha256:77e1353daac48fa9b93dff691b8ddd38bc1d1c301f423145f34355b0b4b20740"
+      "digest": "sha256:5dd83c2339894db61b1b84790261ce9a7386cd96208f255d318c559c9d605151"
     },
     {
       "family": "resumption",
@@ -74,7 +74,7 @@
       "corpus_version": "memory-temporal-update-corpus-v1",
       "source_revision": "c08af27",
       "cases": 4,
-      "digest": "sha256:871886066d8ec800ecf541f6c0402af2d335753fb6052d646ce1859e59d6cb9c"
+      "digest": "sha256:de19c7d6673b5ce5c831ace24334746b8ff9ca2097ecfb5c0a72003838828722"
     }
   ],
   "splits": {
@@ -96,7 +96,7 @@
       "experience-transfer-recurring-workflow-001",
       "forgetting-and-interference-irrelevant-growth-001",
       "forgetting-and-interference-low-utility-001",
-      "implicit-retrieval-after-decision-derived-membership-001",
+      "implicit-retrieval-after-decision-seam-reuse-001",
       "implicit-retrieval-control-version-declaration-001",
       "implicit-retrieval-failed-experiment-embedding-default-001",
       "implicit-retrieval-partial-implementation-write-set-closure-001",

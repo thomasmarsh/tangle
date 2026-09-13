@@ -58,7 +58,7 @@ _CASE_KIND = {
     "resumption-handoff-corpus-continuation-001": "handoff",
     "resumption-control-vault-rename-001": "control",
     "implicit-retrieval-failed-experiment-embedding-default-001": "failed-experiment",
-    "implicit-retrieval-after-decision-derived-membership-001": "after-decision",
+    "implicit-retrieval-after-decision-seam-reuse-001": "after-decision",
     "implicit-retrieval-blocker-lease-handoff-001": "blocker",
     "implicit-retrieval-failed-experiment-orientation-compaction-001": "failed-experiment",
     "implicit-retrieval-handoff-parent-next-001": "handoff",
@@ -82,6 +82,7 @@ _EXPECTED_LOW_OVERLAP = frozenset(
         "implicit-retrieval-partial-implementation-write-set-closure-001",
         "implicit-retrieval-control-version-declaration-001",
         "implicit-retrieval-control-offline-gate-001",
+        "implicit-retrieval-after-decision-seam-reuse-001",
     }
 )
 
@@ -118,10 +119,10 @@ _FORBIDDEN_OBSERVABLE = {
         "src/braintree/vault.py",
     },
     "implicit-retrieval-failed-experiment-embedding-default-001": set(_SEMANTIC_DECIDING_SURFACES),
-    "implicit-retrieval-after-decision-derived-membership-001": {
+    "implicit-retrieval-after-decision-seam-reuse-001": {
+        "references/coordination.md",
         "SKILL.md",
-        ".braintree/index-map.md",
-        ".braintree/resolved/TAS-011-reachability-contract.md",
+        ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md",
     },
     "implicit-retrieval-blocker-lease-handoff-001": {
         "references/coordination.md",

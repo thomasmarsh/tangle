@@ -4,74 +4,74 @@
   "family": "temporal-update",
   "source_revision": "c08af27",
   "cases": [
-                {
-          "schema_version": "memory-scenario-v1",
-          "case_id": "temporal-update-cosmetic-edit-001",
-          "family": "temporal-update",
-          "split": "development",
-          "severity": "minor",
-          "source_revision": "c08af27",
-          "construction": {
-            "episodes": [
-              {
-                "id": "ep-1",
-                "sequence": 1,
-                "kind": "decision",
-                "statement": "A semantic change increments `context_rev` so an already-reconciled consumer rereads the dependency before relying on it again.",
-                "evidence": [
-                  ".braintree/resolved/TAS-009-semantic-revisions.md"
-                ]
-              },
-              {
-                "id": "ep-2",
-                "sequence": 2,
-                "kind": "observation",
-                "statement": "A dependency's reworded sentence changed the interface contract its consumer relies on, and the revision bump was omitted by mistake.",
-                "evidence": [
-                  ".braintree/resolved/TAS-059-stale-pin-commit-shape.md",
-                  "references/dependencies.md"
-                ]
-              },
-              {
-                "id": "ep-3",
-                "sequence": 3,
-                "kind": "observation",
-                "statement": "The shared checker reports a revision mismatch but cannot detect an omitted bump while the recorded revision still matches.",
-                "evidence": [
-                  ".braintree/resolved/TAS-069-unify-dependency-semantics.md"
-                ]
-              }
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "temporal-update-cosmetic-edit-001",
+      "family": "temporal-update",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "A semantic change increments `context_rev` so an already-reconciled consumer rereads the dependency before relying on it again.",
+            "evidence": [
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
             ]
           },
-          "query": {
-            "task": "A pinned consumer's dependency was edited: its `updated` timestamp moved and a sentence in its body was reworded. The consumer's pin still matches the dependency's recorded revision. Decide how the consumer should proceed before executing.",
-            "observable_paths": [
-              "src/braintree/revision.py"
-            ],
-            "allowed_actions": [
-              "reconcile-before-executing",
-              "execute-without-reconcile",
-              "increment-the-dependency-revision"
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A dependency's reworded sentence changed the interface contract its consumer relies on, and the revision bump was omitted by mistake.",
+            "evidence": [
+              ".braintree/resolved/TAS-059-stale-pin-commit-shape.md",
+              "references/dependencies.md"
             ]
           },
-          "grading": {
-            "grader": "action-exact",
-            "expected_outcome": "reconcile-before-executing",
-            "acceptable_actions": [
-              "reconcile-before-executing"
-            ],
-            "gold_evidence": [
-              {
-                "id": "gold-1",
-                "statement": "The reworded sentence changed the interface contract the consumer relies on, and the revision bump was omitted by mistake; the matching recorded revision is not proof the change is consumer-irrelevant, so reconcile before executing.",
-                "source_episodes": [
-                  "ep-1",
-                  "ep-2"
-                ]
-              }
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The shared checker reports a revision mismatch but cannot detect an omitted bump while the recorded revision still matches.",
+            "evidence": [
+              ".braintree/resolved/TAS-069-unify-dependency-semantics.md"
             ]
           }
-        },
+        ]
+      },
+      "query": {
+        "task": "A pinned consumer's dependency was edited: its `updated` timestamp moved and a sentence in its module header was reworded. The project rereads a pinned dependency only when its recorded revision differs; the consumer's pin still matches and the shared checker reports no mismatch. Decide how the consumer should proceed before executing.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "reconcile-before-executing",
+          "execute-without-reconcile",
+          "increment-the-dependency-revision"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "reconcile-before-executing",
+        "acceptable_actions": [
+          "reconcile-before-executing"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The reworded sentence changed the interface contract the consumer relies on, and the revision bump was omitted by mistake; the matching recorded revision is not proof the change is consumer-irrelevant, so reconcile before executing.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
     {
       "schema_version": "memory-scenario-v1",
       "case_id": "temporal-update-semantic-revision-001",

@@ -58,7 +58,7 @@ and the first observable-only control of each family. Twelve cases are selected.
 | admission | `admission-discard-cache-speculation-001` | control |
 | resumption | `resumption-after-decision-shared-install-001` | memory-required |
 | resumption | `resumption-control-vault-rename-001` | control |
-| implicit-retrieval | `implicit-retrieval-after-decision-derived-membership-001` | memory-required |
+| implicit-retrieval | `implicit-retrieval-after-decision-seam-reuse-001` | memory-required |
 | implicit-retrieval | `implicit-retrieval-control-version-declaration-001` | control |
 | temporal-update | `temporal-update-cosmetic-edit-001` | memory-required |
 | cascading-invalidation | `cascading-invalidation-independent-evidence-001` | memory-required |

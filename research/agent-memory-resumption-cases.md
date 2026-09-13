@@ -110,7 +110,7 @@ correct.
 | Case | Kind | Severity | Split | Cue | Gold memory | Distractor |
 |---|---|---|---|---|---|---|
 | `implicit-retrieval-failed-experiment-embedding-default-001` | failed-experiment | major | development | Let "sounds similar" become the main repeated-work check | Similarity search lost to the lexical baseline and stays advisory | Dependency-free default install |
-| `implicit-retrieval-after-decision-derived-membership-001` | after-decision | moderate | development | Cache each hub's member list in the index-map | Hub membership is derived by an exact backlink search and never copied | Rebuildable derived index |
+| `implicit-retrieval-after-decision-seam-reuse-001` | after-decision | moderate | development | Decide whether a slice may widen a completed sibling's private helper | An internal, behavior-preserving reuse is authored without escalation and recorded in the worker's result | Non-behavioral reuse did not bump its owner's revision |
 | `implicit-retrieval-blocker-lease-handoff-001` | blocker | moderate | held-out | Hand an abandoned job to another agent right now | A lease has a 900-second default, renews, and distinguishes expiry | Different-agent `no-op` |
 | `implicit-retrieval-failed-experiment-orientation-compaction-001` | failed-experiment | moderate | held-out | Collapse the repeated summary instructions into a shorter loop | Orientation-loop compaction was measured higher and rejected | No recording-pipeline failure |
 | `implicit-retrieval-handoff-parent-next-001` | handoff | major | held-out | Finish a child while the parent pointer still names it | The coordinator owns the advance; the worker reports the stale route | Checker silence for action `next` |
