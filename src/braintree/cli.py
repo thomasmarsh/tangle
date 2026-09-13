@@ -15,6 +15,7 @@ import sys
 import time
 from collections.abc import Callable, Sequence
 
+from . import help as help_module
 from . import index, semantic, sidecar
 from .revision import reported_version
 from .toon import escape, field
@@ -105,6 +106,11 @@ _CLUSTERS_TIME_BUDGET_SECONDS = 60.0
 _CLUSTERS_DEFAULT_LIMIT = "10"
 _DIGEST_DEFAULT_LIMIT = "20"
 
+# ``_usage_error`` names the narrow verb help that resolves a malformed command
+# line. ``_dispatch`` sets this before a command body runs, so the diagnostic
+# points at the rule the caller got wrong rather than only the global catalog.
+_ACTIVE_COMMAND = ""
+
 
 def _print_usage() -> None:
     description = (
@@ -120,7 +126,15 @@ def _print_usage() -> None:
 
 def _usage_error(message: str) -> int:
     print(field("error", message))
-    print(field("help", "Run `braintree --help` for command usage."))
+    if _ACTIVE_COMMAND:
+        print(
+            field(
+                "help",
+                f"Run `braintree {_ACTIVE_COMMAND} --help` for operands and exit meanings.",
+            )
+        )
+    else:
+        print(field("help", "Run `braintree --help` for the command and topic index."))
     return 2
 
 
@@ -1032,6 +1046,8 @@ def _reconcile(args: list[str]) -> int:
 
 
 def _dispatch(command: str, args: list[str]) -> int:
+    global _ACTIVE_COMMAND
+    _ACTIVE_COMMAND = command
     if command == "status":
         if len(args) != 1:
             return _usage_error("status accepts no arguments")
@@ -1102,14 +1118,20 @@ def _dispatch(command: str, args: list[str]) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the sidecar/index command group and return the process exit code."""
+    global _ACTIVE_COMMAND
     args = list(sys.argv[1:] if argv is None else argv)
     if len(args) == 1 and args[0] in {"--version", "-v", "-V"}:
         print(reported_version())
         return 0
     command = args[0] if args else "status"
+    # Reset the diagnostic context: a global or unknown-command error must not
+    # point at a verb named by an earlier call in the same process.
+    _ACTIVE_COMMAND = ""
     if command in {"--help", "-h"}:
         _print_usage()
         return 0
+    if help_module.wants_help(args):
+        return help_module.render_verb(help_module.verb_key(args))
     if command not in {name.split()[0] for name, _ in _COMMANDS}:
         return _usage_error(f"unknown command: {command}")
     try:

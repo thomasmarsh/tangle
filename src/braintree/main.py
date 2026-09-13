@@ -19,6 +19,7 @@ from . import (
     feedback_record,
     feedback_scan,
     graph_check,
+    help,
     node_record,
     provider,
     quality_benchmark,
@@ -28,7 +29,7 @@ from . import (
     verb_benchmark,
 )
 from .revision import reported_version
-from .toon import escape, field
+from .toon import escape, field, table
 
 __all__ = ["main"]
 
@@ -89,6 +90,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
         "benchmark token|behavioral|storage|verbs|staged|embedding|quality",
         "run a development benchmark",
     ),
+    ("help [TOPIC]", "print the topic index or one installed workflow reference"),
 )
 
 _COORDINATION_COMMANDS = frozenset(
@@ -135,45 +137,62 @@ def _print_usage() -> None:
         )
     )
     print(field("usage", _USAGE))
+    print(
+        field(
+            "help",
+            "Run `braintree <command> --help` for operands and exit meanings, "
+            "or `braintree help TOPIC` for a workflow reference.",
+        )
+    )
     print(f"commands[{len(_COMMANDS)}]{{command,purpose}}:")
     for name, purpose in _COMMANDS:
         print(f'  "{escape(name)}","{escape(purpose)}"')
+    print(table("topics", "topic,purpose", help.topic_rows(), "topics: 0 references"))
 
 
-def _usage_error(message: str) -> int:
+def _usage_error(message: str, command: str = "") -> int:
     print(field("error", message))
-    print(field("help", "Run `braintree --help` for command usage."))
+    if command:
+        print(
+            field(
+                "help",
+                f"Run `braintree {command} --help` for operands and exit meanings.",
+            )
+        )
+    else:
+        print(field("help", "Run `braintree --help` for the command and topic index."))
     return 2
 
 
 def _feedback(args: list[str]) -> int:
     if not args:
-        return _usage_error("feedback requires scan or record")
+        return _usage_error("feedback requires scan or record", "feedback")
     group = args[0]
     if group == "scan":
         return feedback_scan.main(args[1:])
     if group == "record":
         return feedback_record.main(args[1:])
-    return _usage_error(f"unknown feedback command: {group}")
+    return _usage_error(f"unknown feedback command: {group}", "feedback")
 
 
 def _semantic(args: list[str]) -> int:
     if not args:
-        return _usage_error("semantic requires embed")
+        return _usage_error("semantic requires embed", "semantic")
     group = args[0]
     if group == "embed":
         return provider.main(args[1:])
-    return _usage_error(f"unknown semantic command: {group}")
+    return _usage_error(f"unknown semantic command: {group}", "semantic")
 
 
 def _benchmark(args: list[str]) -> int:
     if not args:
         return _usage_error(
-            "benchmark requires token, behavioral, storage, verbs, staged, embedding, or quality"
+            "benchmark requires token, behavioral, storage, verbs, staged, embedding, or quality",
+            "benchmark",
         )
     name = args[0]
     if name not in _BENCHMARKS:
-        return _usage_error(f"unknown benchmark: {name}")
+        return _usage_error(f"unknown benchmark: {name}", "benchmark")
     return _BENCHMARKS[name](args[1:])
 
 
@@ -192,6 +211,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if command in {"--help", "-h"}:
         _print_usage()
         return 0
+    if command == "help":
+        return help.help_command(args[1:])
+    # A per-verb help request is answered here, before any command body runs, so
+    # every public verb gets bounded help with no vault and no sidecar.
+    if help.wants_help(args):
+        return help.render_verb(help.verb_key(args))
     if command == "check":
         return graph_check.main(args[1:])
     # ``node record`` is the capture path beside ``feedback record``; a bare

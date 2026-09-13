@@ -1,0 +1,633 @@
+"""Bounded, read-only help for the single ``braintree`` command.
+
+Two layers keep the skill's guidance discoverable without loading all of it:
+
+- Per-verb help states the operands, output fields, exit meanings, and
+  command-specific hazards the verb owns. It needs no vault and no sidecar, so
+  an agent can ask before acting.
+- Topical help renders one installed Markdown reference. The reference files
+  under ``references/`` are the canonical prose; this module locates and prints
+  them instead of duplicating their text in Python strings.
+
+The command and topic index stays in :func:`braintree.main._print_usage`; this
+module is the bounded detail behind it.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
+
+from .toon import field, table
+
+__all__ = [
+    "REFERENCE_DIRECTORY",
+    "REFERENCE_TOPICS",
+    "TOPIC_PURPOSES",
+    "help_command",
+    "render_verb",
+    "topic_rows",
+    "verb_key",
+    "wants_help",
+]
+
+# The directory name is installed beside ``SKILL.md`` at the same revision as
+# the command, so a rendered topic always matches the installed revision.
+REFERENCE_DIRECTORY = "references"
+
+# Ordering is the reading order the design names: coordination, dependencies,
+# then authoring detail.
+REFERENCE_TOPICS: tuple[str, ...] = ("coordination", "dependencies", "authoring")
+
+TOPIC_PURPOSES: dict[str, str] = {
+    "coordination": "claims, leases, parallel worktrees, handoff, integration",
+    "dependencies": "pins, gates, revision bumps, staged staleness, reversals",
+    "authoring": "node bodies, capture commands, feedback nodes, decomposition",
+}
+
+# A help request never reaches a command body, so it is safe to detect it from
+# the raw arguments before dispatch.
+_HELP_FLAGS = frozenset({"-h", "--help"})
+
+# Commands whose second token names a subcommand with its own help entry.
+_GROUP_COMMANDS = frozenset({"node", "feedback", "semantic", "benchmark"})
+
+
+@dataclass(frozen=True)
+class Verb:
+    """The bounded help one public verb publishes."""
+
+    usage: str
+    purpose: str
+    operands: tuple[tuple[str, str], ...] = ()
+    outputs: tuple[tuple[str, str], ...] = ()
+    exits: tuple[tuple[str, str], ...] = ()
+    hazards: tuple[str, ...] = ()
+    topic: str = ""
+
+
+_EXITS = (
+    ("0", "the answer was produced"),
+    ("1", "the request could not be answered (missing node, absent vault, findings)"),
+    ("2", "the command line is malformed"),
+)
+
+_COORDINATION_TOPIC = "coordination"
+_DEPENDENCIES_TOPIC = "dependencies"
+_AUTHORING_TOPIC = "authoring"
+
+
+def _verb(
+    purpose: str,
+    *,
+    operands: tuple[tuple[str, str], ...] = (),
+    outputs: tuple[tuple[str, str], ...] = (),
+    hazards: tuple[str, ...] = (),
+    topic: str = "",
+    usage: str,
+) -> Verb:
+    return Verb(
+        usage=usage,
+        purpose=purpose,
+        operands=operands,
+        outputs=outputs,
+        exits=_EXITS,
+        hazards=hazards,
+        topic=topic,
+    )
+
+
+VERBS: dict[str, Verb] = {
+    "status": _verb(
+        "Show the current coordination state for this project.",
+        usage="braintree status",
+        outputs=(
+            ("project_id", "stable identity shared by every worktree"),
+            ("sidecar", "absolute path of the local state database"),
+            ("initialized", "whether that database exists"),
+            ("active_claims", "leases currently recorded"),
+            ("reservations", "prefix,next rows for allocated ids"),
+        ),
+        hazards=("Reports state only; it never writes or repairs the database.",),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "location": _verb(
+        "Show the stable project identity and state path.",
+        usage="braintree location",
+        outputs=(
+            ("project_id", "identity derived from the Git common directory"),
+            ("sidecar", "absolute path a status or init would use"),
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "init": _verb(
+        "Create or repair the local coordination state.",
+        usage="braintree init",
+        operands=(
+            ("(none)", "run from the project root; the location is derived"),
+        ),
+        outputs=(
+            ("result", "always initialized"),
+            ("project_id", "stable identity"),
+            ("sidecar", "database path created or repaired"),
+        ),
+        hazards=(
+            "Rebuilds only derived state; never repair the database by hand.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "allocate": _verb(
+        "Atomically reserve PREFIX-NNN across worktrees.",
+        usage="braintree allocate PREFIX",
+        operands=(
+            ("PREFIX", "uppercase letters, digits, underscores, or hyphens"),
+        ),
+        outputs=(
+            ("id", "the reserved identity, for example TAS-106"),
+        ),
+        hazards=(
+            "A reservation is not a node; a local find is collision detection only.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "claim": _verb(
+        "Acquire or renew an exclusive lease on one node.",
+        usage="braintree claim NODE AGENT --base-hash HASH [--lease-seconds N]",
+        operands=(
+            ("NODE", "bare ID or full node name; a path is rejected"),
+            ("AGENT", "claim owner; a repeat with the same hash renews"),
+            ("--base-hash", "the bare 64-character content_hash digest"),
+            ("--lease-seconds", "lease duration; default 900"),
+        ),
+        outputs=(
+            ("result", "always claimed"),
+            ("node", "the opaque claim key"),
+            ("agent", "the recorded owner"),
+            ("base_hash", "the recorded starting digest"),
+            ("lease_expires_at", "absolute expiry"),
+            ("lease_remaining_seconds", "seconds left on this call"),
+        ),
+        hazards=(
+            "Never pass the two-line node:/content_hash: block; pass the bare digest.",
+            "The frontier move belongs to the claimed edit, not the handoff.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "release": _verb(
+        "Release the matching lease or report that it lapsed.",
+        usage="braintree release NODE AGENT --base-hash HASH",
+        operands=(
+            ("NODE", "the same bare ID or full node name used to claim"),
+            ("AGENT", "the recorded owner"),
+            ("--base-hash", "the starting digest recorded by claim"),
+        ),
+        outputs=(
+            ("result", "released, expired, or no-op"),
+            ("node", "the claim key"),
+            ("lease_remaining_seconds", "seconds left, or 0"),
+        ),
+        hazards=(
+            "A hash or owner mismatch fails non-zero and refuses the release.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "index": _verb(
+        "Rebuild the derived index from Markdown.",
+        usage="braintree index [NODES]",
+        operands=(("NODES", "vault nodes directory; defaults to ./nodes"),),
+        outputs=(
+            ("nodes", "node rows reindexed"),
+            ("edges", "graph edges reindexed"),
+            ("root", "absolute nodes directory indexed"),
+        ),
+        hazards=("Derived state only; Markdown remains authoritative.",),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "search": _verb(
+        "Full-text search derived Markdown content.",
+        usage=(
+            "braintree search QUERY [--limit N] [--status S] [--type T] "
+            "[--priority P] [--parent REF] [--dependency REF]"
+        ),
+        operands=(
+            ("QUERY", "search text"),
+            ("--limit", "maximum rows; default 20"),
+            ("--status", "proposed, active, blocked, or resolved"),
+            ("--type", "uppercase type prefix such as TAS or DEF"),
+            ("--priority", "P0 through P3"),
+            ("--parent / --dependency", "filter by a stored relation target"),
+        ),
+        outputs=(
+            ("nodes", "id,status,summary rows, or an explicit zero line"),
+        ),
+        hazards=("Reconciles the index first; filters read Markdown, not raw SQL.",),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "similar": _verb(
+        "Rank nodes by lexical similarity.",
+        usage="braintree similar TEXT|--file PATH [--limit N]",
+        operands=(
+            ("TEXT", "query text, or"),
+            ("--file", "UTF-8 file to read the query from"),
+            ("--limit", "maximum rows; default 10"),
+        ),
+        outputs=(
+            ("similar", "id,status,score,summary rows"),
+        ),
+        hazards=(
+            "Never both TEXT and --file; the optional provider reranks when healthy.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "backlinks": _verb(
+        "List derived incoming graph edges for one node.",
+        usage="braintree backlinks NODE",
+        operands=(("NODE", "bare ID or full node name"),),
+        outputs=(
+            ("backlinks", "source,status,relation,pinned_context_rev rows"),
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "hash": _verb(
+        "Print the raw-content SHA-256 of a node file.",
+        usage="braintree hash NODE",
+        operands=(("NODE", "bare ID or full node name; a path is rejected"),),
+        outputs=(
+            ("node", "the operand echoed"),
+            ("content_hash", "bare digest to pass as --base-hash"),
+        ),
+        hazards=(
+            "Frontmatter is included; use the bare digest, never the labelled block.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "stale": _verb(
+        "Find missing or outdated dependency pins.",
+        usage="braintree stale",
+        outputs=(
+            ("stale", "source,status,target,pinned,current,relation,reason rows"),
+        ),
+        hazards=("Read-only diagnosis; reconcile each consumer deliberately.",),
+        topic=_DEPENDENCIES_TOPIC,
+    ),
+    "frontier": _verb(
+        "List frontier candidates, optionally clustered into advisory groups.",
+        usage="braintree frontier [--group] [--limit N]",
+        operands=(
+            ("--group", "cluster candidates into advisory workstreams"),
+            ("--limit", "maximum rows; requires --group"),
+        ),
+        outputs=(
+            ("frontier", "id,status,priority,summary,next,stale rows"),
+            ("frontier_groups", "grouped rows with the same fields"),
+            ("advisory", "states that groups are not work claims"),
+        ),
+        hazards=(
+            "Candidates are a superset of the frontier; resolve them through the coordinator.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "node": _verb(
+        "Show one node's frontmatter, route, edges, and backlinks.",
+        usage="braintree node NODE",
+        operands=(("NODE", "bare ID or full node name"),),
+        outputs=(
+            ("node/name/status/path", "identity and location"),
+            ("frontmatter", "key,value rows"),
+            ("route_relation/route", "primary Parent or Area edge"),
+            ("context_edges", "relation,target,pinned,current,status,stale rows"),
+            ("backlinks", "incoming edges"),
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "node record": _verb(
+        "Create one routed, stamped node of a named type.",
+        usage="braintree node record --type T --summary S --body B [OPTIONS]",
+        operands=(
+            ("--type", "THO, DEF, DEC, or TAS"),
+            ("--summary", "frontmatter summary"),
+            ("--body", "node body text"),
+            ("--status", "status directory; defaults to proposed"),
+            ("--next", "required for an unfinished TAS; omitted when resolved"),
+            ("--route/--id/--slug/--nodes", "route and id overrides"),
+        ),
+        outputs=(
+            ("path", "the written node file"),
+            ("id", "the allocated identity"),
+        ),
+        hazards=(
+            "Creates the node you already decided to admit; it does not judge admission.",
+            "Reserves the automatically chosen id before writing the file.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
+    "impact": _verb(
+        "List direct and transitive dependents of a node.",
+        usage="braintree impact NODE",
+        operands=(("NODE", "bare ID or full node name"),),
+        outputs=(
+            ("target/target_context_rev", "the resolved node and revision"),
+            ("impact", "dependent,status,depth,relation,dependency,... rows"),
+        ),
+        hazards=("Traverses the whole chain; do not repeat it via backlinks.",),
+        topic=_DEPENDENCIES_TOPIC,
+    ),
+    "orient": _verb(
+        "Print a bounded orientation packet over the graph.",
+        usage="braintree orient [--section NAME] [--limit N]",
+        operands=(
+            ("--section", "named packet section; repeatable"),
+            ("--limit", "maximum rows per section; default 10"),
+        ),
+        outputs=(
+            ("section/total", "per-section header and row count"),
+            ("rows", "each section's documented columns"),
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "next": _verb(
+        "Rank frontier candidates for the next actor.",
+        usage="braintree next [--rank] [--limit N]",
+        operands=(
+            ("--rank", "accepted; ranking is the only mode"),
+            ("--limit", "maximum rows; default 5"),
+        ),
+        outputs=(
+            ("ranking", "the documented ordering rule"),
+            ("total", "candidate count"),
+            ("next", "rank,id,status,priority,blocking,updated,summary,next rows"),
+        ),
+        hazards=("Candidates are advisory; the coordinator's next route resolves them.",),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "clusters": _verb(
+        "List advisory clusters, over-broad routes, and outlier nodes.",
+        usage="braintree clusters [--limit N]",
+        operands=(("--limit", "maximum rows per answer; default 10"),),
+        outputs=(
+            ("advisory", "states the answer is not a work claim"),
+            ("space/method/params/stability", "the chosen fit and its evidence"),
+            ("clusters/noise/outliers", "bounded member rows"),
+        ),
+        hazards=(
+            "Needs the optional semantic capability; without it, one advisory line and exit 0.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "digest": _verb(
+        "Digest one hub's or node's unresolved direct members.",
+        usage="braintree digest NODE [--limit N]",
+        operands=(
+            ("NODE", "bare ID or full node name"),
+            ("--limit", "maximum rows; default 20"),
+        ),
+        outputs=(
+            ("target/status/total", "the resolved node and member count"),
+            ("members", "id,status,priority,updated,summary,next rows"),
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "reconcile": _verb(
+        "Plan duplicate, divergence, and stale-pin repairs from a Git change set.",
+        usage="braintree reconcile [--base REF] [--head REF ...] [NODES]",
+        operands=(
+            ("--base", "comparison base; defaults to HEAD"),
+            ("--head", "a ref to include; repeatable"),
+            ("NODES", "vault nodes directory; defaults to ./nodes"),
+        ),
+        outputs=(
+            ("base", "the resolved base ref"),
+            ("head", "the refs compared"),
+            ("steps", "action,depth,node,path,pinned,current,detail rows"),
+        ),
+        hazards=(
+            "Plans repairs only; run inside the vault's Git repository.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "check": _verb(
+        "Validate a vault without writing state.",
+        usage="braintree check [--allow-stale] [--allow-orphan NODE] [--format text|toon] [NODES]",
+        operands=(
+            ("--allow-stale", "relax only the revision equality of a pin"),
+            ("--allow-orphan", "permit one named orphan; repeatable"),
+            ("--format", "text diagnostics or the toon findings table"),
+            ("NODES", "vault nodes directory; defaults to ./nodes"),
+        ),
+        outputs=(
+            ("findings", "code,node,detail rows in toon format"),
+            ("graph check", "a pass line with the node count in text format"),
+        ),
+        hazards=(
+            "--allow-stale is sanctioned only for a deliberate staged-staleness commit.",
+            "A pinned dependency to an unresolved target still fails.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
+    "semantic": _verb(
+        "Run the optional semantic provider commands.",
+        usage="braintree semantic embed [--model NAME]",
+        operands=(("embed", "read JSON texts on stdin and write JSON vectors"),),
+        outputs=(
+            ("vectors", "one equal-width vector per input on stdout"),
+        ),
+        hazards=(
+            "Needs the optional semantic capability; an absent cache exits non-zero.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "semantic embed": _verb(
+        "Embed JSON texts as JSON vectors for BT_SEMANTIC_PROVIDER.",
+        usage="braintree semantic embed [--model NAME]",
+        operands=(
+            ("stdin", "a JSON array of texts"),
+            ("--model", "override the selected embedding model"),
+        ),
+        outputs=(
+            ("vectors", "a JSON array of equal-width vectors"),
+        ),
+        hazards=(
+            "Offline only; the provider command string is cached with the vectors.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "feedback": _verb(
+        "Collect or record Braintree friction as FBK nodes.",
+        usage="braintree feedback scan VAULT ... | braintree feedback record [OPTIONS]",
+        outputs=(
+            ("feedback", "scanned feedback rows, or the written node path"),
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
+    "feedback scan": _verb(
+        "Collect FBK feedback from one or more external vaults.",
+        usage="braintree feedback scan VAULT ...",
+        operands=(("VAULT", "one or more vault roots to read"),),
+        outputs=(
+            ("feedback", "vault,id,status,revision,summary rows"),
+            ("feedback", "an explicit `feedback: 0 nodes` when empty"),
+        ),
+        hazards=("Read-only; never writes to the scanned vault and needs no sidecar.",),
+        topic=_AUTHORING_TOPIC,
+    ),
+    "feedback record": _verb(
+        "Record Braintree friction as one routed FBK node.",
+        usage="braintree feedback record --attempted A --friction F --improvement I [OPTIONS]",
+        operands=(
+            ("--attempted/--friction/--improvement", "the one Feedback section lines"),
+            ("--nodes", "vault nodes directory"),
+            ("--route/--id/--summary/--slug", "route and identity overrides"),
+        ),
+        outputs=(
+            ("path", "the written nodes/proposed/FBK-n-slug.md file"),
+            ("id", "the allocated identity"),
+        ),
+        hazards=(
+            "Stamps the installed revision; degrades to <version>+unknown without a record.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
+    "benchmark": _verb(
+        "Run a development benchmark.",
+        usage="braintree benchmark token|behavioral|storage|verbs|staged|embedding|quality",
+        operands=(
+            ("NAME", "one of the benchmark names in the usage line"),
+        ),
+        outputs=(("protocol/verification", "the harness's own bounded report"),),
+        hazards=("Development only; the offline harnesses never spend model tokens.",),
+    ),
+    "help": _verb(
+        "Print the topic index or one installed workflow reference.",
+        usage="braintree help [TOPIC]",
+        operands=(
+            ("TOPIC", "one of: " + ", ".join(REFERENCE_TOPICS)),
+        ),
+        outputs=(
+            ("topics", "topic,purpose rows when no topic is given"),
+            ("Markdown", "the canonical reference text for one topic"),
+        ),
+        hazards=("Read-only; works with no vault and never initializes the sidecar.",),
+    ),
+}
+
+# Benchmark subcommands share one shape: a bounded development harness that
+# emits or verifies a committed baseline.
+_BENCHMARK_PURPOSES: dict[str, str] = {
+    "token": "measure model-token consumption from fresh controlled sessions",
+    "behavioral": "report secondary filesystem diagnostics on temporary fixtures",
+    "storage": "compare storage representations against the committed baseline",
+    "verbs": "verify each direct-answer verb against its exact-value baseline",
+    "staged": "compare a recorded pre-thrust and landed token-benchmark sample",
+    "embedding": "freeze or verify the retrieval corpus, or run the batch comparison",
+    "quality": "measure or verify the embedding and clustering quality gate",
+}
+
+for _name, _purpose in _BENCHMARK_PURPOSES.items():
+    VERBS[f"benchmark {_name}"] = _verb(
+        _purpose[0].upper() + _purpose[1:] + ".",
+        usage=f"braintree benchmark {_name} [--verify]",
+        operands=(
+            ("--verify", "check the committed baseline instead of emitting"),
+        ),
+        outputs=(("verification", "a pass line, or a mismatch that exits 1"),),
+        hazards=("Development only; offline, with no live model calls.",),
+    )
+
+
+def wants_help(args: Sequence[str]) -> bool:
+    """Return whether the raw argv asks for this command's help."""
+    return len(args) > 1 and any(argument in _HELP_FLAGS for argument in args[1:])
+
+
+def verb_key(args: Sequence[str]) -> str:
+    """Map raw argv to the help registry key for the invoked verb."""
+    command = args[0]
+    if command in _GROUP_COMMANDS and len(args) > 1:
+        candidate = f"{command} {args[1]}"
+        if candidate in VERBS:
+            return candidate
+    return command
+
+
+def _reference_path(topic: str) -> Path | None:
+    """Locate the installed Markdown reference for one topic."""
+    start = Path(__file__).resolve().parent
+    for candidate in (start, *start.parents):
+        path = candidate / REFERENCE_DIRECTORY / f"{topic}.md"
+        if path.is_file():
+            return path
+    return None
+
+
+def topic_rows() -> tuple[tuple[str, str], ...]:
+    """Return the topic index rows for the global command help."""
+    return tuple(
+        (topic, TOPIC_PURPOSES[topic])
+        for topic in REFERENCE_TOPICS
+        if topic in TOPIC_PURPOSES
+    )
+
+
+def _print_topic_index() -> None:
+    print(field("usage", "braintree help TOPIC"))
+    print(
+        table(
+            "topics",
+            "topic,purpose",
+            topic_rows(),
+            "topics: 0 references",
+        )
+    )
+
+
+def _print_verb(name: str, verb: Verb) -> None:
+    print(field("command", f"braintree {name}"))
+    print(field("usage", verb.usage))
+    print(field("purpose", verb.purpose))
+    if verb.operands:
+        print(table("arguments", "name,meaning", verb.operands, "arguments: 0"))
+    if verb.outputs:
+        print(table("outputs", "field,meaning", verb.outputs, "outputs: 0"))
+    print(table("exits", "code,meaning", verb.exits, "exits: 0"))
+    if verb.hazards:
+        print(table("hazards", "hazard", ((hazard,) for hazard in verb.hazards), "hazards: 0"))
+    if verb.topic:
+        print(field("topic", verb.topic))
+        print(field("topic_help", f"braintree help {verb.topic}"))
+
+
+def render_verb(key: str) -> int:
+    """Print one verb's bounded help and return its exit code."""
+    verb = VERBS.get(key)
+    if verb is None:
+        print(field("error", f"unknown command: {key}"))
+        print(field("help", "Run `braintree --help` for the command and topic index."))
+        return 2
+    _print_verb(key, verb)
+    return 0
+
+
+def help_command(args: Sequence[str]) -> int:
+    """Run ``braintree help [TOPIC]`` and return the process exit code."""
+    if not args:
+        _print_topic_index()
+        return 0
+    if any(argument in _HELP_FLAGS for argument in args):
+        return render_verb("help")
+    if len(args) > 1:
+        print(field("error", "help accepts at most one topic"))
+        print(field("help", "Available topics: " + ", ".join(REFERENCE_TOPICS) + "."))
+        return 2
+    topic = args[0]
+    if topic not in REFERENCE_TOPICS:
+        print(field("error", f"unknown help topic: {topic}"))
+        print(field("help", "Available topics: " + ", ".join(REFERENCE_TOPICS) + "."))
+        return 2
+    path = _reference_path(topic)
+    if path is None:
+        print(field("error", f"missing installed reference: {REFERENCE_DIRECTORY}/{topic}.md"))
+        print(field("help", "Reinstall the skill so its reference tree matches the command."))
+        return 1
+    print(path.read_text(encoding="utf-8").rstrip("\n"))
+    return 0
