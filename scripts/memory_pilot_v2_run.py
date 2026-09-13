@@ -135,6 +135,8 @@ def collect(run_dir: Path, runs_root: str | None, out_path: str | None) -> int:
         input_tokens = int(usage.get("input") or 0)
         cached = int(usage.get("cacheRead") or 0)
         output_tokens = int(usage.get("output") or 0)
+        actual_model = str(step.get("model") or attempt.get("model") or "")
+        actual_model = actual_model.split(":", 1)[0]
         samples.append(
             {
                 "key": key,
@@ -142,7 +144,7 @@ def collect(run_dir: Path, runs_root: str | None, out_path: str | None) -> int:
                 "raw_output_ref": status.get("outputFile") or str(status_path.parent),
                 "raw_output": output,
                 "prompt_digest": keys[key]["prompt_digest"],
-                "model": mp.PILOT_V2_MODEL,
+                "model": actual_model or mp.PILOT_V2_MODEL,
                 "started_at": _iso(started),
                 "finished_at": _iso(ended),
                 "telemetry": {
