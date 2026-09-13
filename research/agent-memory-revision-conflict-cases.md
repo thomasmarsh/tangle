@@ -71,9 +71,11 @@ invalidation separately gradeable:
 
 The corpora cover the four corrective behaviors the Done-when names:
 `reconcile`, `preserve-alternatives`, `abstain`, and `ask-clarification`. The
-competing-rules case uses `action-acceptable` because both preserving the
-alternatives and abstaining with a report are genuinely correct; the other
-cases use `action-exact`.
+competing-rules case uses `action-exact`: the observable state records no
+precedence, so the keep-both convention would be defensible, but the gold
+memory records a precedence decision that makes the narrower later rule
+control; the genuine-conflict case keeps both conclusions and reports the
+uncertainty because its only tie-break is blocked.
 
 ### Conflict authority
 
@@ -118,7 +120,7 @@ minimal memory from surrounding noise.
 
 | Case | Kind | Split | Severity | Cue | Gold memory | Distractor |
 |---|---|---|---|---|---|---|
-| `conflict-and-uncertainty-competing-rules-001` | unresolved-conflict | development | major | Apply two current rules when neither controls | Preserve both readings and report the conflict rather than silently choosing | Cosmetic edit without a revision bump |
+| `conflict-and-uncertainty-competing-rules-001` | unresolved-conflict | development | major | Decide when two current rules collide and no precedence is observable | A recorded precedence decision supplies the missing precedence and makes the narrower later rule control | Cosmetic edit without a revision bump |
 | `conflict-and-uncertainty-missing-premise-001` | missing-premise | development | moderate | Resolve which of two migrations a request means | Ask one targeted question instead of guessing or stalling | A semantic revision that needed reconciliation |
 | `conflict-and-uncertainty-genuine-conflict-001` | unresolved-conflict | held-out | major | Conclude when a tie-break is blocked | Preserve both conclusions and report the uncertainty | A consumer pin mismatched after a revision |
 

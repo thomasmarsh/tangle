@@ -54,7 +54,7 @@
         ]
       },
       "query": {
-        "task": "A node's outcome moved to a different node, and its remaining work shares one outcome and completion boundary with an adjacent node. The supersession rule and the consolidation rule can each be read to govern. Decide how to proceed.",
+        "task": "A node's outcome moved to a different node, and its remaining work shares one outcome and completion boundary with an adjacent node. The supersession rule and the consolidation rule can each be read to govern. No precedence between the two rules is available in the current observable state, and the standing convention for such a collision is to keep both readings and flag the disagreement. Decide how to proceed.",
         "observable_paths": [
           "src/braintree/quality_benchmark.py"
         ],
@@ -74,7 +74,7 @@
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "The collision is apparent rather than irreducible: a recorded precedence decision makes the narrower later rule controlling, so apply it and note the collision instead of preserving or abstaining.",
+            "statement": "The collision is apparent rather than irreducible: a recorded precedence decision supplies the precedence missing from the observable state and makes the narrower later rule controlling, so apply it and note the collision instead of following the keep-both convention or abstaining.",
             "source_episodes": [
               "ep-1",
               "ep-2",

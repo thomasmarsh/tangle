@@ -2,7 +2,7 @@
   "protocol": "memory-corpus-v1",
   "schema_version": "memory-scenario-v1",
   "cases": 53,
-  "digest": "sha256:cabe4ac352feb613cef7d9ed025e9a383b8a04f1d4c0306796fac1f94a3f379c",
+  "digest": "sha256:e7754707c24e04e50460fda994b660ccc51d1cbcafb288405311f5dfea8a63de",
   "families": [
     {
       "family": "admission",
@@ -26,7 +26,7 @@
       "corpus_version": "memory-conflict-and-uncertainty-corpus-v1",
       "source_revision": "c08af27",
       "cases": 3,
-      "digest": "sha256:dbf052892b5055e299fa79aabe25396bb58576429c7da2996f976ac0b7eeb8a6"
+      "digest": "sha256:b1f033a78b7a83b2e24f206f671dcacfd41d0e70c75f0421fdc0314a97e29570"
     },
     {
       "family": "experience-transfer",
