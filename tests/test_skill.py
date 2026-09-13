@@ -1,7 +1,11 @@
-"""Contract tests for ``SKILL.md`` and the live repository execution graph.
+"""Contract tests for the Braintree skill surfaces and the live execution graph.
 
-Ported from ``tests/skill.sh`` so the skill text and the checked-in vault are
-validated with the Python toolchain instead of Ruby.
+The skill ships one concise core (``SKILL.md``) plus canonical topical
+references under ``references/``. These tests lock the literal grammar the graph
+checker and clients genuinely depend on, and replace broad prose-fragment locks
+with observable routing and behavioral invariants: the core routes to a topic,
+each topic loads as its installed Markdown, every public verb answers
+``--help``, and the core stays measurably smaller than the pre-split file.
 """
 
 from __future__ import annotations
@@ -10,276 +14,68 @@ import re
 import subprocess
 from pathlib import Path
 
-from braintree import graph_check
+import pytest
+
+from braintree import graph_check, main
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SKILL = _ROOT / "SKILL.md"
 _AGENTS = _ROOT / "AGENTS.md"
+_README = _ROOT / "README.md"
+_REFERENCES = _ROOT / "references"
 _NODES = _ROOT / "nodes"
 _INDEX = _NODES / "index-map.md"
 
-_GRAPH_CHECK_COMMAND = "After each integration, run `braintree check nodes`"
+# The three conditional workflows the core routes to. Each name is both a
+# ``braintree help`` topic and a canonical installed Markdown file.
+_TOPICS = ("coordination", "dependencies", "authoring")
 
-_HYBRID_CONTRACT: tuple[str, ...] = (
-    "nodes/proposed/",
-    "nodes/active/",
-    "nodes/blocked/",
-    "nodes/resolved/",
+# The compact baseline this refactor must approach; the pre-split file measured
+# 30,244 bytes. The bound keeps the core concise while allowing correct prose.
+_CORE_SIZE_BOUND = 16_000
+
+# A single routing instruction the core must always carry: load the reference a
+# conditional workflow needs, and read the same Markdown through the command.
+_CORE_ROUTING = (
+    "Read the topical reference named below before the first conditional workflow",
+    "`braintree help TOPIC` prints the same installed Markdown",
+    "Load only the reference the current operation requires",
+    "braintree <verb> --help",
+)
+
+# The invariants an agent must have before acting, kept in the core rather than
+# a reference: authority, vault shape, admission, the durable-outcome boundary,
+# status meaning, reachability, and mutation rules.
+_CORE_INVARIANTS = (
     "Markdown is the durable, human-visible authority",
     "Obsidian-compatible",
-    "installed `braintree` command",
-    "workers read or write SQLite directly",
-    "braintree index [nodes]",
-    "FTS data from Markdown",
-    "authoritative only for local operational coordination",
-    "braintree allocate PREFIX",
-    "braintree claim NODE AGENT",
-    "braintree hash NODE",
-    "SHA-256 hex digest of the node file's raw UTF-8 bytes",
-    "frontmatter included",
-    "Loss of the database may lose claims and indexes",
-    "`braintree init` then `braintree index`",
-    "one host and a local filesystem",
-    "network-mounted",
-    "PostgreSQL",
-    "stationary-path/status-in-database migration is deferred",
-    "context_rev",
-    "not an edit counter",
+    "Each node lives in exactly one fixed status directory",
+    "Admit a node only when its conclusion or executable state is likely to change",
+    "Independent resumability is necessary but not sufficient",
+    "A fresh worker may continue the same graph node; agents and nodes are not one-to-one",
+    "Change status by moving the unchanged filename between those directories",
+    "the only accepted forms are a plain action sentence, `Do X.`, or a single "
+    "`[[direct-child]]` link",
+    "Every other node has exactly one primary, unpinned `Parent` or `Area` link",
+    "keep only the candidate its coordinating parent's `next` route names",
+    "Confirm each pinned dependency is `resolved` before executing",
+    "Graph bookkeeping never broadens authorization",
 )
 
-_ADMISSION_CONTRACT: tuple[str, ...] = (
-    "Admit a node only when",
-    "future decision or action",
-    "tool-call logs",
-    "routine narration or",
-    "duplicate source material",
-    "Prefer updating the existing node",
-    "independently resumable outcome, blocker, dependency,",
-    "Independent resumability is\nnecessary but not sufficient",
-    "materially reduce future resumption cost",
-    "Agent boundaries, exclusive write-set",
-    "failed checks, incidental or mechanical cleanup, routine",
-    "verification, and handoffs alone never qualify",
-    "A fresh worker may continue the same graph\n"
-    "node; agents and nodes are not one-to-one",
-)
-
-_PARALLEL_CONTRACT: tuple[str, ...] = (
-    "advisory navigation, never a work claim",
-    "coordinator assigns each worker a direct node path and an exclusive write set",
-    "One agent writes a node and its status path at a time",
-    "Shared parents, `index-map.md`, definitions, and root hubs are coordinator-owned",
-    "explicitly serialized",
-    "A worktree is a snapshot, not global truth",
-    "alone resolves a coordinating parent after all required child work is integrated",
-    "Coordinator preallocation",
-    "explicitly disjoint numeric ranges",
-    "checks for an existing collision only; it is never an ID reservation",
-    "`braintree allocate PREFIX` to atomically reserve an ID",
-    "Branch-local `owner` or claim metadata is insufficient",
-    "worker records the integration base and its assigned node path and write set",
-    "hashes its starting Markdown node with `braintree hash`, and claims it with `braintree claim`",
-    "then release the matching claim",
-    "A worktree slice is not a node boundary: a fresh worker may continue the assigned node",
-    "content update and its status move coherent in one commit or handoff bundle",
-    "verify every changed, created, and moved path remains in that assigned write set",
-    "Report the base, touched paths, created paths, moved paths, dependency evidence, "
-    "and test evidence",
-    "coordinator integrates worker branches one at a time",
-    "Never blindly auto-merge an upstream change to the assigned node or divergent status paths",
-    "manual semantic reconciliation",
-    _GRAPH_CHECK_COMMAND,
-    "exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches",
-    "reconcile stale consumers before their dependent execution",
-    "only after its required child evidence has been integrated",
-)
-
-_CANONICAL_CONTRACT: tuple[str, ...] = (
-    "Store each relationship in one canonical direction",
-    "put `Parent` on the child",
-    "do not store them as reciprocal edges",
-    "exactly one primary",
-    "orphan",
-    "Decompose just in time",
-    "independently resumable",
-    "verification boundary that also retains durable execution-memory value",
-    "one concrete frontier action",
-    "one wikilinked direct child",
-    "Roll up from evidence",
-    "resolving children alone does not complete the parent",
-    "A `DEC` node records a settled choice",
-    "resolved `DEF` or `DEC` is current knowledge",
-    "A settled `DEF` or `DEC` is `resolved`",
-    "`braintree check` reports a pinned dependency whose target is "
-    "`proposed`, `active`, or `blocked`",
-    "`--allow-stale` does not relax that check",
-    "The bump commit shape:",
-    "commit the semantic `context_rev` bump with the bumped node alone",
-    "sanctioned staged-staleness gate `braintree check --allow-stale nodes`",
-    "still rejects a missing or malformed pin",
-    "relaxes only the revision equality",
-    "Reconciliation is separate work",
-    "reset the pin to the current `context_rev`",
-    "before that consumer executes",
-    "When the frontier is a knowledge node (`THO`/`DEF`/`DEC`)",
-    "answer the question and resolve it like any other frontier node",
-    "advance the coordinating parent's `next` to the next deliberate frontier child",
-    "leave its `context_rev` unchanged because `next` is navigation",
-    "Advancing a coordinating parent's `next` after its frontier child is resolved "
-    "is part of that resolution rather than bookkeeping",
-    "refresh the parent's `updated` and leave its `context_rev` unchanged, "
-    "because `next` is navigation",
-)
-
-_FEEDBACK_CONTRACT: tuple[str, ...] = (
-    "## Feedback nodes",
-    "records Braintree friction as an `FBK` node",
-    "The `FBK` type is the one feedback marker",
-    "find nodes -name 'FBK-*.md'",
-    "from Markdown alone, with no sidecar, network, or write to the scanned vault",
-    "`FBK-<n>-<slug>.md`",
-    "braintree_revision:",
-    "braintree_revision: 0.5.0+g1b58d57",
-    "braintree_revision: unknown",
-    "Read the revision to record with `braintree --version`",
-    "generated `installed-revision` stamp",
-    "`<version>+g<short-sha>`",
-    "`<version>+unknown`",
-    "Treat the public `<version>` as the compatibility signal",
-    "`+g<short-sha>` as provenance",
-    "never resolve the source revision against the remote",
-    "one `# Feedback` section",
-    "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
-    "`braintree check` rejects an `FBK` node that omits or malforms `braintree_revision`",
-    "Record feedback with the writing half of the mechanism",
-    "`braintree feedback record`",
-    "allocates the next `FBK` id from Markdown",
-    "routes the node to the vault's root hub",
-    "degrades explicitly to `<version>+unknown` when no record is present",
-    "valid, routed `FBK` node that `braintree check` accepts",
-    "read-only `braintree feedback scan` command over one or more vault roots",
-    "feedback: 0 nodes",
-    "no sidecar or network",
-    "Triage each scanned result into this graph",
-    "cite the feedback id and revision in the admitted node",
-    "dispose the result explicitly rather than dropping it silently",
-)
-
-
-# A worker's node addressing and hash operand are unambiguous: the commands
-# take a bare ID or full node name (never a path), `content_hash` is the
-# operand, and the frontier transition belongs to the claimed edit.
-_HASH_ADDRESSING_CONTRACT: tuple[str, ...] = (
-    "NODE is a bare ID (`TAS-085`) or a full node name, the filename stem",
-    "a path (`nodes/proposed/TAS-085-hash-addressing-and-operand.md`) is not accepted",
-    "the error names the two accepted forms",
-    "they treat NODE as the opaque claim key",
-    "The `content_hash` value is the operand",
-    "never pass the `node:`/`content_hash:` block",
-    "the status move and the `# Context` edit that take the frontier",
-    "is part of the claimed edit, not a precondition",
-    "names the node content exactly as handed off, before that transition",
-    "never the path the handoff supplies",
-    "`claim` and `release` treat NODE as the same opaque claim key",
-    "belongs to the claimed edit, not to the handoff",
-)
-
-# A lease is explicit and observable: the default duration and the
-# renew-on-reclaim rule are stated, remaining time is reported, and a lapsed
-# lease is distinguishable from one never held.
-_LEASE_LIFECYCLE_CONTRACT: tuple[str, ...] = (
-    "A lease lasts 900 seconds by default",
-    "`--lease-seconds N` chooses another duration",
-    "renews the lease to a fresh `N` seconds",
-    "report `lease_remaining_seconds` on every call",
-    "`release` distinguishes a lapsed matching lease (`expired`)",
-    "from a node that holds no claim at all (`no-op`)",
-)
-
-# Resolution authority is the coordinator's graph action, not a delegated
-# writer's: a worker slice prepares closeout evidence, and the coordinator alone
-# performs the resolving edit once required children are integrated.
-_RESOLUTION_CLAIM_CONTRACT: tuple[str, ...] = (
-    "Resolution authority is the coordinator's",
-    "After required children are integrated",
-    "the coordinator alone performs a coordinating parent's resolving edit",
-    "moving it to `resolved`",
-    "writing the outcome's evidence and limitations",
-    "removing `next`",
-    "worker slice prepares closeout evidence only",
-    "result, limitations, and test and dependency evidence",
-    "never moves the coordinating parent to `resolved`",
-    "a delegated closeout task stops at the handoff",
-)
-
-# Independent slice verification has one stated evidence rule: an actor that can
-# execute the gates, or a coordinator-run transcript, because a no-shell reviewer
-# sign-off cannot falsify a recorded gate claim.
-_VERIFICATION_EVIDENCE_CONTRACT: tuple[str, ...] = (
-    "Independent slice verification rests on falsifiable evidence",
-    "a verifying actor that can execute the gates",
-    "a coordinator-run gate transcript attached to the handoff",
-    "read-only, no-execution reviewer sign-off alone does not falsify a recorded gate claim",
-    "it can never be the sole sign-off",
-)
-
-# A slice's write set bounds what a worker may author: the minimal primitive or
-# seam a gate needs is in scope, a change to another node's landed seam or the
-# public schema contract is escalated, and the coordinating task names the seam
-# up front so the worker never has to infer it.
-_SLICE_PRIMITIVE_SCOPE_CONTRACT: tuple[str, ...] = (
-    "A worker may author the minimal primitive or seam",
-    "a gate or `Done when` criterion needs",
-    "inside its declared write set",
-    "records that authored piece in the node's `# Result`",
-    "alters a landed seam another node owns, or the public schema contract",
-    "is escalated rather than authored",
-    "A coordinating task names any primitive or seam its slice must introduce",
-    "so the worker does not have to infer it",
-)
-
-_MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
-    "mechanical change with no independently resumable outcome",
-    "enclosing node's `next` or result",
-    "`Refs:` footer",
-)
-
-# A node's scope is its durable outcome, not a session, agent, commit, or
-# effort estimate: one node may span sessions and one session may advance
-# several frontier nodes, and the boundary is reassessed only when execution
-# reveals split or consolidation evidence.
-_DURABLE_OUTCOME_BOUNDARY_CONTRACT: tuple[str, ...] = (
+# The durable-outcome boundary rule the admission decision added; it must not
+# regress out of the always-loaded core.
+_DURABLE_OUTCOME_BOUNDARY = (
     "One node owns one durable outcome or decision",
     "not an estimated session, commit, agent assignment, or amount of code",
     "one node may span sessions, and one session may advance several frontier nodes",
     "Reassess a boundary when execution reveals new evidence",
-    "rather than through a mandatory per-node sizing pass",
-    "split when execution reveals another outcome that can be accepted, verified, "
-    "consumed, blocked, or resumed independently",
+    "split when execution reveals another outcome that can be accepted, verified,",
     "retains durable execution-memory value",
-    "consolidate adjacent nodes when they share one outcome, completion evidence, "
-    "and rollback boundary",
-    "neither retains independent future value",
-    "continuing the stronger owner and preserving or reconciling backlinks",
-    "Do neither merely because a session ended, an agent changed, several commits "
-    "landed, or the work is larger or smaller than expected",
-    "braintree similar --file PATH",
-    "braintree digest NODE",
-    "braintree clusters",
-    "advisory support only",
-    "used after boundary evidence appears",
+    "consolidate adjacent nodes when they share one outcome, completion evidence,",
     "no checker or command claims semantic authority over scope",
-    "`braintree check` validates graph structure only",
 )
 
-# The boundary rule is evidence-driven, so no mandatory per-node sizing command
-# is documented on any surface.
-_SIZING_COMMAND_ABSENT: tuple[str, ...] = (
-    "braintree size",
-    "braintree scope",
-)
-
-_README_BOUNDARY_CONTRACT: tuple[str, ...] = (
+_README_BOUNDARY = (
     "One node owns one durable outcome or decision",
     "one node may span sessions and one session may advance several nodes",
     "Reassess that boundary only when execution reveals evidence",
@@ -287,122 +83,75 @@ _README_BOUNDARY_CONTRACT: tuple[str, ...] = (
     "no checker or command has semantic authority over scope",
 )
 
-# Reversing a partly implemented outcome has one stated rule: in place while the
-# same node owns the outcome, supersession when the outcome moves, with the
-# reversed direction's commit recorded rather than rewritten.
-_REVERSAL_CONTRACT: tuple[str, ...] = (
-    "Reversing a partly implemented outcome is an in-place update",
-    "rewrite the outcome in the same node",
-    "bump `context_rev` because a pinned consumer must reread the changed direction",
-    "Supersede only when the outcome moves to a different node",
-    "record the replacement as `Superseded by [[...]]` in the body",
-    "search remaining backlinks",
-    "A reversal records the commit that named the reversed direction",
-    "short SHA and subject",
-    "kept, reverted, or replaced",
-    "never rewrite, amend, or force-push the earlier commit",
+# Literal grammar the graph checker and clients genuinely depend on. Each token
+# is emitted or parsed, not narrative: status directories, canonical edges, the
+# pin and gate forms, frontmatter keys, and the ``Refs:`` footer convention.
+_REQUIRED_GRAMMAR = (
+    "nodes/proposed/",
+    "nodes/active/",
+    "nodes/blocked/",
+    "nodes/resolved/",
+    "Depends on [[DEF-auth-protocol]] at context_rev 7.",
+    "Gated on [[DEF-auth-protocol]].",
+    "Parent [[",
+    "Area [[IDX-",
+    "Superseded by [[",
+    "Refs:",
+    "context_rev",
+    "updated",
+    "summary",
+    "braintree_revision:",
 )
 
-# The direct-answer verbs replaced the frontier and dependency-impact recipes;
-# the documented surfaces must name the verbs and no longer carry the raw
-# recipes that the verbs answer directly.
-_DIRECT_ANSWER_CONTRACT: tuple[str, ...] = (
-    "braintree frontier",
-    "braintree node ID",
-    "braintree impact ID",
-    "braintree orient",
+# The boundary rule is evidence-driven, so no mandatory per-node sizing command
+# is documented on any surface.
+_SIZING_COMMAND_ABSENT = (
+    "braintree size",
+    "braintree scope",
 )
 
-# The direct-answer verbs return frontier candidates, not the resolved frontier:
-# an up-front plan pre-creates its children, so sequenced siblings carry their
-# own action `next` and a worker resolves through the coordinator's `next` route
-# before executing.
-_FRONTIER_CANDIDATE_CONTRACT: tuple[str, ...] = (
-    "return frontier candidates",
-    "which is a superset of the frontier",
-    "sequenced sibling carries its own action `next`",
-    "Resolve the candidate list through the coordinator",
-    "its coordinating parent's `next` route names",
-    "not yet at the frontier",
-    "That answer is a candidate list, not the resolved frontier",
-    "Resolve it through the coordinator",
-)
+# Each reference must carry the working rules for its topic rather than only a
+# heading. These are the load-bearing rules, not broad prose locks.
+_TOPIC_RULES: dict[str, tuple[str, ...]] = {
+    "coordination": (
+        "they treat NODE as the opaque claim key",
+        "A lease lasts 900 seconds by default",
+        "release` distinguishes a lapsed matching lease (`expired`)",
+        "coordinator assigns each worker a direct node path and an exclusive write set",
+        "the coordinator alone performs a coordinating parent's resolving edit",
+        "have workers read or write SQLite directly",
+        "it refuses a network-mounted location unless overridden",
+    ),
+    "dependencies": (
+        "The pin must terminate its line",
+        "record it as a gate instead of a context edge",
+        "never pin the gate",
+        "`braintree check --allow-stale nodes`",
+        "Reconciliation is separate work owned by each consumer",
+        "Supersede only when the outcome moves to a different node",
+        "never rewrite, amend, or force-push the earlier commit",
+    ),
+    "authoring": (
+        "braintree node record",
+        "allocates the next id from Markdown",
+        "The `FBK` type is the one feedback marker",
+        "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
+        "`nodes/index-map.md` holds intent and routing, not state",
+        "Decompose just in time",
+        "Roll up from evidence, not child counts",
+    ),
+}
 
-# A gate on prerequisite plan text that no node owns is blocked input waiting on
-# state outside the vault, not a proposed sibling dependency the graph resolves.
-_PLAN_TEXT_GATE_CONTRACT: tuple[str, ...] = (
-    "A gate on prerequisite plan text that no node owns is `blocked`",
-    "state the prerequisite and the unblock condition in `# Blocked`",
-    "Once a node owns that plan text the gate is a sibling dependency "
-    "and the node is `proposed`",
-    "including prerequisite plan text that no node owns",
-)
-
-# A dependency whose target is not yet resolved is a documented, unpinned gate
-# (``Gated on [[X]].``) rather than a context edge, and both the missing-pin and
-# unresolved-target diagnostics name that form.
-_GATED_DEPENDENCY_CONTRACT: tuple[str, ...] = (
-    "A dependency whose target is not yet `resolved` has no consumable context "
-    "to pin",
-    "record it as a gate instead of a context edge, `Gated on "
-    "[[DEF-auth-protocol]].` in `# Context`",
-    "never pin the gate",
-    "rg -n -F 'Gated on [[DEF-auth-protocol]]' nodes",
-    "replace the gate with the pinned `Depends on` edge once the target resolves",
-    "A pinned edge to a target that is not resolved and an unpinned context edge "
-    "both name the gate form in their diagnostic",
-)
-
-# Markdown code is quoted text, not graph syntax: a node may reproduce the
-# skill's own link-shaped grammar in an inline span or a fenced block without
-# the checker reporting a broken link.
-_CODE_MASKING_CONTRACT: tuple[str, ...] = (
-    "Link scanning ignores wikilink-shaped tokens inside inline code spans "
-    "and fenced code blocks",
-    "without a false `broken link` finding",
-)
-
-_SKILL_REMOVED_RECIPES: tuple[str, ...] = (
-    r"rg --files-without-match '^next:.*\[\['",
-    "rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev ' nodes",
-    "transitive impact repeats it",
-)
-
-_INDEX_REMOVED_RECIPES: tuple[str, ...] = (
-    r"rg --files-without-match '^next:.*\[\['",
-    "rg -n -F 'Depends on [[DEF-ID]] at context_rev '",
-)
-
-# The capture path gives a client one command that supplies the id, route,
-# timestamp, and required frontmatter it would otherwise hand-author, while the
-# admission threshold stays the caller's decision rather than the command's.
-_NODE_CAPTURE_CONTRACT: tuple[str, ...] = (
-    "## Capturing a node",
-    "`braintree node record`",
-    "creates one routed, correctly-stamped node of a named type from a summary and body",
-    "the way `braintree feedback record` does for `FBK`",
-    "`--type` is one of `THO`, `DEF`, `DEC`, or `TAS`",
-    "allocates the next id from Markdown",
-    "discovers the primary route to the vault's root hub from `index-map.md`",
-    "stamps a positive `context_rev` and the current `updated`",
-    "`--status` names the status directory",
-    "requires `--next` carrying its one action",
-    "a `resolved` node must omit `--next`",
-    "The admission threshold is unchanged",
-    "creates the node the caller has already decided to admit",
-)
-
-_ABSENT_CONTRACT: tuple[str, ...] = (
+_ABSENT_CONTRACT = (
     "stationary node metadata",
     "sequence ledger",
     "vault-wide revision",
     "increment it on every write",
 )
 
-# The unified `braintree` command must hide the implementation: no documented
-# surface may name the runtime, toolchain, package layout, or internal command
-# names.
-_IMPLEMENTATION_LEAKS: tuple[str, ...] = (
+# The unified `braintree` command must hide the implementation: no installed
+# surface may name the runtime, toolchain, package layout, or internal commands.
+_IMPLEMENTATION_LEAKS = (
     "uv run",
     "--frozen",
     "pyproject",
@@ -418,9 +167,201 @@ _IMPLEMENTATION_LEAKS: tuple[str, ...] = (
     ".pi/skills",
 )
 
+# Every public verb, as the argv prefix a caller types before `--help`.
+_PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
+    ("status",),
+    ("location",),
+    ("init",),
+    ("allocate",),
+    ("claim",),
+    ("release",),
+    ("index",),
+    ("search",),
+    ("similar",),
+    ("backlinks",),
+    ("hash",),
+    ("stale",),
+    ("frontier",),
+    ("node",),
+    ("node", "record"),
+    ("impact",),
+    ("orient",),
+    ("next",),
+    ("clusters",),
+    ("digest",),
+    ("reconcile",),
+    ("check",),
+    ("semantic",),
+    ("semantic", "embed"),
+    ("feedback",),
+    ("feedback", "scan"),
+    ("feedback", "record"),
+    ("benchmark",),
+    ("benchmark", "token"),
+    ("benchmark", "behavioral"),
+    ("benchmark", "storage"),
+    ("benchmark", "verbs"),
+    ("benchmark", "staged"),
+    ("benchmark", "embedding"),
+    ("benchmark", "quality"),
+    ("help",),
+)
+
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _normalized(text: str) -> str:
+    """Collapse whitespace so a rule can be matched across line wrapping."""
+    return re.sub(r"\s+", " ", text)
+
+
+def _assert_contains(text: str, substrings: tuple[str, ...]) -> None:
+    haystack = _normalized(text)
+    missing = [value for value in substrings if _normalized(value) not in haystack]
+    assert not missing, f"missing contract text: {missing!r}"
+
+
+def _assert_absent(text: str, substrings: tuple[str, ...]) -> None:
+    present = [value for value in substrings if value in text]
+    assert not present, f"obsolete contract text survived: {present!r}"
+
+
+def _reference(topic: str) -> str:
+    return _read(_REFERENCES / f"{topic}.md")
+
+
+def _frontmatter(text: str) -> str:
+    match = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
+    assert match is not None
+    return match.group(1)
+
+
+def test_skill_core_frontmatter_and_authority() -> None:
+    text = _read(_SKILL)
+    assert text.startswith("---\n")
+    header = _frontmatter(text)
+    assert re.search(r"^name: braintree$", header, re.MULTILINE)
+    assert re.search(r"^description: .+", header, re.MULTILINE)
+    _assert_absent(text, _ABSENT_CONTRACT)
+
+
+def test_documented_surfaces_hide_the_implementation() -> None:
+    surfaces = [_SKILL, _AGENTS, _README, *sorted(_REFERENCES.glob("*.md"))]
+    for path in surfaces:
+        text = _read(path)
+        leaks = [value for value in _IMPLEMENTATION_LEAKS if value in text]
+        assert not leaks, f"{path.name} leaks implementation detail: {leaks!r}"
+
+
+def test_core_stays_concise() -> None:
+    size = len(_SKILL.read_bytes())
+    assert size < _CORE_SIZE_BOUND, f"SKILL.md grew to {size} bytes"
+
+
+def test_core_keeps_the_invariants_and_routes_to_references() -> None:
+    text = _read(_SKILL)
+    _assert_contains(text, _CORE_ROUTING)
+    _assert_contains(text, _CORE_INVARIANTS)
+    for topic in _TOPICS:
+        assert f"references/{topic}.md" in text
+        assert f"braintree help {topic}" in text
+
+
+def test_core_keeps_the_durable_outcome_boundary() -> None:
+    text = _read(_SKILL)
+    _assert_contains(text, _DURABLE_OUTCOME_BOUNDARY)
+    _assert_absent(text, _SIZING_COMMAND_ABSENT)
+
+
+def test_readme_keeps_the_durable_outcome_boundary() -> None:
+    _assert_contains(_read(_README), _README_BOUNDARY)
+    _assert_absent(_read(_README), _SIZING_COMMAND_ABSENT)
+
+
+def test_reference_topics_are_canonical() -> None:
+    for topic, rules in _TOPIC_RULES.items():
+        text = _reference(topic)
+        assert len(text) > 1_000, f"{topic}.md is too small to be canonical prose"
+        _assert_contains(text, rules)
+
+
+def test_required_literal_grammar_survives() -> None:
+    surface = _read(_SKILL) + "".join(_reference(topic) for topic in _TOPICS)
+    _assert_contains(surface, _REQUIRED_GRAMMAR)
+    _assert_absent(_read(_SKILL), _SIZING_COMMAND_ABSENT)
+
+
+def test_help_topic_routes_to_the_installed_reference(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`braintree help TOPIC` is read-only and needs no vault or sidecar."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "sidecar"))
+    monkeypatch.setenv("BT_PROJECT_ID", "skill-test")
+    for topic in _TOPICS:
+        assert main.main(["help", topic]) == 0
+        assert capsys.readouterr().out == _reference(topic).rstrip("\n") + "\n"
+    assert not (tmp_path / "sidecar").exists()
+    assert not (tmp_path / "nodes").exists()
+
+
+def test_help_without_a_topic_lists_the_topics(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main.main(["help"]) == 0
+    out = capsys.readouterr().out
+    for topic in _TOPICS:
+        assert f'"{topic}"' in out
+
+
+def test_help_rejects_an_unknown_topic(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main.main(["help", "bogus"]) == 2
+    out = capsys.readouterr().out
+    assert 'error: "unknown help topic: bogus"' in out
+    for topic in _TOPICS:
+        assert topic in out
+
+
+@pytest.mark.parametrize("verb", _PUBLIC_VERBS, ids=lambda verb: " ".join(verb))
+def test_every_public_verb_has_bounded_help(
+    verb: tuple[str, ...], capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main.main([*verb, "--help"]) == 0
+    out = capsys.readouterr().out
+    assert 'usage: "' in out, out
+    assert "exits[3]{code,meaning}:" in out, out
+    assert '"0"' in out and '"1"' in out and '"2"' in out, out
+
+
+def test_global_help_is_the_command_and_topic_index(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main.main(["--help"]) == 0
+    out = capsys.readouterr().out
+    assert "commands[" in out
+    assert "topics[3]{topic,purpose}:" in out
+    for topic in _TOPICS:
+        assert f'"{topic}"' in out
+    assert len(out) < 8_000, "global help is no longer the short index"
+
+
+def test_live_vault_passes_graph_check() -> None:
+    assert graph_check.main([str(_NODES)]) == 0
+
+
+def test_index_is_routing_not_a_catalog() -> None:
+    index = _read(_INDEX)
+    assert not re.search(r"^\| .*\[\[", index, re.MULTILINE)
+    assert "not copied node state" in index
+    assert re.search(r"Indexes \[\[", index)
+    hubs = re.findall(r"^\s*- Indexes \[\[([^\]]+)\]\]", index, re.MULTILINE)
+    assert hubs
+    for hub in hubs:
+        assert re.match(r"IDX-\d+", hub)
+        hub_text = _read(_NODES / "resolved" / f"{hub}.md")
+        assert not re.search(r"^(?:Parent|Area) \[\[", hub_text, re.MULTILINE)
 
 
 _FRONTIER_RECIPE = re.compile(r"^- Frontier: `([^`]+)`$", re.MULTILINE)
@@ -443,145 +384,6 @@ def _run_frontier_recipe(root: Path) -> set[str]:
         check=True,
     )
     return set(_FRONTIER_ID.findall(result.stdout))
-
-
-def _frontmatter(text: str) -> str:
-    match = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
-    assert match is not None
-    return match.group(1)
-
-
-def _assert_present(text: str, substrings: tuple[str, ...]) -> None:
-    missing = [value for value in substrings if value not in text]
-    assert not missing, f"missing contract text: {missing!r}"
-
-
-def _assert_absent(text: str, substrings: tuple[str, ...]) -> None:
-    present = [value for value in substrings if value in text]
-    assert not present, f"obsolete contract text survived: {present!r}"
-
-
-def test_skill_frontmatter_and_hybrid_contract() -> None:
-    text = _read(_SKILL)
-    assert text.startswith("---\n")
-    header = _frontmatter(text)
-    assert re.search(r"^name: braintree$", header, re.MULTILINE)
-    assert re.search(r"^description: .+", header, re.MULTILINE)
-    _assert_present(text, _HYBRID_CONTRACT)
-    _assert_absent(text, _ABSENT_CONTRACT)
-
-
-def test_documented_surfaces_hide_the_implementation() -> None:
-    for path in (_SKILL, _AGENTS, _ROOT / "README.md"):
-        text = _read(path)
-        leaks = [value for value in _IMPLEMENTATION_LEAKS if value in text]
-        assert not leaks, f"{path.name} leaks implementation detail: {leaks!r}"
-
-
-def test_skill_admission_and_parallel_contract() -> None:
-    text = _read(_SKILL)
-    _assert_present(text, _ADMISSION_CONTRACT)
-    _assert_present(text, _PARALLEL_CONTRACT)
-
-
-def test_mechanical_change_commit_path() -> None:
-    for path in (_SKILL, _AGENTS):
-        _assert_present(_read(path), _MECHANICAL_COMMIT_CONTRACT)
-
-
-def test_live_vault_passes_graph_check() -> None:
-    assert graph_check.main([str(_NODES)]) == 0
-
-
-def test_skill_canonical_edge_and_lifecycle_contract() -> None:
-    text = _read(_SKILL)
-    _assert_present(text, _CANONICAL_CONTRACT)
-
-
-def test_skill_reversal_contract() -> None:
-    _assert_present(_read(_SKILL), _REVERSAL_CONTRACT)
-
-
-def test_skill_feedback_contract() -> None:
-    text = _read(_SKILL)
-    _assert_present(text, _FEEDBACK_CONTRACT)
-
-
-def test_index_is_routing_not_a_catalog() -> None:
-    index = _read(_INDEX)
-    assert not re.search(r"^\| .*\[\[", index, re.MULTILINE)
-    assert "not copied node state" in index
-    assert re.search(r"Indexes \[\[", index)
-    hubs = re.findall(r"^\s*- Indexes \[\[([^\]]+)\]\]", index, re.MULTILINE)
-    assert hubs
-    for hub in hubs:
-        assert re.match(r"IDX-\d+", hub)
-        hub_text = _read(_NODES / "resolved" / f"{hub}.md")
-        assert not re.search(r"^(?:Parent|Area) \[\[", hub_text, re.MULTILINE)
-
-
-def test_skill_names_the_direct_answer_verbs() -> None:
-    text = _read(_SKILL)
-    _assert_present(text, _DIRECT_ANSWER_CONTRACT)
-    _assert_absent(text, _SKILL_REMOVED_RECIPES)
-
-
-def test_skill_frontier_candidate_contract() -> None:
-    _assert_present(_read(_SKILL), _FRONTIER_CANDIDATE_CONTRACT)
-
-
-def test_skill_plan_text_gate_status() -> None:
-    _assert_present(_read(_SKILL), _PLAN_TEXT_GATE_CONTRACT)
-
-
-def test_skill_durable_outcome_boundary_contract() -> None:
-    text = _read(_SKILL)
-    _assert_present(text, _DURABLE_OUTCOME_BOUNDARY_CONTRACT)
-    _assert_absent(text, _SIZING_COMMAND_ABSENT)
-
-
-def test_readme_durable_outcome_boundary_contract() -> None:
-    text = _read(_ROOT / "README.md")
-    _assert_present(text, _README_BOUNDARY_CONTRACT)
-    _assert_absent(text, _SIZING_COMMAND_ABSENT)
-
-
-def test_skill_code_masking_status() -> None:
-    _assert_present(_read(_SKILL), _CODE_MASKING_CONTRACT)
-
-
-def test_skill_gated_dependency_contract() -> None:
-    _assert_present(_read(_SKILL), _GATED_DEPENDENCY_CONTRACT)
-
-
-def test_skill_hash_addressing_and_operand_contract() -> None:
-    _assert_present(_read(_SKILL), _HASH_ADDRESSING_CONTRACT)
-
-
-def test_skill_lease_lifecycle_contract() -> None:
-    _assert_present(_read(_SKILL), _LEASE_LIFECYCLE_CONTRACT)
-
-
-def test_skill_resolution_claim_contract() -> None:
-    _assert_present(_read(_SKILL), _RESOLUTION_CLAIM_CONTRACT)
-
-
-def test_skill_verification_evidence_contract() -> None:
-    _assert_present(_read(_SKILL), _VERIFICATION_EVIDENCE_CONTRACT)
-
-
-def test_skill_slice_primitive_scope_contract() -> None:
-    _assert_present(_read(_SKILL), _SLICE_PRIMITIVE_SCOPE_CONTRACT)
-
-
-def test_skill_node_capture_contract() -> None:
-    _assert_present(_read(_SKILL), _NODE_CAPTURE_CONTRACT)
-
-
-def test_index_map_queries_use_the_direct_answer_verbs() -> None:
-    index = _read(_INDEX)
-    assert "braintree frontier" in index
-    _assert_absent(index, _INDEX_REMOVED_RECIPES)
 
 
 def _write_node(path: Path, body: str) -> None:
