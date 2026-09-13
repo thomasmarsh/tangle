@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T18:24:28Z
+updated: 2026-09-13T18:40:00Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
-next: Run the authorized five-arm causal batches and collect the exploratory result.
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
@@ -12,13 +11,13 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 Depends on [[TAS-121-evaluation-foundation]] at context_rev 1.
 
-This node owns the shared five-arm causal runner and the residual
-`resumption-after-decision-shared-install-001` repair. The repair is folded in
-rather than split into its own node because a separating frozen corpus is the
-runner's fixture: the repair changes the corpus digest the runner pins, and both
-outcomes share one completion boundary (the paid causal run) and one rollback
-unit (the corpus revision). TAS-121's recorded residual names a later node, and
-this is that later node.
+This node owns the shared five-arm causal runner and the
+`resumption-after-decision-shared-install-001` repair. The repair was folded in
+because a separating frozen corpus is the runner's fixture and the repair
+changed the corpus digest the runner pins. The round-four separability re-run
+found three further non-separating cases, so the corpus-repair outcome is now
+tracked independently in [[TAS-151-corpus-separability-repair]]; this node's
+own outcome is the measured exploratory comparison.
 
 # Outcome
 
@@ -136,3 +135,50 @@ harness, prompts, and fixtures are unchanged by this bookkeeping commit.
   `sha256:abd5c4437fa74638cfd411281c92fde167074e6650d9fb2682efced2cacfc677`,
   540 samples (12 cases × 5 arms × 3 models × 3 repetitions), three models at
   `high`.
+
+# Result
+
+The authorized five-arm causal run completed 540/540 with evidence
+`exploratory` (development split) and decision `exploratory`. Pins: corpus
+digest
+`sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`,
+plan digest
+`sha256:abd5c4437fa74638cfd411281c92fde167074e6650d9fb2682efced2cacfc677`,
+source revision `f39f6201bd3b`, three models at `high`. All 540 samples pass
+isolation, model, prompt, and telemetry validation; none is incomplete.
+
+Paired effects (95% percentile bootstrap, 10,000 fixed-seed resamples over
+`(case, model)` strata, 108 pairs and 36 strata per contrast):
+
+- `braintree - repository-only`: **+0.481**, CI [0.306, 0.611] — excludes zero.
+- `braintree - raw-history`: **0.000**, CI [-0.083, 0.056] — includes zero.
+- `braintree - flat-memory`: +0.046, CI [-0.056, 0.120] — includes zero.
+- `oracle - braintree`: +0.148, CI [0.009, 0.259] — excludes zero, leaving
+  measurable headroom below the ceiling.
+
+The contract's support criterion requires improvement against both
+repository-only and raw-history; the raw-history interval includes zero, so the
+claim is **not** supported on this development run. The result is labelled
+`exploratory`, not confirmatory, as preregistered.
+
+Costs over correctness-gated samples:
+
+| Arm | admitted | total tokens | output tokens | model turns | latency ms | cost |
+|---|---|---|---|---|---|---|
+| repository-only | 38 | 75,458 | 15,755 | 38 | 171,544 | $0.1108 |
+| raw-history | 90 | 90,310 | 43,831 | 90 | 425,974 | $0.1409 |
+| flat-memory | 85 | 68,090 | 35,072 | 85 | 352,188 | $0.1099 |
+| braintree | 90 | 44,846 | 29,292 | 90 | 309,179 | $0.0643 |
+| oracle | 106 | 40,913 | 23,131 | 106 | 283,827 | $0.0554 |
+
+Braintree admits as many correct samples as raw-history (90) at less than half
+the total tokens (44,846 versus 90,310) and a lower monetary cost. Of 540
+samples, 131 are incorrect-action failures; none are infrastructure or
+model-output failures. Per-case and per-model arms, per-sample telemetry, and
+failure labels are in `benchmark/memory-causal-result.json`, whose embedded
+reproduction commands pin both digests.
+
+Residual: the round-four separability re-run returned **`stop`** (see
+`# Pilot verification`); three memory-required cases still do not separate, so
+the corpus is not ready for the confirmatory freeze. That outcome is tracked in
+[[TAS-151-corpus-separability-repair]].

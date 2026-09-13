@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T14:03:33Z
+updated: 2026-09-13T18:41:00Z
 summary: Attribute benchmark failures to memory writing, retrieval, reading, or action.
 next: Define the pipeline failure taxonomy and attribution procedure.
 ---
@@ -10,7 +10,10 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Gated on [[TAS-122-causal-baseline-experiment]].
+Depends on [[TAS-122-causal-baseline-experiment]] at context_rev 1.
+
+The 540-sample five-arm causal result, including 131 labelled failures, is in
+`benchmark/memory-causal-result.json`.
 
 # Outcome
 
