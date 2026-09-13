@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T18:13:39Z
+updated: 2026-09-13T18:22:25Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
-next: Obtain owner authorization for the repaired-corpus separability re-run and the five-arm causal run at their recorded pins.
+next: Run the authorized separability and five-arm causal batches and collect both results.
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
@@ -38,7 +38,8 @@ oracle-evidence conditions.
 
 The runner is specified and implemented offline as `braintree benchmark causal`
 (`src/braintree/memory_causal.py`), with the prose preregistration in
-`research/agent-memory-causal-preregistration.md` and zero-live tests in
+`research/agent-memory-causal-preregistration.md`, the live fan-out in
+`scripts/memory_causal_run.py`, and zero-live tests in
 `tests/test_memory_causal.py`. It realizes contract protocol
 `memory-causal-v1`:
 
@@ -84,34 +85,27 @@ still 53 cases, the same deterministic splits and control balance, and
 `benchmark/memory-corpus/manifest.json` regenerated. The historical
 `benchmark/memory-pilot-v2-round3-result.json` and the TAS-147 and TAS-150
 results keep the prior digest as the record of the run they describe; the causal
-plan re-pins the new digest from the frozen corpus. The repair still needs a
-paid separability re-run to prove it separates.
+plan re-pins the new digest from the frozen corpus. The paid separability
+re-run below verifies that the repaired case separates.
 
-# Blocked
+# Authorization
 
-Blocked by the missing owner authorization for two bounded paid runs: the
-single-case separability re-run that verifies the repaired resumption case, and
-the development-split five-arm causal run. The contract requires explicit owner
-authorization recorded before execution; none is recorded yet, so no live run
-has started and this node has no `# Authorization` section.
+The owner granted a standing authorization in session on 2026-09-13 covering
+all paid runs in this evaluation program, explicitly ending per-run
+authorization requests; this node executes under that standing grant.
 
-The plans were generated at revision `5b5d83faf03f` before this bookkeeping
-edit and pin corpus digest
-`sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`:
+The plans were generated at revision `f39f6201bd3b` before this authorization
+commit. The plan digest content-addresses its source-revision pin, so the
+recorded plans name `f39f6201bd3b` and are run without regeneration; the corpus,
+harness, prompts, and fixtures are unchanged by this bookkeeping commit.
 
-- separability pilot: plan digest
-  `sha256:3817b130ff3f4d7fed6f85ce9211487884e299560c4afe5c28d1b047dd407a11`,
-  72 episodes, `memory-pilot-v2`, `deepseek/deepseek-v4-flash` at `high`.
-- five-arm causal run: plan digest
-  `sha256:e930630a1dbc3a55677db41ae42adbc8afb900e5aa9b3fbd1692c24f964fbc2b`,
-  540 episodes, `memory-causal-v1`, three models at `high`.
-
-The plan digest content-addresses its source-revision pin, so a regeneration at
-a later commit yields a different digest. To authorize, the owner names the
-corpus digest, the plan digest (the recorded one generated at `5b5d83faf03f`,
-or a regenerated one at a named revision), the sample bound, and the exact model
-and tool pins; then the authorization is recorded in `# Authorization` and the
-recorded plan is run without regeneration, with any reconciliation noted.
-
-Unblocks when the owner records that authorization; then run the fixed batches
-and collect the analysis.
+- Corpus digest
+  `sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`.
+- Separability pilot: protocol `memory-pilot-v2`, plan digest
+  `sha256:01088e771996eb8584c63f91f79fcaef002740c987bd5fb0325e2dad5dc71124`,
+  72 samples (12 cases × 2 arms × 3 repetitions), `deepseek/deepseek-v4-flash`
+  at `high`.
+- Five-arm causal run: protocol `memory-causal-v1`, plan digest
+  `sha256:abd5c4437fa74638cfd411281c92fde167074e6650d9fb2682efced2cacfc677`,
+  540 samples (12 cases × 5 arms × 3 models × 3 repetitions), three models at
+  `high`.
