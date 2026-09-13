@@ -164,6 +164,27 @@ Serial work uses the same discipline without branches: self-assign one node and
 write set, claim it, keep content and status coherent, run
 `braintree check`, and do not leave a resolved status move uncommitted.
 
+## Timed-out worker recovery
+
+A timed-out run leaves a partial state, not a lost one, and recovery is a
+coordinator decision taken on evidence rather than a rerun. Do not revert or
+discard the partial diff unread: inspect it and run the tests the diff touches to
+establish whether that partial state is behavior-preserving.
+
+- When the partial state compiles and its touched tests pass, it is green: either
+  re-dispatch a narrow finishing brief for the remaining slice — the tests, the
+  `# Result` evidence, and the status move the timed-out worker never reached —
+  or accept the coherent slice on the same node instead of reverting it, because
+  reverting a compiling, passing slice discards work for no gain. The node stays
+  `proposed` until the finishing worker resolves it.
+- When the partial state does not compile or fails a touched test, it is not
+  green: revert it and re-scope the remaining slice against the reverted base
+  rather than continuing on a state whose behavior is unknown.
+- A run that timed out after resolving its node and splitting the remainder needs
+  only coordinator verification: the resolved node, its recorded evidence, and
+  its advanced `next` route are the finished slice, so verify them instead of
+  re-deriving the work.
+
 ## Integration and reconciliation
 
 The coordinator integrates worker branches one at a time. Never blindly

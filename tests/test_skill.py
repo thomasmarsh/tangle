@@ -205,6 +205,37 @@ _NEGATIVE_ASSERTION_RULE = (
     "matches whole tokens rather than substrings",
 )
 
+# A timed-out run leaves a partial state, not a lost one: the coordinator
+# inspects the partial diff and runs the tests it touches to establish whether
+# the state is behavior-preserving, re-dispatches a narrow finishing brief or
+# accepts a green slice on the same node instead of reverting it, reverts and
+# re-scopes a non-green one, leaves the node `proposed` until the finishing
+# worker resolves it, and only verifies a run that timed out after resolving and
+# splitting.
+_TIMED_OUT_WORKER_RECOVERY_RULE = (
+    "A timed-out run leaves a partial state, not a lost one",
+    "inspect it and run the tests the diff touches",
+    "establish whether that partial state is behavior-preserving",
+    "re-dispatch a narrow finishing brief for the remaining slice",
+    "accept the coherent slice on the same node instead of reverting it",
+    "revert it and re-scope the remaining slice against the reverted base",
+    "The node stays `proposed` until the finishing worker resolves it",
+    "needs only coordinator verification",
+)
+
+# Falsification probe for the recovery procedure: the completion-receipt
+# paragraph already names a timed-out run but states no recovery procedure, so
+# the guard must reject it. The probe fails when the guard stops detecting the
+# procedure rather than when the reference merely reflows.
+_TIMED_OUT_WORKER_RECOVERY_SIGNAL_ONLY = (
+    "A worker records a compact structured completion receipt before its long "
+    "narrative report: the recorded base hash, the `release` result, a gate "
+    "summary, and the commit SHAs. A `release` result at the recorded base hash "
+    "is the completion signal the coordinator trusts over the run status: when a "
+    "run times out while the worker is still composing prose, that release "
+    "states the work is finished even though the run reported failure."
+)
+
 # A status move and the node's body edit belong in one commit: `git mv` can
 # stage the pre-edit blob, so the destination is `git add`-ed after the move,
 # and the move is the last step before committing that node.
@@ -467,6 +498,18 @@ def test_write_set_closure_guard_rejects_the_pre_change_enumeration() -> None:
 
 def test_completion_receipt_is_the_trusted_signal() -> None:
     _assert_contains(_reference("coordination"), _COMPLETION_RECEIPT_RULE)
+
+
+def test_timed_out_worker_recovery_procedure_is_stated() -> None:
+    _assert_contains(_reference("coordination"), _TIMED_OUT_WORKER_RECOVERY_RULE)
+
+
+def test_timed_out_worker_recovery_guard_rejects_the_timeout_signal_alone() -> None:
+    """Falsification probe: the guard must reject a timeout signal with no procedure."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _TIMED_OUT_WORKER_RECOVERY_SIGNAL_ONLY, _TIMED_OUT_WORKER_RECOVERY_RULE
+        )
 
 
 def test_additive_field_on_a_resolved_seam_is_authored_by_the_consumer() -> None:
