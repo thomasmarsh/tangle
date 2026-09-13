@@ -30,6 +30,10 @@ for file in "$repo_root"/src/braintree/*; do
   [ -f "$file" ] || continue
   package_files="$package_files src/braintree/$(basename -- "$file")"
 done
+for file in "$repo_root"/references/*.md; do
+  [ -f "$file" ] || continue
+  package_files="$package_files references/$(basename -- "$file")"
+done
 
 check_tree() {
   destination=$1
@@ -61,7 +65,23 @@ run_installed() {
   uv run --project "$destination" --frozen --quiet braintree check "$repo_root/nodes" >/dev/null
   uv run --project "$destination" --frozen --quiet braintree feedback scan "$repo_root/nodes" >/dev/null
   [ "$(uv run --project "$destination" --frozen --quiet braintree --version)" = "$expected_record" ]
+  run_installed_help "$destination"
   run_installed_feedback_record "$destination"
+}
+
+# The reference tree must be installed beside SKILL.md and rendered by the
+# installed command, without a vault and without initializing the sidecar.
+run_installed_help() {
+  destination=$1
+  help_cwd=$(mktemp -d "$test_root/help.XXXXXX")
+  for topic in coordination dependencies authoring; do
+    cmp -s "$repo_root/references/$topic.md" "$destination/references/$topic.md"
+    rendered=$(cd "$help_cwd" && uv run --project "$destination" --frozen --quiet \
+      braintree help "$topic")
+    case "$rendered" in *"$topic"*) ;; *) exit 1;; esac
+  done
+  [ ! -e "$help_cwd/nodes" ]
+  rm -rf "$help_cwd"
 }
 
 # The recording half of the feedback mechanism must work from an installed
@@ -120,6 +140,15 @@ printf '%s\n' '0.0.0+gold' >"$record_path"
 upgrade=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$upgrade" in *'result: "installed"'*) ;; *) exit 1;; esac
 check_record "$codex_destination"
+
+# A reference-only change is detected and restored, not reported no-op, and the
+# restored tree returns to a clean no-op on the next run.
+printf '%s\n' 'stale reference prose' >"$codex_destination/references/coordination.md"
+reference_upgrade=$($repo_root/scripts/install.sh --codex --project "$project")
+case "$reference_upgrade" in *'result: "installed"'*) ;; *) exit 1;; esac
+cmp -s "$repo_root/references/coordination.md" "$codex_destination/references/coordination.md"
+reference_repeat=$($repo_root/scripts/install.sh --codex --project "$project")
+case "$reference_repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 
 $repo_root/scripts/install.sh --codex --home "$home_root" >/dev/null
 cmp -s "$repo_root/SKILL.md" "$home_root/.agents/skills/braintree/SKILL.md"

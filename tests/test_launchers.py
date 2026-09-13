@@ -7,6 +7,7 @@ installer test. These checks keep the one dev launcher wired to the unified
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -31,3 +32,25 @@ def test_launcher_runs(args: list[str]) -> None:
         text=True,
     )
     assert result.returncode == 0, (args, result.stdout, result.stderr)
+
+
+@pytest.mark.parametrize("topic", ["coordination", "dependencies", "authoring"])
+def test_launcher_renders_an_installed_topic_without_a_vault(
+    topic: str, tmp_path: Path
+) -> None:
+    """`braintree help TOPIC` is read-only and needs no vault or sidecar."""
+    env = dict(os.environ)
+    env["BT_SIDECAR_DIR"] = str(tmp_path / "sidecar")
+    env["BT_PROJECT_ID"] = "launcher-probe"
+    result = subprocess.run(
+        [str(_LAUNCHER), "help", topic],
+        cwd=str(tmp_path),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (topic, result.stdout, result.stderr)
+    assert result.stdout == (_ROOT / "references" / f"{topic}.md").read_text(
+        encoding="utf-8"
+    ).rstrip("\n") + "\n"
+    assert not (tmp_path / "sidecar").exists()

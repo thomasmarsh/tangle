@@ -151,6 +151,13 @@ copy_file() {
 }
 
 copy_file SKILL.md 0644
+# The topical references are the canonical workflow prose the installed command
+# renders with `braintree help TOPIC`; copy them beside SKILL.md in every
+# destination so a rendered topic always matches the installed revision.
+for reference in "$repo_root"/references/*.md; do
+  [ -f "$reference" ] || continue
+  copy_file "references/$(basename -- "$reference")" 0644
+done
 if [ "$agent" = codex ]; then
   copy_file agents/openai.yaml 0644
 fi
