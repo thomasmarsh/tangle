@@ -71,6 +71,19 @@ _UPDATED_CLAMP_RULE = (
     "backwards",
 )
 
+# A slice write set is the compile-and-golden closure of its change, not a
+# crate directory: the worker includes and reports additional in-scope paths,
+# and stops and escalates only for another node's path or a shared hub.
+_WRITE_SET_CLOSURE_RULE = (
+    "write set is the compile-and-golden closure of the approved change, not a "
+    "crate directory",
+    "exhaustive matches and struct literals on the changed types",
+    "every golden and baseline the change can invalidate (`tests/golden/**`,",
+    "`baselines/**`)",
+    "includes and reports the additional in-scope paths",
+    "stops and escalates for a path owned by another node or a shared hub",
+)
+
 # The durable-outcome boundary rule the admission decision added; it must not
 # regress out of the always-loaded core.
 _DURABLE_OUTCOME_BOUNDARY = (
@@ -286,6 +299,10 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
 
 def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
     _assert_contains(_read(_SKILL), _UPDATED_CLAMP_RULE)
+
+
+def test_write_set_is_the_change_closure() -> None:
+    _assert_contains(_reference("coordination"), _WRITE_SET_CLOSURE_RULE)
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:

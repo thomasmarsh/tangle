@@ -78,6 +78,13 @@ write set before work begins.
   or the public schema contract, is escalated rather than authored. A
   coordinating task names any primitive or seam its slice must introduce, so the
   worker does not have to infer it.
+- The assigned write set is the compile-and-golden closure of the approved
+  change, not a crate directory: membership covers every file the change must
+  touch, including exhaustive matches and struct literals on the changed types,
+  plus every golden and baseline the change can invalidate (`tests/golden/**`,
+  `baselines/**`). When the closure exceeds the assigned set, the worker includes
+  and reports the additional in-scope paths; it stops and escalates for a path
+  owned by another node or a shared hub.
 - A worktree is a snapshot, not global truth; workers do not assume unseen work
   or IDs are unclaimed.
 - A worktree slice is not a node boundary: a fresh worker may continue the
