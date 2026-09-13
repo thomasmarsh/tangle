@@ -20,6 +20,7 @@ from . import (
     feedback_scan,
     graph_check,
     help,
+    memory_causal,
     memory_corpus,
     memory_pilot,
     node_record,
@@ -89,8 +90,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
-    (
-        "benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus|pilot",
+    ("benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus|pilot|causal",
         "run a development benchmark",
     ),
     ("help [TOPIC]", "print the topic index or one installed workflow reference"),
@@ -132,6 +132,7 @@ _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "quality": quality_benchmark.main,
     "corpus": memory_corpus.main,
     "pilot": memory_pilot.main,
+    "causal": memory_causal.main,
 }
 
 
@@ -194,7 +195,7 @@ def _benchmark(args: list[str]) -> int:
     if not args:
         return _usage_error(
             "benchmark requires token, behavioral, storage, verbs, staged, "
-            "embedding, quality, corpus, or pilot",
+            "embedding, quality, corpus, pilot, or causal",
             "benchmark",
         )
     name = args[0]
