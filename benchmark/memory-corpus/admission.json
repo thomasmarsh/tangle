@@ -1,0 +1,715 @@
+{
+  "corpus_version": "memory-admission-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "admission",
+  "source_revision": "86d81e3",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-retain-owner-compression-constraint-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "feedback",
+            "statement": "The owner removed the agent-context compression layer, judging that it reclaimed less context than it cost.",
+            "evidence": ["AGENTS.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "The owner requires measured net context savings before any reintroduction of context compression.",
+            "evidence": ["AGENTS.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to add a context-compression layer to this project's agent workflow.",
+        "observable_paths": ["AGENTS.md"],
+        "allowed_actions": [
+          "retain-user-constraint",
+          "add-compression-layer",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "retain-user-constraint",
+        "acceptable_actions": ["retain-user-constraint"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The owner constraint that a compression layer must show measured net context savings is absent from the repository and governs every later decision about agent context.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-retain-offline-grading-constraint-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "feedback",
+            "statement": "The owner requires the whole evaluation corpus to grade with a plain install; no evaluation case may require the optional semantic extra.",
+            "evidence": ["pyproject.toml"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "The semantic extra is declared optional, so the core commands run without it.",
+            "evidence": [
+              "pyproject.toml",
+              ".braintree/resolved/DEC-006-semantic-layer-capability-boundary.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether a new evaluation case may require the optional semantic extra to grade.",
+        "observable_paths": ["pyproject.toml"],
+        "allowed_actions": [
+          "retain-user-constraint",
+          "require-semantic-extra",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "retain-user-constraint",
+        "acceptable_actions": ["retain-user-constraint"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The owner constraint that no evaluation case may require the optional semantic extra is stronger than the manifest's optional declaration and is not recorded.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-retain-heldout-separation-hypothesis-001",
+      "family": "admission",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The evaluation contract freezes development and held-out splits, but no separability pilot has run.",
+            "evidence": ["research/agent-memory-evaluation-contract.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "A curator predicted that the held-out split will separate the memory arms more strongly than development, because development cases are iterated against.",
+            "evidence": ["research/agent-memory-evaluation-contract.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to record a prediction about how the two splits will differ before the pilot runs.",
+        "observable_paths": ["research/agent-memory-evaluation-contract.md"],
+        "allowed_actions": [
+          "retain-unsupported-hypothesis",
+          "run-separability-pilot",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "retain-unsupported-hypothesis",
+        "acceptable_actions": ["retain-unsupported-hypothesis"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The split-separation prediction is an untested hypothesis unavailable from the contract, and it is decision-relevant because it would shape any re-split.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-retain-label-stability-hypothesis-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The scenario schema carries no explicit admission label; grading names the expected action.",
+            "evidence": ["src/braintree/memory_scenario.py"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "A curator predicted the label derived from the expected action verb will stay stable as the corpus grows.",
+            "evidence": ["src/braintree/memory_scenario.py", "research/agent-memory-scenario-schema.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to record a prediction about how long a derived classification will stay stable.",
+        "observable_paths": ["src/braintree/memory_scenario.py"],
+        "allowed_actions": [
+          "retain-unsupported-hypothesis",
+          "add-label-field",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "retain-unsupported-hypothesis",
+        "acceptable_actions": ["retain-unsupported-hypothesis"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The prediction about label stability is unavailable from the schema and would precede any decision to add an explicit label field.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-retain-envelope-layout-alternative-001",
+      "family": "admission",
+      "split": "held-out",
+      "severity": "moderate",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "One versioned envelope per family was chosen over one JSON file per case, so a family can be digested, split, and reviewed as a unit.",
+            "evidence": ["research/agent-memory-evaluation-contract.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "A later author proposed a per-case file layout for easier independent editing.",
+            "evidence": ["research/agent-memory-evaluation-contract.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to switch the gold corpus to one file per case.",
+        "observable_paths": ["research/agent-memory-evaluation-contract.md"],
+        "allowed_actions": [
+          "retain-rejected-alternative",
+          "switch-to-per-case-files",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "retain-rejected-alternative",
+        "acceptable_actions": ["retain-rejected-alternative"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The per-family envelope was chosen so one family can be digested and split as a unit; the rejected per-case layout and its rationale are not recorded and prevent re-litigating the format.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-update-existing-context-rev-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The skill restates the rule that `context_rev` is a consumer-context revision, not an edit counter.",
+            "evidence": ["SKILL.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "A different consumer asked the same `context_rev` question in a later round.",
+            "evidence": ["SKILL.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide how to record a clarification a consumer raised about `context_rev`.",
+        "observable_paths": ["src/braintree/revision.py"],
+        "allowed_actions": [
+          "update-existing-node",
+          "retain-new-node",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "update-existing-node",
+        "acceptable_actions": ["update-existing-node"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "TAS-009-semantic-revisions already owns the `context_rev` rule, so new evidence updates that node instead of creating a duplicate.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-update-existing-fast-suite-001",
+      "family": "admission",
+      "split": "held-out",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "result",
+            "statement": "The default suite was re-measured at 356 tests in about 40 s with 79 benchmark tests deselected.",
+            "evidence": [".braintree/resolved/TAS-110-fast-default-test-suite.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "Benchmark verification stays opt-in behind `make test-benchmarks`.",
+            "evidence": ["Makefile", "pyproject.toml"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide where a re-measured suite runtime is recorded.",
+        "observable_paths": ["Makefile", "pyproject.toml"],
+        "allowed_actions": [
+          "update-existing-node",
+          "retain-new-node",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "update-existing-node",
+        "acceptable_actions": ["update-existing-node"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "TAS-110-fast-default-test-suite owns the fast-suite outcome, so the new measurement updates that node's evidence rather than adding a second fast-suite node.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-update-existing-seam-reuse-001",
+      "family": "admission",
+      "split": "held-out",
+      "severity": "moderate",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "An internal, non-behavioral reuse change in a resolved node's module may widen visibility instead of duplicating the seam.",
+            "evidence": [".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "A new slice raised the same reuse question on an unrelated seam.",
+            "evidence": ["references/coordination.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide how to record a reuse question raised on a new seam.",
+        "observable_paths": ["references/authoring.md"],
+        "allowed_actions": [
+          "update-existing-node",
+          "retain-new-node",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "update-existing-node",
+        "acceptable_actions": ["update-existing-node"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "TAS-118-resolved-seam-internal-reuse owns the visibility-widening rule, so a matching reuse question extends that node rather than starting a second seam rule.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-update-existing-clamp-rule-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The skill states the timestamp clamp rule: a worker refreshing an inherited `updated` ahead of the host clock uses `max(now, previous updated)`.",
+            "evidence": ["SKILL.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "An engineer re-filed the missing clamp rule after the fix had shipped.",
+            "evidence": [".braintree/resolved/TAS-112-timestamp-clamp-rule.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide how to record a report about timestamp handling.",
+        "observable_paths": ["references/dependencies.md"],
+        "allowed_actions": [
+          "update-existing-node",
+          "retain-new-node",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "update-existing-node",
+        "acceptable_actions": ["update-existing-node"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "TAS-112-timestamp-clamp-rule already owns the clamp rule, so the recurrence adds evidence to that node rather than creating a duplicate rule node.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-update-existing-staging-gotcha-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "failure",
+            "statement": "`git mv` staged the pre-edit blob, so a status move committed a node without its `# Result` body.",
+            "evidence": [".braintree/resolved/TAS-116-status-move-staging.md"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "Stage the status move and the body edit in one commit and `git add` the destination after the move.",
+            "evidence": ["SKILL.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide how to record a status-move staging failure.",
+        "observable_paths": ["references/authoring.md"],
+        "allowed_actions": [
+          "update-existing-node",
+          "retain-new-node",
+          "discard-observation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "update-existing-node",
+        "acceptable_actions": ["update-existing-node"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "TAS-116-status-move-staging owns the `git mv` staging rule, so a recurrence extends that node rather than duplicating it.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-discard-current-code-fact-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "`pyproject.toml` sets `requires-python = \">=3.12\"`.",
+            "evidence": ["pyproject.toml"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "`dependencies = []` keeps a plain install free of runtime dependencies.",
+            "evidence": ["pyproject.toml"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to store the interpreter floor and the empty dependency list as memory.",
+        "observable_paths": ["pyproject.toml"],
+        "allowed_actions": ["discard-observation", "retain-new-memory", "update-existing-node"]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "discard-observation",
+        "acceptable_actions": ["discard-observation"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Both facts are authoritative in the manifest and cheaply observable, so retaining them would duplicate current state.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-discard-transient-failure-001",
+      "family": "admission",
+      "split": "held-out",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "failure",
+            "statement": "One `make test` invocation timed out once while the installer test ran, and the run was marked failed.",
+            "evidence": ["Makefile", "tests/install.sh"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "A rerun with no configuration change passed and the timeout never reproduced.",
+            "evidence": ["Makefile"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether a single timed-out run becomes durable memory.",
+        "observable_paths": ["Makefile", "tests/install.sh"],
+        "allowed_actions": [
+          "discard-transient-failure",
+          "retain-new-memory",
+          "update-existing-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "discard-transient-failure",
+        "acceptable_actions": ["discard-transient-failure"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The timeout was transient and never reproduced, so it cannot change a future decision without a measured cause.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-discard-cache-speculation-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "A reviewer speculated that the 4096-entry token-count cache is too small for large vaults.",
+            "evidence": ["src/braintree/index.py"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "No measurement of cache misses or vault scaling accompanied the speculation.",
+            "evidence": ["src/braintree/index.py"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to store the claim that the token-count cache is too small.",
+        "observable_paths": ["src/braintree/index.py"],
+        "allowed_actions": [
+          "discard-unsupported-hypothesis",
+          "retain-new-memory",
+          "update-existing-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "discard-unsupported-hypothesis",
+        "acceptable_actions": ["discard-unsupported-hypothesis"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A claim with no measurement or reproduction cannot change a decision; it becomes durable only with a size measurement or a scaling test.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-discard-routine-verification-001",
+      "family": "admission",
+      "split": "held-out",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "action",
+            "statement": "The agent re-ran the default suite.",
+            "evidence": ["Makefile"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "The suite printed the same passing summary as the previous run.",
+            "evidence": ["Makefile"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to record a second passing test run.",
+        "observable_paths": ["Makefile"],
+        "allowed_actions": [
+          "discard-routine-verification",
+          "retain-new-memory",
+          "update-existing-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "discard-routine-verification",
+        "acceptable_actions": ["discard-routine-verification"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Routine verification narration is excluded by the admission policy and version history already records the repeat.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "admission-discard-duplicate-source-001",
+      "family": "admission",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "86d81e3",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The nine scenario families and their four curation groups are frozen in the contract.",
+            "evidence": ["src/braintree/memory_contract.py"]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A draft note restated the partition table in its own words.",
+            "evidence": ["research/agent-memory-scenario-schema.md"]
+          }
+        ]
+      },
+      "query": {
+        "task": "Decide whether to store a note describing the scenario-family partition.",
+        "observable_paths": [
+          "src/braintree/memory_contract.py",
+          "research/agent-memory-scenario-schema.md"
+        ],
+        "allowed_actions": [
+          "discard-duplicate-source",
+          "retain-new-memory",
+          "update-existing-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "discard-duplicate-source",
+        "acceptable_actions": ["discard-duplicate-source"],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The contract and its prose authority already state the partition, so the note is duplicate source material.",
+            "source_episodes": ["ep-1", "ep-2"]
+          }
+        ]
+      }
+    }
+  ]
+}
