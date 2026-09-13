@@ -40,7 +40,7 @@ One node owns one durable outcome or decision, not an estimated session, commit,
 
 ## Status, next, and roll-up
 
-`proposed` is ready but not yet at the frontier; `active` is being worked; `blocked` needs input or state no node in this vault owns, such as a credential or an external approval; `resolved` is complete. Change status by moving the unchanged filename between those directories, so wikilinks keep the stable basename. A settled `DEF` or `DEC` is `resolved`; while its invariant or decision is still unsettled it stays `proposed`.
+`proposed` is ready but not yet at the frontier; `active` is being worked; `blocked` needs input or state no node in this vault owns, such as a credential or an external approval; `resolved` is complete. Change status by moving the unchanged filename between those directories, so wikilinks keep the stable basename. Stage that move and the node's `# Result`/`# Resolution` body edit in the same commit: `git mv` can stage the pre-edit blob, so `git add` the destination after the move, and make the move the last step before committing that node. A settled `DEF` or `DEC` is `resolved`; while its invariant or decision is still unsettled it stays `proposed`.
 
 `# Focus`, `priority`, and `active` are advisory navigation, never a work claim. A node's `next` is the one deliberate frontier route: the only accepted forms are a plain action sentence, `Do X.`, or a single `[[direct-child]]` link. Naming multiple children or a non-child fails the graph check. Resolve a coordinating task only when its own `Done when` criteria are met and every child is resolved or disposed; resolving children alone does not complete the parent.
 

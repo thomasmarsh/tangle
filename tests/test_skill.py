@@ -110,6 +110,17 @@ _PARENT_NEXT_OWNERSHIP_RULE = (
     "reports the stale route",
 )
 
+# A status move and the node's body edit belong in one commit: `git mv` can
+# stage the pre-edit blob, so the destination is `git add`-ed after the move,
+# and the move is the last step before committing that node.
+_STATUS_MOVE_STAGING_RULE = (
+    "Stage that move and the node's `# Result`/`# Resolution` body edit in the "
+    "same commit",
+    "`git mv` can stage the pre-edit blob",
+    "`git add` the destination after the move",
+    "make the move the last step before committing that node",
+)
+
 # The durable-outcome boundary rule the admission decision added; it must not
 # regress out of the always-loaded core.
 _DURABLE_OUTCOME_BOUNDARY = (
@@ -340,6 +351,10 @@ def test_completion_receipt_is_the_trusted_signal() -> None:
 
 def test_parent_next_advance_names_the_write_set_exception() -> None:
     _assert_contains(_read(_SKILL), _PARENT_NEXT_OWNERSHIP_RULE)
+
+
+def test_status_move_is_staged_with_its_body_edit() -> None:
+    _assert_contains(_read(_SKILL), _STATUS_MOVE_STAGING_RULE)
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:
