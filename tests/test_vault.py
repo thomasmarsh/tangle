@@ -96,6 +96,27 @@ def test_resolve_migrates_the_default_legacy_vault(
     assert not (tmp_path / "nodes").exists()
 
 
+def test_resolve_announces_the_move_on_stderr_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A default-resolved legacy vault is announced once, and never on stdout."""
+    _legacy_vault(tmp_path)
+    monkeypatch.delenv("BT_NODES_DIR", raising=False)
+    monkeypatch.chdir(tmp_path)
+
+    assert vault.resolve() == str(tmp_path / vault.DIRECTORY_NAME)
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == "migrated vault: nodes -> .braintree\n"
+
+    # The rename happens once, so an already-migrated resolver stays silent.
+    assert vault.resolve() == str(tmp_path / vault.DIRECTORY_NAME)
+    repeated = capsys.readouterr()
+    assert repeated.out == ""
+    assert repeated.err == ""
+
+
 def test_migrate_command_reports_both_outcomes(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -111,6 +111,54 @@ def test_recorded_node_passes_graph_check(
     assert "graph check: passed (2 nodes)" in capsys.readouterr().out
 
 
+def test_capture_announces_a_legacy_vault_migration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A legacy ``nodes/`` root is migrated in place and the move is announced.
+
+    The capture path resolves the vault itself, so writing from a root that
+    still holds a legacy vault renames it. The operator must see the move, and
+    the reported ``path`` must name the resolved ``.braintree`` directory.
+    """
+    root = tmp_path / "consumer"
+    _hub(root)
+    monkeypatch.delenv("BT_NODES_DIR", raising=False)
+    # Pin the sidecar to an absent location so the capture reserves its id
+    # vault-locally instead of touching any sidecar on this machine.
+    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "absent-sidecar"))
+    monkeypatch.setenv("BT_PROJECT_ID", "legacy-vault-migration")
+    monkeypatch.chdir(root)
+
+    assert (
+        feedback_record.main(
+            [
+                "--route",
+                "Area [[IDX-001-root]]",
+                "--attempted",
+                _CONTENT[0],
+                "--friction",
+                _CONTENT[1],
+                "--improvement",
+                _CONTENT[2],
+            ]
+        )
+        == 0
+    )
+
+    captured = capsys.readouterr()
+    assert captured.err == "migrated vault: nodes -> .braintree\n"
+    assert not (root / "nodes").exists()
+    node = (
+        Path.cwd()
+        / ".braintree"
+        / "proposed"
+        / "FBK-001-the-allocated-id-already-existed-on-disk.md"
+    )
+    assert node.is_file()
+    assert f'path: "{node}"' in captured.out
+    assert "/nodes/proposed" not in captured.out
+
+
 def test_record_uses_the_installed_revision_record(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -10,11 +10,16 @@ caller named that directory, so the command only reads it. Only the default
 resolution from the current directory may migrate a legacy vault, which keeps
 the upgrade to a consuming project's own worktree and leaves every other vault
 untouched.
+
+A migration no command asked for is never silent: the resolver announces it in
+one line on stderr, because the answer a command prints on stdout may be
+machine-readable TOON that a notice would corrupt.
 """
 
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 
 __all__ = [
@@ -26,6 +31,7 @@ __all__ = [
     "default_directory",
     "legacy_directory",
     "migrate",
+    "migration_notice",
     "resolve",
 ]
 
@@ -114,13 +120,28 @@ def migrate(root: str) -> Migration | None:
     return Migration(source=source, destination=destination)
 
 
+def migration_notice(migration: Migration) -> str:
+    """Return the one-line announcement of a migration a command performed.
+
+    The notice names the move relative to the vault root the resolver read, so
+    a command run from a project root reports ``nodes -> .braintree``, the two
+    directory names the operator sees in the worktree.
+    """
+    return (
+        f"migrated vault: {os.path.basename(migration.source)}"
+        f" -> {os.path.basename(migration.destination)}"
+    )
+
+
 def resolve(override: str | None = None, *, migrate_legacy: bool = True) -> str:
     """Return the vault directory a command should read.
 
     An explicit operand or ``BT_NODES_DIR`` wins unchanged and is never
     migrated. Otherwise the default ``.braintree`` path is returned, after
     migrating a qualifying legacy ``nodes/`` vault in the current directory when
-    ``migrate_legacy`` is set.
+    ``migrate_legacy`` is set. A performed migration is announced with
+    :func:`migration_notice` on stderr; stdout carries only the returned path
+    and whatever the invoking command writes.
     """
     if override is not None:
         return override
@@ -129,5 +150,7 @@ def resolve(override: str | None = None, *, migrate_legacy: bool = True) -> str:
         return configured
     root = os.getcwd()
     if migrate_legacy:
-        migrate(root)
+        migration = migrate(root)
+        if migration is not None:
+            print(migration_notice(migration), file=sys.stderr)
     return os.path.join(root, DIRECTORY_NAME)
