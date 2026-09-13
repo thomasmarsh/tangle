@@ -78,15 +78,36 @@ _UPDATED_CLAMP_RULE = (
 
 # A slice write set is the compile-and-golden closure of its change, not a
 # crate directory: the worker includes and reports additional in-scope paths,
-# and stops and escalates only for another node's path or a shared hub.
+# and stops and escalates only for another node's path or a shared hub. The
+# closure also names the workspace manifest and lockfile a dependency needs and
+# the generated artifacts a source shape change invalidates.
 _WRITE_SET_CLOSURE_RULE = (
     "write set is the compile-and-golden closure of the approved change, not a "
     "crate directory",
     "exhaustive matches and struct literals on the changed types",
     "every golden and baseline the change can invalidate (`tests/golden/**`,",
     "`baselines/**`)",
+    "the workspace manifest and lockfile when the approved change needs a "
+    "dependency",
+    "the generated artifacts a source shape change invalidates (JSON schemas, "
+    "snapshots, pinned-hash fixtures)",
     "includes and reports the additional in-scope paths",
     "stops and escalates for a path owned by another node or a shared hub",
+)
+
+# Falsification probe for the closure enumeration: the pre-change paragraph
+# named only goldens and baselines, so the guard must reject it. The probe
+# carries the new enumeration's forbidden tokens by their absence, and it fails
+# when the guard stops detecting them rather than when the reference merely
+# reflows.
+_WRITE_SET_CLOSURE_PRE_CHANGE = (
+    "The assigned write set is the compile-and-golden closure of the approved "
+    "change, not a crate directory: membership covers every file the change must "
+    "touch, including exhaustive matches and struct literals on the changed "
+    "types, plus every golden and baseline the change can invalidate "
+    "(`tests/golden/**`, `baselines/**`). When the closure exceeds the assigned "
+    "set, the worker includes and reports the additional in-scope paths; it "
+    "stops and escalates for a path owned by another node or a shared hub."
 )
 
 # A worker records a compact completion receipt before its long narrative
@@ -436,6 +457,12 @@ def test_coordinator_stamps_the_host_clock_at_handoff() -> None:
 
 def test_write_set_is_the_change_closure() -> None:
     _assert_contains(_reference("coordination"), _WRITE_SET_CLOSURE_RULE)
+
+
+def test_write_set_closure_guard_rejects_the_pre_change_enumeration() -> None:
+    """Falsification probe: the guard must reject the pre-change closure."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_WRITE_SET_CLOSURE_PRE_CHANGE, _WRITE_SET_CLOSURE_RULE)
 
 
 def test_completion_receipt_is_the_trusted_signal() -> None:

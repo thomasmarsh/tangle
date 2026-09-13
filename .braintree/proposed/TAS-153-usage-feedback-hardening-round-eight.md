@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T22:08:30Z
+updated: 2026-09-13T22:10:28Z
 summary: Fix or dispose the round-eight Tangle feedback findings: timeout recovery, closure completeness, host-clock stamping, negative assertions, just-in-time slices, gate enumeration, and feedback ownership.
-next: "[[TAS-158-write-set-closure-generators-and-manifests]]"
+next: "[[TAS-159-timed-out-worker-recovery]]"
 ---
 
 # Context

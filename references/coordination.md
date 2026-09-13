@@ -102,9 +102,14 @@ write set before work begins.
   change, not a crate directory: membership covers every file the change must
   touch, including exhaustive matches and struct literals on the changed types,
   plus every golden and baseline the change can invalidate (`tests/golden/**`,
-  `baselines/**`). When the closure exceeds the assigned set, the worker includes
-  and reports the additional in-scope paths; it stops and escalates for a path
-  owned by another node or a shared hub.
+  `baselines/**`), the workspace manifest and lockfile when the approved change
+  needs a dependency, and the generated artifacts a source shape change
+  invalidates (JSON schemas, snapshots, pinned-hash fixtures). A necessary
+  dependency or regenerated artifact is in the set even though the change edits
+  no source file in it, so a worker never leaves its set or stops for a closure
+  file. When the closure exceeds the assigned set, the worker includes and
+  reports the additional in-scope paths; it stops and escalates for a path owned
+  by another node or a shared hub.
 - A worktree is a snapshot, not global truth; workers do not assume unseen work
   or IDs are unclaimed.
 - A worktree slice is not a node boundary: a fresh worker may continue the
