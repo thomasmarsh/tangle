@@ -413,6 +413,7 @@ def test_document_preregisters_protocol_arms_models_and_gate() -> None:
     for model in memory_causal.CAUSAL_MODELS:
         assert model in text, model
     assert "braintree benchmark causal" in text
+    assert "scripts/memory_causal_run.py" in text
     assert ".pi/agents/memory-pilot-child.md" in text
     assert "pilot_subset" in text
     assert "resumption-after-decision-shared-install-001" in text

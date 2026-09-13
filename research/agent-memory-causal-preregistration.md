@@ -162,6 +162,22 @@ schema without a model call; `record` ingests retained child outputs and
 telemetry. The result embeds its own exact reproduction commands and plan
 digest.
 
+The live fan-out is owned by `scripts/memory_causal_run.py`, which writes one
+isolated child prompt per planned episode plus one workflow script per batch and
+passes each episode's model as a per-child override, so one workflow spans the
+three preregistered models:
+
+```sh
+uv run python scripts/memory_causal_run.py generate /tmp/memory-causal-v1
+# launch batch1.js through batch9.js with the subagent tool, one batch per call
+uv run python scripts/memory_causal_run.py collect /tmp/memory-causal-v1 \
+  --out benchmark/memory-causal-result.json
+```
+
+The `collect` step rebuilds every sample from retained async run state and
+makes no model call; a missing or failed sample leaves the run `incomplete` and
+`untested`.
+
 ## 10. Authorization
 
 Live or paid execution is a separate authorization. The contract requires
