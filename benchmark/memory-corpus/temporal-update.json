@@ -1,0 +1,293 @@
+{
+  "corpus_version": "memory-temporal-update-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "temporal-update",
+  "source_revision": "c08af27",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "temporal-update-cosmetic-edit-001",
+      "family": "temporal-update",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "`context_rev` counts only a consumer-relevant change: increment it when a changed assumption, decision, invariant, or interface would force an already reconciled consumer to reread.",
+            "evidence": [
+              "SKILL.md",
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "Cosmetic edits, history additions, status moves, and priority or next changes refresh `updated` but never bump the revision, so a pin that still matches stays current.",
+            "evidence": [
+              "SKILL.md",
+              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "A legacy `nodes/` vault was migrated to the dot-directory layout in place, and the migration was announced rather than silent.",
+            "evidence": [
+              ".braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+              ".braintree/resolved/TAS-119-announce-vault-migration.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A pinned consumer notices that its dependency's `updated` timestamp moved and a sentence in the dependency body was reworded, but the pinned revision number is unchanged. Decide how the consumer should proceed before executing.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "execute-without-reconcile",
+          "reconcile-before-executing",
+          "increment-the-dependency-revision"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "execute-without-reconcile",
+        "acceptable_actions": [
+          "execute-without-reconcile"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A cosmetic edit refreshes `updated` but does not bump the consumer-context revision, so a pin that still matches the unchanged revision is current and the consumer may execute without reconciling.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "temporal-update-semantic-revision-001",
+      "family": "temporal-update",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "A semantic change increments `context_rev` because a consumer that had already reconciled must reread the dependency before it can rely on it again.",
+            "evidence": [
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "A pinned context edge whose revision differs from the target's current revision is stale, and reconciliation is consumer-owned: reread, update assumptions, reset the pin, and pass the plain check before executing.",
+            "evidence": [
+              ".braintree/resolved/TAS-059-stale-pin-commit-shape.md",
+              "references/dependencies.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "One shared checker verdict names a missing, revision-mismatched, or unresolved pin for every context relation.",
+            "evidence": [
+              ".braintree/resolved/TAS-069-unify-dependency-semantics.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Before executing, a worker sees that a pinned dependency now reports a higher revision number than the pin and that the dependency's decision text changed since the pin was written. Decide the immediate next step.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "reconcile-then-execute",
+          "execute-at-the-recorded-pin",
+          "drop-the-dependency-edge"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "reconcile-then-execute",
+        "acceptable_actions": [
+          "reconcile-then-execute"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A revision mismatch means the dependency changed a consumer-relevant assumption, so the consumer must reread it, update its assumptions, reset the pin, and pass the plain check before executing.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "temporal-update-event-mutation-time-001",
+      "family": "temporal-update",
+      "split": "held-out",
+      "severity": "moderate",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "failure",
+            "statement": "A node arrived with a day-boundary placeholder timestamp ahead of the host clock, so refreshing `updated` literally would move the field backwards.",
+            "evidence": [
+              ".braintree/resolved/TAS-112-timestamp-clamp-rule.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "A worker refreshing an inherited `updated` ahead of the host clock uses `max(now, previous updated)` and notes the clamp rather than moving it backwards.",
+            "evidence": [
+              ".braintree/resolved/TAS-112-timestamp-clamp-rule.md",
+              "SKILL.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The real mutation time is the host clock while the recorded `updated` is the coordinator's placeholder, so the real mutation time differs from the recorded `updated` and the record must stay monotonic.",
+            "evidence": [
+              ".braintree/resolved/TAS-112-timestamp-clamp-rule.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A separate integration task needed the tested surface genuinely public, which was a write-set closure concern rather than a timestamp concern.",
+            "evidence": [
+              ".braintree/resolved/TAS-113-write-set-change-closure.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A worker is about to mutate an assigned node whose existing `updated` timestamp is later than the current host clock because a handoff stamped a placeholder. Decide what timestamp the worker writes.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "clamp-to-the-previous-timestamp",
+          "write-the-host-clock-time",
+          "reject-the-assigned-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "clamp-to-the-previous-timestamp",
+        "acceptable_actions": [
+          "clamp-to-the-previous-timestamp"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The existing placeholder is ahead of the host clock, so the real mutation time differs from the recorded `updated`; the worker keeps the later of the host clock and the previous value, notes the clamp, and does not move `updated` backwards.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "temporal-update-changed-definition-001",
+      "family": "temporal-update",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "The project versions one release artifact with a single semantic version declared once in `pyproject.toml` and never duplicated or frozen as an invariant.",
+            "evidence": [
+              ".braintree/resolved/DEC-003-semantic-versioning.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "Tests derive the expected version from the one declaration, and an earlier port's preservation clause is historical rather than a standing constraint.",
+            "evidence": [
+              ".braintree/resolved/DEC-003-semantic-versioning.md",
+              "tests/test_scaffold.py"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "A separate decision placed the vault under a dot-directory and announced the migration.",
+            "evidence": [
+              ".braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+              ".braintree/resolved/TAS-119-announce-vault-migration.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A refactor wants to preserve an exact version literal so a mechanical change can prove byte-identical behavior. Decide whether that restraint is consistent with how this project versions its one release artifact.",
+        "observable_paths": [
+          "src/braintree/quality_benchmark.py"
+        ],
+        "allowed_actions": [
+          "derive-the-version-from-the-one-declaration",
+          "preserve-the-version-literal",
+          "add-a-second-version-declaration"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "derive-the-version-from-the-one-declaration",
+        "acceptable_actions": [
+          "derive-the-version-from-the-one-declaration"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The project declares one semantic version once and treats it as a signal rather than an invariant, so a refactor must not freeze an exact literal; tests read the declaration.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

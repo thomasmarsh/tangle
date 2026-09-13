@@ -1,0 +1,249 @@
+{
+  "corpus_version": "memory-conflict-and-uncertainty-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "conflict-and-uncertainty",
+  "source_revision": "c08af27",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "conflict-and-uncertainty-competing-rules-001",
+      "family": "conflict-and-uncertainty",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "One current rule says to supersede only when an outcome moves to a different node, while another says to consolidate adjacent nodes that share one outcome and completion boundary.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md",
+              ".braintree/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A node's outcome moved only partly, so both rules can be read to apply and neither clearly controls.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md",
+              ".braintree/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "Under irreducible conflict, correct behavior may be to preserve alternatives or abstain with a report rather than resolve to one answer.",
+            "evidence": [
+              "research/agent-memory-theory-evaluation.md",
+              ".braintree/proposed/TAS-127-uncertainty-provenance-security.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A different node's cosmetic edit refreshed its timestamp without a revision bump.",
+            "evidence": [
+              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Two current contract rules can both be read to govern a node whose outcome only partly moved, and neither clearly controls. Decide how to proceed.",
+        "observable_paths": [
+          "src/braintree/quality_benchmark.py"
+        ],
+        "allowed_actions": [
+          "preserve-both-readings-and-report",
+          "abstain-and-report-the-conflict",
+          "silently-apply-the-supersession-rule",
+          "silently-apply-the-consolidation-rule"
+        ]
+      },
+      "grading": {
+        "grader": "action-acceptable",
+        "expected_outcome": "preserve-both-readings-and-report",
+        "acceptable_actions": [
+          "preserve-both-readings-and-report",
+          "abstain-and-report-the-conflict"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "With two current rules in genuine tension and no controlling one, the justified behavior is to preserve both readings and report the conflict rather than to pick one silently.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "conflict-and-uncertainty-missing-premise-001",
+      "family": "conflict-and-uncertainty",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The repository records two distinct migrations, a storage-architecture migration and a vault-directory migration, and a request referred only to 'the migration'.",
+            "evidence": [
+              ".braintree/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A request that names only 'the migration' leaves which one it means undetermined.",
+            "evidence": [
+              ".braintree/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "Correct behavior on a missing premise may be to ask one targeted clarification rather than guess or stall.",
+            "evidence": [
+              "research/agent-memory-theory-evaluation.md",
+              ".braintree/proposed/TAS-127-uncertainty-provenance-security.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A separate definition changed at a higher revision and required consumer reconciliation.",
+            "evidence": [
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A request names 'the migration' while the repository records two distinct migrations, and the request does not identify which one it means. Decide the immediate next action.",
+        "observable_paths": [
+          "src/braintree/quality_benchmark.py"
+        ],
+        "allowed_actions": [
+          "ask-one-targeted-clarification",
+          "assume-the-more-recent-migration",
+          "list-both-and-execute-neither"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "ask-one-targeted-clarification",
+        "acceptable_actions": [
+          "ask-one-targeted-clarification"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Exactly one premise is missing and one targeted question resolves it, so the worker asks that question rather than guessing or stalling broadly.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "conflict-and-uncertainty-genuine-conflict-001",
+      "family": "conflict-and-uncertainty",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "One current decision requires the skill entrypoint stay compact and future skill-text edits be evaluated with a matched token A/B before growth is retained.",
+            "evidence": [
+              ".braintree/resolved/DEC-004-compact-skill-text.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A later analysis reports the compactness target is unmet and prescribes moving detail behind focused references, while the staged token A/B that would compare a new always-loaded rule against the compact entrypoint is blocked pending authorization.",
+            "evidence": [
+              ".braintree/resolved/THO-016-has-cumulative-contract-growth-invalidated-the-c.md",
+              ".braintree/blocked/TAS-080-staged-token-ab.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "Under irreducible conflict and a missing tie-break, correct behavior may be calibrated inaction or preserving alternatives rather than one resolved answer.",
+            "evidence": [
+              "research/agent-memory-theory-evaluation.md",
+              ".braintree/proposed/TAS-127-uncertainty-provenance-security.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A separate consumer pin mismatched after a semantic revision.",
+            "evidence": [
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Two current sources pull in different directions about whether a new always-loaded rule belongs in the compact entrypoint, and the staged comparison that could break the tie is blocked pending authorization. Decide what a worker may conclude.",
+        "observable_paths": [
+          "src/braintree/quality_benchmark.py"
+        ],
+        "allowed_actions": [
+          "preserve-both-conclusions-and-report-uncertainty",
+          "silently-add-the-rule-to-the-entrypoint",
+          "silently-move-the-rule-to-a-reference"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "preserve-both-conclusions-and-report-uncertainty",
+        "acceptable_actions": [
+          "preserve-both-conclusions-and-report-uncertainty"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A current compactness constraint, a progressive-disclosure prescription, and a blocked tie-break leave no single justified answer, so both conclusions are preserved and the uncertainty is reported.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

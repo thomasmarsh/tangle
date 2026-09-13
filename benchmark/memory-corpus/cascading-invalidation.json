@@ -1,0 +1,316 @@
+{
+  "corpus_version": "memory-cascading-invalidation-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "cascading-invalidation",
+  "source_revision": "c08af27",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "cascading-invalidation-transitive-stale-001",
+      "family": "cascading-invalidation",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "A semantic revision bump commits the bumped node alone and leaves pinned consumers stale on purpose, so an exact backlink search finds the reconciliation work.",
+            "evidence": [
+              ".braintree/resolved/TAS-059-stale-pin-commit-shape.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "The impact view lists every direct and transitive dependent of a changed node in dependency order, with each edge's pinned and current revision.",
+            "evidence": [
+              ".braintree/resolved/TAS-072-transitive-dependency-impact.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "The integration planner orders repairs so each pinned dependency is reconciled after its target, rereading the dependency before reconciling the consumer.",
+            "evidence": [
+              ".braintree/resolved/TAS-077-reconciliation-planner.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "One shared verdict names a missing, mismatched, or unresolved pin for every context relation.",
+            "evidence": [
+              ".braintree/resolved/TAS-069-unify-dependency-semantics.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A shared definition changed at a higher revision. Its direct consumer updated its assumptions and bumped its own revision, so the node pinned to that consumer also mismatches. Decide the reconciliation scope and order.",
+        "observable_paths": [
+          "src/braintree/sidecar.py"
+        ],
+        "allowed_actions": [
+          "reconcile-upstream-to-downstream",
+          "reconcile-downstream-to-upstream",
+          "reconcile-only-the-direct-consumer"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "reconcile-upstream-to-downstream",
+        "acceptable_actions": [
+          "reconcile-upstream-to-downstream"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Both pins are stale and reconciliation is consumer-owned and dependency-ordered, so the direct consumer resolves against the changed definition first and the downstream node then reconciles against it.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "cascading-invalidation-independent-evidence-001",
+      "family": "cascading-invalidation",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "A revision bump on a definition makes a pinned consumer stale and forces it to reread.",
+            "evidence": [
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "Cascading invalidation must identify exactly the affected consumers, including independently supported conclusions that should survive.",
+            "evidence": [
+              "research/agent-memory-theory-evaluation.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "A consumer's conclusion can rest on a separate resolved decision that the bump did not change, so the reread confirms the conclusion while the pin is reset.",
+            "evidence": [
+              ".braintree/resolved/DEC-003-semantic-versioning.md",
+              "references/dependencies.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A non-behavioral internal reuse changed no consumer assumption and did not bump its owner's revision.",
+            "evidence": [
+              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A consumer's pinned dependency changed at a higher revision, but the consumer's conclusion rests on a separate resolved decision that the change did not touch. Decide whether the consumer's conclusion must change.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "reset-the-pin-and-keep-the-conclusion",
+          "revise-the-consumer-conclusion",
+          "remove-the-independent-decision"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "reset-the-pin-and-keep-the-conclusion",
+        "acceptable_actions": [
+          "reset-the-pin-and-keep-the-conclusion"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The mismatch forces a reread, but the conclusion is independently supported by an unchanged decision, so it survives; the consumer resets its pin and keeps the conclusion.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "cascading-invalidation-reversal-in-place-001",
+      "family": "cascading-invalidation",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "failure",
+            "statement": "A committed direction was reversed after part of it had been implemented.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "While the same node and scope still own the outcome, reversing it is an in-place update that bumps `context_rev` because a pinned consumer must reread the changed direction.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "The reversal records the reversed commit's short identifier and subject in the node body with whether the change was kept, reverted, or replaced.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A different outcome moved to a new node and was recorded as superseded rather than reversed in place.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A downstream consumer relied on a decision whose direction was reversed inside the same owning node after partial implementation. Decide how the consumer must respond.",
+        "observable_paths": [
+          "src/braintree/sidecar.py"
+        ],
+        "allowed_actions": [
+          "reread-and-update-assumptions",
+          "ignore-because-no-new-node-exists",
+          "create-a-superseding-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "reread-and-update-assumptions",
+        "acceptable_actions": [
+          "reread-and-update-assumptions"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "An in-place reversal bumps the owning node's revision precisely because a pinned consumer must reread and reverse its own assumption; it is not a new node and needs no supersession link.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "cascading-invalidation-superseded-decision-001",
+      "family": "cascading-invalidation",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "c08af27",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "Supersede only when the outcome moves to a different node: the obsolete node is resolved, marked superseded, and records the replacement link.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "Resolution does not change `context_rev`, so completion is detected from the status directory and a matching pin can still point at disposed content.",
+            "evidence": [
+              "references/dependencies.md",
+              ".braintree/resolved/TAS-009-semantic-revisions.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "A consumer must follow the supersession link and search remaining backlinks instead of trusting a numerically matching pin.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A different outcome was reversed in place, which did bump that same node's revision.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A consumer's pinned dependency still matches the recorded revision, but the dependency now points to a replacement node and is marked disposed. Decide what the consumer must do.",
+        "observable_paths": [
+          "src/braintree/sidecar.py"
+        ],
+        "allowed_actions": [
+          "follow-the-replacement-link",
+          "trust-the-matching-pin",
+          "delete-the-replacement-node"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "follow-the-replacement-link",
+        "acceptable_actions": [
+          "follow-the-replacement-link"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A supersession does not change the obsolete node's revision, so a matching pin is a false negative; the consumer follows the replacement link and re-checks remaining backlinks.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

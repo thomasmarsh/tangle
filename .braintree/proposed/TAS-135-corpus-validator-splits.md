@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T14:55:24Z
+updated: 2026-09-13T15:14:28Z
 summary: Validate, balance, split, and digest the gold memory-evaluation corpus.
 next: Implement corpus validation and freeze deterministic development and held-out splits.
 ---
@@ -12,7 +12,7 @@ Parent [[TAS-121-evaluation-foundation]].
 
 Depends on [[TAS-131-admission-scenarios]] at context_rev 1.
 Depends on [[TAS-132-resumption-retrieval-scenarios]] at context_rev 1.
-Gated on [[TAS-133-revision-conflict-scenarios]].
+Depends on [[TAS-133-revision-conflict-scenarios]] at context_rev 1.
 Gated on [[TAS-134-transfer-interference-authority-scenarios]].
 
 # Outcome
