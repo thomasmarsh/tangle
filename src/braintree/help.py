@@ -506,7 +506,10 @@ VERBS: dict[str, Verb] = {
     ),
     "benchmark": _verb(
         "Run a development benchmark.",
-        usage="braintree benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus",
+        usage=(
+            "braintree benchmark "
+            "token|behavioral|storage|verbs|staged|embedding|quality|corpus|pilot"
+        ),
         operands=(
             ("NAME", "one of the benchmark names in the usage line"),
         ),
@@ -565,6 +568,27 @@ VERBS["benchmark corpus"] = _verb(
         ("verification", "a pass line, or findings that exit 1"),
     ),
     hazards=("Development only; offline, with no live model calls.",),
+)
+
+# The isolated repeated pilot is the other benchmark-shaped group command with
+# verbs rather than a ``--verify`` flag, and it is deliberately zero-live.
+VERBS["benchmark pilot"] = _verb(
+    "Preregister, dry-run, or record the isolated repeated memory separability pilot.",
+    usage="braintree benchmark pilot plan|dry-run|record",
+    operands=(
+        ("plan", "print the deterministic 72-episode plan and its pins"),
+        ("dry-run", "validate the fixtures, keys, digests, aggregation, and schema offline"),
+        ("record", "ingest raw child outputs as --input and optionally write --output"),
+    ),
+    outputs=(
+        ("plan", "the pins, plan digest, and 72 keyed episodes"),
+        ("dry-run", "a pass line, or findings that exit 1"),
+        ("result", "the recorded pins, grades, telemetry, and verdict"),
+    ),
+    hazards=(
+        "Development only; plan and dry-run make zero live model calls. "
+        "Record consumes already-collected samples and never launches a child.",
+    ),
 )
 
 

@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 priority: P1
-updated: 2026-09-13T17:04:44Z
+updated: 2026-09-13T17:19:01Z
 summary: Redesign the gold corpus so memory-required cases separate repository-only from oracle.
-next: "[[TAS-148-isolated-repeat-pilot-harness]]"
+next: "[[TAS-149-run-isolated-repeat-pilot]]"
 ---
 
 Parent [[TAS-121-evaluation-foundation]].

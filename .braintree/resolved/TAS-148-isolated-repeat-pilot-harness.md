@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T17:04:44Z
+updated: 2026-09-13T17:19:01Z
 summary: Preregister and implement an isolated three-repetition Pi pilot harness.
-next: Commit the v2 protocol, isolated child profile, fixture builder, recorder, and zero-live tests.
 ---
 
 Parent [[TAS-147-pilot-corpus-revision]].
@@ -41,3 +40,26 @@ operator context to a child.
 - Every contract pin, repetition index, Pi child run id, raw output reference, grade, token/cost telemetry, and correctly computed latency is retained.
 - A clean-checkout dry run validates fixtures, keys, prompt digests, aggregation, and result-schema completeness without making a live model call.
 - `braintree check` and `make test` pass.
+
+# Result
+
+Implemented the zero-live isolated pilot-v2 harness.
+
+- Added `src/braintree/memory_pilot.py`: protocol constants, an arm-fixture
+  builder that embeds every observable file and the arm's memory, a
+  deterministic 72-episode plan (12 cases x 2 arms x 3 repetitions) in three
+  24-child batches, a strict output parser, a provenance and telemetry recorder
+  with latency computed from retained timestamps, and the paired-majority
+  `proceed`/`revise`/`stop` verdict with incomplete-run handling.
+- Added the project child profile `.pi/agents/memory-pilot-child.md`:
+  replacement system prompt, fresh context, no tools, no skills, no project or
+  global context, no ambient extensions, and `deepseek/deepseek-v4-flash` at
+  `high` effort with no fallback model.
+- Added `research/agent-memory-pilot-v2-preregistration.md` and
+  `tests/test_memory_pilot_v2.py` (27 zero-live tests), and wired
+  `braintree benchmark pilot plan|dry-run|record` into the CLI.
+- `braintree benchmark pilot dry-run` passes: 72 unique episodes in three
+  24-child batches, pins covering every contract field, a synthetic complete run
+  that aggregates to `proceed`, and a valid result schema, with no live call.
+- `braintree check` passed with 179 nodes; `make test` passed with 567 tests and
+  3 expected skips.

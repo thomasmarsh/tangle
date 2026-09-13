@@ -1,16 +1,16 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T17:04:44Z
+updated: 2026-09-13T17:19:01Z
 summary: Run the isolated three-repetition Pi separability pilot and decide the gate.
-next: Obtain explicit owner authorization for the bounded 72-sample live run after TAS-148 resolves.
+next: Obtain explicit owner authorization for the bounded 72-sample live run.
 ---
 
 Parent [[TAS-147-pilot-corpus-revision]].
 
 # Context
 
-Gated on [[TAS-148-isolated-repeat-pilot-harness]].
+Depends on [[TAS-148-isolated-repeat-pilot-harness]] at context_rev 1.
 
 The live run uses the frozen development subset and corpus digest, two arms,
 three paired repetitions, one fresh isolated Pi child per episode, and
@@ -35,8 +35,8 @@ majority and phase-one rules.
 
 # Blocked
 
-Blocked by the missing owner authorization for the paid 72-sample live run and
-by the unfinished isolated harness.
+Blocked by the missing owner authorization for the paid 72-sample live run. The
+isolated harness is resolved, so execution now needs only the owner to
+authorize the exact recorded pins and sample bound.
 
-Unblocks when [[TAS-148-isolated-repeat-pilot-harness]] resolves and the owner
-authorizes the exact recorded pins and sample bound.
+Unblocks when the owner authorizes the exact 72-sample pins and bound.
