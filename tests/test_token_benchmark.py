@@ -62,7 +62,9 @@ def test_check_fixture_reports_variants(capsys: pytest.CaptureFixture[str]) -> N
 def test_composite_fixture_has_expected_file_count(capsys: pytest.CaptureFixture[str]) -> None:
     assert token_benchmark.main(["--check-fixture"]) == 0
     out = capsys.readouterr().out
-    assert '"files":75' in out
+    # SKILL.md, agents/openai.yaml, four metadata files, every src/braintree
+    # module (including help.py), three references, plus the generated graph.
+    assert '"files":79' in out
     assert '"fixture_version":"graph-retrieval-v3"' in out
 
 

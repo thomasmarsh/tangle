@@ -135,6 +135,11 @@ def _installed_skill_files() -> dict[str, bytes]:
     for source in sorted(package.iterdir()):
         if source.is_file():
             files[str(source.relative_to(_repo_root()))] = source.read_bytes()
+    # The installer also copies the canonical topical references beside SKILL.md,
+    # so the fixture mirrors the full installed distribution, not only the core.
+    for source in sorted((_repo_root() / "references").iterdir()):
+        if source.is_file():
+            files[str(source.relative_to(_repo_root()))] = source.read_bytes()
     return files
 
 
