@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T18:08:43Z
+updated: 2026-09-13T18:13:39Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
 next: Obtain owner authorization for the repaired-corpus separability re-run and the five-arm causal run at their recorded pins.
 ---
@@ -95,13 +95,23 @@ the development-split five-arm causal run. The contract requires explicit owner
 authorization recorded before execution; none is recorded yet, so no live run
 has started and this node has no `# Authorization` section.
 
-The owner must authorize the corpus digest
-`sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`,
-the separability pins (`memory-pilot-v2`, `memory-pilot-v2-fixture-1`,
-`deepseek/deepseek-v4-flash` at `high`) or the causal pins (`memory-causal-v1`,
-`memory-causal-fixture-1`, the three-model list), the sample bound, and the
-source revision and plan digest generated at the run revision.
+The plans were generated at revision `5b5d83faf03f` before this bookkeeping
+edit and pin corpus digest
+`sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`:
 
-Unblocks when the owner records authorization for the exact pins and sample
-bound; then generate the plan at that revision, record the authorization in
-`# Authorization`, run the fixed batches, and collect the analysis.
+- separability pilot: plan digest
+  `sha256:3817b130ff3f4d7fed6f85ce9211487884e299560c4afe5c28d1b047dd407a11`,
+  72 episodes, `memory-pilot-v2`, `deepseek/deepseek-v4-flash` at `high`.
+- five-arm causal run: plan digest
+  `sha256:e930630a1dbc3a55677db41ae42adbc8afb900e5aa9b3fbd1692c24f964fbc2b`,
+  540 episodes, `memory-causal-v1`, three models at `high`.
+
+The plan digest content-addresses its source-revision pin, so a regeneration at
+a later commit yields a different digest. To authorize, the owner names the
+corpus digest, the plan digest (the recorded one generated at `5b5d83faf03f`,
+or a regenerated one at a named revision), the sample bound, and the exact model
+and tool pins; then the authorization is recorded in `# Authorization` and the
+recorded plan is run without regeneration, with any reconciliation noted.
+
+Unblocks when the owner records that authorization; then run the fixed batches
+and collect the analysis.
