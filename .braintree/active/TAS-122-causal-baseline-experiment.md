@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T18:22:25Z
+updated: 2026-09-13T18:24:28Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
-next: Run the authorized separability and five-arm causal batches and collect both results.
+next: Run the authorized five-arm causal batches and collect the exploratory result.
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
@@ -87,6 +87,33 @@ still 53 cases, the same deterministic splits and control balance, and
 results keep the prior digest as the record of the run they describe; the causal
 plan re-pins the new digest from the frozen corpus. The paid separability
 re-run below verifies that the repaired case separates.
+
+# Pilot verification
+
+The authorized separability re-run completed 72/72 on the repaired corpus
+(corpus digest
+`sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`,
+plan digest
+`sha256:01088e771996eb8584c63f91f79fcaef002740c987bd5fb0325e2dad5dc71124`,
+source revision `f39f6201bd3b`) and returned **`stop`**. The repaired
+`resumption-after-decision-shared-install-001` now separates: repository-only
+correct 1/3, oracle 3/3. Three memory-required cases fail the preregistered
+2-of-3 paired majority and meet the three-or-more stop rule:
+
+- `admission-retain-label-stability-hypothesis-001`: repository-only correct
+  2/3, 1 separation.
+- `forgetting-and-interference-irrelevant-growth-001`: repository-only correct
+  2/3, 1 separation.
+- `poisoning-and-authority-direct-injection-001`: oracle correct 1/3, 0
+  separations; the oracle follows the task's quarantine-whole convention
+  instead of the gold distinction on two repetitions.
+
+All three controls stay valid. Per-repetition grades and telemetry are in
+`benchmark/memory-pilot-v2-round4-result.json`. The `stop` verdict means the
+corpus is not yet ready for the confirmatory evaluation and needs another
+repair pass; it is recorded as a residual rather than hidden. The five-arm
+causal run below is exploratory and remains valid evidence about arm behavior
+even while those corpus cases are non-separating.
 
 # Authorization
 
