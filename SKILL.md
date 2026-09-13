@@ -5,43 +5,14 @@ description: Manage engineering work in a local Markdown vault as atomic, wikili
 
 # Braintree
 
-Markdown is the durable, human-visible authority: keep the vault directly editable and Obsidian-compatible.
+Markdown is the durable, human-visible authority: keep the vault directly editable and Obsidian-compatible. The installed `braintree` command answers graph questions and runs optional same-host coordination, but it never replaces Markdown as truth: the sidecar is authoritative only for local operational coordination, and no worker reads or writes it directly. Read the topical reference named below before the first conditional workflow it covers; `braintree help TOPIC` prints the same installed Markdown.
 
-## Hybrid sidecar contract
-
-Use the installed `braintree` command for graph indexes and live coordination. Do not have workers read or write SQLite directly. The sidecar is an untracked external SQLite database keyed by the Git common directory and shared by all worktrees; `BT_SIDECAR_DIR`/`BT_PROJECT_ID` override it for tests.
-
-- Markdown stays authoritative; SQLite is authoritative only for local operational coordination.
-- `braintree index [nodes]` rebuilds derived node, edge, content-hash, backlink, stale-pin, and FTS data from Markdown; `braintree search`, `braintree backlinks`, and `braintree stale` reconcile first.
-- `braintree allocate PREFIX` atomically reserves an ID; `braintree claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or renews a lease, and `braintree release NODE AGENT --base-hash HASH` releases it. NODE is a bare ID (`TAS-085`) or a full node name, the filename stem (`TAS-085-hash-addressing-and-operand`); a path (`nodes/proposed/TAS-085-hash-addressing-and-operand.md`) is not accepted, and the error names the two accepted forms. `braintree hash` resolves either form, but `claim` and `release` never read Markdown: they treat NODE as the opaque claim key, so address one node with the same spelling in every command. The release hash must be the starting hash recorded by the claim: a hash or owner mismatch fails non-zero and names the cause. A lease lasts 900 seconds by default, `--lease-seconds N` chooses another duration, and a claim that repeats the same agent and base hash renews the lease to a fresh `N` seconds rather than failing or keeping the old expiry. `claim` and `release` report `lease_remaining_seconds` on every call, and `release` distinguishes a lapsed matching lease (`expired`) from a node that holds no claim at all (`no-op`).
-- `braintree hash NODE` prints `node` and `content_hash`: the SHA-256 hex digest of the node file's raw UTF-8 bytes, frontmatter included. The `content_hash` value is the operand: take that bare 64-character digest from `braintree hash` rather than reimplementing the algorithm, and pass it as `--base-hash` to `braintree claim` and `braintree release`; never pass the `node:`/`content_hash:` block or any other spelling.
-- A worker hashes and claims before editing, and the node's own frontier transition — the status move and the `# Context` edit that take the frontier — is part of the claimed edit, not a precondition: the recorded `content_hash` names the node content exactly as handed off, before that transition and before any other edit.
-- Run `braintree init` before coordinated work. Loss of the database may lose claims and indexes but never durable graph knowledge; recover with `braintree init` then `braintree index`.
-- The sidecar is for concurrent processes on one host and a local filesystem; it refuses a network-mounted location unless overridden. For multi-host coordination use a server database such as PostgreSQL; SQLite/WAL is not that service.
-- Keep status directories and Markdown pointers. A stationary-path/status-in-database migration is deferred.
-
-```sh
-hash=$(braintree hash TAS-085-hash-addressing-and-operand | sed -n 's/^content_hash: "\(.*\)"$/\1/p')
-braintree claim TAS-085-hash-addressing-and-operand worker --base-hash "$hash"
-braintree release TAS-085-hash-addressing-and-operand worker --base-hash "$hash"
-```
-
-## Vault contract
+## Vault shape
 
 - Root is the directory containing `nodes/index-map.md`.
-- Each node lives in exactly one status directory: `nodes/proposed/`, `nodes/active/`, `nodes/blocked/`, or `nodes/resolved/`. Those four names are fixed, but a status directory is created on demand: it exists only once a node has that status, and no empty directory is required.
-- Names are `<ID>-<short-slug>.md`; `TAS`/`THO`/`DEF`/`IDX`/`FBK` express type. Filename supplies ID/type, directory supplies status; do not duplicate them in frontmatter.
-- Store each relationship in one canonical direction: put `Parent` on the child, `Area` on the assigned node, `Depends on` on the consumer, `Superseded by` on the obsolete node, and `Indexes` on `index-map.md` or another deliberate route. Derive child, parent-of, and backlink views by search; do not store them as reciprocal edges.
-
-## Node admission
-
-Admit a node only when its conclusion or executable state is likely to change a future decision or action. Do not admit conversation transcripts, tool-call logs, routine narration or status, duplicate source material, or observations with no foreseeable decision or action value.
-
-Prefer updating the existing node when new information advances the same outcome, question, component, decision, or defect. Independent resumability is
-necessary but not sufficient for a distinct node: it must also retain durable execution-memory value, likely to change a later decision or action or materially reduce future resumption cost. Agent boundaries, exclusive write-set boundaries, failed checks, incidental or mechanical cleanup, routine verification, and handoffs alone never qualify; keep them in the current node's `next`, result, evidence, or handoff. A fresh worker may continue the same graph
-node; agents and nodes are not one-to-one.
-
-A mechanical change with no independently resumable outcome — a one-line build, formatting, lint, or install fix — is not a node: record it in the enclosing node's `next` or result, or, when it needs its own commit, name that node in a `Refs:` footer.
+- Each node lives in exactly one fixed status directory: `nodes/proposed/`, `nodes/active/`, `nodes/blocked/`, or `nodes/resolved/`. A status directory exists only once a node has that status; no empty directory is required.
+- Names are `<ID>-<short-slug>.md`; `TAS`/`THO`/`DEF`/`IDX`/`FBK` express type. Filename supplies ID/type, directory supplies status; never duplicate them in frontmatter.
+- Store each relationship in one canonical direction: `Parent` on the child, `Area` on the assigned node, `Depends on` on the consumer, `Superseded by` on the obsolete node, `Indexes` on `index-map.md`. Derive child, parent-of, indexed-by, and backlink views by search; never store reciprocal edges.
 
 Required frontmatter:
 
@@ -55,167 +26,63 @@ next: Add the failing boundary test.
 ---
 ```
 
-- Start `context_rev` at `1`; it is a consumer-context revision, not an edit counter: increment it only when a change could alter an assumption, decision, invariant, interface, or other context a pinned consumer must reread. Refresh `updated` to the current UTC ISO-8601 time on every mutation.
-- Do not increment `context_rev` for cosmetic edits, history additions, status moves, or priority/`next` changes.
-- `priority` is optional, task-only `P0`-`P3`. `next` is required for proposed/active tasks, holds the unblock action for blocked tasks, and is omitted from resolved tasks.
-- `disposition` is optional and sparse: `abandoned`, `deprecated`, or `superseded`. Put a replacement link in the body, not frontmatter.
+- Start `context_rev` at `1`; it is a consumer-context revision, not an edit counter: increment it only when a change could alter an assumption, decision, invariant, interface, or other context a pinned consumer must reread. Refresh `updated` to the current UTC ISO-8601 time on every mutation, and never bump `context_rev` for cosmetic edits, history, status moves, or `priority`/`next` changes.
+- `priority` is optional, task-only `P0`-`P3`. `next` is required for proposed/active tasks, holds a blocked task's unblock action, and is omitted from resolved tasks. `disposition` is optional and sparse: `abandoned`, `deprecated`, or `superseded`, with the replacement link in the body.
 
-## Index contract
+## Admission and the node boundary
 
-`nodes/index-map.md` holds intent and routing, not state: a short `# Focus` list, durable area entry pointers, and tested query recipes. Never copy node status, priority, revision, timestamp, or summary into it. A focus pointer is advisory; validate its target before acting.
+Admit a node only when its conclusion or executable state is likely to change a future decision or action. Never admit conversation transcripts, tool-call logs, routine narration or status, duplicate source material, or observations with no foreseeable decision or action value.
 
-## Parallel worktree contract
+Prefer updating the existing node when new information advances the same outcome, question, component, decision, or defect. Independent resumability is necessary but not sufficient: a distinct node must also retain durable execution-memory value that will likely change a later decision or action or materially reduce future resumption cost. Agent boundaries, exclusive write-set boundaries, failed checks, incidental or mechanical cleanup, routine verification, and handoffs alone never qualify. A mechanical change with no independently resumable outcome belongs in the enclosing node's `next` or result, or carries a `Refs:` footer naming that node. A fresh worker may continue the same graph node; agents and nodes are not one-to-one.
 
-`# Focus`, `priority`, and `active` status are advisory navigation, never a work claim. A coordinator assigns each worker a direct node path and an exclusive write set before work begins.
+One node owns one durable outcome or decision, not an estimated session, commit, agent assignment, or amount of code: one node may span sessions, and one session may advance several frontier nodes. Reassess a boundary when execution reveals new evidence, not through a mandatory per-node sizing pass: split when execution reveals another outcome that can be accepted, verified, consumed, blocked, or resumed independently and that retains durable execution-memory value; consolidate adjacent nodes when they share one outcome, completion evidence, and rollback boundary and neither retains independent future value, continuing the stronger owner and preserving or reconciling backlinks. Do neither merely because a session ended, an agent changed, several commits landed, or the work is larger or smaller than expected. The on-demand commands `braintree similar --file PATH`, `braintree digest NODE`, and, when the optional semantic capability is installed, `braintree clusters`, are advisory support only, used after boundary evidence appears; no checker or command claims semantic authority over scope, and `braintree check` validates graph structure only.
 
-- One agent writes a node and its status path at a time. Shared parents, `index-map.md`, definitions, and root hubs are coordinator-owned unless their writes are explicitly serialized.
-- A worker may author the minimal primitive or seam a gate or `Done when` criterion needs inside its declared write set, and records that authored piece in the node's `# Result`. A change that alters a landed seam another node owns, or the public schema contract, is escalated rather than authored. A coordinating task names any primitive or seam its slice must introduce, so the worker does not have to infer it.
-- A worktree is a snapshot, not global truth; workers do not assume unseen work or IDs are unclaimed.
-- The coordinator integrates child evidence, reconciles upstream change, and alone resolves a coordinating parent after all required child work is integrated.
-- Resolution authority is the coordinator's. After required children are integrated, the coordinator alone performs a coordinating parent's resolving edit: moving it to `resolved`, writing the outcome's evidence and limitations, and removing `next`. A worker slice prepares closeout evidence only — its result, limitations, and test and dependency evidence — and never moves the coordinating parent to `resolved`; a delegated closeout task stops at the handoff, leaving the resolving edit to the coordinator.
-- Independent slice verification rests on falsifiable evidence: a verifying actor that can execute the gates, or a coordinator-run gate transcript attached to the handoff. A read-only, no-execution reviewer sign-off alone does not falsify a recorded gate claim, so it can never be the sole sign-off; when only such a reviewer is available, the coordinator reruns the gates and attaches the transcript it verifies.
-- For parallel creation, use `braintree allocate PREFIX` to atomically reserve an ID; Coordinator preallocation or explicitly disjoint numeric ranges are valid offline alternatives. A local `find` checks for an existing collision only; it is never an ID reservation. Branch-local `owner` or claim metadata is insufficient because separate worktrees can make the same claim without seeing each other.
+## Status, next, and roll-up
 
-Before editing, a worker records the integration base and its assigned node path and write set, hashes its starting Markdown node with `braintree hash`, and claims it with `braintree claim`. `braintree hash` takes the node's bare ID or full node name, never the path the handoff supplies, and its `content_hash` field is the bare digest passed as `--base-hash`; `claim` and `release` treat NODE as the same opaque claim key. The base hash names the node content as handed off: the node's own frontier transition — the status move and `# Context` edit — belongs to the claimed edit, not to the handoff. A worktree slice is not a node boundary: a fresh worker may continue the assigned node. Keep the assigned node's content update and its status move coherent in one commit or handoff bundle. Before handoff, verify every changed, created, and moved path remains in that assigned write set, then release the matching claim. Report the base, touched paths, created paths, moved paths, dependency evidence, and test evidence to the coordinator.
+`proposed` is ready but not yet at the frontier; `active` is being worked; `blocked` needs input or state no node in this vault owns, such as a credential or an external approval; `resolved` is complete. Change status by moving the unchanged filename between those directories, so wikilinks keep the stable basename. A settled `DEF` or `DEC` is `resolved`; while its invariant or decision is still unsettled it stays `proposed`.
 
-Serial work uses the same discipline without branches: self-assign one node and write set, claim it, keep content and status coherent, run `braintree check nodes`, and do not leave a resolved status move uncommitted.
+`# Focus`, `priority`, and `active` are advisory navigation, never a work claim. A node's `next` is the one deliberate frontier route: the only accepted forms are a plain action sentence, `Do X.`, or a single `[[direct-child]]` link. Naming multiple children or a non-child fails the graph check. Resolve a coordinating task only when its own `Done when` criteria are met and every child is resolved or disposed; resolving children alone does not complete the parent.
 
-The coordinator integrates worker branches one at a time. Never blindly auto-merge an upstream change to the assigned node or divergent status paths: reject that handoff or perform manual semantic reconciliation before integration. After each integration, run `braintree check nodes`, use exact `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing dependency changed by that handoff, and reconcile stale consumers before their dependent execution. Resolve a coordinating parent only after its required child evidence has been integrated.
+`blocked` and `proposed` are not interchangeable. Use `blocked` only for input or state that no node in this vault owns, including prerequisite plan text with no owning node, with a short `# Blocked` section and a concrete `next` when one exists. Use `proposed` for work that is ready to start but not yet at the frontier, including a child gated on a sibling decision: that decision is in the graph and will resolve there. Once a node owns the plan text, the same gate is a sibling dependency and the node is `proposed`.
 
-## Reachability contract
+## Reachability and the frontier
 
-`index-map.md` routes to durable `IDX` root hubs via `Indexes`; a hub has no `Parent`/`Area` and does not list members. Every other node has exactly one primary, unpinned `Parent` or `Area` link that must reach a hub. To find the frontier, derive hub members and follow each coordinating node's `next`; the `next` route, not `# Focus` or `priority`, names the one deliberate frontier child. The direct-answer verbs (`braintree frontier`, `braintree next --rank`, and `braintree orient`) return frontier candidates instead: every unfinished node whose `next` is an action, which is a superset of the frontier. A user-requested plan pre-creates its children up front as `proposed`, so a sequenced sibling carries its own action `next` and is reported beside the deliberate child. Resolve the candidate list through the coordinator before executing: keep only the candidate its coordinating parent's `next` route names, because a candidate whose parent's `next` names a different node is not yet at the frontier. An unfinished node that cannot reach a hub or a deliberate `# Focus` pointer is an orphan and a graph-integrity failure. Derive hub membership with an exact `Parent`/`Area` backlink search; never copy it into a hub or the index.
+`index-map.md` routes to durable `IDX` root hubs via `Indexes`; a hub has no `Parent`/`Area` and does not list members. Every other node has exactly one primary, unpinned `Parent` or `Area` link that must reach a hub. An unfinished node that cannot reach a hub or a deliberate `# Focus` pointer is an orphan and a graph-integrity failure. Derive hub membership with an exact `Parent`/`Area` backlink search; never copy it into a hub or the index.
 
-## Decomposition and roll-up
+To find the frontier, derive hub members and follow each coordinating node's `next`; the `next` route, not `# Focus` or `priority`, names the one deliberate frontier child. The direct-answer verbs `braintree frontier`, `braintree next --rank`, and `braintree orient` return frontier candidates instead — every unfinished node whose `next` is an action, a superset of the frontier. A user-requested plan pre-creates its children as `proposed`, so a sequenced sibling carries its own action `next` and is reported beside the deliberate child. Resolve the candidate list through the coordinator before executing: keep only the candidate its coordinating parent's `next` route names, because a candidate whose parent's `next` names a different node is not yet at the frontier.
 
-Decompose just in time, only after the node-admission threshold, at a distinct independently resumable outcome, blocker, dependency, or verification boundary that also retains durable execution-memory value. A child states its outcome or decision, completion criterion, primary `Parent`/`Area` route, and executable `next`. Do not pre-create speculative trees. A user-requested plan is not speculative decomposition: create its children up front as `proposed` work and resolve or dispose each as reality arrives.
+## Dependency readiness
 
-One node owns one durable outcome or decision, not an estimated session, commit, agent assignment, or amount of code; one node may span sessions, and one session may advance several frontier nodes. Reassess a boundary when execution reveals new evidence rather than through a mandatory per-node sizing pass: split when execution reveals another outcome that can be accepted, verified, consumed, blocked, or resumed independently and that retains durable execution-memory value; consolidate adjacent nodes when they share one outcome, completion evidence, and rollback boundary and neither retains independent future value, continuing the stronger owner and preserving or reconciling backlinks. Do neither merely because a session ended, an agent changed, several commits landed, or the work is larger or smaller than expected. The on-demand commands `braintree similar --file PATH`, `braintree digest NODE`, and, when the optional semantic capability is installed, `braintree clusters`, are advisory support only, used after boundary evidence appears; no checker or command claims semantic authority over scope, and `braintree check` validates graph structure only.
+Confirm each pinned dependency is `resolved` before executing. Pin context-bearing dependencies only, in the form `Depends on [[DEF-auth-protocol]] at context_rev 7.` where the pin terminates its line; a dependency whose target is not yet `resolved` has no consumable context to pin, so record it as a gate instead — `Gated on [[DEF-auth-protocol]].` in `# Context` — leave the node `proposed`, and never pin the gate; replace the gate with the pinned `Depends on` edge once the target resolves. A pinned dependency whose target is `proposed`, `active`, or `blocked` is a checker failure that `--allow-stale` does not relax.
 
-A direct child is a node whose primary `Parent` or `Area` is the current node. A coordinating task states its outcome and `Done when` criteria; its `next` is either one concrete frontier action or one wikilinked direct child at the current frontier, never a child list. The only accepted `next` forms are a plain action sentence, `Do X.`, or a single `[[direct-child]]` link; naming multiple children or a non-child fails the graph check. Roll up from evidence, not child counts; resolve only when its criteria are met and every child is resolved or disposed, since resolving children alone does not complete the parent.
-
-`blocked` and `proposed` are not interchangeable. Use `blocked` only when the node needs input or state that no node in this vault owns, such as a credential or an external approval; use `proposed` for work that is ready to start but not yet at the frontier, including a child gated on a sibling decision. A proposed sibling is not blocked, because the decision it waits on is in the graph and will resolve there. A gate on prerequisite plan text that no node owns is `blocked`, like any other input the vault does not own: no node will resolve the gate, so state the prerequisite and the unblock condition in `# Blocked`. Once a node owns that plan text the gate is a sibling dependency and the node is `proposed`.
-
-## Dependency revisions and staleness
-
-Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at context_rev 7.` The pin must terminate its line; trailing text after `at context_rev N.` is invalid. Do not pin navigation links. A node is `Stale` when a dependency is missing, its current `context_rev` differs from the pin, or the link lacks a pin; do not add `stale` to status or frontmatter. A semantic change leaves dependents' pins unchanged so one exact backlink search finds the reconciliation work. Confirm each pinned dependency is `resolved` before executing; resolution does not change `context_rev`, so completion is detected from the status directory. A dependency whose target is not yet `resolved` has no consumable context to pin: record it as a gate instead of a context edge, `Gated on [[DEF-auth-protocol]].` in `# Context`, leaving the node `proposed` until it can execute, and never pin the gate. The exact search `rg -n -F 'Gated on [[DEF-auth-protocol]]' nodes` finds every gate on a target; replace the gate with the pinned `Depends on` edge once the target resolves. `braintree check` reports a pinned dependency whose target is `proposed`, `active`, or `blocked`, and `--allow-stale` does not relax that check because it only relaxes the revision equality. A pinned edge to a target that is not resolved and an unpinned context edge both name the gate form in their diagnostic.
-
-The bump commit shape: commit the semantic `context_rev` bump with the bumped node alone, leaving pinned consumers stale on purpose so the exact backlink search finds them. That commit runs the sanctioned staged-staleness gate `braintree check --allow-stale nodes`, which still rejects a missing or malformed pin and relaxes only the revision equality; plain `braintree check nodes` remains the normal gate everywhere else. Reconciliation is separate work owned by each consumer: reread the dependency, update assumptions, reset the pin to the current `context_rev`, and pass the plain gate before that consumer executes. `--allow-stale` is sanctioned only for a deliberate staged-staleness commit: never use it to silence a pin you can reconcile now, and never leave a consumer stale across its own execution.
-
-## Read and execute loop
-
-1. Read `nodes/index-map.md` when orienting or when no direct node pointer was supplied.
-2. With no pointer, run `braintree frontier` for the frontier candidates: it returns every unfinished node whose `next` is an action rather than a `[[child]]` route, so a coordinating node's `next` target appears instead of the coordinator. That answer is a candidate list, not the resolved frontier, because an up-front plan's sequenced siblings also carry an action `next`. Resolve it through the coordinator by keeping only the candidate the coordinating parent's `next` route names. Validate the candidate's status and header exactly as a `# Focus` target. `# Focus`, `priority`, and `active` are not the frontier.
-3. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`.
-4. For each context-bearing dependency, compare its header `context_rev` with the pin and confirm it is `resolved`; follow only mismatched, blocking, or required pointers.
-5. Groom a stale node before execution: reconcile assumptions, update pins, and refresh `updated`.
-6. Execute the smallest coherent unit and update summary, next, evidence, status, revision, and timestamp.
-
-When the frontier is a knowledge node (`THO`/`DEF`/`DEC`), answer the question and resolve it like any other frontier node, and in the same change advance the coordinating parent's `next` to the next deliberate frontier child. That advance is part of resolving the frontier, not bookkeeping on an unrelated node: refresh the parent's `updated`, and leave its `context_rev` unchanged because `next` is navigation, not consumer-relevant semantics.
-
-One orientation pass is enough. Never bulk-dump `nodes/`; filter and count in the shell, then open only the fragments needed. If a search returns nothing, report it rather than retrying with different flags.
-
-## Common queries
-
-```sh
-braintree frontier  # frontier
-braintree node ID  # one node
-braintree impact ID  # dependency impact
-braintree orient  # orientation packet
-braintree digest ID  # unresolved direct members of a hub or node
-braintree clusters  # advisory clusters, over-broad routes, and outliers
-find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'          # unfinished
-find nodes -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +  # actionable P0
-rg -n '^(Parent|Area) \[\[' nodes                                               # primary routes
-```
-
-`braintree digest ID` bounds the summaries and `next` of one hub's or
-coordinating node's unresolved direct members. `braintree clusters` returns
-advisory cluster groupings, over-broad routes, noise, and outliers, and only
-when the optional semantic capability is installed; without it, it prints one
-advisory line and exits zero. Neither answer is a claim, assignment, or
-authority.
-
-Prefer bounded results. Do not repeat a backlink search through returned dependents; `braintree impact ID` traverses the chain directly.
-
-## Integrity and sidecar commands
-
-`braintree check` is a portable read-only Markdown validator needing no sidecar; `braintree feedback scan` is a portable read-only collector for external feedback; the coordination verbs provide the optional hybrid index and same-host coordination:
-
-```sh
-braintree check nodes
-braintree feedback scan /path/to/other-vault
-braintree index nodes
-braintree search 'authentication' --limit 10
-```
-
-Run from the project root. The checker validates links, headers and lifecycle rules, canonical edges and frontiers, dependency-pin syntax and revision mismatch, primary-route reachability, and parent cycles. Link scanning ignores wikilink-shaped tokens inside inline code spans and fenced code blocks, so a node can quote the skill's own grammar in code without a false `broken link` finding.
+Load **dependencies** (`braintree help dependencies`) for staleness, the semantic-revision bump shape and its sanctioned staged-staleness gate, reconciliation ownership, and reversal versus supersession.
 
 ## Mutation rules
 
 - Use `find` (or `braintree allocate PREFIX` in parallel) to avoid ID collisions; a local `find` detects collisions only and never reserves an ID.
-- Refresh only the mutated node's `updated`; increment `context_rev` only for a consumer-relevant semantic change. Never update unrelated nodes or the index as bookkeeping.
-- Advancing a coordinating parent's `next` after its frontier child is resolved is part of that resolution rather than bookkeeping, so the resolving worker owns that edit; refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation.
-- Change status by moving the unchanged filename between status directories; wikilinks use the basename and stay stable.
+- Refresh only the mutated node's `updated`; increment `context_rev` only for a consumer-relevant semantic change. Never edit unrelated nodes or the index as bookkeeping.
 - Give each node one primary `Parent [[...]]` or `Area [[IDX-...]]` link; do not add a `Child`/`Parent of` copy to the parent.
-- `blocked` only for missing input or external state, including prerequisite plan text that no node owns, with a short `# Blocked` section and a concrete `next` when one exists.
 - `resolved` only when the outcome is complete; for a coordinating task verify `Done when`, evidence, and child dispositions first. Remove `next` and keep concise evidence.
-- Reversing a partly implemented outcome is an in-place update while the same node and scope still own it: rewrite the outcome in the same node, and bump `context_rev` because a pinned consumer must reread the changed direction.
-- Supersede only when the outcome moves to a different node: move to `resolved`, set `disposition: superseded`, record the replacement as `Superseded by [[...]]` in the body, and search remaining backlinks. Deprecation follows the same resolved-node shape with `disposition: deprecated` and a note on why the outcome is retired.
-- A reversal records the commit that named the reversed direction — short SHA and subject — in the node's body, with whether that commit's change was kept, reverted, or replaced. Record the reversal in the node and a new commit; never rewrite, amend, or force-push the earlier commit.
+- Advancing a coordinating parent's `next` after its frontier child resolves is part of that resolution, so the resolving worker owns that edit: refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation.
+- Resolving a frontier knowledge node (`THO`/`DEF`/`DEC`) is to answer the question and resolve it like any other frontier node; in the same change advance the coordinating parent's `next` to the next deliberate frontier child.
 - Graph bookkeeping never broadens authorization for code, external systems, or destructive actions.
 
-## Feedback nodes
+## Read and execute loop
 
-A consuming project records Braintree friction as an `FBK` node. The `FBK` type is the one feedback marker, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, with no sidecar, network, or write to the scanned vault.
+1. Read `nodes/index-map.md` when orienting or when no direct node pointer was supplied.
+2. With no pointer, run `braintree frontier` for frontier candidates and resolve the candidate list through the coordinator as above. `# Focus`, `priority`, and `active` are not the frontier.
+3. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`.
+4. For each context-bearing dependency, compare its header `context_rev` with the pin and confirm it is `resolved`; follow only mismatched, blocking, or required pointers.
+5. Execute the smallest coherent unit and update summary, `next`, evidence, status, `context_rev`, and `updated`.
 
-- Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route into its own vault, like any node.
-- Carry the installed Braintree revision as `braintree_revision:` frontmatter, for example `braintree_revision: 0.5.0+g1b58d57`; write `braintree_revision: unknown` when no revision can be determined.
-- Read the revision to record with `braintree --version`: an installed skill prints the installer's generated `installed-revision` stamp, `<version>+g<short-sha>`, or `<version>+unknown` when the source revision could not be determined. Treat the public `<version>` as the compatibility signal and the `+g<short-sha>` as provenance: decide compatibility from the version, and never resolve the source revision against the remote, which the offline record cannot support.
-- State the friction in one `# Feedback` section with an `Attempted:`, a `Friction:`, and an `Improvement:` line.
+One orientation pass is enough. Never bulk-dump `nodes/`; filter and count in the shell, then open only the fragments needed. If a search returns nothing, report it rather than retrying with different flags. Report graph lists in compact TOON with only the fields needed, state zero results explicitly, and name the resolved node, new status, and advanced frontier in a completion report.
 
-`braintree check` rejects an `FBK` node that omits or malforms `braintree_revision` or lacks the required `# Feedback` content.
+## References and command help
 
-Record feedback with the writing half of the mechanism. Run `braintree feedback record` from the consuming project's vault root and it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md` in one step. The id is reserved atomically by the same capture contract as `braintree node record`; see Capturing a node.
+Command syntax lives in per-verb help: run `braintree <verb> --help` for a verb's operands, output fields, exit meanings, and command-specific hazards. Conditional workflow prose lives in the installed references, readable as Markdown and printed by `braintree help TOPIC`. Load only the reference the current operation requires.
 
-```sh
-braintree feedback record \
-  --attempted '...' --friction '...' --improvement '...'
-```
+- **coordination** — `braintree help coordination` before claims, leases, parallel worktrees, handoff, integration, or multi-host work ([references/coordination.md](references/coordination.md)).
+- **dependencies** — `braintree help dependencies` before pinning, gating, bumping `context_rev`, staged-staleness commits, or reversal and supersession ([references/dependencies.md](references/dependencies.md)).
+- **authoring** — `braintree help authoring` before writing node bodies, feedback nodes, capture commands, or decomposition and roll-up detail ([references/authoring.md](references/authoring.md)).
 
-`--nodes` points at the vault's `nodes/` directory when it is not the current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from `index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the summary derived from the friction, and the derived slug. The command reads the installed `installed-revision` record and degrades explicitly to `<version>+unknown` when no record is present, so the node always names the Braintree version in use. The result is a valid, routed `FBK` node that `braintree check` accepts.
-
-To collect feedback from another vault, run the read-only `braintree feedback scan` command over one or more vault roots:
-
-```sh
-braintree feedback scan /path/to/vault
-```
-
-It reads only `FBK-*.md` frontmatter and prints compact TOON with each node's vault, id, status, Braintree revision, and summary; it prints `feedback: 0 nodes` when there is none. It works on a read-only checkout with no sidecar or network, and never writes to the scanned vault.
-
-Triage each scanned result into this graph: admit a node only when the friction is likely to change a future decision or action, cite the feedback id and revision in the admitted node, and otherwise dispose the result explicitly rather than dropping it silently.
-
-## Capturing a node
-
-`braintree node record` creates one routed, correctly-stamped node of a named type from a summary and body, the way `braintree feedback record` does for `FBK`:
-
-```sh
-braintree node record --type THO \
-  --summary 'Does a claim survive a worktree move?' \
-  --body 'Question: does a claim survive a move between worktrees?'
-```
-
-- `--type` is one of `THO`, `DEF`, `DEC`, or `TAS`. `FBK` friction is recorded with `braintree feedback record`, and a root `IDX` hub is declared in `index-map.md`, so neither is a capture target.
-- The command allocates the next id from Markdown, discovers the primary route to the vault's root hub from `index-map.md`, and stamps a positive `context_rev` and the current `updated`, so the result is a routed node the checker accepts.
-- It reserves that id atomically before writing the file, and both one-command capture paths share this one allocation contract. When the project's sidecar exists and the target `nodes/` directory is inside the project's own worktree, the reservation comes from the same atomic counter `braintree allocate PREFIX` uses, so parallel worktrees cannot choose the same number. Otherwise it reserves a vault-local marker under `nodes/.braintree/` with an exclusive create, which is collision-safe for callers sharing that vault but does not span worktrees; preallocate with `braintree allocate PREFIX` and pass `--id` when parallel creation crosses worktrees without an initialized sidecar.
-- `--status` names the status directory and defaults to `proposed`; the caller owns the body the type and status need, so a `blocked` body carries a `# Blocked` section with `Blocked by` and `Unblocks when`.
-- A `TAS` node in an unfinished status requires `--next` carrying its one action, and a `resolved` node must omit `--next`, matching the `next` rule the checker enforces.
-- `--route 'Area [[IDX-...]]'` overrides the discovered route, `--id` and `--slug` override the allocated id and the derived slug, `--summary` overrides the derived summary, and `--nodes` selects a `nodes/` directory other than the current one.
-
-The admission threshold is unchanged: the command creates the node the caller has already decided to admit, and it never admits a note with no foreseeable decision or action value on its own.
-
-## Node body and status output
-
-Use body headings only for additional information: `# Context` (with `Depends on [[...]] at context_rev N.`), `# Blocked` (`Blocked by`/`Unblocks when`), `# Outcome`, `# Done when`, `# Result`, `# Invariant` for definitions, and `# Feedback` for feedback nodes. A `DEC` node records a settled choice under `# Decision`/`# Rationale`/`# Consequences`. A settled `DEF` or `DEC` is `resolved`; while its invariant or decision is still unsettled it stays `proposed`, so resolving it is the act of settling it. A resolved `DEF` or `DEC` is current knowledge unless its sparse `disposition` says `deprecated` or `superseded`. Index nodes contain pointers, not copied content.
-
-Report graph lists in compact TOON, not JSON or narrative tables, with only the fields needed, e.g. `nodes{id,status,priority,context_rev}: TAS-101,active,P1,3 | DEF-auth,resolved,,7`. State zero results explicitly, and name the resolved node, new status, and advanced frontier in a completion report.
+`braintree --help` stays the short command and topic index.
