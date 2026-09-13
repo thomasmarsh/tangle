@@ -79,6 +79,7 @@ __all__ = [
     "prefix_maxima",
     "reconcile",
     "reindex",
+    "refresh",
     "resolve_node",
     "search",
     "search_filter",
@@ -173,9 +174,43 @@ def _now() -> str:
     return datetime.now(UTC).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _read_index_rows(root: str) -> tuple[list[tuple[object, ...]], list[tuple[object, ...]]]:
-    rows: list[tuple[object, ...]] = []
-    edge_rows: list[tuple[object, ...]] = []
+@dataclass(frozen=True)
+class _DerivedNode:
+    """One Markdown node in the shape the derived ``nodes`` table stores."""
+
+    id: str
+    path: str
+    type: str
+    status: str
+    summary: str
+    context_rev: int
+    content_hash: str
+    body: str
+
+    def row(self, indexed_at: str) -> tuple[object, ...]:
+        """Return the row for ``INSERT INTO nodes`` with its indexing stamp."""
+        return (
+            self.id,
+            self.path,
+            self.type,
+            self.status,
+            self.summary,
+            self.context_rev,
+            self.content_hash,
+            indexed_at,
+            self.body,
+        )
+
+
+# One derived edge as ``edges`` stores it: the pin empty rather than ``None`` so
+# a stored row and a freshly derived row compare equal.
+DerivedEdge = tuple[str, str, str, str]
+
+
+def _read_snapshot(root: str) -> tuple[list[_DerivedNode], list[DerivedEdge]]:
+    """Read the derived node and edge snapshot the Markdown under ``root`` defines."""
+    nodes: list[_DerivedNode] = []
+    edge_rows: list[tuple[str, str, str, int | None]] = []
     for path in sorted(glob.glob(os.path.join(root, "*", "*.md"))):
         status = os.path.basename(os.path.dirname(path))
         if status not in _STATUSES:
@@ -189,29 +224,42 @@ def _read_index_rows(root: str) -> tuple[list[tuple[object, ...]], list[tuple[ob
             raw = handle.read()
         text = raw.decode("utf-8")
         header, body = _frontmatter(text)
-        relative = os.path.relpath(path, root)
-        rows.append(
-            (
-                node_id,
-                relative,
-                node_id.split("-", 1)[0],
-                status,
-                header.get("summary", ""),
-                _context_rev(header),
-                content_hash(raw),
-                _now(),
-                body,
+        nodes.append(
+            _DerivedNode(
+                id=node_id,
+                path=os.path.relpath(path, root),
+                type=node_id.split("-", 1)[0],
+                status=status,
+                summary=header.get("summary", ""),
+                context_rev=_context_rev(header),
+                content_hash=content_hash(raw),
+                body=body,
             )
         )
         for relation, target, pin in _EDGE.findall(body):
             edge_rows.append((node_id, relation.strip(), target, int(pin) if pin else None))
-    names = {os.path.basename(str(row[1]))[:-3]: str(row[0]) for row in rows}
-    resolved: list[tuple[object, ...]] = [
-        (source, relation, names.get(str(target), target), pin)
-        for source, relation, target, pin in edge_rows
-    ]
-    deduped: list[tuple[object, ...]] = list(dict.fromkeys(resolved))
-    return rows, deduped
+    names = {os.path.basename(node.path)[:-3]: node.id for node in nodes}
+    edges: list[DerivedEdge] = list(
+        dict.fromkeys(
+            (
+                source,
+                relation,
+                names.get(target, target),
+                "" if pin is None else str(pin),
+            )
+            for source, relation, target, pin in edge_rows
+        )
+    )
+    return nodes, edges
+
+
+def _maxima(nodes: Sequence[_DerivedNode]) -> dict[str, int]:
+    """Return the highest numeric suffix each node-ID prefix reaches."""
+    maxima: dict[str, int] = {}
+    for node in nodes:
+        prefix, _, digits = node.id.rpartition("-")
+        maxima[prefix] = max(maxima.get(prefix, 0), int(digits))
+    return maxima
 
 
 def existing_allocations(root: str) -> dict[str, set[int]]:
@@ -277,11 +325,8 @@ def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
     if not os.path.isdir(root):
         raise SidecarError(f"nodes directory does not exist: {root}")
     ensure_index_schema(conn)
-    rows, edges = _read_index_rows(root)
-    maxima: dict[str, int] = {}
-    for row in rows:
-        prefix, _, digits = str(row[0]).rpartition("-")
-        maxima[prefix] = max(maxima.get(prefix, 0), int(digits))
+    nodes, edges = _read_snapshot(root)
+    stamp = _now()
     conn.execute("BEGIN IMMEDIATE")
     try:
         conn.execute("DELETE FROM edges")
@@ -289,14 +334,14 @@ def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
         conn.execute("DELETE FROM nodes")
         conn.executemany(
             "INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?)",
-            rows,
+            [node.row(stamp) for node in nodes],
         )
         conn.executemany(
             "INSERT INTO nodes_fts VALUES(?,?,?)",
-            [(str(row[0]), row[4], row[8]) for row in rows],
+            [(node.id, node.summary, node.body) for node in nodes],
         )
         conn.executemany("INSERT INTO edges VALUES(?,?,?,?)", edges)
-        _upsert_reservations(conn, maxima)
+        _upsert_reservations(conn, _maxima(nodes))
         conn.execute(
             "INSERT INTO graph_meta(key,value) VALUES('nodes_root',?) "
             "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -306,7 +351,102 @@ def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
     except BaseException:
         conn.execute("ROLLBACK")
         raise
-    return len(rows), len(edges), root
+    return len(nodes), len(edges), root
+
+
+def refresh(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
+    """Write only the derived rows the Markdown under ``root`` changed.
+
+    The upkeep path behind automatic maintenance. It reads the Markdown
+    snapshot, compares it with the rows already indexed, and writes only the
+    changed node rows, the added or removed edge rows, and the deletions. An
+    unchanged vault writes nothing and opens no write transaction, so an
+    interaction that changed no Markdown pays the snapshot read and no indexing
+    cost. Markdown is the only input, so repeated calls are idempotent and a
+    lost, partial, or foreign index is rebuilt from the same snapshot the whole
+    :func:`reindex` rebuilds it from.
+
+    The comparison runs outside the write transaction, so concurrent upkeep is
+    expected: every write is a conflict-tolerant upsert of the row the shared
+    Markdown defines, which makes a writer that compared a stale index converge
+    instead of failing on a duplicate identity.
+
+    Returns ``(nodes_written, edges_written, root)``.
+    """
+    root = os.path.abspath(root)
+    if not os.path.isdir(root):
+        raise SidecarError(f"nodes directory does not exist: {root}")
+    ensure_index_schema(conn)
+    nodes, edges = _read_snapshot(root)
+    desired = {node.id: node for node in nodes}
+    stored = {
+        str(node_id): (str(path), str(content_hash_value))
+        for node_id, path, content_hash_value in conn.execute(
+            "SELECT id, path, content_hash FROM nodes"
+        ).fetchall()
+    }
+    changed = {
+        node_id: node
+        for node_id, node in desired.items()
+        if stored.get(node_id) != (node.path, node.content_hash)
+    }
+    removed = sorted(set(stored) - set(desired))
+    stored_edges: set[DerivedEdge] = {
+        (str(source), str(relation), str(target), "" if pin is None else str(pin))
+        for source, relation, target, pin in conn.execute(
+            "SELECT source_id, relation, target_id, pinned_context_rev FROM edges"
+        ).fetchall()
+    }
+    desired_edges = set(edges)
+    if not changed and not removed and stored_edges == desired_edges:
+        return 0, 0, root
+    edge_deletions = sorted(stored_edges - desired_edges)
+    edge_insertions = sorted(desired_edges - stored_edges)
+    stamp = _now()
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        if removed:
+            placeholders = ",".join("?" for _ in removed)
+            conn.execute(f"DELETE FROM nodes_fts WHERE id IN ({placeholders})", removed)
+            conn.execute(f"DELETE FROM nodes WHERE id IN ({placeholders})", removed)
+        for node in changed.values():
+            conn.execute(
+                "INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(id) DO UPDATE SET path=excluded.path,"
+                "type=excluded.type,status=excluded.status,"
+                "summary=excluded.summary,context_rev=excluded.context_rev,"
+                "content_hash=excluded.content_hash,indexed_at=excluded.indexed_at,"
+                "body=excluded.body",
+                node.row(stamp),
+            )
+            conn.execute("DELETE FROM nodes_fts WHERE id=?", (node.id,))
+            conn.execute(
+                "INSERT INTO nodes_fts VALUES(?,?,?)",
+                (node.id, node.summary, node.body),
+            )
+        for source, relation, target, _pin in edge_deletions:
+            conn.execute(
+                "DELETE FROM edges WHERE source_id=? AND relation=? AND target_id=?",
+                (source, relation, target),
+            )
+        for source, relation, target, pin in edge_insertions:
+            conn.execute(
+                "INSERT INTO edges VALUES(?,?,?,?) "
+                "ON CONFLICT(source_id, relation, target_id) DO UPDATE SET "
+                "pinned_context_rev=excluded.pinned_context_rev",
+                (source, relation, target, None if pin == "" else int(pin)),
+            )
+        _upsert_reservations(conn, _maxima(nodes))
+        conn.execute(
+            "INSERT INTO graph_meta(key,value) VALUES('nodes_root',?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (root,),
+        )
+        conn.execute("COMMIT")
+    except BaseException:
+        conn.execute("ROLLBACK")
+        raise
+    return len(changed), len(edge_insertions), root
 
 
 def search(

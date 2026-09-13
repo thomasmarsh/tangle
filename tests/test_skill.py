@@ -10,8 +10,10 @@ each topic loads as its installed Markdown, every public verb answers
 
 from __future__ import annotations
 
+import io
 import re
 import subprocess
+from contextlib import redirect_stdout
 from pathlib import Path
 
 import pytest
@@ -675,8 +677,8 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "The window between the child's resolution and the parent's advance is the "
         "multi-writer transient",
         "The sanction never clears the advance",
-        "have workers read or write SQLite directly",
-        "it refuses a network-mounted location unless overridden",
+        "A client never reads or writes the local coordination state directly",
+        "The derived index maintains itself on every interaction",
     ),
     "dependencies": (
         "The pin must terminate its line",
@@ -794,6 +796,81 @@ def _frontmatter(text: str) -> str:
     match = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
     assert match is not None
     return match.group(1)
+
+
+# The local coordination state is a private implementation detail: a client
+# never touches it directly, and the derived index maintains itself rather than
+# being a step a client runs. `braintree index` survives only as the explicit
+# repair or rebuild the reference and the verb help both say it is.
+_LOCAL_STATE_PRIVACY_RULE = (
+    "A client never reads or writes the local coordination state directly and "
+    "never maintains a derived index by hand",
+    "The local state holds only derived answers",
+    "losing it loses no durable graph knowledge",
+    "`braintree index [.braintree]` exists only to repair or rebuild it from "
+    "Markdown",
+)
+
+# The same rule must survive in the always-loaded core, not only the reference,
+# because a client reads the mutation rules before any coordination reference.
+_INDEX_UPKEEP_CORE_RULE = (
+    "The derived index maintains itself on every interaction",
+    "so no client keeps it current by hand",
+    "`braintree index` exists only to repair or rebuild it from Markdown",
+)
+
+# The forbidden tokens name the retired client-facing concepts: the database
+# engine, the internal component, its test-only environment overrides, the
+# network-filesystem exception, and the manual upkeep step. The guard matches
+# whole tokens against the named installed surfaces, and the falsification probe
+# carries two of the tokens so the guard fails when it stops detecting them
+# rather than when the prose merely reflows.
+_PRIVATE_STATE_ABSENT = (
+    "SQLite",
+    "sqlite",
+    "sidecar",
+    "Sidecar",
+    "BT_SIDECAR_DIR",
+    "BT_PROJECT_ID",
+    "network-mounted",
+    "braintree init",
+    "PostgreSQL",
+)
+_PRIVATE_STATE_PROBE = (
+    "Do not have workers read or write SQLite directly. The sidecar is an "
+    "untracked external database; run `braintree init` before coordinated work."
+)
+
+# Falsification probe for the private-state guard: a surface that still names
+# the database engine, the internal component, or the manual init step must be
+# rejected, so this guard is not vacuously true.
+
+
+def test_local_state_is_not_a_client_concept() -> None:
+    """No installed surface names the database engine or the internal component."""
+    for path in (_SKILL, *sorted(_REFERENCES.glob("*.md"))):
+        _assert_absent(_read(path), _PRIVATE_STATE_ABSENT)
+
+
+def test_private_state_guard_rejects_a_surface_that_names_it() -> None:
+    """Falsification probe: the guard must reject prose naming the local state."""
+    with pytest.raises(AssertionError):
+        _assert_absent(_PRIVATE_STATE_PROBE, _PRIVATE_STATE_ABSENT)
+
+
+def test_the_index_maintains_itself_and_index_is_repair_only() -> None:
+    _assert_contains(_read(_SKILL), _INDEX_UPKEEP_CORE_RULE)
+    _assert_contains(_reference("coordination"), _LOCAL_STATE_PRIVACY_RULE)
+
+
+def test_index_verb_help_says_repair_or_rebuild() -> None:
+    """The `index` verb help states it is the explicit repair or rebuild."""
+    captured = io.StringIO()
+    with redirect_stdout(captured):
+        assert main.main(["index", "--help"]) == 0
+    out = captured.getvalue()
+    assert "Repair or rebuild the derived index from Markdown." in out
+    assert "maintains itself on every interaction" in out
 
 
 def test_skill_core_frontmatter_and_authority() -> None:

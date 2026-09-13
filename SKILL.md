@@ -5,7 +5,7 @@ description: Manage engineering work in a local Markdown vault as atomic, wikili
 
 # Braintree
 
-Markdown is the durable, human-visible authority: keep the vault directly editable and Obsidian-compatible. The installed `braintree` command answers graph questions and runs optional same-host coordination, but it never replaces Markdown as truth: the sidecar is authoritative only for local operational coordination, and no worker reads or writes it directly. Read the topical reference named below before the first conditional workflow it covers; `braintree help TOPIC` prints the same installed Markdown.
+Markdown is the durable, human-visible authority: keep the vault directly editable and Obsidian-compatible. The installed `braintree` command answers graph questions, maintains its own derived index, and runs optional same-host coordination, but it never replaces Markdown as truth: local coordination state is derived and disposable, and no client reads or writes it directly. Read the topical reference named below before the first conditional workflow it covers; `braintree help TOPIC` prints the same installed Markdown.
 
 ## Vault shape
 
@@ -69,6 +69,7 @@ Load **dependencies** (`braintree help dependencies`) for staleness, the semanti
 - Advancing a coordinating parent's `next` after its frontier child resolves is part of that resolution, so the resolving worker owns that edit: refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation. A handoff whose write set names the parent — or its `next` line — folds that advance into the child's resolution commit, so no committed state leaves the parent routing to a resolved child. A handoff whose write set excludes the parent cannot make that edit: the child's resolution commit completes the worker's slice and the pending advance is its handoff action — name the parent and the resolved child, do not edit outside the set, and check with `braintree check --allow-pending-advance PARENT`, which sanctions that declared pending advance. That window is the multi-writer transient, not a failed slice; a genuine stale route — an unfinished node's `next` naming a resolved node, which the plain `braintree check` flags as `next-resolved-node` — keeps failing and the coordinator clears it at integration.
 - Resolving a frontier knowledge node (`THO`/`DEF`/`DEC`) is to answer the question and resolve it like any other frontier node; in the same change advance the coordinating parent's `next` to the next deliberate frontier child.
 - Graph bookkeeping never broadens authorization for code, external systems, or destructive actions.
+- The derived index maintains itself on every interaction, so no client keeps it current by hand; `braintree index` exists only to repair or rebuild it from Markdown.
 
 ## Read and execute loop
 

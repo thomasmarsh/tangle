@@ -112,14 +112,15 @@ braintree node record --type THO \
   the vault's root hub from `index-map.md`, and stamps a positive `context_rev`
   and the current `updated`, so the result is a routed node the checker accepts.
 - It reserves that id atomically before writing the file, and both one-command
-  capture paths share this one allocation contract. When the project's sidecar
-  exists and the target `.braintree/` directory is inside the project's own worktree,
-  the reservation comes from the same atomic counter `braintree allocate PREFIX`
-  uses, so parallel worktrees cannot choose the same number. Otherwise it
-  reserves a vault-local marker under `.braintree/reservations/` with an exclusive
-  create, which is collision-safe for callers sharing that vault but does not
-  span worktrees; preallocate with `braintree allocate PREFIX` and pass `--id`
-  when parallel creation crosses worktrees without an initialized sidecar.
+  capture paths share this one allocation contract. When the project's local
+  coordination state exists and the target `.braintree/` directory is inside the
+  project's own worktree, the reservation comes from the same atomic counter
+  `braintree allocate PREFIX` uses, so parallel worktrees cannot choose the same
+  number. Otherwise it reserves a vault-local marker under
+  `.braintree/reservations/` with an exclusive create, which is collision-safe for
+  callers sharing that vault but does not span worktrees; preallocate with
+  `braintree allocate PREFIX` and pass `--id` when parallel creation crosses
+  worktrees before that state exists.
 - `--status` names the status directory and defaults to `proposed`; the caller
   owns the body the type and status need, so a `blocked` body carries a
   `# Blocked` section with `Blocked by` and `Unblocks when`.
@@ -143,7 +144,7 @@ or action value on its own.
 
 A consuming project records Braintree friction as an `FBK` node. The `FBK` type
 is the one feedback marker, so `find .braintree -name 'FBK-*.md'` discovers feedback
-from Markdown alone, with no sidecar, network, or write to the scanned vault.
+from Markdown alone, with no network access and no write to the scanned vault.
 
 One session records one session `FBK` node, and the coordinator owns it: a worker
 that hits friction reports it in its run report — the attempted action, the
@@ -206,7 +207,7 @@ braintree feedback scan /path/to/vault
 It reads only `FBK-*.md` frontmatter and prints compact TOON with each node's
 vault, id, status, Braintree revision, and summary; it prints
 `feedback: 0 nodes` when there is none. It works on a read-only checkout with no
-sidecar or network, and never writes to the scanned vault.
+local state and no network, and never writes to the scanned vault.
 
 Triage each scanned result into this graph: admit a node only when the friction
 is likely to change a future decision or action, cite the feedback id and

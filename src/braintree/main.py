@@ -10,6 +10,7 @@ behind this command.
 from __future__ import annotations
 
 import os
+import sqlite3
 import sys
 from collections.abc import Callable, Sequence
 
@@ -21,6 +22,7 @@ from . import (
     feedback_scan,
     graph_check,
     help,
+    index,
     memory_authority,
     memory_causal,
     memory_corpus,
@@ -30,6 +32,7 @@ from . import (
     provider,
     quality_benchmark,
     reservations,
+    sidecar,
     staged_benchmark,
     storage_comparison,
     token_benchmark,
@@ -61,7 +64,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
         "release NODE AGENT --base-hash HASH",
         "release the matching lease or report it expired",
     ),
-    ("index [NODES]", "rebuild the derived index from Markdown"),
+    ("index [NODES]", "repair or rebuild the derived index from Markdown"),
     (
         "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
         "[--parent REF] [--dependency REF]",
@@ -139,6 +142,12 @@ _COORDINATION_COMMANDS = frozenset(
 # check`.
 _DIRECT_ANSWER_COMMANDS = frozenset({"frontier", "next", "orient", "status"})
 
+# The interactions that must not trigger derived-index upkeep: ``init`` creates
+# the local coordination state, ``index`` is its explicit repair or rebuild,
+# ``migrate`` changes the vault path the upkeep would read, and ``check``
+# validates without writing any state at all.
+_INDEX_UPKEEP_EXCLUDED = frozenset({"init", "index", "migrate", "check"})
+
 
 def _warn_orphans() -> None:
     """Warn on stderr about each orphaned unfinished node, without failing.
@@ -183,6 +192,52 @@ _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "diagnostics": memory_diagnostics.main,
     "authority": memory_authority.main,
 }
+
+
+def _maintain_index(command: str) -> None:
+    """Bring the derived index up to date after one interaction.
+
+    Trigger: every dispatched interaction except :data:`_INDEX_UPKEEP_EXCLUDED`,
+    and only when the project's local coordination state already exists. Scope:
+    the derived node, edge, and full-text rows for the resolved vault, rebuilt
+    from Markdown alone, so repeated calls are idempotent and an unchanged vault
+    writes nothing. Failure: the interaction's answer and exit code never
+    change. An unresolvable state location, an absent state file, and a
+    concurrent writer's lock are silent no-ops, so a read-only interaction
+    creates no local state and a benign race raises no noise; any other failure
+    is one warning on stderr, the same channel the orphan pre-check uses.
+    """
+    if command in _INDEX_UPKEEP_EXCLUDED:
+        return
+    try:
+        database = sidecar.database_path()
+    except sidecar.SidecarError:
+        return
+    if not database.is_file():
+        return
+    nodes_dir = vault.resolve(migrate_legacy=False)
+    if not os.path.isdir(nodes_dir):
+        return
+    try:
+        connection = sidecar.open_connection()
+        try:
+            index.refresh(connection, nodes_dir)
+        finally:
+            connection.close()
+    except sqlite3.OperationalError as exc:
+        # A lock is a benign race with another writer, not a failure to report.
+        if "locked" in str(exc) or "busy" in str(exc):
+            return
+        _warn_index_upkeep(str(exc))
+    except Exception as exc:  # upkeep must never fail a client interaction
+        _warn_index_upkeep(str(exc))
+
+
+def _warn_index_upkeep(detail: str) -> None:
+    print(
+        f"warning: unable to maintain the derived index: {detail}",
+        file=sys.stderr,
+    )
 
 
 def _print_usage() -> None:
@@ -274,6 +329,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     # every public verb gets bounded help with no vault and no sidecar.
     if help.wants_help(args):
         return help.render_verb(help.verb_key(args))
+    # Upkeep runs after the body, so a mutating interaction's own change is
+    # already in Markdown when the index is brought up to date.
+    code = _dispatch(command, args)
+    _maintain_index(command)
+    return code
+
+
+def _dispatch(command: str, args: list[str]) -> int:
+    """Run one command body and return its exit code."""
     if command in _DIRECT_ANSWER_COMMANDS:
         _warn_orphans()
     if command == "check":

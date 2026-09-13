@@ -5,27 +5,25 @@ worktrees, integration, and reconciliation. It is the canonical Markdown source
 that `braintree help coordination` prints, and it is installed beside
 `SKILL.md` at the same revision as the `braintree` command.
 
-## Hybrid sidecar contract
+## Local coordination contract
 
-Use the installed `braintree` command for graph indexes and live coordination.
-Do not have workers read or write SQLite directly. The sidecar is an untracked
-external database keyed by the Git common directory and shared by all worktrees;
-`BT_SIDECAR_DIR`/`BT_PROJECT_ID` override it for tests.
+Use the installed `braintree` command for every derived answer and for live
+coordination. A client never reads or writes the local coordination state
+directly and never maintains a derived index by hand. That state is an untracked
+per-project store shared by every worktree of one repository, so all of them see
+one set of claims, leases, and reserved ids.
 
-- Markdown stays authoritative; SQLite is authoritative only for local
-  operational coordination.
-- `braintree index [.braintree]` rebuilds derived node, edge, content-hash, backlink,
-  stale-pin, and full-text data from Markdown; `braintree search`,
-  `braintree backlinks`, and `braintree stale` reconcile first.
-- Run `braintree init` before coordinated work. Loss of the database may lose
-  claims and indexes but never durable graph knowledge; recover with
-  `braintree init` then `braintree index`.
-- The sidecar is for concurrent processes on one host and a local filesystem; it
-  refuses a network-mounted location unless overridden. For multi-host
-  coordination use a server database such as PostgreSQL; SQLite/WAL is not that
-  service.
-- Keep status directories and Markdown pointers. A stationary-path/status-in-
-  database migration is deferred.
+- Markdown stays authoritative. The local state holds only derived answers
+  (search, backlinks, stale pins) and live coordination (claims, leases, reserved
+  ids); losing it loses no durable graph knowledge.
+- The derived index maintains itself on every interaction, so no client step
+  keeps it current. `braintree index [.braintree]` exists only to repair or
+  rebuild it from Markdown, for example after that state is lost.
+- The local state serves concurrent processes on one host and a local
+  filesystem. It is not shared between hosts; coordinate across hosts through the
+  Markdown vault, which is the shared authority.
+- Keep status directories and Markdown pointers: a move of either into the local
+  state is deferred.
 
 ## Hash, claim, and lease
 
@@ -134,7 +132,7 @@ write set before work begins.
   `braintree reservations` lists each prefix's burned ids — reserved with no
   node on disk — so a gap in the vault is a discarded allocation, not a missing
   node. There is no release or reclaim: a reused id could collide with a node an
-  in-flight worktree already wrote under it, and the sidecar cannot distinguish
+  in-flight worktree already wrote under it, and the local state cannot distinguish
   a discarded allocation from a pending one.
 
 ## Worker handoff

@@ -111,13 +111,13 @@ VERBS: dict[str, Verb] = {
         usage="braintree status",
         outputs=(
             ("project_id", "stable identity shared by every worktree"),
-            ("sidecar", "absolute path of the local state database"),
-            ("initialized", "whether that database exists"),
+            ("sidecar", "absolute path of the local coordination state"),
+            ("initialized", "whether that state exists"),
             ("active_claims", "leases currently recorded"),
             ("reservations", "prefix,next rows for allocated ids"),
         ),
         hazards=(
-            "Reports state only; it never writes or repairs the database.",
+            "Reports state only; it never writes or repairs the local state.",
             _ORPHAN_WARNING_HAZARD,
         ),
         topic=_COORDINATION_TOPIC,
@@ -127,7 +127,7 @@ VERBS: dict[str, Verb] = {
         usage="braintree location",
         outputs=(
             ("project_id", "identity derived from the Git common directory"),
-            ("sidecar", "absolute path a status or init would use"),
+            ("sidecar", "absolute path of the local coordination state"),
         ),
         topic=_COORDINATION_TOPIC,
     ),
@@ -140,10 +140,10 @@ VERBS: dict[str, Verb] = {
         outputs=(
             ("result", "always initialized"),
             ("project_id", "stable identity"),
-            ("sidecar", "database path created or repaired"),
+            ("sidecar", "local state path created or repaired"),
         ),
         hazards=(
-            "Rebuilds only derived state; never repair the database by hand.",
+            "Rebuilds only derived state; never repair the local state by hand.",
         ),
         topic=_COORDINATION_TOPIC,
     ),
@@ -159,7 +159,7 @@ VERBS: dict[str, Verb] = {
         ),
         hazards=(
             "Runs only when nodes/index-map.md exists and .braintree/ does not.",
-            "Idempotent in-place rename; it never rewrites Markdown or the sidecar.",
+            "Idempotent in-place rename; it never rewrites Markdown or the local state.",
         ),
         topic=_AUTHORING_TOPIC,
     ),
@@ -185,7 +185,7 @@ VERBS: dict[str, Verb] = {
             ("reservations", "prefix,next,burned rows for allocated ids"),
         ),
         hazards=(
-            "Read-only; it writes no state and needs no initialized sidecar.",
+            "Read-only; it writes no state and needs no local state.",
             "A burned id was allocated and discarded, so it is not a missing node.",
         ),
         topic=_COORDINATION_TOPIC,
@@ -232,15 +232,19 @@ VERBS: dict[str, Verb] = {
         topic=_COORDINATION_TOPIC,
     ),
     "index": _verb(
-        "Rebuild the derived index from Markdown.",
+        "Repair or rebuild the derived index from Markdown.",
         usage="braintree index [NODES]",
         operands=(("NODES", "vault directory; defaults to ./.braintree"),),
         outputs=(
-            ("nodes", "node rows reindexed"),
-            ("edges", "graph edges reindexed"),
+            ("nodes", "node rows indexed"),
+            ("edges", "graph edges indexed"),
             ("root", "absolute nodes directory indexed"),
         ),
-        hazards=("Derived state only; Markdown remains authoritative.",),
+        hazards=(
+            "The index maintains itself on every interaction; run this only to "
+            "repair or rebuild it.",
+            "Derived state only; Markdown remains authoritative.",
+        ),
         topic=_COORDINATION_TOPIC,
     ),
     "search": _verb(
@@ -260,7 +264,7 @@ VERBS: dict[str, Verb] = {
         outputs=(
             ("nodes", "id,status,summary rows, or an explicit zero line"),
         ),
-        hazards=("Reconciles the index first; filters read Markdown, not raw SQL.",),
+        hazards=("Updates the derived index first; filters read Markdown.",),
         topic=_COORDINATION_TOPIC,
     ),
     "similar": _verb(
@@ -524,7 +528,7 @@ VERBS: dict[str, Verb] = {
             ("feedback", "vault,id,status,revision,summary rows"),
             ("feedback", "an explicit `feedback: 0 nodes` when empty"),
         ),
-        hazards=("Read-only; never writes to the scanned vault and needs no sidecar.",),
+        hazards=("Read-only; never writes to the scanned vault and needs no local state.",),
         topic=_AUTHORING_TOPIC,
     ),
     "feedback record": _verb(
@@ -569,7 +573,7 @@ VERBS: dict[str, Verb] = {
             ("topics", "topic,purpose rows when no topic is given"),
             ("Markdown", "the canonical reference text for one topic"),
         ),
-        hazards=("Read-only; works with no vault and never initializes the sidecar.",),
+        hazards=("Read-only; works with no vault and never creates local state.",),
     ),
 }
 
