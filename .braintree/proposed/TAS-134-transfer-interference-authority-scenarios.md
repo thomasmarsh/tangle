@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T14:03:33Z
+updated: 2026-09-13T15:23:50Z
 summary: Curate transfer, interference, forgetting, and memory-authority cases.
 next: Curate and justify 10–15 transfer, scale, and authority cases.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-121-evaluation-foundation]].
 
 # Context
 
-Gated on [[TAS-130-scenario-schema-grader]].
+Depends on [[TAS-130-scenario-schema-grader]] at context_rev 1.
 
 # Outcome
 
