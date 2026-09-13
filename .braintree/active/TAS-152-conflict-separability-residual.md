@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T19:30:46Z
+updated: 2026-09-13T19:34:00Z
 summary: Repair the round-five non-separating conflict case so the corpus separates.
 next: Execute the three pilot batches and the nine causal batches, then collect and record both results.
 ---
@@ -47,24 +47,30 @@ re-run; the exact corpus digest, plan digest, and source revision are generated
 at the run revision and recorded here before execution, with no further
 authorization request.
 
-The conflict case was repaired at revision `cdcbde6bb90c`, which re-froze the
-corpus at digest
-`sha256:e7754707c24e04e50460fda994b660ccc51d1cbcafb288405311f5dfea8a63de`.
-The separability re-run pins: protocol `memory-pilot-v2`; corpus digest
-`sha256:e7754707c24e04e50460fda994b660ccc51d1cbcafb288405311f5dfea8a63de`;
-fixture `memory-pilot-v2-fixture-1`; source revision `cdcbde6bb90c`; model
+The conflict case was repaired at revision `cdcbde6bb90c` and the temporal
+case at `20c88e7ba1ed`, which re-froze the corpus at digest
+`sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5`.
+An initial conflict-only pilot (corpus
+`sha256:e7754707c24e04e50460fda994b660ccc51d1cbcafb288405311f5dfea8a63de`,
+plan digest
+`sha256:c955e3fd0161c5f2d6dee95e9d67c0f072115cd0936e4d146ff795777726c6b6`)
+separated the conflict case 3/3 but flipped the temporal case, so the temporal
+repair followed. The final separability re-run pins: protocol `memory-pilot-v2`;
+corpus digest
+`sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5`;
+fixture `memory-pilot-v2-fixture-1`; source revision `20c88e7ba1ed`; model
 `deepseek/deepseek-v4-flash` (`deepseek-v4-flash`) at `high`; prompt
 `memory-pilot-v2-prompt-1`; tools `no-tools`; budget one isolated turn, no
 retries; grader `memory-scenario-v1`; plan digest
-`sha256:c955e3fd0161c5f2d6dee95e9d67c0f072115cd0936e4d146ff795777726c6b6`;
+`sha256:0458a693e0477e86744f0bd9f819a2796b5db2b965b05e8405c6851bd34f10df`;
 72 samples (12 cases x 2 arms x 3 repetitions) in three 24-child batches.
 
 Because the repair changes the five-arm runner's fixture, the same standing
 authorization also covers the replacement causal run that [[TAS-122-causal-baseline-experiment]]
 owns and [[TAS-123-pipeline-diagnostics]] derives from: protocol
 `memory-causal-v1`; corpus digest
-`sha256:e7754707c24e04e50460fda994b660ccc51d1cbcafb288405311f5dfea8a63de`;
-source revision `cdcbde6bb90c`; plan digest
-`sha256:15d116445bc018cb0d5220748bd4d2922e9cdaeb2acc93c94706f53fd3e04710`;
+`sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5`;
+source revision `20c88e7ba1ed`; plan digest
+`sha256:636c25705154e95bdd976b24233c0ae88927096091d3ec91e8b8c05603e3aac2`;
 540 samples (12 cases x 5 arms x 3 models x 3 repetitions) in nine 60-child
 batches, three models at `high`.
