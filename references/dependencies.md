@@ -17,8 +17,12 @@ change leaves dependents' pins unchanged so one exact backlink search finds the
 reconciliation work.
 
 Confirm each pinned dependency is `resolved` before executing; resolution does
-not change `context_rev`, so completion is detected from the status directory. A
-dependency whose target is not yet `resolved` has no consumable context to pin:
+not change `context_rev`, so completion is detected from the status directory.
+Clearing a blocker is the same status move with a `next` change, so it never
+bumps `context_rev` either: a consumer reads readiness from the status
+directory, and its gate clears when the target resolves, not when the node
+returns to `proposed`. A dependency whose target is not yet `resolved` has no
+consumable context to pin:
 record it as a gate instead of a context edge, `Gated on
 [[DEF-auth-protocol]].` in `# Context`, leaving the node `proposed` until it can
 execute, and never pin the gate. Find every gate on a target with the

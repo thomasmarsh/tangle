@@ -423,6 +423,61 @@ _STATUS_MOVE_STAGING_RULE = (
     "make the move the last step before committing that node",
 )
 
+# A frontier node whose `# Done when` cannot be met in one session is advanced by
+# the smallest coherent slice rather than held back or overrun: the completed
+# slice, the remaining scope, and its evidence go in the body, `next` names the
+# first remaining action, and the node stays `proposed` or `active`. Clearing a
+# blocker returns the node to `proposed`, never to `resolved`, and a slice is a
+# unit of execution rather than a split trigger or a sizing ritual.
+_SESSION_SLICE_RULE = (
+    "A frontier node whose `# Done when` cannot be met in one session is "
+    "advanced by the smallest coherent slice",
+    "record the completed slice, the remaining scope, and its evidence in the "
+    "body",
+    "set `next` to the first remaining action",
+    "leave the node `proposed` or `active`",
+    "Unblocking is not completing",
+    "never to `resolved`",
+    "A slice is a unit of execution, not a split trigger or a sizing ritual",
+)
+
+# Falsification probe for the slice rule: the durable-outcome boundary already
+# says one node may span sessions and one session may advance several frontier
+# nodes, but it states no slice for a `# Done when` that outlives one session,
+# so the guard must reject it. The probe fails when the guard stops detecting
+# the rule rather than when the boundary merely reflows.
+_SESSION_SLICE_PROBE_SESSION_SPAN_ONLY = (
+    "One node owns one durable outcome or decision, not an estimated session, "
+    "commit, agent assignment, or amount of code: one node may span sessions, "
+    "and one session may advance several frontier nodes."
+)
+
+# Clearing a blocker is a status move plus a `next` change, so it never bumps
+# `context_rev`; a consumer reads readiness from the status directory, and a
+# gated consumer's gate clears when the target resolves, not when the node
+# unblocks. A semantic change made in the same edit still bumps the revision.
+_BLOCKER_CLEARANCE_REVISION_RULE = (
+    "Clearing a blocker is exactly that status move with a `next` change, so it "
+    "never bumps `context_rev`",
+    "a consumer detects readiness from the status directory",
+    "a semantic change made in the same edit still bumps it",
+    "Clearing a blocker is the same status move with a `next` change",
+    "its gate clears when the target resolves, not when the node returns to "
+    "`proposed`",
+)
+
+# Falsification probe for the blocker rule: the pre-change core stated that a
+# status move never bumps `context_rev` and the reference stated that resolution
+# does not, but neither answered a `blocked`->`proposed` move, so the guard must
+# reject them. The probe fails when the guard stops detecting the rule rather
+# than when those sentences merely reflow.
+_BLOCKER_CLEARANCE_PROBE_STATUS_MOVE_ONLY = (
+    "never bump `context_rev` for cosmetic edits, history, status moves, or "
+    "`priority`/`next` changes. Confirm each pinned dependency is `resolved` "
+    "before executing; resolution does not change `context_rev`, so completion "
+    "is detected from the status directory."
+)
+
 # The durable-outcome boundary rule the admission decision added; it must not
 # regress out of the always-loaded core.
 _DURABLE_OUTCOME_BOUNDARY = (
@@ -874,6 +929,32 @@ def test_pending_advance_guard_rejects_the_pre_change_stale_route_paragraph() ->
 
 def test_status_move_is_staged_with_its_body_edit() -> None:
     _assert_contains(_read(_SKILL), _STATUS_MOVE_STAGING_RULE)
+
+
+def test_session_slice_rule_is_stated() -> None:
+    _assert_contains(_read(_SKILL), _SESSION_SLICE_RULE)
+
+
+def test_session_slice_guard_rejects_the_session_span_boundary_alone() -> None:
+    """Falsification probe: the guard must reject the session-span boundary alone."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _SESSION_SLICE_PROBE_SESSION_SPAN_ONLY, _SESSION_SLICE_RULE
+        )
+
+
+def test_clearing_a_blocker_is_not_a_context_rev_bump() -> None:
+    surface = _read(_SKILL) + _reference("dependencies")
+    _assert_contains(surface, _BLOCKER_CLEARANCE_REVISION_RULE)
+
+
+def test_blocker_clearance_guard_rejects_the_status_move_rule_alone() -> None:
+    """Falsification probe: the guard must reject the status-move rule alone."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _BLOCKER_CLEARANCE_PROBE_STATUS_MOVE_ONLY,
+            _BLOCKER_CLEARANCE_REVISION_RULE,
+        )
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:
