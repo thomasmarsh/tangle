@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T19:34:00Z
+updated: 2026-09-13T19:48:55Z
 summary: Repair the round-five non-separating conflict case so the corpus separates.
-next: Execute the three pilot batches and the nine causal batches, then collect and record both results.
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
@@ -74,3 +73,38 @@ source revision `20c88e7ba1ed`; plan digest
 `sha256:636c25705154e95bdd976b24233c0ae88927096091d3ec91e8b8c05603e3aac2`;
 540 samples (12 cases x 5 arms x 3 models x 3 repetitions) in nine 60-child
 batches, three models at `high`.
+
+# Result
+
+The conflict separability residual is repaired and the corpus is frozen with no
+non-separating memory-required case. The conflict case now states that no
+precedence is observable and that the standing convention is to keep both
+readings and flag the disagreement; the recorded precedence decision in the
+unavailable history then makes the narrower later rule controlling. A first
+conflict-only pilot (plan `sha256:c955e3fd...`) separated the conflict case 3/3
+but flipped `temporal-update-cosmetic-edit-001`, so that case also received a
+documentation-only distractor against the hidden contract reword.
+
+The round-seven separability pilot completed 72/72 with the preregistered
+verdict **`proceed`**. All nine memory-required development cases separate under
+the 2-of-3 paired majority: repository-only is correct 0/3 on every one, and the
+oracle is correct 3/3 on every one except
+`conflict-and-uncertainty-competing-rules-001` (2/3, one empty model response
+graded a model failure). All three controls are valid 3/3. Pins: corpus digest
+`sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5`;
+plan digest
+`sha256:0458a693e0477e86744f0bd9f819a2796b5db2b965b05e8405c6851bd34f10df`;
+source revision `20c88e7ba1ed`. Evidence is in
+`benchmark/memory-pilot-v2-round7-result.json`; the conflict-only round-six
+intermediate is `benchmark/memory-pilot-v2-round6-result.json`.
+
+Because the repair changes the five-arm runner's fixture, this node also
+generated and collected the replacement causal result that
+[[TAS-122-causal-baseline-experiment]] owns and the re-derived diagnostics
+report that [[TAS-123-pipeline-diagnostics]] owns, and both consumers are
+reconciled to the new revision. The corpus keeps its 53 cases, 40-60 range,
+family and curation-group balance, control balance, and deterministic split,
+re-frozen at digest
+`sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5`.
+`braintree check`, `make test` (610 passed), and `make test-benchmarks` (79
+passed) pass.

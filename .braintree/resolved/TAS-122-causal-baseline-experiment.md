@@ -1,7 +1,7 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P1
-updated: 2026-09-13T19:19:49Z
+updated: 2026-09-13T19:48:55Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
 ---
 
@@ -138,49 +138,50 @@ harness, prompts, and fixtures are unchanged by this bookkeeping commit.
 
 # Result
 
-The five-arm causal run was re-executed after the corpus repair that
-[[TAS-151-corpus-separability-repair]] owns, because that repair changed the
+The five-arm causal run was re-executed after the separability repair that
+[[TAS-152-conflict-separability-residual]] owns, because that repair changed the
 runner's fixture. It completed 540/540 with evidence `exploratory` (development
 split) and decision `exploratory`. Pins: corpus digest
-`sha256:cabe4ac352feb613cef7d9ed025e9a383b8a04f1d4c0306796fac1f94a3f379c`,
+`sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5`,
 plan digest
-`sha256:1f8e982d0fae174f7c758a3b800e22c33980c33a75abea1c88c45d9de6f2649f`,
-source revision `4bbf8cc1be2d`, three models at `high`. All 540 samples pass
+`sha256:636c25705154e95bdd976b24233c0ae88927096091d3ec91e8b8c05603e3aac2`,
+source revision `20c88e7ba1ed`, three models at `high`. All 540 samples pass
 isolation, model, prompt, and telemetry validation; none is incomplete.
 
 Paired effects (95% percentile bootstrap, 10,000 fixed-seed resamples over
 `(case, model)` strata, 108 pairs and 36 strata per contrast):
 
-- `braintree - repository-only`: **+0.389**, CI [0.204, 0.537] — excludes zero.
-- `braintree - raw-history`: **0.000**, CI [-0.130, 0.093] — includes zero.
-- `braintree - flat-memory`: -0.019, CI [-0.130, 0.065] — includes zero.
-- `oracle - braintree`: +0.287, CI [0.130, 0.417] — excludes zero, leaving
+- `braintree - repository-only`: **+0.333**, CI [0.167, 0.463] — excludes zero.
+- `braintree - raw-history`: **-0.046**, CI [-0.176, 0.046] — includes zero.
+- `braintree - flat-memory`: 0.000, CI [-0.111, 0.083] — includes zero.
+- `oracle - braintree`: +0.389, CI [0.213, 0.528] — excludes zero, leaving
   measurable headroom below the ceiling.
 
 The contract's support criterion requires improvement against both
 repository-only and raw-history; the raw-history interval includes zero, so the
 claim is **not** supported on this development run. The result is labelled
 `exploratory`, not confirmatory, as preregistered. The re-run reproduces the
-prior qualitative conclusion on the repaired corpus.
+prior qualitative conclusion on the fully separating corpus.
 
 Costs over correctness-gated samples:
 
 | Arm | admitted | total tokens | output tokens | model turns | latency ms | cost |
 |---|---|---|---|---|---|---|
-| repository-only | 34 | 30,424 | 25,886 | 34 | 275,926 | $0.0919 |
-| raw-history | 76 | 50,490 | 39,011 | 76 | 383,371 | $0.1078 |
-| flat-memory | 78 | 56,675 | 44,003 | 78 | 438,070 | $0.1271 |
-| braintree | 76 | 49,865 | 38,355 | 76 | 351,799 | $0.0858 |
-| oracle | 107 | 41,663 | 24,855 | 107 | 314,640 | $0.0541 |
+| repository-only | 28 | 11,442 | 7,564 | 28 | 84,469 | $0.0172 |
+| raw-history | 69 | 72,246 | 45,909 | 69 | 341,319 | $0.1069 |
+| flat-memory | 64 | 68,854 | 42,555 | 65 | 436,213 | $0.1356 |
+| braintree | 64 | 45,307 | 36,097 | 64 | 315,101 | $0.0964 |
+| oracle | 106 | 40,591 | 24,772 | 106 | 284,614 | $0.0551 |
 
-Braintree admits as many correct samples as raw-history (76) at comparable
-total tokens (49,865 versus 50,490) and a lower monetary cost. Of 540 samples,
-169 are incorrect-action failures; none are infrastructure or model-output
+Braintree admits 64 correct samples against raw-history's 69 at a lower total
+token count (45,307 versus 72,246) and comparable monetary cost. Of 540 samples,
+209 are incorrect-action failures; none are infrastructure or model-output
 failures. Per-case and per-model arms, per-sample telemetry, and failure labels
 are in `benchmark/memory-causal-result.json`, whose embedded reproduction
 commands pin both digests.
 
-Residual: the round-five separability pilot returned **`revise`** (see
-[[TAS-151-corpus-separability-repair]]): the three cases this node originally
-reported now separate, and the one remaining non-separating case is tracked in
-[[TAS-152-conflict-separability-residual]].
+Residual: the round-five separability pilot returned **`revise`**, which
+[[TAS-152-conflict-separability-residual]] resolved; its round-seven re-run
+returned **`proceed`** with every memory-required case separating, so this node's
+replacement causal result is the final development-split evidence before the
+confirmatory freeze.

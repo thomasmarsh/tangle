@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T19:19:49Z
+updated: 2026-09-13T19:48:55Z
 summary: Repair the round-four non-separating cases so the frozen corpus separates.
 ---
 
@@ -9,7 +9,7 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Depends on [[TAS-122-causal-baseline-experiment]] at context_rev 2.
+Depends on [[TAS-122-causal-baseline-experiment]] at context_rev 3.
 
 The round-four separability re-run on the repaired corpus returned `stop`:
 three memory-required development cases do not separate under the

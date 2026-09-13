@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T18:53:34Z
+updated: 2026-09-13T19:48:55Z
 summary: Compare retrieval policies on held-out, action-weighted engineering queries.
 next: Define the held-out action-weighted retrieval comparison.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Depends on [[TAS-123-pipeline-diagnostics]] at context_rev 2.
+Depends on [[TAS-123-pipeline-diagnostics]] at context_rev 3.
 
 # Outcome
 
