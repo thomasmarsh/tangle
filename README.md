@@ -86,6 +86,14 @@ uv sync --extra semantic
 pip install 'braintree[semantic]'
 ```
 
+An install can opt in to the extra at install time. Pass `--semantic` and the generated `braintree` command requests it, so the installed skill can run `braintree clusters`; a plain install never requests it and stays on the dependency-free set:
+
+```sh
+./scripts/install.sh --pi --home "$HOME" --semantic
+```
+
+The installer prints the `BT_SEMANTIC_PROVIDER` line that enables the layer. The extra and the provider stay separate switches: installing the extra does not by itself enable the layer, and enabling the layer without the extra leaves every answer on the lexical baseline.
+
 The extra pins the off-the-shelf inference and clustering libraries that ship: `fastembed` on ONNX Runtime is the in-process inference runtime, with `numpy`, `scikit-learn`, `umap-learn` for UMAP reduction, and `hdbscan` for density clustering. `sentence-transformers` on CPU torch was an evaluation baseline only and is deliberately not shipped: above torch 2.2.2 it publishes no x86_64 macOS wheel, and torch 2.2.2 needs `numpy<2`, which contradicts fastembed's `numpy>=2.1`. No model is trained, fine-tuned, or shipped here; the extra only makes published models usable. Capability probing is a `find_spec` lookup that never imports or loads any of them, so `braintree check`, `braintree frontier`, `braintree orient`, `braintree search`, and every other interactive verb answer exactly as before while the extra is absent.
 
 Model weights are read offline from a local cache, and nothing downloads at query time. Pre-fetch the weights once into the cache, then run offline:

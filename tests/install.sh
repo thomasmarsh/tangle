@@ -207,6 +207,25 @@ check_tree "$claude_home/.claude/skills/braintree"
 check_record "$claude_home/.claude/skills/braintree"
 [ ! -e "$claude_home/.claude/skills/braintree/agents" ]
 
+# An explicit --semantic install requests the optional extra in the generated
+# launcher and prints the provider to enable it, while a plain install keeps the
+# launcher on the dependency-free frozen set. Neither form syncs the extra at
+# install time, so this stays offline.
+semantic_project="$test_root/semantic-project"
+mkdir -p "$semantic_project"
+$repo_root/scripts/install.sh --codex --project "$semantic_project" >/dev/null
+semantic_launcher="$semantic_project/.local/bin/braintree"
+if grep -q -- '--extra semantic' "$semantic_launcher"; then exit 1; fi
+semantic_install=$($repo_root/scripts/install.sh --codex --project "$semantic_project" --semantic)
+case "$semantic_install" in
+  *'result: "installed"'*'provider: "export BT_SEMANTIC_PROVIDER='*) ;;
+  *) exit 1 ;;
+esac
+grep -q -- '--frozen --extra semantic braintree "$@"' "$semantic_launcher"
+[ "$(cat "$semantic_project/.agents/skills/braintree/src/braintree/installed-revision")" = "$expected_record" ]
+semantic_repeat=$($repo_root/scripts/install.sh --codex --project "$semantic_project" --semantic)
+case "$semantic_repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
+
 if $repo_root/scripts/install.sh --codex >/dev/null 2>&1; then exit 1; fi
 if $repo_root/scripts/install.sh --codex --project "$project" --unknown >/dev/null 2>&1; then exit 1; fi
 error=$($repo_root/scripts/install.sh --codex 2>/dev/null || true)
@@ -221,12 +240,12 @@ for installer in "$repo_root/scripts/install.sh" "$repo_root/scripts/install-cla
 done
 
 help=$($repo_root/scripts/install.sh --help)
-for expected in 'options[9]{flag,meaning}:' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[4]{command,purpose}:' '--codex --project /path/to/project --dry-run' '--claude --project /path/to/project' '--pi --project /path/to/project' '--codex --home $HOME'; do
+for expected in 'options[10]{flag,meaning}:' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' '"--semantic"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[5]{command,purpose}:' '--codex --project /path/to/project --dry-run' '--claude --project /path/to/project' '--pi --project /path/to/project' '--pi --home $HOME --semantic' '--codex --home $HOME'; do
   case "$help" in *"$expected"*) ;; *) exit 1;; esac
 done
 
 claude_help=$($repo_root/scripts/install-claude.sh --help)
-for expected in 'usage: "scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run]"' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'options[6]{flag,meaning}:' 'examples[3]{command,purpose}:' './scripts/install-claude.sh --project /path/to/project --dry-run' './scripts/install-claude.sh --home $HOME'; do
+for expected in 'usage: "scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run] [--semantic]"' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'options[7]{flag,meaning}:' '"--semantic"' 'examples[4]{command,purpose}:' './scripts/install-claude.sh --project /path/to/project --dry-run' './scripts/install-claude.sh --home $HOME --semantic' './scripts/install-claude.sh --home $HOME'; do
   case "$claude_help" in *"$expected"*) ;; *) exit 1;; esac
 done
 case "$claude_help" in *'--claude'*|*'--codex'*|*'--pi'*) exit 1;; esac
