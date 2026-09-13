@@ -207,21 +207,40 @@ check_tree "$claude_home/.claude/skills/braintree"
 check_record "$claude_home/.claude/skills/braintree"
 [ ! -e "$claude_home/.claude/skills/braintree/agents" ]
 
-# An explicit --semantic install requests the optional extra in the generated
-# launcher and prints the provider to enable it, while a plain install keeps the
-# launcher on the dependency-free frozen set. Neither form syncs the extra at
-# install time, so this stays offline.
+# An explicit --semantic install requests the optional extra and defaults the
+# provider, so the installed capability is zero-config; a plain install keeps the
+# launcher on the dependency-free frozen set. A fake uv reads the launcher's
+# environment without syncing the extra, keeping this offline.
+fake_bin="$test_root/fake-bin"
+mkdir -p "$fake_bin"
+cat > "$fake_bin/uv" <<'FAKE_UV'
+#!/bin/sh
+case "${BT_SEMANTIC_PROVIDER+x}" in
+  x) printf 'provider=[%s]\n' "$BT_SEMANTIC_PROVIDER" ;;
+  *) printf 'provider=<unset>\n' ;;
+esac
+FAKE_UV
+chmod 0755 "$fake_bin/uv"
+
 semantic_project="$test_root/semantic-project"
 mkdir -p "$semantic_project"
 $repo_root/scripts/install.sh --codex --project "$semantic_project" >/dev/null
 semantic_launcher="$semantic_project/.local/bin/braintree"
 if grep -q -- '--extra semantic' "$semantic_launcher"; then exit 1; fi
+plain_env=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
+case "$plain_env" in *'provider=<unset>'*) ;; *) exit 1;; esac
 semantic_install=$($repo_root/scripts/install.sh --codex --project "$semantic_project" --semantic)
 case "$semantic_install" in
-  *'result: "installed"'*'provider: "export BT_SEMANTIC_PROVIDER='*) ;;
+  *'result: "installed"'*'provider: "defaults to braintree semantic embed'*) ;;
   *) exit 1 ;;
 esac
 grep -q -- '--frozen --extra semantic braintree "$@"' "$semantic_launcher"
+semantic_default=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
+case "$semantic_default" in *'provider=[braintree semantic embed]'*) ;; *) exit 1;; esac
+semantic_override=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" BT_SEMANTIC_PROVIDER='custom provider' "$semantic_launcher")
+case "$semantic_override" in *'provider=[custom provider]'*) ;; *) exit 1;; esac
+semantic_empty=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" BT_SEMANTIC_PROVIDER='' "$semantic_launcher")
+case "$semantic_empty" in *'provider=[]'*) ;; *) exit 1;; esac
 [ "$(cat "$semantic_project/.agents/skills/braintree/src/braintree/installed-revision")" = "$expected_record" ]
 semantic_repeat=$($repo_root/scripts/install.sh --codex --project "$semantic_project" --semantic)
 case "$semantic_repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
