@@ -64,7 +64,7 @@ Load **dependencies** (`braintree help dependencies`) for staleness, the semanti
 - Refresh only the mutated node's `updated`; increment `context_rev` only for a consumer-relevant semantic change. Never edit unrelated nodes or the index as bookkeeping.
 - Give each node one primary `Parent [[...]]` or `Area [[IDX-...]]` link; do not add a `Child`/`Parent of` copy to the parent.
 - `resolved` only when the outcome is complete; for a coordinating task verify `Done when`, evidence, and child dispositions first. Remove `next` and keep concise evidence.
-- Advancing a coordinating parent's `next` after its frontier child resolves is part of that resolution, so the resolving worker owns that edit: refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation.
+- Advancing a coordinating parent's `next` after its frontier child resolves is part of that resolution, so the resolving worker owns that edit: refresh the parent's `updated` and leave its `context_rev` unchanged, because `next` is navigation. A handoff whose write set excludes the parent must name the parent (or its `next`) in the write set; otherwise the coordinator owns the advance, and the worker reports the stale route — an unfinished node's `next` naming a resolved node, which `braintree check` flags — as a handoff action.
 - Resolving a frontier knowledge node (`THO`/`DEF`/`DEC`) is to answer the question and resolve it like any other frontier node; in the same change advance the coordinating parent's `next` to the next deliberate frontier child.
 - Graph bookkeeping never broadens authorization for code, external systems, or destructive actions.
 

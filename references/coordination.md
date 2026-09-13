@@ -120,6 +120,14 @@ and moved path remains in that assigned write set, then release the matching
 claim. Report the base, touched paths, created paths, moved paths, dependency
 evidence, and test evidence to the coordinator.
 
+A handoff whose write set excludes the coordinating parent cannot advance its
+`next`. Either the handoff names the parent — or the parent's `next` line — in
+the write set, so the resolving worker owns the advance, or the coordinator owns
+the advance and the worker reports the stale route as its handoff action instead
+of editing outside its set. A stale route is an unfinished coordinating node
+whose `next` is a single direct-child link naming an already-resolved child;
+`braintree check` reports it as `next-resolved-node`.
+
 A worker records a compact structured completion receipt before its long
 narrative report: the recorded base hash, the `release` result, a gate summary,
 and the commit SHAs. A `release` result at the recorded base hash is the

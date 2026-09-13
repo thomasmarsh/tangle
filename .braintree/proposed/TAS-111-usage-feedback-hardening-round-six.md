@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T02:22:04Z
+updated: 2026-09-13T02:26:37Z
 summary: Fix or dispose the round-six Tangle feedback findings: incoming-future timestamps, write-set change closure, completion receipts, parent-next ownership, status-move staging, resolved-seam reuse, and legacy-vault migration announcement.
-next: "[[TAS-115-parent-next-advance-ownership]]"
+next: "[[TAS-116-status-move-staging]]"
 ---
 
 # Context

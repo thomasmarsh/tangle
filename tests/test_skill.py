@@ -98,6 +98,18 @@ _COMPLETION_RECEIPT_RULE = (
     "when a run times out while the worker is still composing prose",
 )
 
+# Resolving a frontier child includes advancing the coordinating parent's
+# `next`, so the resolving worker owns that edit; when the handoff's write set
+# excludes the parent, the handoff must name the parent (or its `next`) or the
+# coordinator owns the advance and the worker reports the stale route.
+_PARENT_NEXT_OWNERSHIP_RULE = (
+    "the resolving worker owns that edit",
+    "A handoff whose write set excludes the parent must name the parent (or its "
+    "`next`) in the write set",
+    "otherwise the coordinator owns the advance",
+    "reports the stale route",
+)
+
 # The durable-outcome boundary rule the admission decision added; it must not
 # regress out of the always-loaded core.
 _DURABLE_OUTCOME_BOUNDARY = (
@@ -155,6 +167,9 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "release` distinguishes a lapsed matching lease (`expired`)",
         "coordinator assigns each worker a direct node path and an exclusive write set",
         "the coordinator alone performs a coordinating parent's resolving edit",
+        "A stale route is an unfinished coordinating node whose `next` is a single "
+        "direct-child link naming an already-resolved child",
+        "`braintree check` reports it as `next-resolved-node`",
         "have workers read or write SQLite directly",
         "it refuses a network-mounted location unless overridden",
     ),
@@ -321,6 +336,10 @@ def test_write_set_is_the_change_closure() -> None:
 
 def test_completion_receipt_is_the_trusted_signal() -> None:
     _assert_contains(_reference("coordination"), _COMPLETION_RECEIPT_RULE)
+
+
+def test_parent_next_advance_names_the_write_set_exception() -> None:
+    _assert_contains(_read(_SKILL), _PARENT_NEXT_OWNERSHIP_RULE)
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:

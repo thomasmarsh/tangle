@@ -98,6 +98,20 @@ def _replace(path: Path, old: str, new: str) -> None:
     path.write_text(path.read_text(encoding="utf-8").replace(old, new), encoding="utf-8")
 
 
+def _resolve_child(nodes: Path) -> None:
+    """Resolve the active child in place, dropping its now-invalid next."""
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        "".join(
+            line
+            for line in child.read_text(encoding="utf-8").splitlines(keepends=True)
+            if not line.startswith("next:")
+        ),
+        encoding="utf-8",
+    )
+    child.rename(nodes / "resolved" / child.name)
+
+
 def test_valid_vault_passes(nodes: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main([str(nodes)]) == 0
     assert "graph check: passed" in capsys.readouterr().out
@@ -242,6 +256,70 @@ def test_non_task_type_requires_next(
     code, err = _run(nodes, capsys)
     assert code == 1
     assert "unfinished task requires next" in err
+
+
+def test_next_naming_a_resolved_child_is_flagged(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An unfinished coordinator whose route names a resolved child is stale."""
+    _resolve_child(nodes)
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "next frontier [[TAS-002-child]] is already resolved" in err
+
+
+def test_action_next_beside_a_resolved_child_passes(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A coordinator's action next is not a stale route, resolved child or not."""
+    _resolve_child(nodes)
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "next: Continue [[TAS-002-child]].",
+        "next: Audit the resolved child outcome.",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_node_without_children_is_not_a_stale_route(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "active" / "TAS-003-leaf.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Leaf work.",
+        "next: Finish the leaf action.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_blocked_action_next_is_not_a_stale_route(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _write(
+        nodes / "blocked" / "TAS-003-waiting.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-10T00:00:00Z",
+        "summary: Waiting.",
+        "next: Request the vendor fixture.",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+        "",
+        "# Blocked",
+        "",
+        "Blocked by the vendor. Unblocks when the fixture arrives.",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
 
 
 def test_blocked_node_requires_blocked_section(
@@ -1005,6 +1083,10 @@ def _mut_next_not_direct_child(nodes: Path) -> None:
     )
 
 
+def _mut_next_resolved_node(nodes: Path) -> None:
+    _resolve_child(nodes)
+
+
 # Every error class the validator can raise, with one mutation that triggers it.
 _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
     "vault-no-nodes": (_mut_vault_no_nodes, "vault-no-nodes"),
@@ -1072,6 +1154,7 @@ _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
         "next-multiple-frontiers",
     ),
     "next-not-direct-child": (_mut_next_not_direct_child, "next-not-direct-child"),
+    "next-resolved-node": (_mut_next_resolved_node, "next-resolved-node"),
 }
 
 

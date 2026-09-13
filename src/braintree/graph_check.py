@@ -28,7 +28,7 @@ Finding codes by class:
   ``index-focus-without-active``, ``index-focus-target``.
 - Routes and frontier: ``route-root-hub-unrouted``, ``route-primary-missing``,
   ``route-cycle``, ``route-orphan``, ``next-multiple-frontiers``,
-  ``next-not-direct-child``.
+  ``next-not-direct-child``, ``next-resolved-node``.
 """
 
 from __future__ import annotations
@@ -151,6 +151,7 @@ FINDING_CODES: dict[str, str] = {
     "route-orphan": "unfinished node cannot reach a hub",
     "next-multiple-frontiers": "next names more than one frontier node",
     "next-not-direct-child": "next frontier is not a direct child",
+    "next-resolved-node": "next frontier is already resolved",
 }
 
 _FORBIDDEN_FIELDS = ("id", "type", "status", "seq", "mtime", "rev")
@@ -779,6 +780,21 @@ def _validate(
                     f"{node.path}: frontier is not a direct child",
                 )
             )
+        if (
+            len(frontier) == 1
+            and node.status != "resolved"
+            and routes.get(frontier[0]) == node.name
+        ):
+            child_nodes = by_name.get(frontier[0])
+            if child_nodes is not None and child_nodes[0].status == "resolved":
+                errors.append(
+                    Finding(
+                        "next-resolved-node",
+                        node.path,
+                        f"{node.path}: next frontier [[{frontier[0]}]] is already "
+                        "resolved",
+                    )
+                )
 
     for node in nodes:
         if node.status == "resolved":
