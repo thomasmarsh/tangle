@@ -42,10 +42,15 @@ __all__ = [
     "CORPUS_DIR_RELATIVE",
     "GROWTH_CLASSES",
     "MANIFEST_NAME",
+    "MAX_PILOT_CASES",
     "MAX_TOTAL_CASES",
     "MIN_CASES_PER_FAMILY",
     "MIN_CONTROL_FAMILIES",
+    "MIN_PILOT_CASES",
     "MIN_TOTAL_CASES",
+    "PILOT_ARMS",
+    "PILOT_PROTOCOL",
+    "PILOT_VERDICTS",
     "PROTOCOL",
     "SCHEMA_VERSION",
     "CorpusError",
@@ -63,6 +68,8 @@ __all__ = [
     "outcome_label",
     "parse_documents",
     "path_exists",
+    "pilot_problems",
+    "pilot_subset",
     "source_incident",
     "split_manifest",
     "validate",
@@ -97,6 +104,17 @@ MIN_CONTROL_FAMILIES = 2
 # class is frozen here; the growth *size* is a harness knob owned by the causal
 # runner, because the schema records no size field.
 GROWTH_CLASSES = ("irrelevant-growth", "superseded-growth", "near-duplicate-growth")
+
+# The separability pilot is a bounded two-arm pre-run over development cases:
+# repository-only is the floor and oracle the ceiling. Its subset is derived
+# deterministically from the frozen corpus before any live run, so no case can
+# be chosen or dropped after an outcome is seen. Protocol and verdicts live here
+# so the prose preregistration and the test that pins it share one authority.
+PILOT_PROTOCOL = "memory-pilot-v1"
+PILOT_ARMS = ("repository-only", "oracle")
+PILOT_VERDICTS = ("proceed", "revise", "stop")
+MIN_PILOT_CASES = 8
+MAX_PILOT_CASES = 12
 
 RESEARCH_THEORY = "research/agent-memory-theory-evaluation.md"
 UNCERTAINTY_NODE = "TAS-127"
@@ -256,6 +274,62 @@ def control_balance(corpus: Sequence[Envelope]) -> Json:
             "memory-required": len(envelope.cases) - controls,
         }
     return balance
+
+
+def pilot_subset(corpus: Sequence[Envelope]) -> tuple[memory_scenario.Scenario, ...]:
+    """Return the deterministic preregistered development subset for the pilot.
+
+    The rule is fixed before any live run so no case can be chosen or dropped
+    after its outcome is seen. For each family it takes the lexicographically
+    first memory-required development case and, when the family has one, the
+    lexicographically first observable-only control development case. The
+    result spans every family and curation group and pairs required cases with
+    controls that must stay solvable without oracle evidence.
+    """
+    by_family = {
+        envelope.family: sorted(envelope.cases, key=lambda case: case.case_id)
+        for envelope in corpus
+    }
+    selected: list[memory_scenario.Scenario] = []
+    for family in memory_contract.SCENARIO_FAMILIES:
+        development = [case for case in by_family.get(family, []) if case.split == "development"]
+        required = [case for case in development if not is_control(case)]
+        controls = [case for case in development if is_control(case)]
+        if required:
+            selected.append(required[0])
+        if controls:
+            selected.append(controls[0])
+    return tuple(selected)
+
+
+def pilot_problems(corpus: Sequence[Envelope]) -> list[str]:
+    """Return the structural problems that make the pilot subset unusable.
+
+    The subset must stay inside the admitted 8-12 range, span every family and
+    every curation group, and mix memory-required cases with memory-irrelevant
+    controls so an always-consult-memory strategy cannot pass the pilot.
+    """
+    selected = pilot_subset(corpus)
+    problems: list[str] = []
+    if not (MIN_PILOT_CASES <= len(selected) <= MAX_PILOT_CASES):
+        problems.append(
+            f"pilot: {len(selected)} cases outside {MIN_PILOT_CASES}..{MAX_PILOT_CASES}"
+        )
+    families = {case.family for case in selected}
+    missing_families = [
+        family for family in memory_contract.SCENARIO_FAMILIES if family not in families
+    ]
+    if missing_families:
+        problems.append(f"pilot: misses families {missing_families}")
+    groups = {memory_scenario.curation_group(case.family) for case in selected}
+    for group, _ in memory_contract.CURATION_GROUPS:
+        if group not in groups:
+            problems.append(f"pilot: misses curation group {group}")
+    if not any(is_control(case) for case in selected):
+        problems.append("pilot: has no memory-irrelevant control")
+    if not any(not is_control(case) for case in selected):
+        problems.append("pilot: has no memory-required case")
+    return problems
 
 
 def _read_text(path: Path) -> str | None:
