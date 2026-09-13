@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T19:48:55Z
+updated: 2026-09-13T20:03:45Z
 summary: Evaluate uncertainty, source provenance, unresolved conflict, and memory poisoning.
 next: Define conflict, provenance, and authority-threat cases.
 ---
