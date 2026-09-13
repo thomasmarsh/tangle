@@ -1,6 +1,6 @@
 ---
 context_rev: 1
-updated: 2026-09-12T15:10:30Z
+updated: 2026-09-13T21:41:03Z
 summary: Theory: moving graph reasoning into direct `braintree` answers reduces client round trips and skill tokens without weakening correctness.
 ---
 
@@ -37,4 +37,26 @@ the reduction and stays optional under
 
 # Evidence
 
-No samples recorded yet.
+The isolated staged live A/B ([[TAS-080-staged-token-ab]]) was retired as
+superseded by [[DEC-009-retire-staged-live-token-ab]], so the theory is decided
+from landed evidence rather than a live pair:
+
+- Always-loaded token cost: the recipe removal of
+  [[TAS-074-shrink-skill-to-commands]] and the later consolidation left
+  `SKILL.md` at 12,669 B, below the 13,481 B compact baseline adopted by
+  [[DEC-004-compact-skill-text]], whose own two-round A/B cut median benchmark
+  tokens 23.5%.
+- Round trips: [[TAS-078-round-trip-telemetry-and-gates]] replaced the
+  multi-step shell recipes for the frontier and dependency impact with the
+  single `braintree frontier`, `braintree node`, `braintree impact`, and
+  `braintree orient` verbs, and records tool-call and shell-call counts.
+- Correctness: each direct-answer verb has an exact-value case and checked-in
+  baseline in `braintree benchmark verbs`, and `make test` passes.
+
+# Conclusion
+
+Supported for the always-loaded contract: the direct-answer surface replaces
+multi-call recipes with one verb each and the skill text is smaller, with
+correctness held by the verb baselines. The magnitude of the client round-trip
+reduction is established structurally and from telemetry, not from a matched
+live pair, which was retired by [[DEC-009-retire-staged-live-token-ab]].

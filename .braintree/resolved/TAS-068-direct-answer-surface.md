@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-12T16:21:41Z
+updated: 2026-09-13T21:41:03Z
 summary: Move graph reasoning out of SKILL.md prose into direct `braintree` answers so client agents decide and act in fewer round trips while the always-loaded skill shrinks.
-next: "[[TAS-080-staged-token-ab]]"
 ---
 
 # Context
@@ -66,5 +65,24 @@ for the same correctness.
   dependency impact, with tests tying each answer to the Markdown derivation.
 - `SKILL.md` no longer carries the shell recipes its verbs replaced and is
   measurably smaller.
-- Round-trip telemetry and a correctness-gated A/B are recorded.
+- Round-trip telemetry and a correctness-gated comparison are recorded
+  ([[TAS-078-round-trip-telemetry-and-gates]]); the staged live A/B is retired
+  by [[DEC-009-retire-staged-live-token-ab]].
 - `make test` passes.
+
+# Result
+
+Complete. Every planned child (TAS-069 through TAS-079) is resolved and the
+final comparison ([[TAS-080-staged-token-ab]]) is superseded by
+[[DEC-009-retire-staged-live-token-ab]], so the thrust rolls up on landed
+evidence rather than the staged live pair.
+
+`braintree` now answers the frontier and a node directly
+([[TAS-071-frontier-and-node-verbs]]) and dependency impact in one call
+([[TAS-072-transitive-dependency-impact]]), each tied to the Markdown
+derivation by tests. `SKILL.md` no longer carries the replaced shell recipes and
+has shrunk from the 20,472 B measured in [[TAS-074-shrink-skill-to-commands]] to
+12,669 B. Round-trip telemetry and correctness-gated verb baselines are recorded
+by [[TAS-078-round-trip-telemetry-and-gates]], and the theory
+[[THO-010-round-trip-reduction-theory]] is answered from that evidence. `make
+test` passes.

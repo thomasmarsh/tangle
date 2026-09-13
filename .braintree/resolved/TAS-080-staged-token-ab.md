@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T16:33:00Z
+updated: 2026-09-13T21:41:03Z
 summary: Run the staged token and round-trip A/B comparing the pre-thrust state with the landed direct-answer surface.
-next: Obtain owner authorization for one bounded, matched live Codex pair.
+disposition: superseded
 ---
 
 # Context
@@ -50,8 +50,16 @@ spend the owner has not authorized. Once authorized, record both samples
 `0e39f3a` and once from the landed checkout), run `braintree benchmark staged`
 over the two records, and resolve this node with the deltas and the decision.
 
-# Blocked
+# Result
 
-Blocked by the missing owner authorization for one bounded, matched live Codex
-session pair on the account. Unblocks when the owner authorizes that pair; then
-the two samples can be recorded and the A/B run.
+Superseded by [[DEC-009-retire-staged-live-token-ab]]; not executed.
+
+No matched pre-thrust and landed sample pair was ever recorded. The node is
+retired because the question it owned is answered by stronger, already-landed
+evidence: the correctness-gated verb baselines and round-trip telemetry of
+[[TAS-078-round-trip-telemetry-and-gates]], the recipe removal and skill-text
+A/B of [[TAS-074-shrink-skill-to-commands]], and the held-out correctness-cost
+surface of [[TAS-120-agent-memory-evaluation-program]]. A single live pair would
+also fall below the two-round, three-sessions-per-arm standard of
+[[DEC-004-compact-skill-text]]. The zero-live harness remains available for a
+future authorized A/B.
