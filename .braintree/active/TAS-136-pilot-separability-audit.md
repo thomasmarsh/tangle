@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T16:04:02Z
+updated: 2026-09-13T16:08:58Z
 summary: Audit whether repository-only and oracle conditions separate on a bounded pilot.
-next: Obtain owner authorization for the bounded repository-only versus oracle pilot over the preregistered development subset.
+next: Run the authorized two-arm pilot over the preregistered subset and record the graded decision.
 ---
 
 Parent [[TAS-121-evaluation-foundation]].
@@ -38,15 +38,14 @@ prose authority and fixes protocol `memory-pilot-v1`, the two arms
 pure function of the corpus digest, so it cannot be steered after an outcome is
 seen, and no held-out case is inspected.
 
-The live half cannot run yet: no owner authorization for a live or paid run is
-recorded in the vault or the contract, and the contract requires it before
-execution.
+# Authorization
 
-# Blocked
-
-Blocked by the missing owner authorization for the bounded two-arm separability
-pilot. Unblocks when the owner records that authorization; then the pilot runs
-`repository-only` and `oracle` over the 12 preregistered cases, grades each pair
-with `memory_scenario.grade()`, repairs or removes any non-separating case with
-a recorded reason, and resolves this node with the phase-one `proceed`,
-`revise`, or `stop` decision.
+The owner explicitly authorized the bounded live pilot in session on
+2026-09-13, before execution. Scope: the 12 preregistered development cases,
+the two pilot arms (`repository-only`, `oracle`), one repetition per sample.
+Pins for the run: protocol `memory-pilot-v1`; corpus digest
+`sha256:8caf44eae2a841e4ff4e2ad4f11ee85bfa87cbca048065539a94f18f65ed7d02`;
+grader `memory_scenario.grade`; model `deepseek/deepseek-v4-pro` at reasoning
+effort `high`; harness `pi-subagents`. The run is delegated to one
+fresh-context subagent per `(case, arm)` sample, each given only its arm's
+fixture.
