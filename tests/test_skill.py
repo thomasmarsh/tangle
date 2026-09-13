@@ -63,9 +63,14 @@ _CORE_INVARIANTS = (
 )
 
 # An inherited `updated` ahead of the host clock must not move the field
-# backwards: the coordinator stamps real UTC at handoff and the worker clamps.
+# backwards: the coordinator stamps the real host clock at handoff, not a
+# rounded or estimated value, so no future `updated` is carried, and the
+# worker clamps.
+_COORDINATOR_HOST_CLOCK_STAMP_RULE = (
+    "A coordinator stamps the host clock at handoff",
+    "the real host clock time, not a rounded or estimated value",
+)
 _UPDATED_CLAMP_RULE = (
-    "A coordinator stamps the real UTC time at handoff",
     "a worker refreshing an inherited `updated` ahead of the host clock uses "
     "`max(now, previous updated)` and notes the clamp rather than moving it "
     "backwards",
@@ -379,6 +384,10 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
 
 def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
     _assert_contains(_read(_SKILL), _UPDATED_CLAMP_RULE)
+
+
+def test_coordinator_stamps_the_host_clock_at_handoff() -> None:
+    _assert_contains(_read(_SKILL), _COORDINATOR_HOST_CLOCK_STAMP_RULE)
 
 
 def test_write_set_is_the_change_closure() -> None:
