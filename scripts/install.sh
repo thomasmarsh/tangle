@@ -39,6 +39,7 @@ usage() {
     field description 'Install Braintree for Claude Code into an explicit project or home-root directory.'
     field usage 'scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run] [--semantic]'
     field launcher 'DIR/.local/bin/braintree, the single documented entry point'
+    field program 'DIR/.local/share/braintree, the one shared program per root the launcher runs'
     printf 'options[7]{flag,meaning}:\n'
     printf '  "--project DIR","install to DIR/.claude/skills/braintree"\n'
     printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
@@ -59,6 +60,7 @@ usage() {
   field usage 'scripts/install.sh (--codex | --claude | --pi) (--project DIR | --home DIR) [--dry-run] [--semantic]'
   field claude_wrapper 'scripts/install-claude.sh omits --claude and accepts the same destination flags.'
   field launcher 'DIR/.local/bin/braintree, the single documented entry point'
+  field program 'DIR/.local/share/braintree, the one shared program per root the launcher runs'
   printf 'options[10]{flag,meaning}:\n'
   printf '  "--codex","install to DIR/.agents/skills/braintree"\n'
   printf '  "--claude","install to DIR/.claude/skills/braintree"\n'
@@ -131,23 +133,30 @@ case "$agent" in
     ;;
 esac
 
+# One shared program per root, independent of which agent discovers the skill.
+# Every agent's generated command runs this copy, so an agent install cannot
+# repoint it at another agent's files.
+program_dir="$root/.local/share/$skill_name"
+
 if [ "$dry_run" = true ]; then
   field result dry-run
   field agent "$agent"
   field destination "$destination"
+  field program "$program_dir"
   exit 0
 fi
 
 changed=false
 
-# Install one repository file into the skill destination, preserving its
-# relative path. Installed copies are run through the generated ``braintree``
-# command, which hides the toolchain and package layout from the consumer.
+# Install one repository file into a base directory, preserving its relative
+# path. The agent destination receives only the skill prose it discovers; the
+# program the generated ``braintree`` command runs goes to the shared location.
 copy_file() {
-  relative=$1
-  mode=$2
+  base=$1
+  relative=$2
+  mode=$3
   source="$repo_root/$relative"
-  target="$destination/$relative"
+  target="$base/$relative"
   if [ -f "$target" ] && cmp -s "$source" "$target"; then
     return
   fi
@@ -156,32 +165,42 @@ copy_file() {
   changed=true
 }
 
-copy_file SKILL.md 0644
-# The topical references are the canonical workflow prose the installed command
-# renders with `braintree help TOPIC`; copy them beside SKILL.md in every
-# destination so a rendered topic always matches the installed revision.
+# The agent destination is only the skill prose the agent discovers: the core,
+# the canonical reference tree it renders, and agent metadata. It never carries
+# the program, so installing an agent cannot repoint or rebuild the command.
+copy_file "$destination" SKILL.md 0644
 for reference in "$repo_root"/references/*.md; do
   [ -f "$reference" ] || continue
-  copy_file "references/$(basename -- "$reference")" 0644
+  copy_file "$destination" "references/$(basename -- "$reference")" 0644
 done
 if [ "$agent" = codex ]; then
-  copy_file agents/openai.yaml 0644
+  copy_file "$destination" agents/openai.yaml 0644
 fi
+
+# The program is installed once per root. Copy a file only when it is missing or
+# differs, so reinstalling another agent leaves this revision untouched. When
+# the program drifts from this checkout, the differing bytes and the record
+# below refresh it; the released version and the exact copied bytes are the
+# compatibility check.
 for metadata in pyproject.toml uv.lock .python-version README.md; do
-  copy_file "$metadata" 0644
+  copy_file "$program_dir" "$metadata" 0644
+done
+for reference in "$repo_root"/references/*.md; do
+  [ -f "$reference" ] || continue
+  copy_file "$program_dir" "references/$(basename -- "$reference")" 0644
 done
 for source in "$repo_root"/src/braintree/*; do
   [ -f "$source" ] || continue
-  copy_file "src/braintree/$(basename -- "$source")" 0644
+  copy_file "$program_dir" "src/braintree/$(basename -- "$source")" 0644
 done
 
-# Record the release version and the source revision this install was copied
-# from as generated install data. The installed ``braintree`` command reads it
-# back with `--version`, so a consuming project can name the exact revision
-# in use without network access or the original checkout. The value matches the
-# ``braintree_revision`` convention: ``<version>+g<short-sha>`` when a source
-# revision is available, else ``<version>+unknown``. The semantic version is
-# still declared once in pyproject.toml; this record only stamps it.
+# Record the release version and the source revision the shared program was
+# copied from as generated install data. The installed ``braintree`` command
+# reads it back with `--version`, so a consuming project can name the exact
+# revision in use without network access or the original checkout. The value
+# matches the ``braintree_revision`` convention: ``<version>+g<short-sha>`` when
+# a source revision is available, else ``<version>+unknown``. The semantic
+# version is still declared once in pyproject.toml; this record only stamps it.
 source_revision=unknown
 if command -v git >/dev/null 2>&1; then
   detected=$(git -C "$repo_root" rev-parse --short=7 HEAD 2>/dev/null || true)
@@ -190,7 +209,7 @@ if command -v git >/dev/null 2>&1; then
   esac
 fi
 record_value="$version+$source_revision"
-record="$destination/src/braintree/installed-revision"
+record="$program_dir/src/braintree/installed-revision"
 if [ ! -f "$record" ] || [ "$(cat "$record")" != "$record_value" ]; then
   mkdir -p "$(dirname -- "$record")" 2>/dev/null || runtime_error "unable to create directory for: $record"
   printf '%s\n' "$record_value" >"$record" 2>/dev/null || runtime_error "unable to install: $record"
@@ -199,7 +218,8 @@ if [ ! -f "$record" ] || [ "$(cat "$record")" != "$record_value" ]; then
 fi
 
 # Install the single language-agnostic command that fronts the skill. The
-# launcher records the destination it was installed for, so a consumer runs
+# launcher points at the one shared per-root program, never at an agent
+# destination, so reinstalling any agent cannot repoint it. A consumer runs
 # ``braintree`` from any project root without naming the toolchain or layout.
 launcher_dir="$root/.local/bin"
 launcher="$launcher_dir/braintree"
@@ -219,9 +239,9 @@ fi
 fi
 launcher_body=$(cat <<EOF
 #!/bin/sh
-# Generated by the Braintree installer: run the installed skill.
+# Generated by the Braintree installer: run the shared per-root program.
 set -eu
-${launcher_provider}exec uv run --project "$destination" --frozen ${launcher_extra:+$launcher_extra }braintree "\$@"
+${launcher_provider}exec uv run --project "$program_dir" --frozen ${launcher_extra:+$launcher_extra }braintree "\$@"
 EOF
 )
 if [ ! -f "$launcher" ] || [ "$(cat "$launcher")" != "$launcher_body" ]; then
@@ -238,6 +258,7 @@ else
 fi
 field agent "$agent"
 field destination "$destination"
+field program "$program_dir"
 field launcher "$launcher"
 if [ "$semantic" = true ]; then
   field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
