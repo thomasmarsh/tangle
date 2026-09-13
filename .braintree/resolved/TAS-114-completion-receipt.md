@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T02:14:00Z
+updated: 2026-09-13T02:22:04Z
 summary: Make a worker's completion signal explicit, so a report-time timeout is distinguishable from an implementation-time failure.
-next: State the completion receipt and the trusted completion signal in the contract and pin them.
 ---
 
 # Context
@@ -35,3 +34,13 @@ status, so a report-time timeout is distinguishable from unfinished work.
 - The contract states that a `release` result at the recorded base hash is the completion signal the coordinator trusts over the run status when a run times out during reporting.
 - A contract test in `tests/test_skill.py` pins the stated rule.
 - `make test` passes.
+
+# Result
+
+`references/coordination.md` records the completion receipt and the trusted completion signal, and `tests/test_skill.py` pins the rule.
+
+- Under `## Worker handoff`, the reference now states: "A worker records a compact structured completion receipt before its long narrative report: the recorded base hash, the `release` result, a gate summary, and the commit SHAs. A `release` result at the recorded base hash is the completion signal the coordinator trusts over the run status: when a run times out while the worker is still composing prose, that release states the work is finished even though the run reported failure."
+- `tests/test_skill.py` adds the `_COMPLETION_RECEIPT_RULE` constant and `test_completion_receipt_is_the_trusted_signal`, which reads `references/coordination.md` through the existing `_reference` helper in the neighbours' literal-substring style. Removing the rule text fails the test (`1 failed`); restoring it passes.
+- No `SKILL.md` edit: the core already routes a worker to the coordination reference before handoff, so the always-loaded surface stays unchanged.
+
+Evidence: `uv run pytest tests/test_skill.py -q -k completion_receipt` passed 1; the deliberate-removal probe failed as intended; `make test` ran 366 passed, 3 skipped, 79 deselected; `braintree check` passed.

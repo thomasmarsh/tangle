@@ -84,6 +84,20 @@ _WRITE_SET_CLOSURE_RULE = (
     "stops and escalates for a path owned by another node or a shared hub",
 )
 
+# A worker records a compact completion receipt before its long narrative
+# report, and a `release` result at the recorded base hash is the completion
+# signal the coordinator trusts over the run status when a run times out while
+# the worker is still composing prose.
+_COMPLETION_RECEIPT_RULE = (
+    "records a compact structured completion receipt before its long "
+    "narrative report",
+    "the recorded base hash, the `release` result, a gate summary, and the "
+    "commit SHAs",
+    "A `release` result at the recorded base hash is the completion signal the "
+    "coordinator trusts over the run status",
+    "when a run times out while the worker is still composing prose",
+)
+
 # The durable-outcome boundary rule the admission decision added; it must not
 # regress out of the always-loaded core.
 _DURABLE_OUTCOME_BOUNDARY = (
@@ -303,6 +317,10 @@ def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
 
 def test_write_set_is_the_change_closure() -> None:
     _assert_contains(_reference("coordination"), _WRITE_SET_CLOSURE_RULE)
+
+
+def test_completion_receipt_is_the_trusted_signal() -> None:
+    _assert_contains(_reference("coordination"), _COMPLETION_RECEIPT_RULE)
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:

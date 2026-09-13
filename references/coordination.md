@@ -120,6 +120,13 @@ and moved path remains in that assigned write set, then release the matching
 claim. Report the base, touched paths, created paths, moved paths, dependency
 evidence, and test evidence to the coordinator.
 
+A worker records a compact structured completion receipt before its long
+narrative report: the recorded base hash, the `release` result, a gate summary,
+and the commit SHAs. A `release` result at the recorded base hash is the
+completion signal the coordinator trusts over the run status: when a run times
+out while the worker is still composing prose, that release states the work is
+finished even though the run reported failure.
+
 Serial work uses the same discipline without branches: self-assign one node and
 write set, claim it, keep content and status coherent, run
 `braintree check`, and do not leave a resolved status move uncommitted.
