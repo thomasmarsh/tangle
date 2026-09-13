@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T02:14:00Z
+updated: 2026-09-13T02:35:53Z
 summary: State the rule for internal, non-behavioral reuse of a resolved sibling's seam by widening visibility instead of duplicating it.
-next: Add the internal-reuse paragraph to the coordination reference and pin it.
 ---
 
 # Context
@@ -38,3 +37,26 @@ behavior.
 - The reference states that duplicating the seam inside the new module is preferred over escalating when reuse would otherwise copy the spelling.
 - A contract test in `tests/test_skill.py` pins the stated rule.
 - `make test` passes.
+
+# Result
+
+`references/coordination.md` states the internal-reuse rule as a compact
+paragraph immediately after the additive-field bullet: an internal,
+non-behavioral reuse change in a resolved node's module — widening an item to
+`pub(crate)`, or adding a `pub(crate)` helper an existing private item delegates
+to — is authored by the assigned worker without escalation when it changes no
+artifact byte, no public API, and no behavior. The worker records the widened
+items, the reason (one spelling instead of two), and the resolved owner in its
+own `# Result`; it does not edit the resolved node and does not bump its
+`context_rev`, because no consumer assumption changes. The paragraph states the
+boundary — visibility and `pub(crate)` factoring are not seam alterations unless
+a consumer outside the crate or an artifact shape changes — and states that
+duplicating the seam inside the new module is preferred over escalating when
+reuse would otherwise copy the spelling. No artifact byte, public API, or
+behavior changed, and no consumer assumption changed, so this node stays
+`context_rev` 1.
+
+Evidence: `tests/test_skill.py` pins the rule with `_INTERNAL_SEAM_REUSE_RULE`
+in `test_internal_reuse_of_a_resolved_seam_is_authored_by_the_consumer`;
+removing the paragraph from `references/coordination.md` fails that test.
+`make test` and `braintree check` pass.

@@ -116,6 +116,28 @@ _ADDITIVE_RESOLVED_SEAM_FIELD_RULE = (
     "needs a bump",
 )
 
+# An internal, non-behavioral reuse change in a resolved node's module — a
+# `pub(crate)` widening or helper — is authored by the assigned worker without
+# escalation when it changes no artifact byte, no public API, and no behavior:
+# the worker records the widened items, the reason, and the resolved owner,
+# stays out of the resolved node, does not bump its `context_rev`, and prefers
+# duplicating the seam over escalating when reuse would copy the spelling.
+_INTERNAL_SEAM_REUSE_RULE = (
+    "An internal, non-behavioral reuse change in a resolved node's module",
+    "widening an item to `pub(crate)`",
+    "adding a `pub(crate)` helper an existing private item delegates to",
+    "authored by the assigned worker without escalation when it changes no "
+    "artifact byte, no public API, and no behavior",
+    "records the widened items, the reason (one spelling instead of two), and "
+    "the resolved owner in its own `# Result`",
+    "does not edit the resolved node and does not bump its `context_rev`, "
+    "because no consumer assumption changes",
+    "Visibility and `pub(crate)` factoring are not seam alterations unless a "
+    "consumer outside the crate or an artifact shape changes",
+    "duplicating the seam inside the new module is preferred over escalating "
+    "when reuse would otherwise copy the spelling",
+)
+
 # Resolving a frontier child includes advancing the coordinating parent's
 # `next`, so the resolving worker owns that edit; when the handoff's write set
 # excludes the parent, the handoff must name the parent (or its `next`) or the
@@ -369,6 +391,10 @@ def test_completion_receipt_is_the_trusted_signal() -> None:
 
 def test_additive_field_on_a_resolved_seam_is_authored_by_the_consumer() -> None:
     _assert_contains(_reference("coordination"), _ADDITIVE_RESOLVED_SEAM_FIELD_RULE)
+
+
+def test_internal_reuse_of_a_resolved_seam_is_authored_by_the_consumer() -> None:
+    _assert_contains(_reference("coordination"), _INTERNAL_SEAM_REUSE_RULE)
 
 
 def test_parent_next_advance_names_the_write_set_exception() -> None:

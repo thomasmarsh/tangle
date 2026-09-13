@@ -85,6 +85,18 @@ write set before work begins.
   `# Result` and does not edit the resolved node; mechanical literal updates in
   the owner's tests stay inside the consumer's write set; and the coordinator
   decides at integration whether the owner's `context_rev` needs a bump.
+
+An internal, non-behavioral reuse change in a resolved node's module — widening
+an item to `pub(crate)`, or adding a `pub(crate)` helper an existing private item
+delegates to — is authored by the assigned worker without escalation when it
+changes no artifact byte, no public API, and no behavior. The worker records the
+widened items, the reason (one spelling instead of two), and the resolved owner
+in its own `# Result`; it does not edit the resolved node and does not bump its
+`context_rev`, because no consumer assumption changes. Visibility and `pub(crate)`
+factoring are not seam alterations unless a consumer outside the crate or an
+artifact shape changes, and duplicating the seam inside the new module is
+preferred over escalating when reuse would otherwise copy the spelling.
+
 - The assigned write set is the compile-and-golden closure of the approved
   change, not a crate directory: membership covers every file the change must
   touch, including exhaustive matches and struct literals on the changed types,
