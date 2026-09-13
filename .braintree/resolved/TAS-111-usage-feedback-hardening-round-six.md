@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T02:41:25Z
+updated: 2026-09-13T02:45:08Z
 summary: Fix or dispose the round-six Tangle feedback findings: incoming-future timestamps, write-set change closure, completion receipts, parent-next ownership, status-move staging, resolved-seam reuse, and legacy-vault migration announcement.
-next: Verify every child is resolved and the Done when criteria, then resolve this coordinator.
 ---
 
 # Context
@@ -45,3 +44,44 @@ regression tests wherever behavior changes.
 - [[TAS-117-authorized-additive-seam-change]] — Tangle `FBK-014`.
 - [[TAS-118-resolved-seam-internal-reuse]] — Tangle `FBK-015` finding 1.
 - [[TAS-119-announce-vault-migration]] — Tangle `FBK-015` finding 2.
+
+# Result
+
+Round six is closed: every confirmed finding is fixed, every Done-when bullet is
+met, and every child is resolved.
+
+- [[TAS-112-timestamp-clamp-rule]] — `SKILL.md` clamps an incoming `updated`
+  ahead of the host clock to `max(now, previous updated)` and notes the clamp,
+  pinned by `tests/test_skill.py`.
+- [[TAS-113-write-set-change-closure]] — `references/coordination.md` defines
+  the assigned write set as the compile-and-golden closure of the change and
+  states the report-or-escalate rule, pinned by `tests/test_skill.py`.
+- [[TAS-114-completion-receipt]] — `references/coordination.md` requires a
+  completion receipt and names the `release` result at the recorded base hash
+  as the trusted completion signal, pinned by `tests/test_skill.py`.
+- [[TAS-115-parent-next-advance-ownership]] — `SKILL.md` states the parent-next
+  write-set exception, `references/coordination.md` carries the detail, and
+  `braintree check` reports a stale route as `next-resolved-node`; pinned by
+  `tests/test_skill.py` and `tests/test_graph_check.py`.
+- [[TAS-116-status-move-staging]] — `SKILL.md` stages a status move with its
+  body edit in one commit and names the `git mv` pre-edit-blob trap, pinned by
+  `tests/test_skill.py`.
+- [[TAS-117-authorized-additive-seam-change]] — `references/coordination.md`
+  authorizes an additive, optional field on a resolved sibling's seam, pinned by
+  `tests/test_skill.py`.
+- [[TAS-118-resolved-seam-internal-reuse]] — `references/coordination.md` states
+  the internal, non-behavioral `pub(crate)` reuse rule for a resolved sibling's
+  seam, pinned by `tests/test_skill.py`.
+- [[TAS-119-announce-vault-migration]] — a legacy `nodes/` vault is migrated
+  with one stderr notice `migrated vault: nodes -> .braintree` and the reported
+  `path` names the resolved `.braintree` directory, pinned by
+  `tests/test_feedback_record.py` and `tests/test_vault.py`.
+
+Gate evidence: `make test` passed (ruff, mypy, `377 passed, 3 skipped, 79
+deselected`), `braintree check` reported `graph check: passed (145 nodes)`, and a
+scratch legacy-vault probe reproduced the migration notice on stderr with the
+reported `path` under `.braintree/proposed/`.
+
+Tangle `FBK-007` through `FBK-015` still live as source nodes in the Tangle
+vault and are Tangle's to resolve; disposing those source nodes is out of scope
+for this repository.
