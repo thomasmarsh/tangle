@@ -812,12 +812,18 @@ def plan_digest(document: Mapping[str, Any]) -> str:
 def plan_document(
     root: Path | None = None,
     repetitions: int = AUTHORITY_REPETITIONS,
+    revision: str | None = None,
 ) -> Json:
-    """Return the deterministic authority plan, including a plan digest."""
+    """Return the deterministic authority plan, including a plan digest.
+
+    ``revision`` overrides the Git source revision so ``verify`` can rebuild the
+    plan at the run's recorded revision instead of the current HEAD.
+    """
     base = _base(root)
     cases = load_cases(base)
     digest = case_digest(cases)
     episodes = build_plan(base, repetitions)
+    resolved_revision = source_revision(base) if revision is None else revision
     document: Json = {
         "protocol": AUTHORITY_PROTOCOL,
         "harness": AUTHORITY_HARNESS,
@@ -828,8 +834,8 @@ def plan_document(
         "reasoning_effort": AUTHORITY_REASONING_EFFORT,
         "memory_budget": AUTHORITY_MEMORY_BUDGET,
         "case_digest": digest,
-        "source_revision": source_revision(base),
-        "pins": pin_document(digest, source_revision(base)),
+        "source_revision": resolved_revision,
+        "pins": pin_document(digest, resolved_revision),
         "case_count": len(cases),
         "arm_count": len(AUTHORITY_ARMS),
         "repetitions": repetitions,
@@ -909,6 +915,7 @@ def _one_sample(
         "key": episode["key"],
         "case_id": case.case_id,
         "arm": episode["arm"],
+        "model": raw.get("model"),
         "repetition": episode["repetition"],
         "injection": case.injection,
         "control": episode["control"],
@@ -1432,7 +1439,10 @@ def verify(root: Path | None = None) -> list[str]:
     samples = committed.get("samples")
     if not isinstance(samples, list):
         return ["authority artifact carries no samples"]
-    recomputed = record(plan_document(base), samples, base)
+    revision = committed.get("source_revision")
+    if not isinstance(revision, str) or not revision:
+        return ["authority artifact carries no source revision"]
+    recomputed = record(plan_document(base, revision=revision), samples, base)
     if dict(committed) != recomputed:
         mismatched = sorted(
             str(key)

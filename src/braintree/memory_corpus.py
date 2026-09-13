@@ -681,7 +681,8 @@ def build_manifest(corpus: Sequence[Envelope]) -> Json:
             ),
             "conflict-norms": (
                 f"conflict-and-uncertainty gold cites {RESEARCH_THEORY} and the "
-                f"still-proposed [[{UNCERTAINTY_NODE}-uncertainty-provenance-security]]"
+                f"resolved [[{UNCERTAINTY_NODE}-uncertainty-provenance-security]] "
+                f"uncertainty and provenance workstream"
             ),
             "control-exception": (
                 "revision-and-conflict and transfer-interference-and-authority are "

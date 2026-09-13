@@ -199,7 +199,7 @@
   },
   "audit": {
     "boundary": "operative boundary is each case's query.observable_paths; the frozen source revision is the outer envelope",
-    "conflict-norms": "conflict-and-uncertainty gold cites research/agent-memory-theory-evaluation.md and the still-proposed [[TAS-127-uncertainty-provenance-security]]",
+    "conflict-norms": "conflict-and-uncertainty gold cites research/agent-memory-theory-evaluation.md and the resolved [[TAS-127-uncertainty-provenance-security]] uncertainty and provenance workstream",
     "control-exception": "revision-and-conflict and transfer-interference-and-authority are deliberately all memory-required"
   }
 }

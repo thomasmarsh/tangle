@@ -144,11 +144,14 @@ the decision that the class is frozen here and the size is out of corpus scope.
 
 The conflict-and-uncertainty cases ground their resolution norms in
 [`research/agent-memory-theory-evaluation.md`](agent-memory-theory-evaluation.md)
-and in the still-proposed
-[`TAS-127-uncertainty-provenance-security`](../.braintree/proposed/TAS-127-uncertainty-provenance-security.md).
-The validator requires the theory citation; the proposed node is recorded here
-as a known dependency on future work, so a later change to the uncertainty
-policy knows it may affect these norms.
+and in the resolved
+[`TAS-127-uncertainty-provenance-security`](../.braintree/resolved/TAS-127-uncertainty-provenance-security.md).
+The validator requires the theory citation; the node is recorded here as the
+dependency that owns the uncertainty policy, so a later change to that policy
+knows it may affect these norms. TAS-127's own authority case set lives
+separately in
+[`benchmark/memory-authority-cases.json`](../benchmark/memory-authority-cases.json)
+and never edits this corpus, so the digest is unchanged by that work.
 
 ## 8. Digest and verify mode
 
@@ -169,9 +172,10 @@ braintree benchmark corpus freeze   # re-validate and rewrite the manifest
 
 - Growth sizes are owned by the causal runner and the interference experiment,
   which instantiate the frozen classes.
-- The conflict norms depend on the still-proposed
-  [`TAS-127-uncertainty-provenance-security`](../.braintree/proposed/TAS-127-uncertainty-provenance-security.md);
-  that node's outcome may revise the norms.
+- The conflict norms cite the resolved
+  [`TAS-127-uncertainty-provenance-security`](../.braintree/resolved/TAS-127-uncertainty-provenance-security.md);
+  that node's authority case set and rate measurement did not change the corpus
+  digest or any conflict norm.
 - `research/agent-memory-evaluation-contract.md` was reconciled to the
   corpus-level control rule and the per-case operative boundary; the change
   bumped TAS-129 to `context_rev 2` and TAS-130 was re-pinned.

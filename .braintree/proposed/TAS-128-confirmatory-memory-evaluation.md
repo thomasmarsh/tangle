@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T19:56:56Z
+updated: 2026-09-13T20:12:41Z
 summary: Run the frozen confirmatory evaluation and settle the supported memory contract.
 next: Freeze the selected mechanisms and confirmatory protocol.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Gated on [[TAS-127-uncertainty-provenance-security]].
+Depends on [[TAS-127-uncertainty-provenance-security]] at context_rev 1.
 
 # Outcome
 
