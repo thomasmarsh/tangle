@@ -417,6 +417,43 @@ _PREMISE_CORRECTION_PROBE_STEP_ONLY = (
     "status, `context_rev`, and `updated`."
 )
 
+# An action-sentence `next` may carry no wikilink; the checker names the token it
+# treated as the frontier route instead of leaving the offending link to be found
+# by trial.
+_NEXT_ACTION_NO_WIKILINK_RULE = (
+    "A `next` written as an action sentence must contain no wikilink",
+    "`braintree check` names the token it treated as the frontier route",
+)
+
+# Falsification probe for the no-wikilink rule: the pre-change sentence named
+# the accepted `next` forms but never forbade a wikilink inside an action
+# sentence, so the guard must reject it. The probe fails when the guard stops
+# detecting the rule rather than when the sentence merely reflows.
+_NEXT_ACTION_NO_WIKILINK_PROBE = (
+    "A node's `next` is the one deliberate frontier route: the only accepted "
+    "forms are a plain action sentence, `Do X.`, or a single `[[direct-child]]` "
+    "link."
+)
+
+# The dependency search recipes anchor to the start of an authored pin or gate
+# line rather than the command text where a node or the reference quotes it, so a
+# zero-consumer reading needs no inspection; the self-match hazard is stated.
+_ANCHORED_DEPENDENCY_SEARCH_RULE = (
+    "line-anchored",
+    "^Gated on \\[\\[DEF-auth-protocol\\]\\]",
+    "^Depends on \\[\\[[^]]+\\]\\] at context_rev [0-9]+\\.",
+    "not the command text where",
+)
+
+# Falsification probe for the anchored recipe: the pre-change recipes used a
+# literal `-F` search for the command text, which self-matches the quote, so the
+# guard must reject it. It fails when the guard stops detecting the anchor rather
+# than when the recipe merely reflows.
+_ANCHORED_DEPENDENCY_SEARCH_PROBE = (
+    "`rg -n -F 'Depends on [[ID]] at context_rev '` searches for every "
+    "context-bearing dependency"
+)
+
 # Literal grammar the graph checker and clients genuinely depend on. Each token
 # is emitted or parsed, not narrative: status directories, canonical edges, the
 # pin and gate forms, frontmatter keys, and the ``Refs:`` footer convention.
@@ -639,6 +676,29 @@ def test_premise_correction_guard_rejects_the_loop_step_alone() -> None:
     """Falsification probe: the guard must reject a step with no correction rule."""
     with pytest.raises(AssertionError):
         _assert_contains(_PREMISE_CORRECTION_PROBE_STEP_ONLY, _PREMISE_CORRECTION_RULE)
+
+
+def test_action_sentence_next_forbids_a_wikilink() -> None:
+    _assert_contains(_read(_SKILL), _NEXT_ACTION_NO_WIKILINK_RULE)
+
+
+def test_no_wikilink_guard_rejects_the_pre_change_accepted_forms() -> None:
+    """Falsification probe: the guard must reject the accepted-forms sentence."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_NEXT_ACTION_NO_WIKILINK_PROBE, _NEXT_ACTION_NO_WIKILINK_RULE)
+
+
+def test_dependency_search_recipes_are_line_anchored() -> None:
+    surface = _reference("dependencies") + _reference("coordination")
+    _assert_contains(surface, _ANCHORED_DEPENDENCY_SEARCH_RULE)
+
+
+def test_anchored_recipe_guard_rejects_the_unanchored_command() -> None:
+    """Falsification probe: the guard must reject an unanchored `-F` recipe."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _ANCHORED_DEPENDENCY_SEARCH_PROBE, _ANCHORED_DEPENDENCY_SEARCH_RULE
+        )
 
 
 def test_updated_ahead_of_the_host_clock_is_clamped() -> None:

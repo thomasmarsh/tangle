@@ -20,9 +20,13 @@ not change `context_rev`, so completion is detected from the status directory. A
 dependency whose target is not yet `resolved` has no consumable context to pin:
 record it as a gate instead of a context edge, `Gated on
 [[DEF-auth-protocol]].` in `# Context`, leaving the node `proposed` until it can
-execute, and never pin the gate. The exact search
-`rg -n -F 'Gated on [[DEF-auth-protocol]]' .braintree` finds every gate on a target;
-replace the gate with the pinned `Depends on` edge once the target resolves.
+execute, and never pin the gate. Find every gate on a target with the
+line-anchored `rg -n '^Gated on \[\[DEF-auth-protocol\]\]\.' .braintree`, and every
+pin with `rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .braintree`.
+The `^` anchor matches an authored pin or gate line, not the command text where a
+node or this reference quotes it, so a zero-consumer reading needs no inspection;
+an unanchored `-F` search for the command text self-matches the quote and forces
+one. Replace the gate with the pinned `Depends on` edge once the target resolves.
 
 `braintree check` reports a pinned dependency whose target is `proposed`,
 `active`, or `blocked`, and `--allow-stale` does not relax that check because it

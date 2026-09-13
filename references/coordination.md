@@ -229,11 +229,13 @@ establish whether that partial state is behavior-preserving.
 The coordinator integrates worker branches one at a time. Never blindly
 auto-merge an upstream change to the assigned node or divergent status paths:
 reject that handoff or perform manual semantic reconciliation before integration.
-After each integration, run `braintree check`, use exact
-`rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing
-dependency changed by that handoff, and reconcile stale consumers before their
-dependent execution. Resolve a coordinating parent only after its required child
-evidence has been integrated.
+After each integration, run `braintree check`, use the line-anchored
+`rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .braintree` search for
+every context-bearing dependency changed by that handoff, and reconcile stale
+consumers before their dependent execution. The `^` anchor matches an authored pin
+line rather than the command text where a node quotes it, so a zero-consumer
+reading needs no inspection. Resolve a coordinating parent only after its required
+child evidence has been integrated.
 
 Resolution authority is the coordinator's. After required children are
 integrated, the coordinator alone performs a coordinating parent's resolving

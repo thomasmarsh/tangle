@@ -28,7 +28,7 @@ Finding codes by class:
   ``index-focus-without-active``, ``index-focus-target``.
 - Routes and frontier: ``route-root-hub-unrouted``, ``route-primary-missing``,
   ``route-cycle``, ``route-orphan``, ``next-multiple-frontiers``,
-  ``next-not-direct-child``, ``next-resolved-node``.
+  ``next-action-wikilink``, ``next-not-direct-child``, ``next-resolved-node``.
 """
 
 from __future__ import annotations
@@ -150,6 +150,7 @@ FINDING_CODES: dict[str, str] = {
     "route-cycle": "parent route forms a cycle",
     "route-orphan": "unfinished node cannot reach a hub",
     "next-multiple-frontiers": "next names more than one frontier node",
+    "next-action-wikilink": "action-sentence next contains a wikilink",
     "next-not-direct-child": "next frontier is not a direct child",
     "next-resolved-node": "next frontier is already resolved",
 }
@@ -765,46 +766,62 @@ def _validate(
         if not isinstance(next_value, str) or next_value == "":
             continue
         frontier = _WIKILINK.findall(next_value)
+        # The only accepted wikilink form is a lone ``[[direct-child]]`` route;
+        # a ``next`` written as an action sentence carries no wikilink at all.
+        lone_link = _WIKILINK.fullmatch(next_value.strip())
         if len(frontier) > 1:
             errors.append(
                 Finding(
                     "next-multiple-frontiers",
                     node.path,
-                    f"{node.path}: next names multiple frontier nodes",
+                    f"{node.path}: next names multiple frontier nodes: "
+                    + ", ".join(f"[[{target}]]" for target in frontier),
                 )
             )
-        if len(frontier) == 1 and routes.get(frontier[0]) != node.name:
+        elif frontier and lone_link is None:
+            # The checker treated an action sentence's embedded link as the
+            # frontier route; name the offending token so it need not be found
+            # by trial.
             errors.append(
                 Finding(
-                    "next-not-direct-child",
+                    "next-action-wikilink",
                     node.path,
-                    f"{node.path}: frontier is not a direct child",
+                    f"{node.path}: action-sentence next contains a wikilink: "
+                    f"[[{frontier[0]}]]",
                 )
             )
-        if (
-            len(frontier) == 1
-            and node.status != "resolved"
-            and routes.get(frontier[0]) == node.name
-        ):
-            child_nodes = by_name.get(frontier[0])
-            if child_nodes is not None and child_nodes[0].status == "resolved":
-                # A pending advance — a resolved frontier child whose advance a
-                # handoff still owes — and a genuine stale route are the same
-                # Markdown, so a stateless checker cannot derive the difference
-                # from file content. A declaration names the pending advance;
-                # every undeclared instance remains this failure.
-                if (
-                    node.name not in allowed_pending
-                    and node.node_id not in allowed_pending
-                ):
-                    errors.append(
-                        Finding(
-                            "next-resolved-node",
-                            node.path,
-                            f"{node.path}: next frontier [[{frontier[0]}]] is already "
-                            "resolved",
-                        )
+        elif lone_link is not None:
+            target = lone_link.group(1)
+            if routes.get(target) != node.name:
+                errors.append(
+                    Finding(
+                        "next-not-direct-child",
+                        node.path,
+                        f"{node.path}: next frontier [[{target}]] is not a direct "
+                        "child",
                     )
+                )
+            elif node.status != "resolved":
+                child_nodes = by_name.get(target)
+                if child_nodes is not None and child_nodes[0].status == "resolved":
+                    # A pending advance — a resolved frontier child whose advance
+                    # a handoff still owes — and a genuine stale route are the
+                    # same Markdown, so a stateless checker cannot derive the
+                    # difference from file content. A declaration names the
+                    # pending advance; every undeclared instance remains this
+                    # failure.
+                    if (
+                        node.name not in allowed_pending
+                        and node.node_id not in allowed_pending
+                    ):
+                        errors.append(
+                            Finding(
+                                "next-resolved-node",
+                                node.path,
+                                f"{node.path}: next frontier [[{target}]] is already "
+                                "resolved",
+                            )
+                        )
 
     for node in nodes:
         if node.status == "resolved":

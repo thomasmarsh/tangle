@@ -61,7 +61,7 @@ def _seed(nodes: Path) -> None:
         "context_rev: 1",
         "updated: 2026-09-10T00:00:00Z",
         "summary: Parent.",
-        "next: Continue [[TAS-002-child]].",
+        'next: "[[TAS-002-child]]"',
         "---",
         "",
         "Area [[IDX-001-root]].",
@@ -275,11 +275,44 @@ def test_action_next_beside_a_resolved_child_passes(
     _resolve_child(nodes)
     _replace(
         nodes / "active" / "TAS-001-parent.md",
-        "next: Continue [[TAS-002-child]].",
+        'next: "[[TAS-002-child]]"',
         "next: Audit the resolved child outcome.",
     )
     assert graph_check.main([str(nodes)]) == 0
     assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_action_sentence_next_containing_a_wikilink_names_the_token(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An action-sentence next carries no wikilink; the checker names the token.
+
+    The embedded link resolves to a live direct child, so only the
+    action-sentence rule makes this a finding; the diagnostic must name the
+    token rather than leave it to be found by trial.
+    """
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        'next: "[[TAS-002-child]]"',
+        "next: Move this node to resolved once [[TAS-002-child]] closes.",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "action-sentence next contains a wikilink: [[TAS-002-child]]" in err
+
+
+def test_non_child_route_names_the_offending_token(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A lone route link that is not a direct child is named in the finding."""
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        'next: "[[TAS-002-child]]"',
+        'next: "[[DEF-001-contract]]"',
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "next frontier [[DEF-001-contract]] is not a direct child" in err
 
 
 def test_node_without_children_is_not_a_stale_route(
@@ -1131,16 +1164,24 @@ def _mut_route_orphan(nodes: Path) -> None:
 def _mut_next_multiple_frontiers(nodes: Path) -> None:
     _replace(
         nodes / "active" / "TAS-001-parent.md",
-        "next: Continue [[TAS-002-child]].",
+        'next: "[[TAS-002-child]]"',
         "next: Continue [[TAS-002-child]] and [[DEF-001-contract]].",
+    )
+
+
+def _mut_next_action_wikilink(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        'next: "[[TAS-002-child]]"',
+        "next: Move this node to resolved once [[TAS-002-child]] closes.",
     )
 
 
 def _mut_next_not_direct_child(nodes: Path) -> None:
     _replace(
         nodes / "active" / "TAS-001-parent.md",
-        "next: Continue [[TAS-002-child]].",
-        "next: Continue [[DEF-001-contract]].",
+        'next: "[[TAS-002-child]]"',
+        'next: "[[DEF-001-contract]]"',
     )
 
 
@@ -1214,6 +1255,7 @@ _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
         _mut_next_multiple_frontiers,
         "next-multiple-frontiers",
     ),
+    "next-action-wikilink": (_mut_next_action_wikilink, "next-action-wikilink"),
     "next-not-direct-child": (_mut_next_not_direct_child, "next-not-direct-child"),
     "next-resolved-node": (_mut_next_resolved_node, "next-resolved-node"),
 }

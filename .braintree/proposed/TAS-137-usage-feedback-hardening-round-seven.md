@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T22:41:24Z
+updated: 2026-09-13T22:47:36Z
 summary: Fix or dispose the round-seven Tangle feedback findings: premise correction, resolved-child completion, allocation visibility, next/search diagnostics, handoff artifact naming, definition completeness, derived artifacts, session slices, and summary integrity.
-next: "[[TAS-141-next-and-pin-search-diagnostics]]"
+next: "[[TAS-142-handoff-names-referenced-artifacts]]"
 ---
 
 # Context
