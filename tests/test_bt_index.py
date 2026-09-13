@@ -554,7 +554,7 @@ def test_next_and_orient_report_the_same_frontier_candidates(
 
 def test_frontier_matches_markdown_on_live_vault(run_bt: RunBt) -> None:
     """The frontier verb agrees with the Markdown recipe on the shipped vault."""
-    nodes = _ROOT / "nodes"
+    nodes = _ROOT / ".braintree"
     env = {
         "BT_NODES_DIR": str(nodes),
         "BT_SIDECAR_DIR": None,

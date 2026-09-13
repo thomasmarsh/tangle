@@ -9,8 +9,9 @@ Markdown is the durable, human-visible authority: keep the vault directly editab
 
 ## Vault shape
 
-- Root is the directory containing `nodes/index-map.md`.
-- Each node lives in exactly one fixed status directory: `nodes/proposed/`, `nodes/active/`, `nodes/blocked/`, or `nodes/resolved/`. A status directory exists only once a node has that status; no empty directory is required.
+- Root is the directory containing `.braintree/index-map.md`.
+- Each node lives in exactly one fixed status directory: `.braintree/proposed/`, `.braintree/active/`, `.braintree/blocked/`, or `.braintree/resolved/`. A status directory exists only once a node has that status; no empty directory is required.
+- `braintree` resolves the vault at `./.braintree` by default; `BT_NODES_DIR` or an explicit directory operand overrides it. A legacy `nodes/` vault is migrated to `.braintree/` in place by `braintree migrate` or by the default resolver, leaving the Markdown bytes unchanged.
 - Names are `<ID>-<short-slug>.md`; `TAS`/`THO`/`DEF`/`IDX`/`FBK` express type. Filename supplies ID/type, directory supplies status; never duplicate them in frontmatter.
 - Store each relationship in one canonical direction: `Parent` on the child, `Area` on the assigned node, `Depends on` on the consumer, `Superseded by` on the obsolete node, `Indexes` on `index-map.md`. Derive child, parent-of, indexed-by, and backlink views by search; never store reciprocal edges.
 
@@ -69,13 +70,13 @@ Load **dependencies** (`braintree help dependencies`) for staleness, the semanti
 
 ## Read and execute loop
 
-1. Read `nodes/index-map.md` when orienting or when no direct node pointer was supplied.
+1. Read `.braintree/index-map.md` when orienting or when no direct node pointer was supplied.
 2. With no pointer, run `braintree frontier` for frontier candidates and resolve the candidate list through the coordinator as above. `# Focus`, `priority`, and `active` are not the frontier.
-3. Locate a known node with a filename search such as `find nodes -name 'TAS-101-*'`.
+3. Locate a known node with a filename search such as `find .braintree -name 'TAS-101-*'`.
 4. For each context-bearing dependency, compare its header `context_rev` with the pin and confirm it is `resolved`; follow only mismatched, blocking, or required pointers.
 5. Execute the smallest coherent unit and update summary, `next`, evidence, status, `context_rev`, and `updated`.
 
-One orientation pass is enough. Never bulk-dump `nodes/`; filter and count in the shell, then open only the fragments needed. If a search returns nothing, report it rather than retrying with different flags. Report graph lists in compact TOON with only the fields needed, state zero results explicitly, and name the resolved node, new status, and advanced frontier in a completion report.
+One orientation pass is enough. Never bulk-dump `.braintree/`; filter and count in the shell, then open only the fragments needed. If a search returns nothing, report it rather than retrying with different flags. Report graph lists in compact TOON with only the fields needed, state zero results explicitly, and name the resolved node, new status, and advanced frontier in a completion report.
 
 ## References and command help
 

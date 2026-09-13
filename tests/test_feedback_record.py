@@ -325,7 +325,7 @@ def test_record_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> 
 
 _CAPTURE_BODY = {
     "THO": "# Question\n\nDoes a claim survive a worktree move?",
-    "DEF": "# Invariant\n\nThe vault root holds nodes/index-map.md.",
+    "DEF": "# Invariant\n\nThe vault root holds .braintree/index-map.md.",
     "DEC": (
         "# Decision\n\nKeep the sidecar derived.\n\n"
         "# Rationale\n\nMarkdown stays authoritative.\n\n"
@@ -447,7 +447,7 @@ def test_concurrent_capture_with_different_slugs_never_duplicates_an_id(
     assert len(set(numbers)) == workers
     # The reservation directory is local coordination state, not a node, so the
     # checker still accepts the vault with it present.
-    assert (nodes / ".braintree" / "reservations").is_dir()
+    assert (nodes / "reservations").is_dir()
     assert graph_check.main([str(nodes)]) == 0
 
 

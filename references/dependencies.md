@@ -21,7 +21,7 @@ dependency whose target is not yet `resolved` has no consumable context to pin:
 record it as a gate instead of a context edge, `Gated on
 [[DEF-auth-protocol]].` in `# Context`, leaving the node `proposed` until it can
 execute, and never pin the gate. The exact search
-`rg -n -F 'Gated on [[DEF-auth-protocol]]' nodes` finds every gate on a target;
+`rg -n -F 'Gated on [[DEF-auth-protocol]]' .braintree` finds every gate on a target;
 replace the gate with the pinned `Depends on` edge once the target resolves.
 
 `braintree check` reports a pinned dependency whose target is `proposed`,
@@ -35,8 +35,8 @@ diagnostic.
 Commit the semantic `context_rev` bump with the bumped node alone, leaving
 pinned consumers stale on purpose so the exact backlink search finds them. That
 commit runs the sanctioned staged-staleness gate
-`braintree check --allow-stale nodes`, which still rejects a missing or malformed
-pin and relaxes only the revision equality; plain `braintree check nodes`
+`braintree check --allow-stale`, which still rejects a missing or malformed
+pin and relaxes only the revision equality; plain `braintree check`
 remains the normal gate everywhere else.
 
 Reconciliation is separate work owned by each consumer: reread the dependency,

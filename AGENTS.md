@@ -52,10 +52,10 @@ or ad hoc notes.
 1. Read [`SKILL.md`](SKILL.md) before starting, and follow its contracts for
    the vault, node admission, indexes, reachability, dependency revisions, and
    mutation rules.
-2. Treat `nodes/` as the authoritative vault. Markdown is the durable,
+2. Treat `.braintree/` as the authoritative vault. Markdown is the durable,
    human-visible authority; the SQLite sidecar is derived, disposable local
    coordination state. Never edit the sidecar database directly.
-3. Work from the graph: orient through `nodes/index-map.md`, derive the
+3. Work from the graph: orient through `.braintree/index-map.md`, derive the
    frontier from hub membership and each coordinating node's `next`, and
    prefer advancing an existing node over creating a new one. Admit a new node
    only when its outcome is likely to change a future decision or action.
@@ -65,13 +65,13 @@ or ad hoc notes.
 5. Validate graph mutations before finishing:
 
    ```sh
-   braintree check nodes
-   braintree index nodes   # optional hybrid sidecar index
+   braintree check
+   braintree index   # optional hybrid sidecar index
    ```
 
    A commit that deliberately stages a semantic `context_rev` bump without yet
    reconciling its pinned consumers runs the sanctioned staged-staleness gate
-   instead: `braintree check --allow-stale nodes`. It still requires every
+   instead: `braintree check --allow-stale`. It still requires every
    context edge to be pinned and relaxes only the revision equality. Reconcile
    each consumer before it executes and before finishing, so the plain gate
    passes and a shipped vault has no staged staleness.

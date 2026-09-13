@@ -16,7 +16,7 @@ import os
 import sys
 from collections.abc import Sequence
 
-from . import sidecar
+from . import sidecar, vault
 from .node_record import (
     AllocationError,
     discover_route,
@@ -88,7 +88,7 @@ def _render(
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the ``braintree feedback record`` command and return the exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
-    nodes_dir = os.environ.get("BT_NODES_DIR", "nodes")
+    nodes_dir: str | None = None
     route: str | None = None
     explicit_id: str | None = None
     summary: str | None = None
@@ -139,6 +139,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(field("error", f"braintree feedback record requires {', '.join(missing)}"))
         return 2
 
+    nodes_dir = vault.resolve(nodes_dir)
     if not os.path.isdir(nodes_dir):
         print(field("error", f"nodes directory does not exist: {nodes_dir}"))
         print(

@@ -40,6 +40,7 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from . import vault
 from .revision import reported_version
 from .toon import field, table
 
@@ -884,7 +885,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             print("error: unknown option", file=sys.stderr)
             return 1
-    nodes_dir = args.pop(0) if args else "nodes"
+    nodes_dir = args.pop(0) if args else vault.resolve()
     if args:
         print(_USAGE)
         return 2

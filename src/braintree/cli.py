@@ -16,14 +16,14 @@ import time
 from collections.abc import Callable, Sequence
 
 from . import help as help_module
-from . import index, semantic, sidecar
+from . import index, semantic, sidecar, vault
 from .revision import reported_version
 from .toon import escape, field
 
 __all__ = ["main"]
 
 _USAGE = (
-    "braintree [status|location|init|allocate PREFIX|"
+    "braintree [status|location|init|migrate [ROOT]|allocate PREFIX|"
     "claim NODE AGENT --base-hash HASH [--lease-seconds N]|"
     "release NODE AGENT --base-hash HASH|index [NODES]|"
     "search QUERY [--limit N] [--status S] [--type T] [--priority P] "
@@ -39,6 +39,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("status", "show the current sidecar state"),
     ("location", "show the stable project identity and database path"),
     ("init", "create or repair the local sidecar"),
+    ("migrate [ROOT]", "rename a legacy nodes/ vault to .braintree/"),
     ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
     (
         "claim NODE AGENT --base-hash HASH [--lease-seconds N]",
@@ -163,7 +164,8 @@ def _print_fields(fields: Sequence[tuple[str, str]]) -> None:
 
 
 def _nodes_directory() -> str:
-    return os.environ.get("BT_NODES_DIR", "nodes")
+    """Return the vault directory, migrating a legacy ``nodes/`` when found."""
+    return vault.resolve()
 
 
 def _require_nodes_directory() -> str | None:
@@ -1045,6 +1047,31 @@ def _reconcile(args: list[str]) -> int:
     return 0
 
 
+def _migrate(args: list[str]) -> int:
+    """Rename a legacy ``nodes/`` vault to ``.braintree/`` under ``ROOT``."""
+    if len(args) > 2:
+        return _usage_error("migrate accepts at most one ROOT directory")
+    root = args[1] if len(args) == 2 else os.getcwd()
+    if not os.path.isdir(root):
+        print(field("error", f"root directory does not exist: {os.path.abspath(root)}"))
+        print(field("help", "Run from the project root or pass its directory."))
+        return 1
+    result = vault.migrate(root)
+    if result is None:
+        print(field("result", "no-op"))
+        print(
+            field(
+                "detail",
+                "no legacy nodes/index-map.md vault without a .braintree directory",
+            )
+        )
+        return 0
+    print(field("result", "migrated"))
+    print(field("source", result.source))
+    print(field("destination", result.destination))
+    return 0
+
+
 def _dispatch(command: str, args: list[str]) -> int:
     global _ACTIVE_COMMAND
     _ACTIVE_COMMAND = command
@@ -1074,6 +1101,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         print(field("result", "initialized"))
         _print_fields(sidecar.location_fields())
         return 0
+    if command == "migrate":
+        return _migrate(args)
     if command == "allocate":
         return _allocate(args)
     if command == "claim":

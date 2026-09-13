@@ -12,7 +12,7 @@ This is not a general-purpose note-taking system or a replacement for every coll
 
 ## Model in brief
 
-Each concern is stored as a small Markdown node. Directory placement is the authoritative workflow status, filenames provide stable identity and type, and wikilinks express relationships. Each relationship has one stored direction: `Parent` lives on the child, `Area` on its assigned node, context dependencies on the consumer, `Superseded by` on obsolete work, and `Indexes` on a deliberate route; inverse child, parent-of, indexed-by, and backlink views are searches. A compact `nodes/index-map.md` routes to durable `IDX` root hubs without duplicating every node. Every non-root node has one primary `Parent` or `Area` link, so unfinished work must reach a hub (or a deliberate Focus route) instead of becoming an orphan. Local semantic `context_rev` values and dependency pins make stale assumptions discoverable without a shared global ledger, without treating every edit as a consumer-visible change. Status is deliberately not stored in stationary node metadata or a symlink/index view: the directory is the one authoritative status representation.
+Each concern is stored as a small Markdown node. Directory placement is the authoritative workflow status, filenames provide stable identity and type, and wikilinks express relationships. Each relationship has one stored direction: `Parent` lives on the child, `Area` on its assigned node, context dependencies on the consumer, `Superseded by` on obsolete work, and `Indexes` on a deliberate route; inverse child, parent-of, indexed-by, and backlink views are searches. A compact `.braintree/index-map.md` routes to durable `IDX` root hubs without duplicating every node. Every non-root node has one primary `Parent` or `Area` link, so unfinished work must reach a hub (or a deliberate Focus route) instead of becoming an orphan. Local semantic `context_rev` values and dependency pins make stale assumptions discoverable without a shared global ledger, without treating every edit as a consumer-visible change. Status is deliberately not stored in stationary node metadata or a symlink/index view: the directory is the one authoritative status representation.
 
 Nodes are an execution-memory admission boundary, not a transcript. Retain durable knowledge and decisions, executable tasks, bugs, debt, blockers, and future features only when they could change a later decision or action or materially reduce future resumption cost. Independent resumability is necessary but insufficient for a new node. Agent, write-set, handoff, failed-check, routine-verification, incidental-cleanup, and mechanical-cleanup boundaries alone stay in the current node's `next`, result, evidence, or handoff; a fresh worker may continue that node. Exclude tool logs, routine narration or status, copied source material, and observations without foreseeable action value.
 
@@ -28,7 +28,7 @@ Markdown is authoritative for prose, wikilinks, context revisions and dependency
 
 ```sh
 braintree init
-braintree index nodes
+braintree index
 braintree search 'authentication' --limit 10
 braintree allocate TAS
 ```
@@ -173,12 +173,12 @@ braintree benchmark quality emit
 Installed projects validate the current graph with the bundled Markdown checker (which needs no sidecar) and query the optional index from any project root:
 
 ```sh
-braintree check nodes
-braintree index nodes
+braintree check
+braintree index
 braintree search 'authentication' --limit 10
 ```
 
-`braintree check` is read-only and intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
+`braintree check` is read-only apart from the one-time legacy-layout migration described below and is intended for grooming or CI. It checks node identities and links, required frontmatter and lifecycle rules, canonical relationships and frontiers, dependency-pin syntax and revision drift, and primary-route reachability/cycles. Normal graph reads and mutations do not require it.
 
 The read-only `braintree feedback scan` collector gathers `FBK` feedback from one or more external vaults without a sidecar or network access, and never writes to the scanned vault:
 
@@ -188,23 +188,23 @@ braintree feedback scan /path/to/other-vault
 
 It prints compact TOON with each feedback node's vault, id, status, Braintree revision, and summary, and states `feedback: 0 nodes` when there is none.
 
-The `braintree feedback record` writer is the recording half of the same mechanism. Run from a consuming project's vault root, it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub unless `--route` overrides it, stamps the revision from the installed record, and writes `nodes/proposed/FBK-<n>-<slug>.md`:
+The `braintree feedback record` writer is the recording half of the same mechanism. Run from a consuming project's vault root, it allocates the next `FBK` id from Markdown, routes the node to the vault's root hub unless `--route` overrides it, stamps the revision from the installed record, and writes `.braintree/proposed/FBK-<n>-<slug>.md`:
 
 ```sh
 braintree feedback record \
   --attempted '...' --friction '...' --improvement '...'
 ```
 
-`--nodes` selects a `nodes/` directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `braintree check` accepts. Both capture commands reserve the automatically chosen id atomically before writing the file: through the project sidecar counter when the sidecar exists and the target `nodes/` directory is inside the project's own worktree, and otherwise through a vault-local `nodes/.braintree/` reservation that is collision-safe for callers sharing that vault but does not span worktrees.
+`--nodes` selects a vault directory other than the current one, and `--id`, `--summary`, and `--slug` override the allocated id, the derived summary, and the derived slug. The result is a valid, routed `FBK` node that `braintree check` accepts. Both capture commands reserve the automatically chosen id atomically before writing the file: through the project sidecar counter when the sidecar exists and the target `.braintree/` directory is inside the project's own worktree, and otherwise through a vault-local `.braintree/reservations/` reservation that is collision-safe for callers sharing that vault but does not span worktrees.
 
 ## Layout
 
-`SKILL.md` is the portable instruction entrypoint, and `references/coordination.md`, `references/dependencies.md`, and `references/authoring.md` are its canonical topical references, rendered by `braintree help TOPIC`. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors, copy the skill and its reference tree into place, and generate the `<root>/.local/bin/braintree` command. `braintree` exposes `check`, `feedback scan`, `feedback record`, the index and coordination verbs, and a `benchmark` group for the development benchmarks; it hides the implementation language, package layout, and toolchain behind one command. The installer also writes a generated `installed-revision` stamp recording the semantic version plus the source revision it was copied from, and `braintree --version` reports it (`0.5.0+g1b58d57`, or `0.5.0+unknown` when the source revision cannot be determined). Compare the public `<version>` when deciding whether an installed skill and a vault are compatible; the `+<short-sha>` build metadata is provenance, not a compatibility ordering.
+`SKILL.md` is the portable instruction entrypoint, and `references/coordination.md`, `references/dependencies.md`, and `references/authoring.md` are its canonical topical references, rendered by `braintree help TOPIC`. `agents/openai.yaml` is Codex-specific display metadata. `scripts/install.sh` is the POSIX-shell, AXI-oriented installer single source of truth and selects the Codex, Claude Code, or pi destination; `scripts/install-claude.sh` is its Claude Code wrapper. They return compact TOON-style fields on stdout, including structured errors, copy the skill and its reference tree into place, and generate the `<root>/.local/bin/braintree` command. `braintree` exposes `check`, `feedback scan`, `feedback record`, the index and coordination verbs, and a `benchmark` group for the development benchmarks; it hides the implementation language, package layout, and toolchain behind one command. The installer also writes a generated `installed-revision` stamp recording the semantic version plus the source revision it was copied from, and `braintree --version` reports it (`0.6.0+g1b58d57`, or `0.6.0+unknown` when the source revision cannot be determined). Compare the public `<version>` when deciding whether an installed skill and a vault are compatible; the `+<short-sha>` build metadata is provenance, not a compatibility ordering.
 
 A vault uses this shape:
 
 ```text
-nodes/
+.braintree/
   index-map.md
   proposed/
   active/
@@ -212,9 +212,11 @@ nodes/
   resolved/
 ```
 
-The status directory and node filename are authoritative. Node frontmatter stores only a semantic `context_rev`, update time, a concise summary, and optional priority, next action, or exceptional disposition. `context_rev` changes only when a pinned consumer should reread the node; `updated` changes for every mutation, while Git retains edit history. Context-bearing links pin the dependency context revision they were last reconciled against. `nodes/index-map.md` holds focus, root-hub routes, and query recipes; it is not a copied node catalog and is not rewritten after every mutation. Hubs do not catalog members: `Parent` and `Area` backlinks provide membership, while a parent’s `next` may deliberately route to one child at the current execution frontier.
+`braintree` resolves the vault at `./.braintree` by default; `BT_NODES_DIR` or an explicit directory operand overrides it. A project that still holds a `nodes/index-map.md` vault and no `.braintree/` is migrated in place by `braintree migrate`, and by the default resolver without a manual step, leaving the Markdown bytes unchanged. The `reservations/` and `.obsidian/` directories inside the vault are local state and stay untracked.
 
-`DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. `FBK` nodes record Braintree friction for cross-project collection: they carry the installed `braintree_revision` and an `Attempted:`/`Friction:`/`Improvement:` `# Feedback` section, so `find nodes -name 'FBK-*.md'` discovers feedback from Markdown alone, and the read-only `braintree feedback scan` collector gathers those nodes from external vaults for triage into this graph. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
+The status directory and node filename are authoritative. Node frontmatter stores only a semantic `context_rev`, update time, a concise summary, and optional priority, next action, or exceptional disposition. `context_rev` changes only when a pinned consumer should reread the node; `updated` changes for every mutation, while Git retains edit history. Context-bearing links pin the dependency context revision they were last reconciled against. `.braintree/index-map.md` holds focus, root-hub routes, and query recipes; it is not a copied node catalog and is not rewritten after every mutation. Hubs do not catalog members: `Parent` and `Area` backlinks provide membership, while a parent’s `next` may deliberately route to one child at the current execution frontier.
+
+`DEF` nodes capture invariants; `DEC` nodes capture settled choices with concise Decision, Rationale, and Consequences sections. `FBK` nodes record Braintree friction for cross-project collection: they carry the installed `braintree_revision` and an `Attempted:`/`Friction:`/`Improvement:` `# Feedback` section, so `find .braintree -name 'FBK-*.md'` discovers feedback from Markdown alone, and the read-only `braintree feedback scan` collector gathers those nodes from external vaults for triage into this graph. A resolved definition or decision means the work of establishing that knowledge is complete, not that it has expired: it remains current unless its sparse `disposition` is `deprecated` or `superseded`.
 
 Decompose only when work reaches an independently resumable outcome, blocker, dependency, or verification boundary that also has durable execution-memory value; do not create a speculative child tree. One node owns one durable outcome or decision, not an estimated session, commit, agent, or amount of code, so one node may span sessions and one session may advance several nodes. Reassess that boundary only when execution reveals evidence — split at an independently acceptable, verifiable, consumable, blocked, or resumable outcome that retains durable execution-memory value, or consolidate nodes that share one outcome, completion evidence, and rollback boundary — never merely because a session ended, an agent changed, several commits landed, or the work is bigger or smaller than expected. The optional similarity, cluster, and digest answers are advisory support after that evidence appears; no checker or command has semantic authority over scope. A coordinating task states its own outcome and completion criteria, and its `next` names one current action or direct child frontier rather than cataloging children. Child completion is evidence, not an automatic parent resolution: resolve the parent only when its own criteria and evidence are complete and its created children are resolved or explicitly disposed.
 

@@ -39,6 +39,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("status", "show the current coordination state"),
     ("location", "show the stable project identity and state path"),
     ("init", "create or repair local coordination state"),
+    ("migrate [ROOT]", "rename a legacy nodes/ vault to .braintree/"),
     ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
     (
         "claim NODE AGENT --base-hash HASH [--lease-seconds N]",
@@ -98,6 +99,7 @@ _COORDINATION_COMMANDS = frozenset(
         "status",
         "location",
         "init",
+        "migrate",
         "allocate",
         "claim",
         "release",

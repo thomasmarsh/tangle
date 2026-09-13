@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-12T14:53:52Z
+updated: 2026-09-13T01:41:48Z
 summary: Install a single `braintree` command into the home root's `.local/bin` and make it the only documented invocation, with no `uv`, Python, or implementation-language awareness in `SKILL.md` or consuming projects.
 ---
 
@@ -11,7 +11,7 @@ Area [[IDX-001-execution-graph]].
 
 Depends on [[DEF-001-distribution-contract]] at context_rev 1.
 
-Depends on [[DEC-005-reinstall-not-migration]] at context_rev 1.
+Depends on [[DEC-005-reinstall-not-migration]] at context_rev 2.
 
 Today every installed invocation names the implementation language and toolchain:
 `uv run --project <skill-dir> --frozen bt ...` and `... graph-check ...`. That

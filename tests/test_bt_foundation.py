@@ -429,7 +429,7 @@ def test_record_reserves_through_the_project_sidecar(
     tmp_path: Path, run_bt: RunBt
 ) -> None:
     repo = tmp_path / "repo"
-    nodes = _write_vault(repo / "nodes")
+    nodes = _write_vault(repo / ".braintree")
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     env = _record_env(tmp_path, "record-sidecar")
     assert run_bt("init", cwd=repo, env=env).returncode == 0
@@ -452,7 +452,7 @@ def test_record_reserves_through_the_project_sidecar(
     assert 'id: "TAS-001"' in recorded.stdout
     assert (nodes / "proposed" / "TAS-001-reserve-the-id-through-the-sidecar.md").is_file()
     # The sidecar counter advanced and no vault-local fallback marker was made.
-    assert not (nodes / ".braintree").exists()
+    assert not (nodes / "reservations").exists()
     assert '"TAS","2"' in run_bt("status", cwd=repo, env=env).stdout
 
 
@@ -460,8 +460,8 @@ def test_record_falls_back_for_a_vault_outside_the_project(
     tmp_path: Path, run_bt: RunBt
 ) -> None:
     repo = tmp_path / "repo"
-    _write_vault(repo / "nodes")
-    external = _write_vault(tmp_path / "external" / "nodes")
+    _write_vault(repo / ".braintree")
+    external = _write_vault(tmp_path / "external" / ".braintree")
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     env = _record_env(tmp_path, "record-external")
     assert run_bt("init", cwd=repo, env=env).returncode == 0
@@ -486,14 +486,14 @@ def test_record_falls_back_for_a_vault_outside_the_project(
     )
     assert recorded.returncode == 0, recorded.stdout
     assert 'id: "TAS-001"' in recorded.stdout
-    assert (external / ".braintree" / "reservations" / "TAS-001").is_file()
+    assert (external / "reservations" / "TAS-001").is_file()
 
 
 def test_concurrent_records_share_the_project_sidecar_reservation(
     tmp_path: Path, run_bt: RunBt, bt_command: Callable[[], list[str]]
 ) -> None:
     repo = tmp_path / "repo"
-    nodes = _write_vault(repo / "nodes")
+    nodes = _write_vault(repo / ".braintree")
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     env = _record_env(tmp_path, "record-race")
     assert run_bt("init", cwd=repo, env=env).returncode == 0
@@ -532,4 +532,4 @@ def test_concurrent_records_share_the_project_sidecar_reservation(
         ids.append(match.group(1))
 
     assert len(set(ids)) == workers
-    assert not (nodes / ".braintree").exists()
+    assert not (nodes / "reservations").exists()

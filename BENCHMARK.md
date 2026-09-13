@@ -34,7 +34,7 @@ and an absent baseline rather than silently substituting a filesystem metric.
 ## Decision
 
 Adopt V4: atomic Markdown nodes in authoritative status directories, a small
-routing-only `nodes/index-map.md`, local semantic `context_rev` pins only on context-bearing
+routing-only `.braintree/index-map.md`, local semantic `context_rev` pins only on context-bearing
 dependencies, and an optional external SQLite sidecar. Markdown is the sole durable authority;
 SQLite rebuilds derived indexes, backlinks, stale-pin checks, and FTS, and is authoritative only
 for same-host claims, leases, and atomic ID allocation. Do not use a copied global node ledger.
@@ -174,11 +174,11 @@ not free in agent interaction cost.
 ## Recommended operating contract
 
 ```text
-nodes/index-map.md           # short routes and tested commands only
-nodes/proposed/ID-slug.md    # status is the directory
-nodes/active/ID-slug.md
-nodes/blocked/ID-slug.md
-nodes/resolved/ID-slug.md
+.braintree/index-map.md           # short routes and tested commands only
+.braintree/proposed/ID-slug.md    # status is the directory
+.braintree/active/ID-slug.md
+.braintree/blocked/ID-slug.md
+.braintree/resolved/ID-slug.md
 ```
 
 Each node has required `context_rev`, `updated`, and `summary`; task `priority` is
@@ -228,22 +228,22 @@ explicitly disposed; child completion alone is not a roll-up.
 
 ```sh
 # Known item / unfinished / blocked / actionable P0
-find nodes -type f -name 'TAS-101-*'
-find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'
-find nodes -type f -path '*/blocked/TAS-*.md'
-find nodes -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +
+find .braintree -type f -name 'TAS-101-*'
+find .braintree -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'
+find .braintree -type f -path '*/blocked/TAS-*.md'
+find .braintree -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +
 
 # Changed definition: read DEF header for its current context_rev, then use that old pin
-rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev 7' nodes
+rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev 7' .braintree
 
 # Lifecycle, explicit inbound references, and recent five
-rg -l '^disposition: superseded$' nodes
-rg -l -F '[[TAS-101]]' nodes
-rg -H '^updated:' nodes | awk -F ': ' '{print $2 " " $1}' | sort -r | head -5
+rg -l '^disposition: superseded$' .braintree
+rg -l -F '[[TAS-101]]' .braintree
+rg -H '^updated:' .braintree | awk -F ': ' '{print $2 " " $1}' | sort -r | head -5
 
 # Root hubs and derived primary memberships
-rg -n '^\s*- Indexes \[\[IDX-' nodes/index-map.md
-rg -n '^(Parent|Area) \[\[' nodes
+rg -n '^\s*- Indexes \[\[IDX-' .braintree/index-map.md
+rg -n '^(Parent|Area) \[\[' .braintree
 ```
 
 The dependency search returns explicit direct edges only. Indirect impact

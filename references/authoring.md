@@ -25,7 +25,7 @@ advanced frontier in a completion report.
 
 ## Index contract
 
-`nodes/index-map.md` holds intent and routing, not state: a short `# Focus` list,
+`.braintree/index-map.md` holds intent and routing, not state: a short `# Focus` list,
 durable area entry pointers, and tested query recipes. Never copy node status,
 priority, revision, timestamp, or summary into it. A focus pointer is advisory;
 validate its target before acting.
@@ -54,9 +54,9 @@ braintree impact ID  # dependency impact
 braintree orient  # orientation packet
 braintree digest ID  # unresolved direct members of a hub or node
 braintree clusters  # advisory clusters, over-broad routes, and outliers
-find nodes -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'          # unfinished
-find nodes -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +  # actionable P0
-rg -n '^(Parent|Area) \[\[' nodes                                               # primary routes
+find .braintree -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'          # unfinished
+find .braintree -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +  # actionable P0
+rg -n '^(Parent|Area) \[\[' .braintree                                               # primary routes
 ```
 
 `braintree digest ID` bounds the summaries and `next` of one hub's or
@@ -86,10 +86,10 @@ braintree node record --type THO \
   and the current `updated`, so the result is a routed node the checker accepts.
 - It reserves that id atomically before writing the file, and both one-command
   capture paths share this one allocation contract. When the project's sidecar
-  exists and the target `nodes/` directory is inside the project's own worktree,
+  exists and the target `.braintree/` directory is inside the project's own worktree,
   the reservation comes from the same atomic counter `braintree allocate PREFIX`
   uses, so parallel worktrees cannot choose the same number. Otherwise it
-  reserves a vault-local marker under `nodes/.braintree/` with an exclusive
+  reserves a vault-local marker under `.braintree/reservations/` with an exclusive
   create, which is collision-safe for callers sharing that vault but does not
   span worktrees; preallocate with `braintree allocate PREFIX` and pass `--id`
   when parallel creation crosses worktrees without an initialized sidecar.
@@ -101,7 +101,7 @@ braintree node record --type THO \
   enforces.
 - `--route 'Area [[IDX-...]]'` overrides the discovered route, `--id` and
   `--slug` override the allocated id and the derived slug, `--summary` overrides
-  the derived summary, and `--nodes` selects a `nodes/` directory other than the
+  the derived summary, and `--nodes` selects a vault directory other than the
   current one.
 
 The admission threshold is unchanged: the command creates the node the caller has
@@ -111,13 +111,13 @@ or action value on its own.
 ## Feedback nodes
 
 A consuming project records Braintree friction as an `FBK` node. The `FBK` type
-is the one feedback marker, so `find nodes -name 'FBK-*.md'` discovers feedback
+is the one feedback marker, so `find .braintree -name 'FBK-*.md'` discovers feedback
 from Markdown alone, with no sidecar, network, or write to the scanned vault.
 
 - Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route
   into its own vault, like any node.
 - Carry the installed Braintree revision as `braintree_revision:` frontmatter,
-  for example `braintree_revision: 0.5.0+g1b58d57`; write
+  for example `braintree_revision: 0.6.0+g1b58d57`; write
   `braintree_revision: unknown` when no revision can be determined.
 - Read the revision to record with `braintree --version`: an installed skill
   prints the installer's generated `installed-revision` stamp,
@@ -136,7 +136,7 @@ Record feedback with the writing half of the mechanism. Run
 `braintree feedback record` from the consuming project's vault root and it
 allocates the next `FBK` id from Markdown, routes the node to the vault's root
 hub, stamps the revision from the installed record, and writes
-`nodes/proposed/FBK-<n>-<slug>.md` in one step. The id is reserved atomically by
+`.braintree/proposed/FBK-<n>-<slug>.md` in one step. The id is reserved atomically by
 the same capture contract as `braintree node record`.
 
 ```sh
@@ -144,8 +144,8 @@ braintree feedback record \
   --attempted '...' --friction '...' --improvement '...'
 ```
 
-`--nodes` points at the vault's `nodes/` directory when it is not the current
-directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from
+`--nodes` points at the vault's `.braintree/` directory when it is not the
+current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from
 `index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the
 summary derived from the friction, and the derived slug. The command reads the
 installed `installed-revision` record and degrades explicitly to

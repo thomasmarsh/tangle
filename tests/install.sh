@@ -62,8 +62,8 @@ check_launcher() {
 
 run_installed() {
   destination=$1
-  uv run --project "$destination" --frozen --quiet braintree check "$repo_root/nodes" >/dev/null
-  uv run --project "$destination" --frozen --quiet braintree feedback scan "$repo_root/nodes" >/dev/null
+  uv run --project "$destination" --frozen --quiet braintree check "$repo_root/.braintree" >/dev/null
+  uv run --project "$destination" --frozen --quiet braintree feedback scan "$repo_root/.braintree" >/dev/null
   [ "$(uv run --project "$destination" --frozen --quiet braintree --version)" = "$expected_record" ]
   run_installed_help "$destination"
   run_installed_feedback_record "$destination"
@@ -80,7 +80,7 @@ run_installed_help() {
       braintree help "$topic")
     case "$rendered" in *"$topic"*) ;; *) exit 1;; esac
   done
-  [ ! -e "$help_cwd/nodes" ]
+  [ ! -e "$help_cwd/.braintree" ]
   rm -rf "$help_cwd"
 }
 
@@ -89,13 +89,13 @@ run_installed_help() {
 run_installed_feedback_record() {
   destination=$1
   vault=$(mktemp -d "$test_root/feedback.XXXXXX")
-  mkdir -p "$vault/nodes/resolved"
-  cat >"$vault/nodes/index-map.md" <<'EOF'
+  mkdir -p "$vault/.braintree/resolved"
+  cat >"$vault/.braintree/index-map.md" <<'EOF'
 # Root hubs
 
 - Indexes [[IDX-001-root]]
 EOF
-  cat >"$vault/nodes/resolved/IDX-001-root.md" <<'EOF'
+  cat >"$vault/.braintree/resolved/IDX-001-root.md" <<'EOF'
 ---
 context_rev: 1
 updated: 2026-09-12T00:00:00Z
@@ -103,12 +103,12 @@ summary: Root hub.
 ---
 EOF
   uv run --project "$destination" --frozen --quiet braintree feedback record \
-    --nodes "$vault/nodes" \
+    --nodes "$vault/.braintree" \
     --attempted 'Ran the installed command.' \
     --friction 'The installed recording path was untested.' \
     --improvement 'Exercise it in the install test.' >/dev/null
-  uv run --project "$destination" --frozen --quiet braintree check "$vault/nodes" >/dev/null
-  grep -q "braintree_revision: $expected_record" "$vault"/nodes/proposed/FBK-001-*.md
+  uv run --project "$destination" --frozen --quiet braintree check "$vault/.braintree" >/dev/null
+  grep -q "braintree_revision: $expected_record" "$vault"/.braintree/proposed/FBK-001-*.md
   rm -rf "$vault"
 }
 

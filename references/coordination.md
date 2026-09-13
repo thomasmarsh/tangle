@@ -14,7 +14,7 @@ external database keyed by the Git common directory and shared by all worktrees;
 
 - Markdown stays authoritative; SQLite is authoritative only for local
   operational coordination.
-- `braintree index [nodes]` rebuilds derived node, edge, content-hash, backlink,
+- `braintree index [.braintree]` rebuilds derived node, edge, content-hash, backlink,
   stale-pin, and full-text data from Markdown; `braintree search`,
   `braintree backlinks`, and `braintree stale` reconcile first.
 - Run `braintree init` before coordinated work. Loss of the database may lose
@@ -31,7 +31,7 @@ external database keyed by the Git common directory and shared by all worktrees;
 
 - NODE is a bare ID (`TAS-085`) or a full node name, the filename stem
   (`TAS-085-hash-addressing-and-operand`); a path
-  (`nodes/proposed/TAS-085-hash-addressing-and-operand.md`) is not accepted, and
+  (`.braintree/proposed/TAS-085-hash-addressing-and-operand.md`) is not accepted, and
   the error names the two accepted forms. `braintree hash` resolves either form,
   but `claim` and `release` never read Markdown: they treat NODE as the opaque
   claim key, so address one node with the same spelling in every command.
@@ -115,14 +115,14 @@ evidence, and test evidence to the coordinator.
 
 Serial work uses the same discipline without branches: self-assign one node and
 write set, claim it, keep content and status coherent, run
-`braintree check nodes`, and do not leave a resolved status move uncommitted.
+`braintree check`, and do not leave a resolved status move uncommitted.
 
 ## Integration and reconciliation
 
 The coordinator integrates worker branches one at a time. Never blindly
 auto-merge an upstream change to the assigned node or divergent status paths:
 reject that handoff or perform manual semantic reconciliation before integration.
-After each integration, run `braintree check nodes`, use exact
+After each integration, run `braintree check`, use exact
 `rg -n -F 'Depends on [[ID]] at context_rev '` searches for every context-bearing
 dependency changed by that handoff, and reconcile stale consumers before their
 dependent execution. Resolve a coordinating parent only after its required child

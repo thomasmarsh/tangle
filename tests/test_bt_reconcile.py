@@ -66,18 +66,18 @@ def _node_text(
 
 
 def _write(repo: Path, status: str, name: str, text: str) -> None:
-    path = repo / "nodes" / status / f"{name}.md"
+    path = repo / ".braintree" / status / f"{name}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
 
 
 def _init_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
-    (repo / "nodes" / "resolved").mkdir(parents=True)
+    (repo / ".braintree" / "resolved").mkdir(parents=True)
     _git(repo, "init", "-q", "-b", "main")
     _git(repo, "config", "user.email", "reconcile-test@example.invalid")
     _git(repo, "config", "user.name", "Reconcile Test")
-    (repo / "nodes" / "index-map.md").write_text(
+    (repo / ".braintree" / "index-map.md").write_text(
         "# Roots\n\n- Indexes [[IDX-001-root]].\n", encoding="utf-8"
     )
     _write(
@@ -147,8 +147,8 @@ def test_reconcile_duplicate_identity_across_snapshots(
     assert [row[0] for row in rows] == ["duplicate-identity", "duplicate-identity"]
     assert {row[2] for row in rows} == {"TAS-100"}
     assert {row[3] for row in rows} == {
-        "nodes/active/TAS-100-alpha.md",
-        "nodes/active/TAS-100-beta.md",
+        ".braintree/active/TAS-100-alpha.md",
+        ".braintree/active/TAS-100-beta.md",
     }
     assert all("duplicate node identity: TAS-100" in row[6] for row in rows)
 
@@ -166,9 +166,9 @@ def test_reconcile_same_node_rename_versus_edit(tmp_path: Path, run_bt: RunBt) -
     base = _rev(repo)
 
     _branch(repo, "rename")
-    (repo / "nodes" / "resolved").mkdir(exist_ok=True)
-    _git(repo, "mv", "nodes/active/TAS-010-shared.md", "nodes/resolved/TAS-010-shared.md")
-    renamed = repo / "nodes" / "resolved" / "TAS-010-shared.md"
+    (repo / ".braintree" / "resolved").mkdir(exist_ok=True)
+    _git(repo, "mv", ".braintree/active/TAS-010-shared.md", ".braintree/resolved/TAS-010-shared.md")
+    renamed = repo / ".braintree" / "resolved" / "TAS-010-shared.md"
     renamed.write_text(
         "\n".join(
             line
@@ -182,7 +182,7 @@ def test_reconcile_same_node_rename_versus_edit(tmp_path: Path, run_bt: RunBt) -
 
     _checkout(repo, "main")
     _branch(repo, "edit")
-    edited = repo / "nodes" / "active" / "TAS-010-shared.md"
+    edited = repo / ".braintree" / "active" / "TAS-010-shared.md"
     edited.write_text(
         edited.read_text(encoding="utf-8").replace("Shared work.", "Edited shared work."),
         encoding="utf-8",
@@ -204,7 +204,7 @@ def test_reconcile_same_node_rename_versus_edit(tmp_path: Path, run_bt: RunBt) -
     rows = _toon_rows(result.stdout, "steps")
     assert [row[0] for row in rows] == ["same-node-divergence"]
     assert rows[0][2] == "TAS-010-shared"
-    assert rows[0][3] == "nodes/active/TAS-010-shared.md"
+    assert rows[0][3] == ".braintree/active/TAS-010-shared.md"
     assert "rename" in rows[0][6] and "edit" in rows[0][6]
 
 
@@ -232,7 +232,7 @@ def test_reconcile_orders_consumers_after_their_target(tmp_path: Path, run_bt: R
     base = _rev(repo)
 
     _branch(repo, "dependency")
-    contract = repo / "nodes" / "resolved" / "DEF-010-contract.md"
+    contract = repo / ".braintree" / "resolved" / "DEF-010-contract.md"
     contract.write_text(
         contract.read_text(encoding="utf-8").replace("context_rev: 1", "context_rev: 2"),
         encoding="utf-8",
@@ -280,7 +280,7 @@ def test_reconcile_outside_a_git_work_tree(tmp_path: Path, run_bt: RunBt) -> Non
     if probe.returncode == 0:
         pytest.skip("temporary directory is inside a Git work tree")
     result = run_bt(
-        "reconcile", str(repo / "nodes"), cwd=outside, env=_env(tmp_path)
+        "reconcile", str(repo / ".braintree"), cwd=outside, env=_env(tmp_path)
     )
     assert result.returncode == 1
     assert 'error: "not inside a Git work tree"' in result.stdout

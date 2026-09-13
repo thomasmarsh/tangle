@@ -1,7 +1,7 @@
 ---
-context_rev: 1
-updated: 2026-09-12T13:54:30Z
-summary: Version gaps are reconciled by reinstalling, not migrating; only an incompatible change to the installed skill/CLI contract or the vault Markdown format would force a vault migration.
+context_rev: 2
+updated: 2026-09-13T02:10:00Z
+summary: Version gaps are reconciled by reinstalling, not migrating; only an incompatible change to the installed skill/CLI contract or the vault Markdown format would force a deliberate vault migration.
 ---
 
 # Context
@@ -14,7 +14,9 @@ Depends on [[DEF-001-distribution-contract]] at context_rev 1.
 # Decision
 
 An installed Braintree skill is upgraded by reinstalling it over the previous
-copy; the tool never migrates itself or a consuming vault. The public semantic
+copy; the tool never migrates itself or a consuming vault, except for the one
+time vault layout rewrite [[DEC-008-vault-lives-under-dot-braintree]] defines
+and sanctions. The public semantic
 `<version>` is the offline compatibility signal; the `+g<short-sha>` install
 record is provenance only and is never ordered or resolved against the remote.
 A version gap warrants a migration only when it changes one of the versioned
@@ -56,8 +58,10 @@ tooling.
 Install is a copy, not a dependency, so there is no package manager to run
 migrations and no installed consumer to schedule one. The vault is Markdown in
 the consumer's own Git repository, where a rewrite is visible and recoverable,
-so migration is only ever a deliberate, evidence-backed vault rewrite rather
-than automatic behavior. Semantic versioning already separates compatibility
+so migration is a deliberate, evidence-backed vault rewrite; the single
+sanctioned exception is the layout rewrite above, whose trigger, idempotency,
+recovery, and validation [[DEC-008-vault-lives-under-dot-braintree]] defines.
+Semantic versioning already separates compatibility
 (the version) from provenance (the revision), so a consumer can decide from
 `bt --version` alone whether an installed skill can read the vault it holds.
 Naming the two surfaces turns "behavior change" from an intuition into a short,
@@ -91,7 +95,8 @@ authoritative: any migration is a Markdown rewrite in the consumer's Git
 repository, recorded as a node there, never a sidecar migration. Recovery is
 the consumer's Git history plus the untouched `installed-revision` record; the
 migration must be idempotent and must not destroy the pre-migration stamp.
-Validation is `graph-check nodes` passing on the migrated vault, `bt reindex`
-reporting no stale pins, and a rollback path to the prior commit. No migration
-code or shim ships before its own `DEC` defines the one-way rewrite, its
-trigger, and this recovery and validation plan.
+Validation is `braintree check` passing on the migrated vault, `braintree
+index` reporting no stale pins, and a rollback path to the prior commit. No
+migration code or shim ships before its own `DEC` defines the one-way rewrite,
+its trigger, and this recovery and validation plan. [[DEC-008-vault-lives-under-dot-braintree]]
+is that `DEC` for the vault layout change.

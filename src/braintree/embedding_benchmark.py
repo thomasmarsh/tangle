@@ -37,7 +37,7 @@ from importlib.metadata import version as distribution_version
 from pathlib import Path
 from types import ModuleType
 
-from . import semantic
+from . import semantic, vault
 from .graph_check import CONTEXT_RELATIONS
 from .index import IndexedNode, _cosine, _read_nodes, _token_counts
 
@@ -1176,7 +1176,7 @@ def _corpus_command(argv: Sequence[str]) -> int:
         _report_corpus(corpus)
         print("verification: passed")
         return 0
-    nodes_root = options.get("--nodes", str(_repo_root() / "nodes"))
+    nodes_root = options.get("--nodes", str(_repo_root() / vault.DIRECTORY_NAME))
     if not os.path.isdir(nodes_root):
         raise _RunError(f"nodes directory does not exist: {nodes_root}")
     corpus = build_corpus(nodes_root, _git_revision())

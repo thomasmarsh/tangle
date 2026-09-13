@@ -52,7 +52,7 @@ from braintree import main, semantic
 
 assert semantic.probe() is None
 assert main.main(["--help"]) == 0
-assert main.main(["check", "nodes"]) == 0
+assert main.main(["check", ".braintree"]) == 0
 assert main.main(["frontier"]) == 0
 assert main.main(["similar", "grant"]) == 0
 print("heavy:" + ",".join(name for name in sys.argv[1:] if name in sys.modules))
@@ -128,7 +128,7 @@ def _env(tmp_path: Path, vault: Path) -> dict[str, str]:
 def _plain_env(tmp_path: Path) -> dict[str, str]:
     """Return a default-install environment: no provider, no extra, no cache."""
     env = os.environ.copy()
-    env.update(_env(tmp_path, _ROOT / "nodes"))
+    env.update(_env(tmp_path, _ROOT / ".braintree"))
     for name in ("BT_SEMANTIC_PROVIDER", "BT_MODEL_CACHE", "HF_HOME"):
         env.pop(name, None)
     return env

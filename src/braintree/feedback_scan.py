@@ -1,10 +1,11 @@
 """Read-only cross-vault scan for Braintree ``FBK`` feedback nodes.
 
 The scan reads only the filename, status directory, and frontmatter of
-``FBK-*.md`` files under each vault's ``nodes/`` tree. It never opens the
-sidecar, never touches the network, and never writes to the scanned vault, so a
-maintainer can collect feedback from a read-only checkout into a compact list
-ready for triage in this graph.
+``FBK-*.md`` files under each vault's ``.braintree/`` tree, or the legacy
+``nodes/`` tree, without migrating either. It never opens the sidecar, never
+touches the network, and never writes to the scanned vault, so a maintainer can
+collect feedback from a read-only checkout into a compact list ready for
+triage in this graph.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import re
 import sys
 from collections.abc import Sequence
 
+from . import vault
 from .toon import field, row
 
 __all__ = ["main"]
@@ -51,9 +53,16 @@ def _frontmatter_value(header: str | None, key: str) -> str | None:
 
 
 def _nodes_directory(argument: str) -> str:
-    candidate = os.path.join(argument, "nodes")
-    if os.path.isdir(candidate):
-        return candidate
+    """Return the vault directory under ``argument``, accepting the legacy name.
+
+    A vault root is scanned at ``.braintree/`` when present and otherwise at
+    ``nodes/``; a directory that is already a vault is returned unchanged. The
+    scan never migrates the external vault, so a legacy vault is read in place.
+    """
+    for name in (vault.DIRECTORY_NAME, vault.LEGACY_DIRECTORY_NAME):
+        candidate = os.path.join(argument, name)
+        if os.path.isdir(candidate):
+            return candidate
     return argument
 
 
@@ -116,18 +125,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(field("help", "Run `braintree feedback scan --help` for usage."))
         return 2
     rows: list[tuple[str, str, str, str, str]] = []
-    for vault in vaults:
-        nodes_dir = _nodes_directory(vault)
+    for vault_root in vaults:
+        nodes_dir = _nodes_directory(vault_root)
         if not os.path.isdir(nodes_dir):
             print(field("error", f"nodes directory does not exist: {nodes_dir}"))
             print(
                 field(
                     "help",
-                    "Pass a vault root containing nodes/ or a nodes directory.",
+                    "Pass a vault root containing .braintree/ (or legacy "
+                    "nodes/) or a vault directory.",
                 )
             )
             return 1
-        rows.extend(_scan_vault(vault, nodes_dir))
+        rows.extend(_scan_vault(vault_root, nodes_dir))
     rows.sort(key=lambda cells: (cells[0], cells[1]))
     if limit is not None:
         rows = rows[:limit]

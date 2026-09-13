@@ -137,6 +137,22 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_COORDINATION_TOPIC,
     ),
+    "migrate": _verb(
+        "Rename a legacy nodes/ vault to .braintree/ in place.",
+        usage="braintree migrate [ROOT]",
+        operands=(
+            ("ROOT", "project root holding the vault; defaults to the current directory"),
+        ),
+        outputs=(
+            ("result", "migrated or no-op"),
+            ("source/destination", "the rename when it happened"),
+        ),
+        hazards=(
+            "Runs only when nodes/index-map.md exists and .braintree/ does not.",
+            "Idempotent in-place rename; it never rewrites Markdown or the sidecar.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
     "allocate": _verb(
         "Atomically reserve PREFIX-NNN across worktrees.",
         usage="braintree allocate PREFIX",
@@ -195,7 +211,7 @@ VERBS: dict[str, Verb] = {
     "index": _verb(
         "Rebuild the derived index from Markdown.",
         usage="braintree index [NODES]",
-        operands=(("NODES", "vault nodes directory; defaults to ./nodes"),),
+        operands=(("NODES", "vault directory; defaults to ./.braintree"),),
         outputs=(
             ("nodes", "node rows reindexed"),
             ("edges", "graph edges reindexed"),
@@ -394,7 +410,7 @@ VERBS: dict[str, Verb] = {
         operands=(
             ("--base", "comparison base; defaults to HEAD"),
             ("--head", "a ref to include; repeatable"),
-            ("NODES", "vault nodes directory; defaults to ./nodes"),
+            ("NODES", "vault directory; defaults to ./.braintree"),
         ),
         outputs=(
             ("base", "the resolved base ref"),
@@ -407,13 +423,13 @@ VERBS: dict[str, Verb] = {
         topic=_COORDINATION_TOPIC,
     ),
     "check": _verb(
-        "Validate a vault without writing state.",
+        "Validate the vault; a legacy nodes/ layout is migrated first.",
         usage="braintree check [--allow-stale] [--allow-orphan NODE] [--format text|toon] [NODES]",
         operands=(
             ("--allow-stale", "relax only the revision equality of a pin"),
             ("--allow-orphan", "permit one named orphan; repeatable"),
             ("--format", "text diagnostics or the toon findings table"),
-            ("NODES", "vault nodes directory; defaults to ./nodes"),
+            ("NODES", "vault directory; defaults to ./.braintree"),
         ),
         outputs=(
             ("findings", "code,node,detail rows in toon format"),
@@ -476,11 +492,11 @@ VERBS: dict[str, Verb] = {
         usage="braintree feedback record --attempted A --friction F --improvement I [OPTIONS]",
         operands=(
             ("--attempted/--friction/--improvement", "the one Feedback section lines"),
-            ("--nodes", "vault nodes directory"),
+            ("--nodes", "vault directory; defaults to ./.braintree"),
             ("--route/--id/--summary/--slug", "route and identity overrides"),
         ),
         outputs=(
-            ("path", "the written nodes/proposed/FBK-n-slug.md file"),
+            ("path", "the written .braintree/proposed/FBK-n-slug.md file"),
             ("id", "the allocated identity"),
         ),
         hazards=(

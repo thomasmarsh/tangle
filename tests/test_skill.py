@@ -23,7 +23,7 @@ _SKILL = _ROOT / "SKILL.md"
 _AGENTS = _ROOT / "AGENTS.md"
 _README = _ROOT / "README.md"
 _REFERENCES = _ROOT / "references"
-_NODES = _ROOT / "nodes"
+_NODES = _ROOT / ".braintree"
 _INDEX = _NODES / "index-map.md"
 
 # The three conditional workflows the core routes to. Each name is both a
@@ -87,10 +87,10 @@ _README_BOUNDARY = (
 # is emitted or parsed, not narrative: status directories, canonical edges, the
 # pin and gate forms, frontmatter keys, and the ``Refs:`` footer convention.
 _REQUIRED_GRAMMAR = (
-    "nodes/proposed/",
-    "nodes/active/",
-    "nodes/blocked/",
-    "nodes/resolved/",
+    ".braintree/proposed/",
+    ".braintree/active/",
+    ".braintree/blocked/",
+    ".braintree/resolved/",
     "Depends on [[DEF-auth-protocol]] at context_rev 7.",
     "Gated on [[DEF-auth-protocol]].",
     "Parent [[",
@@ -126,7 +126,7 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "The pin must terminate its line",
         "record it as a gate instead of a context edge",
         "never pin the gate",
-        "`braintree check --allow-stale nodes`",
+        "`braintree check --allow-stale`",
         "Reconciliation is separate work owned by each consumer",
         "Supersede only when the outcome moves to a different node",
         "never rewrite, amend, or force-push the earlier commit",
@@ -136,7 +136,7 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "allocates the next id from Markdown",
         "The `FBK` type is the one feedback marker",
         "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
-        "`nodes/index-map.md` holds intent and routing, not state",
+        "`.braintree/index-map.md` holds intent and routing, not state",
         "Decompose just in time",
         "Roll up from evidence, not child counts",
     ),
@@ -304,7 +304,7 @@ def test_help_topic_routes_to_the_installed_reference(
         assert main.main(["help", topic]) == 0
         assert capsys.readouterr().out == _reference(topic).rstrip("\n") + "\n"
     assert not (tmp_path / "sidecar").exists()
-    assert not (tmp_path / "nodes").exists()
+    assert not (tmp_path / ".braintree").exists()
 
 
 def test_help_without_a_topic_lists_the_topics(
@@ -404,19 +404,19 @@ def _task(summary: str, next_line: str) -> str:
 
 def test_frontier_recipe_resolves_a_coordinating_next(tmp_path: Path) -> None:
     _write_node(
-        tmp_path / "nodes/active/TAS-101-import-coordinator.md",
+        tmp_path / ".braintree/active/TAS-101-import-coordinator.md",
         _task("Coordinate import hardening.", '"[[TAS-102-validate-manifests]]"'),
     )
     _write_node(
-        tmp_path / "nodes/active/TAS-102-validate-manifests.md",
+        tmp_path / ".braintree/active/TAS-102-validate-manifests.md",
         _task("Validate signed manifests.", "Run the signed-manifest validation."),
     )
     _write_node(
-        tmp_path / "nodes/proposed/TAS-103-follow-up-cleanup.md",
+        tmp_path / ".braintree/proposed/TAS-103-follow-up-cleanup.md",
         _task("Plan post-migration cleanup.", "Draft the cleanup plan."),
     )
     _write_node(
-        tmp_path / "nodes/resolved/TAS-100-old-work.md",
+        tmp_path / ".braintree/resolved/TAS-100-old-work.md",
         "---\ncontext_rev: 1\nupdated: 2026-01-01T00:00:00Z\nsummary: Old work.\n---\n",
     )
 

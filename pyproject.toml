@@ -1,6 +1,6 @@
 [project]
 name = "braintree"
-version = "0.5.0"
+version = "0.6.0"
 description = "Typed Python implementation of the Braintree Markdown graph tooling."
 readme = "README.md"
 requires-python = ">=3.12"

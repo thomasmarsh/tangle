@@ -1,5 +1,7 @@
-.braintree/
-nodes/.obsidian/
+# The vault's portable id-reservation markers and Obsidian workspace are local
+# coordination state, not authoritative Markdown.
+.braintree/reservations/
+.braintree/.obsidian/
 .lavish/
 graph.sqlite3
 graph.sqlite3-wal

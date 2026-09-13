@@ -394,7 +394,7 @@ def test_similar_absent_path_is_byte_identical_to_the_lexical_baseline(
 
 def test_absent_paths_import_no_heavy_module(tmp_path: Path) -> None:
     """A plain install answers ``clusters`` and ``digest`` without a heavy import."""
-    vault = _ROOT / "nodes"
+    vault = _ROOT / ".braintree"
     env = os.environ.copy()
     for name in ("BT_SEMANTIC_PROVIDER", "BT_MODEL_CACHE", "HF_HOME"):
         env.pop(name, None)

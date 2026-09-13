@@ -21,7 +21,7 @@ import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from . import sidecar
+from . import sidecar, vault
 from .toon import field
 
 __all__ = [
@@ -75,11 +75,9 @@ _WHITESPACE = re.compile(r"\s+")
 _SUMMARY_LIMIT = 96
 _SLUG_LIMIT = 48
 
-# The portable fallback keeps one ``PREFIX-NNN`` marker per reserved number in a
-# hidden directory under the vault. The directory is deliberately dot-prefixed
-# so the checker's ``nodes/*/*.md`` status-directory scan ignores it.
-_RESERVATION_ROOT = ".braintree"
-_RESERVATION_SUBDIR = "reservations"
+# The portable fallback keeps one ``PREFIX-NNN`` marker per reserved number in
+# ``<vault>/reservations``. The markers are not ``.md``, so the checker's
+# ``*/*.md`` status-directory scan ignores them.
 _ALLOCATION_ATTEMPTS = 1000
 _VALUE_OPTIONS = frozenset(
     {
@@ -166,13 +164,13 @@ def utc_now() -> str:
 
 
 def reservation_dir(nodes_dir: str) -> str:
-    """Return the portable reservation directory inside a vault's ``nodes`` dir.
+    """Return the portable reservation directory inside a vault directory.
 
     It holds one ``PREFIX-NNN`` marker per number the no-sidecar fallback has
-    reserved. It is local coordination state, not vault Markdown: the hidden
-    directory is outside the checker's status-directory scan.
+    reserved. It is local coordination state, not vault Markdown: the markers
+    are outside the checker's status-directory scan.
     """
-    return os.path.join(nodes_dir, _RESERVATION_ROOT, _RESERVATION_SUBDIR)
+    return os.path.join(nodes_dir, vault.RESERVATION_NAME)
 
 
 def reserved_numbers(nodes_dir: str, prefix: str) -> set[int]:
@@ -300,7 +298,7 @@ def _render(route: str, summary: str, next_line: str | None, body: str, updated:
 def main(argv: Sequence[str] | None = None) -> int:
     """Run ``braintree node record`` and return the process exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
-    nodes_dir = os.environ.get("BT_NODES_DIR", "nodes")
+    nodes_dir: str | None = None
     node_type: str | None = None
     route: str | None = None
     explicit_id: str | None = None
@@ -402,6 +400,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(field("help", "Pass that section in --body, or choose another --status."))
         return 2
 
+    nodes_dir = vault.resolve(nodes_dir)
     if not os.path.isdir(nodes_dir):
         print(field("error", f"nodes directory does not exist: {nodes_dir}"))
         print(
