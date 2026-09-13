@@ -1,9 +1,9 @@
 ---
 context_rev: 3
 priority: P1
-updated: 2026-09-13T17:50:23Z
+updated: 2026-09-13T17:50:54Z
 summary: Redesign the gold corpus so memory-required cases separate repository-only from oracle.
-next: Revise or replace the three non-separating cases and re-run the isolated pilot at a new revision.
+next: "[[TAS-150-run-round-three-isolated-pilot]]"
 ---
 
 Parent [[TAS-121-evaluation-foundation]].
