@@ -202,6 +202,17 @@ _README_BOUNDARY = (
     "no checker or command has semantic authority over scope",
 )
 
+# In a warnings-as-errors workspace a type or trait landed before its consumer
+# fails the dead-code gate, so a just-in-time slice is not independently
+# acceptable: the slice includes a live consumer, or the node's `next` names
+# that consumer as a mandatory companion.
+_JUST_IN_TIME_LIVE_CONSUMER_RULE = (
+    "A just-in-time slice in a warnings-as-errors workspace is not independently "
+    "acceptable when it lands a type or trait before its consumer",
+    "the slice includes a live consumer",
+    "or the node's `next` names that consumer as a mandatory companion",
+)
+
 # Literal grammar the graph checker and clients genuinely depend on. Each token
 # is emitted or parsed, not narrative: status directories, canonical edges, the
 # pin and gate forms, frontmatter keys, and the ``Refs:`` footer convention.
@@ -395,6 +406,10 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
     text = _read(_SKILL)
     _assert_contains(text, _DURABLE_OUTCOME_BOUNDARY)
     _assert_absent(text, _SIZING_COMMAND_ABSENT)
+
+
+def test_just_in_time_slice_includes_or_names_a_live_consumer() -> None:
+    _assert_contains(_read(_SKILL), _JUST_IN_TIME_LIVE_CONSUMER_RULE)
 
 
 def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
