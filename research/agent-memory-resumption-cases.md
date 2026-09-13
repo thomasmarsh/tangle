@@ -97,7 +97,7 @@ correct.
 
 | Case | Kind | Severity | Split | Cue | Gold memory | Distractor |
 |---|---|---|---|---|---|---|
-| `resumption-after-decision-shared-install-001` | after-decision | major | development | Give each project its own skill copy so it can pin a version | The shared install is deliberate; per-project copies duplicate and drift, and the revision stamp reports the version | Installed-revision stamp |
+| `resumption-after-decision-shared-install-001` | after-decision | major | development | Follow the packaging guide and give each project its own copy so it can pin a version | The shared install is deliberate; per-project copies duplicate and drift, and the revision stamp reports the version | Installed-revision stamp |
 | `resumption-after-decision-semantic-optional-001` | after-decision | major | held-out | Make embedding similarity the default near-duplicate check | Embeddings lost near-duplicate retrieval and stay optional and advisory | Dependency-free default install |
 | `resumption-partial-implementation-vault-notice-001` | partial-implementation | moderate | development | Refuse to write when the resolved vault differs from the named one | The in-place migration is deliberate; announce it rather than refuse it | Legacy reservation merge |
 | `resumption-blocker-live-authorization-001` | blocker | critical | development | Record the two matched live token samples now | Live or paid runs need owner authorization recorded before execution | Session-parser reuse |
@@ -155,3 +155,20 @@ grading, and agreement between this document and both corpora.
 This test is these two families' guard only. TAS-135 replaces it with the
 whole-corpus offline validator, deterministic splits, corpus digest, and
 leakage audit that the TAS-121 outcome requires.
+
+## 5. Residual repair
+
+The round-three separability pilot
+([`research/agent-memory-pilot-v2-preregistration.md`](agent-memory-pilot-v2-preregistration.md))
+left `resumption-after-decision-shared-install-001` non-separating:
+`repository-only` was correct 3/3 because the correct action, keeping one shared
+program, coincided with the generic "avoid duplication" default. The case now
+states a locally plausible project packaging guide that requires a broken
+project to pin its own copy rather than wait for a shared fix, so the
+`repository-only` prior follows the guide and installs a per-project copy. The
+unavailable history still decides the other way: the shared install is the
+recorded decision, per-project copies were rejected because they duplicate and
+drift, and version pinning is handled by the installed-revision stamp. Only the
+task text changed; the case id, family, split, severity, gold evidence, allowed
+actions, and citations are unchanged, and the corpus digest was re-frozen. The
+repaired case still requires a paid separability re-run to prove it separates.

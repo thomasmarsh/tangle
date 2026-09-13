@@ -44,7 +44,7 @@
                                     ]
                                   },
                                   "query": {
-                                    "task": "The shared install means every project on a host upgrades together, and a recent upgrade broke a consuming project. A contributor proposes giving each project its own copy so it can pin its version. Decide the next action.",
+                                    "task": "A recent shared-install upgrade broke a consuming project, and the project's packaging guide requires that a broken project pin its own copy rather than wait for a shared fix. A contributor follows the guide and proposes giving each project its own copy so it can pin its version. Decide the next action.",
                                     "observable_paths": [
                                       "src/braintree/toon.py"
                                     ],
