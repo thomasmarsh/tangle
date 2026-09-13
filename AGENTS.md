@@ -79,7 +79,9 @@ or ad hoc notes.
 6. When the skill is installed into another project, use the documented
    installer (`./scripts/install.sh --codex|--claude|--pi --project <root>` or
    `./scripts/install-claude.sh --project <root>`) and the installed
-   `braintree` command from that project root.
+   `braintree` command from that project root. A bare `./scripts/install.sh`
+   selects targets interactively from a terminal; an automated run must name the
+   explicit flags.
 
 Changes to `SKILL.md` change the skill contract and are covered by
 `tests/test_skill.py`; keep those contract strings and the live vault valid.

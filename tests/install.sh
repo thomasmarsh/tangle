@@ -302,7 +302,7 @@ for installer in "$repo_root/scripts/install.sh" "$repo_root/scripts/install-cla
 done
 
 help=$($repo_root/scripts/install.sh --help)
-for expected in 'options[10]{flag,meaning}:' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'program: "DIR/.local/share/braintree, the one shared program per root the launcher runs"' '"--semantic"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[5]{command,purpose}:' '--codex --project /path/to/project --dry-run' '--claude --project /path/to/project' '--pi --project /path/to/project' '--pi --home $HOME --semantic' '--codex --home $HOME'; do
+for expected in 'options[10]{flag,meaning}:' 'usage: "scripts/install.sh [(--codex | --claude | --pi) (--project DIR | --home DIR)] [--dry-run] [--semantic]"' 'interactive: "With no agent or destination, discovers the enclosing project root and the home root' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'program: "DIR/.local/share/braintree, the one shared program per root the launcher runs"' '"--semantic"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[6]{command,purpose}:' '"./scripts/install.sh","discover install targets and multi-select them from a terminal"' '--codex --project /path/to/project --dry-run' '--claude --project /path/to/project' '--pi --project /path/to/project' '--pi --home $HOME --semantic' '--codex --home $HOME'; do
   case "$help" in *"$expected"*) ;; *) exit 1;; esac
 done
 
@@ -317,5 +317,103 @@ case "$claude_error" in *'error: "unknown argument: --unknown"'*'help: "scripts/
 case "$claude_error" in *'--claude'*|*'--codex'*|*'--pi'*) exit 1;; esac
 claude_missing=$($repo_root/scripts/install-claude.sh --project 2>/dev/null || true)
 case "$claude_missing" in *'error: "--project requires a directory"'*'help: "scripts/install-claude.sh --project <directory> [--dry-run]"'*) ;; *) exit 1;; esac
+
+# A bare invocation discovers the enclosing project root and the home root,
+# crosses them with the supported agents, and installs every selected target.
+# BT_INSTALL_SELECTION supplies the selection so the multi-select path runs
+# without a terminal; the menu it replaces is asserted through the same output.
+selector_project="$test_root/selector-project"
+selector_home="$test_root/selector-home"
+mkdir -p "$selector_project/.git" "$selector_home"
+
+selector_output=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='1,4' \
+  "$repo_root/scripts/install.sh" </dev/null)
+case "$selector_output" in *'result: "menu"'*) ;; *) exit 1;; esac
+case "$selector_output" in *'targets[6]{index,agent,root,destination}:'*) ;; *) exit 1;; esac
+for expected in \
+  "\"1\",\"codex\",\"$selector_project\",\"$selector_project/.agents/skills/braintree\"" \
+  "\"2\",\"claude\",\"$selector_project\",\"$selector_project/.claude/skills/braintree\"" \
+  "\"3\",\"pi\",\"$selector_project\",\"$selector_project/.pi/skills/braintree\"" \
+  "\"4\",\"codex\",\"$selector_home\",\"$selector_home/.agents/skills/braintree\"" \
+  "\"5\",\"claude\",\"$selector_home\",\"$selector_home/.claude/skills/braintree\"" \
+  "\"6\",\"pi\",\"$selector_home\",\"$selector_home/.pi/agent/skills/braintree\""; do
+  case "$selector_output" in *"$expected"*) ;; *) exit 1;; esac
+done
+case "$selector_output" in *'result: "multi"'*'selected: "2"'*'outcomes[2]{agent,destination,program,launcher,result}:'*) ;; *) exit 1;; esac
+case "$selector_output" in *'"installed"'*'"installed"'*) ;; *) exit 1;; esac
+
+# Only the selected targets are installed, and each selected one carries both
+# the skill prose and the shared per-root command.
+check_prose "$selector_project/.agents/skills/braintree"
+check_prose "$selector_home/.agents/skills/braintree"
+check_program "$selector_project/.local/share/braintree"
+check_record "$selector_project/.local/share/braintree"
+check_launcher "$selector_project"
+check_launcher "$selector_home"
+[ ! -e "$selector_project/.claude" ]
+[ ! -e "$selector_project/.pi" ]
+[ ! -e "$selector_home/.claude" ]
+[ ! -e "$selector_home/.pi" ]
+
+# Re-selecting the same targets is a no-op for each outcome, and a space
+# separated selection parses like the comma separated one.
+selector_repeat=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='1 4' \
+  "$repo_root/scripts/install.sh" </dev/null)
+case "$selector_repeat" in *'selected: "2"'*'"no-op"'*'"no-op"'*) ;; *) exit 1;; esac
+[ ! -e "$selector_project/.claude" ]
+
+# "all" selects every discovered target; an empty selection cancels without
+# installing.
+selector_all=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='all' \
+  "$repo_root/scripts/install.sh" </dev/null)
+case "$selector_all" in *'selected: "6"'*) ;; *) exit 1;; esac
+check_prose "$selector_project/.claude/skills/braintree"
+check_prose "$selector_project/.pi/skills/braintree"
+selector_empty=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='' \
+  "$repo_root/scripts/install.sh" </dev/null)
+case "$selector_empty" in *'result: "cancelled"'*) ;; *) exit 1;; esac
+
+# A cancelled selection installs nothing into a fresh root.
+selector_cancel_project="$test_root/selector-cancel-project"
+selector_cancel_home="$test_root/selector-cancel-home"
+mkdir -p "$selector_cancel_project/.git" "$selector_cancel_home"
+selector_cancel=$(cd "$selector_cancel_project" && HOME="$selector_cancel_home" BT_INSTALL_SELECTION='' \
+  "$repo_root/scripts/install.sh" </dev/null)
+case "$selector_cancel" in *'result: "cancelled"'*) ;; *) exit 1;; esac
+[ ! -e "$selector_cancel_project/.local" ]
+[ ! -e "$selector_cancel_project/.agents" ]
+[ ! -e "$selector_cancel_home/.local" ]
+
+# An interactive --dry-run reports every selected destination and writes nothing.
+selector_dry_project="$test_root/selector-dry-project"
+selector_dry_home="$test_root/selector-dry-home"
+mkdir -p "$selector_dry_project/.git"
+selector_dry=$(cd "$selector_dry_project" && HOME="$selector_dry_home" BT_INSTALL_SELECTION='1' \
+  "$repo_root/scripts/install.sh" --dry-run </dev/null)
+case "$selector_dry" in *'outcomes[1]'*'"dry-run"'*) ;; *) exit 1;; esac
+[ ! -e "$selector_dry_project/.agents" ]
+[ ! -e "$selector_dry_project/.local" ]
+
+# An invalid selection and an out-of-range number fail clearly.
+if (cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='x' \
+  "$repo_root/scripts/install.sh" </dev/null) >/dev/null 2>&1; then exit 1; fi
+selector_invalid=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='x' \
+  "$repo_root/scripts/install.sh" </dev/null 2>/dev/null || true)
+case "$selector_invalid" in *'error: "invalid selection: x"'*) ;; *) exit 1;; esac
+selector_range=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='9' \
+  "$repo_root/scripts/install.sh" </dev/null 2>/dev/null || true)
+case "$selector_range" in *'error: "selection out of range: 9"'*) ;; *) exit 1;; esac
+
+# A non-terminal stdin never prompts and never hangs: it keeps the explicit-flag
+# error, so an automated run stays deterministic.
+if (cd "$selector_project" && HOME="$selector_home" "$repo_root/scripts/install.sh" </dev/null) >/dev/null 2>&1; then exit 1; fi
+selector_error=$(cd "$selector_project" && HOME="$selector_home" "$repo_root/scripts/install.sh" </dev/null 2>/dev/null || true)
+case "$selector_error" in *'error: "no install target: stdin is not a terminal'*) ;; *) exit 1;; esac
+
+# The explicit flags stay the non-interactive contract: with the same
+# non-terminal stdin they install without presenting a menu.
+selector_flagged=$(cd "$selector_project" && "$repo_root/scripts/install.sh" --codex --project "$selector_project" </dev/null)
+case "$selector_flagged" in *'result: "no-op"'*'agent: "codex"'*) ;; *) exit 1;; esac
+case "$selector_flagged" in *'result: "menu"'*) exit 1;; esac
 
 printf 'install tests: passed\n'

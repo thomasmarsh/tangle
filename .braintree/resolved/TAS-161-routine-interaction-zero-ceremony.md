@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T23:38:10Z
+updated: 2026-09-13T23:49:22Z
 summary: Make routine interaction zero-ceremony: warn on orphaned nodes, maintain the index invisibly, and install through an interactive target multi-select.
-next: "[[TAS-164-interactive-install-target-selector]]"
 ---
 
 # Context
@@ -40,3 +39,23 @@ offers its targets interactively.
 - [[TAS-162-orphan-warning-on-every-interaction]]
 - [[TAS-163-amortized-transparent-index]]
 - [[TAS-164-interactive-install-target-selector]]
+
+# Result
+
+Resolved: all three children are resolved with evidence, so every `Done when`
+criterion holds. [[TAS-162-orphan-warning-on-every-interaction]] made the four
+direct-answer verbs (`frontier`, `next`, `orient`, `status`) warn on each orphan
+unfinished node on stderr without changing stdout or the exit code.
+[[TAS-163-amortized-transparent-index]] made the derived index maintain itself
+after every dispatched interaction and removed SQLite and the sidecar from
+`SKILL.md` and `references/` as client concepts, leaving `braintree index` as
+explicit repair only. [[TAS-164-interactive-install-target-selector]] made a bare
+`scripts/install.sh` discover the enclosing project root and the home root,
+cross them with `codex`/`claude`/`pi`, and install every target chosen from a
+numbered multi-select, while the explicit flags stay the non-interactive
+contract.
+
+Gates: `braintree check` passed (197 nodes); `braintree benchmark verbs --verify`
+passed; `make test` passed (719 passed, 3 skipped, 79 deselected). Each child
+carries its own tests and evidence, and no child was disposed without a
+resolution.

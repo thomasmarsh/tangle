@@ -60,8 +60,17 @@ has semantic authority over scope.
 
 ## Install
 
-Clone this repository, then name the agent and destination explicitly. The installers
-never write to `$HOME` implicitly.
+Clone this repository. A bare run from the project you want discovers the
+enclosing project root and the home root, presents their Codex, Claude Code, and
+pi destinations as a numbered multi-select, and installs every selected target:
+
+```sh
+./scripts/install.sh
+```
+
+A non-interactive run must name the agent and the destination explicitly. The
+installers never write to `$HOME` implicitly: a home-root install happens only
+when you select it or pass `--home`.
 
 ```sh
 # Codex, project scoped
