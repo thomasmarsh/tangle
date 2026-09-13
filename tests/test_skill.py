@@ -155,6 +155,20 @@ _PARENT_NEXT_OWNERSHIP_RULE = (
     "reports the stale route",
 )
 
+# A brief that places a new artifact in an existing directory names the test
+# suites that enumerate that directory before the artifact path is chosen: a
+# directory-walking gate can reject a correctly authored new file, so the
+# enumerating suite is a path constraint the brief surfaces, not a verification
+# surprise.
+_ENTERED_GATE_BRIEF_RULE = (
+    "An increment brief — a node's body or a worker handoff — that places a new "
+    'artifact in an existing directory carries a "gates my artifact enters" '
+    "line naming the test suites that enumerate that directory",
+    "before the artifact path is chosen",
+    "a gate that walks a directory and asserts a property of every file in it "
+    "can reject a correctly authored new file",
+)
+
 # Proving the absence of a branch on a named mode or scenario accepts a
 # checked-in source-text guard over the module when it is paired with a
 # falsification probe, and it names the exact tokens it forbids and the
@@ -451,6 +465,10 @@ def test_readme_keeps_the_durable_outcome_boundary() -> None:
 
 def test_negative_assertion_names_its_probe_tokens_and_modules() -> None:
     _assert_contains(_reference("authoring"), _NEGATIVE_ASSERTION_RULE)
+
+
+def test_brief_names_the_gates_an_entered_directory_enumerates() -> None:
+    _assert_contains(_reference("authoring"), _ENTERED_GATE_BRIEF_RULE)
 
 
 def test_reference_topics_are_canonical() -> None:

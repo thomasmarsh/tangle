@@ -46,6 +46,13 @@ coordinating task states its outcome and `Done when` criteria; its `next` is
 either one concrete frontier action or one wikilinked direct child at the current
 frontier, never a child list. Roll up from evidence, not child counts.
 
+An increment brief — a node's body or a worker handoff — that places a new
+artifact in an existing directory carries a "gates my artifact enters" line
+naming the test suites that enumerate that directory, before the artifact path is
+chosen: a gate that walks a directory and asserts a property of every file in it
+can reject a correctly authored new file, so the enumerating suite is a path
+constraint the brief surfaces rather than a verification surprise.
+
 ## Negative assertions
 
 Prove the absence of a branch on a named mode or scenario with an observable
