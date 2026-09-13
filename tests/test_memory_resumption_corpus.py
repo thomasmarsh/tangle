@@ -50,7 +50,7 @@ _KINDS = _REQUIRED_KINDS + (_CONTROL_KIND,)
 # The interruption kind each case exercises. Pinned here so the corpus cannot
 # silently lose coverage of the Done-when kind list.
 _CASE_KIND = {
-    "resumption-after-decision-benchmark-opt-in-001": "after-decision",
+    "resumption-after-decision-shared-install-001": "after-decision",
     "resumption-after-decision-semantic-optional-001": "after-decision",
     "resumption-partial-implementation-vault-notice-001": "partial-implementation",
     "resumption-blocker-live-authorization-001": "blocker",
@@ -58,7 +58,7 @@ _CASE_KIND = {
     "resumption-handoff-corpus-continuation-001": "handoff",
     "resumption-control-vault-rename-001": "control",
     "implicit-retrieval-failed-experiment-embedding-default-001": "failed-experiment",
-    "implicit-retrieval-after-decision-fast-gate-001": "after-decision",
+    "implicit-retrieval-after-decision-derived-membership-001": "after-decision",
     "implicit-retrieval-blocker-lease-handoff-001": "blocker",
     "implicit-retrieval-failed-experiment-orientation-compaction-001": "failed-experiment",
     "implicit-retrieval-handoff-parent-next-001": "handoff",
@@ -76,7 +76,6 @@ _EXPECTED_LOW_OVERLAP = frozenset(
         "resumption-handoff-corpus-continuation-001",
         "resumption-control-vault-rename-001",
         "implicit-retrieval-failed-experiment-embedding-default-001",
-        "implicit-retrieval-after-decision-fast-gate-001",
         "implicit-retrieval-blocker-lease-handoff-001",
         "implicit-retrieval-failed-experiment-orientation-compaction-001",
         "implicit-retrieval-handoff-parent-next-001",
@@ -107,10 +106,11 @@ _SEMANTIC_DECIDING_SURFACES = frozenset(
 # appear in that case's observable paths, or a repository-only arm could answer
 # it. The review of TAS-132 found six such leaks; this pins the fix.
 _FORBIDDEN_OBSERVABLE = {
-    "resumption-after-decision-benchmark-opt-in-001": {
-        "Makefile",
-        "pyproject.toml",
-        "tests/test_quality_benchmark.py",
+    "resumption-after-decision-shared-install-001": {
+        "scripts/install.sh",
+        ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md",
+        ".braintree/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md",
+        "src/braintree/revision.py",
     },
     "resumption-after-decision-semantic-optional-001": set(_SEMANTIC_DECIDING_SURFACES),
     "resumption-partial-implementation-vault-notice-001": {
@@ -118,10 +118,10 @@ _FORBIDDEN_OBSERVABLE = {
         "src/braintree/vault.py",
     },
     "implicit-retrieval-failed-experiment-embedding-default-001": set(_SEMANTIC_DECIDING_SURFACES),
-    "implicit-retrieval-after-decision-fast-gate-001": {
-        "Makefile",
-        "pyproject.toml",
-        "tests/test_quality_benchmark.py",
+    "implicit-retrieval-after-decision-derived-membership-001": {
+        "SKILL.md",
+        ".braintree/index-map.md",
+        ".braintree/resolved/TAS-011-reachability-contract.md",
     },
     "implicit-retrieval-blocker-lease-handoff-001": {
         "references/coordination.md",

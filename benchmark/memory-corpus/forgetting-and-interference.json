@@ -71,7 +71,7 @@
         ]
       }
     },
-    {
+        {
       "schema_version": "memory-scenario-v1",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
@@ -84,7 +84,7 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "decision",
-            "statement": "Parallel creation must reserve an id atomically with `braintree allocate PREFIX` or a coordinator-preallocated range; a local filename search checks for an existing collision only and is never an id reservation.",
+            "statement": "Parallel creation in separate worktrees uses coordinator-preallocated disjoint numeric ranges; the shared atomic reservation primitive is not used across worktrees because each has its own sidecar.",
             "evidence": [
               "references/coordination.md",
               ".braintree/resolved/TAS-023-parallel-id-allocation.md"
@@ -94,7 +94,7 @@
             "id": "ep-2",
             "sequence": 2,
             "kind": "result",
-            "statement": "A capture path that derived the next number from Markdown let two parallel callers with different slugs write the same numeric id, so both record paths now reserve through one shared primitive.",
+            "statement": "A capture path that derived the next number from Markdown let two parallel callers write the same numeric id, so every capture path reserves through one primitive on a shared host.",
             "evidence": [
               ".braintree/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md"
             ]
@@ -129,26 +129,26 @@
         ]
       },
       "query": {
-        "task": "Two workers in separate worktrees are about to create new nodes, and a local `find` shows no matching id. Decide how each should choose its new id.",
+        "task": "Two workers in separate worktrees are about to create new nodes. Neither can see the other's files, and a local `find` shows no matching id. Decide how each should choose its new id.",
         "observable_paths": [
           "src/braintree/toon.py"
         ],
         "allowed_actions": [
+          "use-the-coordinator-preallocated-range",
           "reserve-an-id-atomically",
-          "use-the-next-id-the-find-shows",
-          "each-picks-a-range-independently"
+          "use-the-next-id-the-find-shows"
         ]
       },
       "grading": {
         "grader": "action-exact",
-        "expected_outcome": "reserve-an-id-atomically",
+        "expected_outcome": "use-the-coordinator-preallocated-range",
         "acceptable_actions": [
-          "reserve-an-id-atomically"
+          "use-the-coordinator-preallocated-range"
         ],
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "Irrelevant memory volume does not change the allocation rule: a filename search is collision detection only, so parallel creation must reserve an id atomically or use a coordinator-preallocated range.",
+            "statement": "The parallel-worktree allocation decision assigns each worktree a coordinator-preallocated disjoint range; the shared reservation primitive is for a shared host, so each worker takes the next id from its own range.",
             "source_episodes": [
               "ep-1",
               "ep-2"

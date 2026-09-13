@@ -82,7 +82,7 @@
         ]
       }
     },
-    {
+        {
       "schema_version": "memory-scenario-v1",
       "case_id": "experience-transfer-recurring-failure-001",
       "family": "experience-transfer",
@@ -95,7 +95,7 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "failure",
-            "statement": "A resolved node was committed after its body was edited and its file moved between status directories; `git mv` staged the pre-edit blob, so the commit recorded the old body.",
+            "statement": "A node was committed after its body was edited and its file moved between status directories, and `git mv` staged the pre-edit blob so the commit recorded the old body.",
             "evidence": [
               ".braintree/resolved/TAS-116-status-move-staging.md"
             ]
@@ -104,7 +104,7 @@
             "id": "ep-2",
             "sequence": 2,
             "kind": "failure",
-            "statement": "The same staging failure recurred across a claim and resolution split in two commits, so a status move landed carrying the pre-edit blob.",
+            "statement": "The same staging failure recurred when the status move and the body edit landed in two separate commits.",
             "evidence": [
               ".braintree/resolved/TAS-116-status-move-staging.md"
             ]
@@ -130,7 +130,7 @@
         ]
       },
       "query": {
-        "task": "A worker edited a node body, moved the same file from `proposed/` to `active/`, and paused before committing. Decide how to stage the commit.",
+        "task": "A worker edited a node body, moved the same file from `proposed/` to `active/`, and paused before committing. The project keeps a status move in its own commit when the body change is unrelated. Decide how to stage the work.",
         "observable_paths": [
           "src/braintree/vault.py"
         ],
@@ -149,7 +149,7 @@
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "`git mv` can stage the pre-edit blob, so stage the destination after the move and make the move the last step; the body edit and the status move must land together.",
+            "statement": "`git mv` can stage the pre-edit blob and a split already landed the old body, so stage the destination after the move and make the move the last step; the edit and the move must land together even when the convention favors separate commits.",
             "source_episodes": [
               "ep-1",
               "ep-2",

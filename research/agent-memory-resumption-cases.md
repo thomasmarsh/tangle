@@ -97,7 +97,7 @@ correct.
 
 | Case | Kind | Severity | Split | Cue | Gold memory | Distractor |
 |---|---|---|---|---|---|---|
-| `resumption-after-decision-benchmark-opt-in-001` | after-decision | major | development | Run benchmark verification in the default pytest invocation | Benchmark verification is deliberately opt-in to keep the default suite fast | Cumulative token telemetry |
+| `resumption-after-decision-shared-install-001` | after-decision | major | development | Give each project its own skill copy so it can pin a version | The shared install is deliberate; per-project copies duplicate and drift, and the revision stamp reports the version | Installed-revision stamp |
 | `resumption-after-decision-semantic-optional-001` | after-decision | major | held-out | Make embedding similarity the default near-duplicate check | Embeddings lost near-duplicate retrieval and stay optional and advisory | Dependency-free default install |
 | `resumption-partial-implementation-vault-notice-001` | partial-implementation | moderate | development | Refuse to write when the resolved vault differs from the named one | The in-place migration is deliberate; announce it rather than refuse it | Legacy reservation merge |
 | `resumption-blocker-live-authorization-001` | blocker | critical | development | Record the two matched live token samples now | Live or paid runs need owner authorization recorded before execution | Session-parser reuse |
@@ -110,7 +110,7 @@ correct.
 | Case | Kind | Severity | Split | Cue | Gold memory | Distractor |
 |---|---|---|---|---|---|---|
 | `implicit-retrieval-failed-experiment-embedding-default-001` | failed-experiment | major | development | Let "sounds similar" become the main repeated-work check | Similarity search lost to the lexical baseline and stays advisory | Dependency-free default install |
-| `implicit-retrieval-after-decision-fast-gate-001` | after-decision | moderate | development | Make the everyday gate run the exhaustive checks | The heavy comparison is deliberately opt-in | Cached tokenizer |
+| `implicit-retrieval-after-decision-derived-membership-001` | after-decision | moderate | development | Cache each hub's member list in the index-map | Hub membership is derived by an exact backlink search and never copied | Rebuildable derived index |
 | `implicit-retrieval-blocker-lease-handoff-001` | blocker | moderate | held-out | Hand an abandoned job to another agent right now | A lease has a 900-second default, renews, and distinguishes expiry | Different-agent `no-op` |
 | `implicit-retrieval-failed-experiment-orientation-compaction-001` | failed-experiment | moderate | held-out | Collapse the repeated summary instructions into a shorter loop | Orientation-loop compaction was measured higher and rejected | No recording-pipeline failure |
 | `implicit-retrieval-handoff-parent-next-001` | handoff | major | held-out | Finish a child while the parent pointer still names it | The coordinator owns the advance; the worker reports the stale route | Checker silence for action `next` |

@@ -1,0 +1,75 @@
+---
+context_rev: 1
+priority: P1
+updated: 2026-09-13T16:50:47Z
+summary: Redesign the gold corpus so memory-required cases separate repository-only from oracle.
+next: Measure each pilot case over three repetitions and treat a case as separating only on a majority, then re-run the pilot.
+---
+
+Parent [[TAS-121-evaluation-foundation]].
+
+# Context
+
+Depends on [[TAS-136-pilot-separability-audit]] at context_rev 2.
+
+The pilot found the repository-only floor too high: for seven of nine
+memory-required development cases the expected or an acceptable action is
+inferable from the task, observable files, and allowed actions without the
+unavailable history. The remediation is a corpus redesign, not a harness change:
+a case needs distractors that are locally plausible and that only the deciding
+history disambiguates.
+
+# Authorization
+
+The owner directed this redesign and its pilot re-run in session on
+2026-09-13, before execution. Scope: the 12 preregistered development cases, the
+two pilot arms (`repository-only`, `oracle`), one repetition per sample. Pins for
+the run: protocol `memory-pilot-v1`; corpus digest
+`sha256:0e294c4e3a61edfb72288ad1bb936f287500c7d080e481163d0bf5fe8e647a24`;
+grader `memory_scenario.grade`; model `deepseek/deepseek-v4-pro` at reasoning
+effort `high`; harness `pi-subagents`. The run is delegated to one fresh-context
+subagent per `(case, arm)` sample, each given only its arm's fixture.
+
+# Outcome
+
+A revised gold corpus whose memory-required cases fail from observable state
+alone while the oracle evidence makes the intended action attainable, verified
+by a re-run of the bounded separability pilot.
+
+# Done when
+
+- Every non-separating case is repaired with a recorded reason or replaced by a development case that separates.
+- The corpus keeps its 40–60-case range, family and curation-group balance, control balance, deterministic split, and digest.
+- The bounded separability pilot is re-run on a preregistered development subset and separates.
+- `braintree check` and `make test` pass.
+
+# Re-run result
+
+The authorized re-run ran on corpus digest
+`sha256:0e294c4e3a61edfb72288ad1bb936f287500c7d080e481163d0bf5fe8e647a24`
+(24 samples, one per `(case, arm)`). All three controls stayed solvable
+repository-only, and the oracle was correct on every memory-required case. Six
+of nine memory-required cases separated; three did not
+(`implicit-retrieval-after-decision-derived-membership-001`,
+`poisoning-and-authority-direct-injection-001`,
+`resumption-after-decision-shared-install-001`), so the preregistered
+three-or-more rule gives **`stop`**. The paired grades and telemetry are in
+`benchmark/memory-pilot-result.json`.
+
+Every original non-separating case was repaired or replaced with a recorded
+reason: the admission hypothesis contract is now false from observable state;
+the cascading task no longer states the independent support; the conflict case
+was replaced by a recorded-precedence decision; the staging case now competes
+with a status-move convention; the forgetting case now competes with a
+preallocated-range convention; the resumption case was replaced by the
+shared-install decision; and the implicit-retrieval case was replaced by
+derived hub membership.
+
+The three remaining failures are not stable corpus defects. Repeated design
+probes of each show repository-only flips between runs (the resumption and
+implicit cases were repository-only-wrong in most probes yet right in the
+recorded run; the poisoning case flipped too), so a single repetition cannot
+distinguish genuine non-separation from model variance. The durable finding is
+that the bounded pilot is underpowered, not that the deciding history is absent.
+The next action measures each case over three repetitions and decides separation
+on a majority before re-running the phase-one gate.

@@ -148,7 +148,7 @@
         ]
       }
     },
-    {
+        {
       "schema_version": "memory-scenario-v1",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
@@ -161,21 +161,37 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "observation",
-            "statement": "The scenario schema carries no explicit admission label; grading names the expected action.",
-            "evidence": ["src/braintree/memory_scenario.py"]
+            "statement": "The scenario schema derives an admission label from the leading verb of the expected action and stores no explicit label field.",
+            "evidence": [
+              "src/braintree/memory_scenario.py"
+            ]
           },
           {
             "id": "ep-2",
             "sequence": 2,
             "kind": "feedback",
-            "statement": "A curator predicted the label derived from the expected action verb will stay stable as the corpus grows.",
-            "evidence": ["src/braintree/memory_scenario.py", "research/agent-memory-scenario-schema.md"]
+            "statement": "A curator recorded that the derived classification is load-bearing for the corpus family balance, so a forecast about its stability gates any later decision to add an explicit label field.",
+            "evidence": [
+              "research/agent-memory-scenario-schema.md",
+              ".braintree/resolved/TAS-131-admission-scenarios.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "An unrelated note recorded that a small output helper was renamed.",
+            "evidence": [
+              "src/braintree/toon.py"
+            ]
           }
         ]
       },
       "query": {
-        "task": "Decide whether to record a prediction about how long a derived classification will stay stable.",
-        "observable_paths": ["src/braintree/memory_scenario.py"],
+        "task": "A curator proposes recording an unmeasured guess that the corpus's derived family classification will keep its current balance as cases are added, and adding an explicit label field would be needed to track it precisely. Decide how to treat the guess.",
+        "observable_paths": [
+          "src/braintree/memory_scenario.py"
+        ],
         "allowed_actions": [
           "retain-unsupported-hypothesis",
           "add-label-field",
@@ -185,12 +201,17 @@
       "grading": {
         "grader": "action-exact",
         "expected_outcome": "retain-unsupported-hypothesis",
-        "acceptable_actions": ["retain-unsupported-hypothesis"],
+        "acceptable_actions": [
+          "retain-unsupported-hypothesis"
+        ],
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "The prediction about label stability is unavailable from the schema and would precede any decision to add an explicit label field.",
-            "source_episodes": ["ep-1", "ep-2"]
+            "statement": "The unmeasured forecast is decision-relevant because it gates a later schema choice, so the project retains it as an unsupported hypothesis instead of discarding it or adding a label field now.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
           }
         ]
       }

@@ -4,86 +4,74 @@
   "family": "resumption",
   "source_revision": "b8cd7d5",
   "cases": [
-    {
-      "schema_version": "memory-scenario-v1",
-      "case_id": "resumption-after-decision-benchmark-opt-in-001",
-      "family": "resumption",
-      "split": "development",
-      "severity": "major",
-      "source_revision": "b8cd7d5",
-      "construction": {
-        "episodes": [
-          {
-            "id": "ep-1",
-            "sequence": 1,
-            "kind": "observation",
-            "statement": "The default pytest run took about 83 seconds because it recomputed full-corpus benchmark verification for the retrieval, embedding, storage, and verb harnesses.",
-            "evidence": [
-              "tests/test_quality_benchmark.py",
-              "tests/test_storage_comparison.py",
-              ".braintree/resolved/TAS-110-fast-default-test-suite.md"
-            ]
-          },
-          {
-            "id": "ep-2",
-            "sequence": 2,
-            "kind": "decision",
-            "statement": "The project made benchmark verification opt-in: the default suite is the fast unit gate and `make test-benchmarks` runs the marked verification.",
-            "evidence": [
-              "Makefile",
-              "pyproject.toml"
-            ]
-          },
-          {
-            "id": "ep-3",
-            "sequence": 3,
-            "kind": "result",
-            "statement": "The `benchmark` marker was declared and excluded by default, and the shared tokenizer was cached so repeated lexical ranking no longer re-tokenized.",
-            "evidence": [
-              "src/braintree/index.py",
-              "pyproject.toml"
-            ]
-          },
-          {
-            "id": "ep-4",
-            "sequence": 4,
-            "kind": "observation",
-            "statement": "The token benchmark records cumulative per-turn telemetry so token and round-trip deltas can be compared later.",
-            "evidence": [
-              "src/braintree/token_benchmark.py"
-            ]
-          }
-        ]
-      },
-      "query": {
-        "task": "A maintainer proposes that the default `pytest` invocation also run the full retrieval and storage benchmark verification so continuous integration never misses it. Decide what to do.",
-        "observable_paths": [
-          "src/braintree/quality_benchmark.py"
-        ],
-        "allowed_actions": [
-          "keep-verification-opt-in",
-          "enable-verification-by-default",
-          "delete-benchmark-verification"
-        ]
-      },
-      "grading": {
-        "grader": "action-exact",
-        "expected_outcome": "keep-verification-opt-in",
-        "acceptable_actions": [
-          "keep-verification-opt-in"
-        ],
-        "gold_evidence": [
-          {
-            "id": "gold-1",
-            "statement": "Benchmark verification was deliberately made opt-in so the default suite stays a fast unit gate; running it by default reverses that decision.",
-            "source_episodes": [
-              "ep-2",
-              "ep-3"
-            ]
-          }
-        ]
-      }
-    },
+                                                                {
+                                  "schema_version": "memory-scenario-v1",
+                                  "case_id": "resumption-after-decision-shared-install-001",
+                                  "family": "resumption",
+                                  "split": "development",
+                                  "severity": "major",
+                                  "source_revision": "b8cd7d5",
+                                  "construction": {
+                                    "episodes": [
+                                      {
+                                        "id": "ep-1",
+                                        "sequence": 1,
+                                        "kind": "observation",
+                                        "statement": "The installer places one shared program per project root that every agent skill links to, rather than a per-project copy.",
+                                        "evidence": [
+                                          "scripts/install.sh",
+                                          ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+                                        ]
+                                      },
+                                      {
+                                        "id": "ep-2",
+                                        "sequence": 2,
+                                        "kind": "decision",
+                                        "statement": "A per-project copy was rejected because it duplicates the program and lets the copies drift; the shared install is the recorded decision.",
+                                        "evidence": [
+                                          ".braintree/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md"
+                                        ]
+                                      },
+                                      {
+                                        "id": "ep-3",
+                                        "sequence": 3,
+                                        "kind": "observation",
+                                        "statement": "The installer still preserves an installed-revision stamp so a consuming project can report the version it uses.",
+                                        "evidence": [
+                                          "src/braintree/revision.py"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "query": {
+                                    "task": "The shared install means every project on a host upgrades together, and a recent upgrade broke a consuming project. A contributor proposes giving each project its own copy so it can pin its version. Decide the next action.",
+                                    "observable_paths": [
+                                      "src/braintree/toon.py"
+                                    ],
+                                    "allowed_actions": [
+                                      "keep-one-shared-per-root-program",
+                                      "install-a-per-project-copy",
+                                      "remove-the-installed-program"
+                                    ]
+                                  },
+                                  "grading": {
+                                    "grader": "action-exact",
+                                    "expected_outcome": "keep-one-shared-per-root-program",
+                                    "acceptable_actions": [
+                                      "keep-one-shared-per-root-program"
+                                    ],
+                                    "gold_evidence": [
+                                      {
+                                        "id": "gold-1",
+                                        "statement": "The shared install is deliberate and per-project copies were rejected because they duplicate and drift; version pinning is handled by the installed-revision stamp, so keep one shared program per root.",
+                                        "source_episodes": [
+                                          "ep-1",
+                                          "ep-2"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
     {
       "schema_version": "memory-scenario-v1",
       "case_id": "resumption-after-decision-semantic-optional-001",
