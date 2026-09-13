@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T14:03:33Z
+updated: 2026-09-13T14:10:54Z
 summary: Define and freeze the first gold corpus for memory-dependent engineering evaluation.
-next: "[[TAS-129-benchmark-claim-contract]]"
+next: "[[TAS-130-scenario-schema-grader]]"
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
