@@ -244,6 +244,49 @@ _MECHANICAL_COMMIT_CONTRACT: tuple[str, ...] = (
     "`Refs:` footer",
 )
 
+# A node's scope is its durable outcome, not a session, agent, commit, or
+# effort estimate: one node may span sessions and one session may advance
+# several frontier nodes, and the boundary is reassessed only when execution
+# reveals split or consolidation evidence.
+_DURABLE_OUTCOME_BOUNDARY_CONTRACT: tuple[str, ...] = (
+    "One node owns one durable outcome or decision",
+    "not an estimated session, commit, agent assignment, or amount of code",
+    "one node may span sessions, and one session may advance several frontier nodes",
+    "Reassess a boundary when execution reveals new evidence",
+    "rather than through a mandatory per-node sizing pass",
+    "split when execution reveals another outcome that can be accepted, verified, "
+    "consumed, blocked, or resumed independently",
+    "retains durable execution-memory value",
+    "consolidate adjacent nodes when they share one outcome, completion evidence, "
+    "and rollback boundary",
+    "neither retains independent future value",
+    "continuing the stronger owner and preserving or reconciling backlinks",
+    "Do neither merely because a session ended, an agent changed, several commits "
+    "landed, or the work is larger or smaller than expected",
+    "braintree similar --file PATH",
+    "braintree digest NODE",
+    "braintree clusters",
+    "advisory support only",
+    "used after boundary evidence appears",
+    "no checker or command claims semantic authority over scope",
+    "`braintree check` validates graph structure only",
+)
+
+# The boundary rule is evidence-driven, so no mandatory per-node sizing command
+# is documented on any surface.
+_SIZING_COMMAND_ABSENT: tuple[str, ...] = (
+    "braintree size",
+    "braintree scope",
+)
+
+_README_BOUNDARY_CONTRACT: tuple[str, ...] = (
+    "One node owns one durable outcome or decision",
+    "one node may span sessions and one session may advance several nodes",
+    "Reassess that boundary only when execution reveals evidence",
+    "never merely because a session ended, an agent changed, several commits landed",
+    "no checker or command has semantic authority over scope",
+)
+
 # Reversing a partly implemented outcome has one stated rule: in place while the
 # same node owns the outcome, supersession when the outcome moves, with the
 # reversed direction's commit recorded rather than rewritten.
@@ -489,6 +532,18 @@ def test_skill_frontier_candidate_contract() -> None:
 
 def test_skill_plan_text_gate_status() -> None:
     _assert_present(_read(_SKILL), _PLAN_TEXT_GATE_CONTRACT)
+
+
+def test_skill_durable_outcome_boundary_contract() -> None:
+    text = _read(_SKILL)
+    _assert_present(text, _DURABLE_OUTCOME_BOUNDARY_CONTRACT)
+    _assert_absent(text, _SIZING_COMMAND_ABSENT)
+
+
+def test_readme_durable_outcome_boundary_contract() -> None:
+    text = _read(_ROOT / "README.md")
+    _assert_present(text, _README_BOUNDARY_CONTRACT)
+    _assert_absent(text, _SIZING_COMMAND_ABSENT)
 
 
 def test_skill_code_masking_status() -> None:
