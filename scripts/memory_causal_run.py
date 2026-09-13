@@ -61,8 +61,8 @@ def _write_batch(run_dir: Path, episodes: list[dict], index: int) -> int:
     return len(tasks)
 
 
-def generate(run_dir: Path) -> int:
-    plan = mc.plan_document()
+def generate(run_dir: Path, split: str = "development") -> int:
+    plan = mc.plan_document(split=split)
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "prompts").mkdir(exist_ok=True)
     (run_dir / "plan.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
@@ -77,7 +77,7 @@ def generate(run_dir: Path) -> int:
         if mc.memory_pilot.prompt_digest(prompt) != episode["prompt_digest"]:
             raise SystemExit(f"prompt digest drift for {episode['key']}")
         (run_dir / "prompts" / f"{episode['key']}.txt").write_text(prompt, encoding="utf-8")
-    for index in range(mc.CAUSAL_BATCH_COUNT):
+    for index in range(plan["batch_count"]):
         start = index * mc.CAUSAL_BATCH_SIZE
         chunk = plan["episodes"][start : start + mc.CAUSAL_BATCH_SIZE]
         count = _write_batch(run_dir, chunk, index)
@@ -195,13 +195,19 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     gen = sub.add_parser("generate")
     gen.add_argument("run_dir", nargs="?", type=Path, default=DEFAULT_RUN_DIR)
+    gen.add_argument(
+        "--split",
+        choices=sorted(mc.CAUSAL_SPLIT_PROTOCOLS),
+        default="development",
+        help="causal split to plan: development (exploratory) or held-out (confirmatory)",
+    )
     col = sub.add_parser("collect")
     col.add_argument("run_dir", nargs="?", type=Path, default=DEFAULT_RUN_DIR)
     col.add_argument("--runs-root", default=None)
     col.add_argument("--out", default=None)
     args = parser.parse_args(argv)
     if args.command == "generate":
-        return generate(args.run_dir)
+        return generate(args.run_dir, args.split)
     return collect(args.run_dir, args.runs_root, args.out)
 
 

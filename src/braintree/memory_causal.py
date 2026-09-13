@@ -54,6 +54,8 @@ __all__ = [
     "CAUSAL_CEILING_ARM",
     "CAUSAL_CHILD_PROFILE",
     "CAUSAL_CONFIDENCE_LEVEL",
+    "CAUSAL_CONFIRMATORY_PROTOCOL",
+    "CAUSAL_CONFIRMATORY_SPLIT",
     "CAUSAL_CONTRASTS",
     "CAUSAL_DECISION_CONTRASTS",
     "CAUSAL_FIXTURE_VERSION",
@@ -77,6 +79,7 @@ __all__ = [
     "dry_run",
     "dry_run_problems",
     "fixture_digest",
+    "held_out_cases",
     "main",
     "paired_effects",
     "plan_digest",
@@ -92,6 +95,14 @@ __all__ = [
 Json = dict[str, Any]
 
 CAUSAL_PROTOCOL = "memory-causal-v1"
+CAUSAL_CONFIRMATORY_PROTOCOL = "memory-causal-confirmatory-v1"
+CAUSAL_CONFIRMATORY_SPLIT = "held-out"
+# The exploratory runner plans only the development split; the frozen held-out
+# split is the confirmatory split, and a plan's protocol names which one it is.
+CAUSAL_SPLIT_PROTOCOLS = {
+    "development": CAUSAL_PROTOCOL,
+    CAUSAL_CONFIRMATORY_SPLIT: CAUSAL_CONFIRMATORY_PROTOCOL,
+}
 CAUSAL_ARMS = memory_contract.CANONICAL_ARM_IDS
 CAUSAL_BASELINE_ARMS = ("repository-only", "raw-history", "flat-memory")
 CAUSAL_TREATMENT_ARM = "braintree"
@@ -314,14 +325,50 @@ def _fixture_hashes(
     )
 
 
-def _causal_cases(root: Path | None = None) -> tuple[memory_scenario.Scenario, ...]:
-    """Return the preregistered development case set: the pilot subset.
+def held_out_cases(
+    corpus: Sequence[memory_corpus.Envelope],
+) -> tuple[memory_scenario.Scenario, ...]:
+    """Return the whole frozen held-out split, ordered by family then case id.
 
-    The subset is a pure function of the frozen corpus, so it cannot be chosen
-    after an outcome is seen. It spans every family and curation group and pairs
-    memory-required cases with memory-irrelevant controls.
+    The confirmatory set is a pure function of the corpus digest, so no case can
+    be included or dropped after an outcome is seen. It spans every family and
+    curation group and carries the corpus's held-out controls.
     """
-    return memory_corpus.pilot_subset(memory_corpus.load_corpus(_base(root)))
+    by_family = {
+        envelope.family: sorted(
+            (case for case in envelope.cases if case.split == CAUSAL_CONFIRMATORY_SPLIT),
+            key=lambda case: case.case_id,
+        )
+        for envelope in corpus
+    }
+    return tuple(
+        case
+        for family in memory_contract.SCENARIO_FAMILIES
+        for case in by_family.get(family, [])
+    )
+
+
+def _split_cases(
+    corpus: Sequence[memory_corpus.Envelope], split: str
+) -> tuple[memory_scenario.Scenario, ...]:
+    """Return the deterministic case set for one causal split."""
+    if split == "development":
+        return memory_corpus.pilot_subset(corpus)
+    if split == CAUSAL_CONFIRMATORY_SPLIT:
+        return held_out_cases(corpus)
+    raise CausalError(f"unknown causal split: {split}")
+
+
+def _causal_cases(
+    root: Path | None = None, split: str = "development"
+) -> tuple[memory_scenario.Scenario, ...]:
+    """Return the deterministic case set for one causal split.
+
+    The set is a pure function of the frozen corpus, so it cannot be chosen
+    after an outcome is seen. Both splits span every family and curation group
+    and pair memory-required cases with memory-irrelevant controls.
+    """
+    return _split_cases(memory_corpus.load_corpus(_base(root)), split)
 
 
 def _episode_key(case_id: str, arm: str, model: str, repetition: int) -> str:
@@ -332,6 +379,7 @@ def build_plan(
     root: Path | None = None,
     models: Sequence[str] = CAUSAL_MODELS,
     repetitions: int = CAUSAL_REPETITIONS,
+    split: str = "development",
 ) -> tuple[Json, ...]:
     """Return every ``(case, arm, model, repetition)`` episode, batch-ordered."""
     if repetitions < memory_contract.MIN_REPETITIONS:
@@ -343,8 +391,10 @@ def build_plan(
         raise CausalError(
             f"{len(models)} models below the contract minimum {memory_contract.MIN_MODELS}"
         )
+    if split not in CAUSAL_SPLIT_PROTOCOLS:
+        raise CausalError(f"unknown causal split: {split}")
     base = _base(root)
-    cases = _causal_cases(base)
+    cases = _causal_cases(base, split)
     cache: dict[str, memory_pilot.ObservableFile] = {}
     prompt_cache: dict[tuple[str, str], tuple[str, str]] = {}
     episodes: list[Json] = []
@@ -379,11 +429,16 @@ def build_plan(
     return tuple(episodes)
 
 
-def pin_document(corpus_digest: str, revision: str, models: Sequence[str]) -> Json:
+def pin_document(
+    corpus_digest: str,
+    revision: str,
+    models: Sequence[str],
+    protocol: str = CAUSAL_PROTOCOL,
+) -> Json:
     """Return every contract pin field the causal run must preserve."""
     listed = tuple(models)
     return {
-        "protocol": CAUSAL_PROTOCOL,
+        "protocol": protocol,
         "corpus-digest": corpus_digest,
         "fixture-version": CAUSAL_FIXTURE_VERSION,
         "source-revision": revision,
@@ -429,15 +484,20 @@ def plan_document(
     root: Path | None = None,
     models: Sequence[str] = CAUSAL_MODELS,
     repetitions: int = CAUSAL_REPETITIONS,
+    split: str = "development",
 ) -> Json:
     """Return the deterministic five-arm causal plan, including a plan digest."""
+    if split not in CAUSAL_SPLIT_PROTOCOLS:
+        raise CausalError(f"unknown causal split: {split}")
     base = _base(root)
     corpus = memory_corpus.load_corpus(base)
     digest = memory_corpus.corpus_digest(corpus)
     listed = tuple(models)
-    episodes = build_plan(base, listed, repetitions)
+    protocol = CAUSAL_SPLIT_PROTOCOLS[split]
+    episodes = build_plan(base, listed, repetitions, split)
+    batch_count = (len(episodes) + CAUSAL_BATCH_SIZE - 1) // CAUSAL_BATCH_SIZE
     document: Json = {
-        "protocol": CAUSAL_PROTOCOL,
+        "protocol": protocol,
         "harness": CAUSAL_HARNESS,
         "grader": CAUSAL_GRADER,
         "child_profile": CAUSAL_CHILD_PROFILE,
@@ -445,16 +505,16 @@ def plan_document(
         "models": list(listed),
         "reasoning_effort": CAUSAL_REASONING_EFFORT,
         "corpus_digest": digest,
-        "split": "development",
+        "split": split,
         "memory_budget": CAUSAL_MEMORY_BUDGET,
-        "pins": pin_document(digest, source_revision(base), listed),
+        "pins": pin_document(digest, source_revision(base), listed, protocol),
         "case_count": len({str(episode["case_id"]) for episode in episodes}),
         "arm_count": len(CAUSAL_ARMS),
         "model_count": len(listed),
         "repetitions": repetitions,
         "sample_count": len(episodes),
         "batch_size": CAUSAL_BATCH_SIZE,
-        "batch_count": CAUSAL_BATCH_COUNT,
+        "batch_count": batch_count,
         "episodes": list(episodes),
     }
     document["plan_digest"] = plan_digest(document)
@@ -465,19 +525,22 @@ def plan_problems(
     root: Path | None = None,
     models: Sequence[str] = CAUSAL_MODELS,
     repetitions: int = CAUSAL_REPETITIONS,
+    split: str = "development",
 ) -> list[str]:
     """Return the structural problems that make the generated plan unusable."""
     base = _base(root)
     listed = tuple(models)
     problems: list[str] = []
+    if split not in CAUSAL_SPLIT_PROTOCOLS:
+        return [f"plan: unknown split {split!r}"]
     if len(listed) < memory_contract.MIN_MODELS:
         problems.append("plan: fewer than three models")
     if repetitions < memory_contract.MIN_REPETITIONS:
         problems.append("plan: fewer than three repetitions")
     if len(set(listed)) != len(listed):
         problems.append("plan: duplicate models")
-    cases = _causal_cases(base)
-    episodes = build_plan(base, listed, repetitions)
+    cases = _causal_cases(base, split)
+    episodes = build_plan(base, listed, repetitions, split)
     expected_keys = {
         _episode_key(case.case_id, arm, model, repetition)
         for case in cases
@@ -498,16 +561,21 @@ def plan_problems(
     batches: dict[int, int] = {}
     for episode in episodes:
         batch = episode["batch"]
-        if not isinstance(batch, int) or not 1 <= batch <= CAUSAL_BATCH_COUNT:
+        if not isinstance(batch, int) or batch < 1:
             problems.append(f"plan: episode {episode.get('key')} has batch {batch!r}")
             continue
         batches[batch] = batches.get(batch, 0) + 1
     expected_count = len(cases) * len(CAUSAL_ARMS) * len(listed) * repetitions
+    expected_batch_count = (expected_count + CAUSAL_BATCH_SIZE - 1) // CAUSAL_BATCH_SIZE
     if sum(batches.values()) != expected_count:
         problems.append(f"plan: {sum(batches.values())} episodes is not {expected_count}")
     for batch, count in sorted(batches.items()):
         if count > CAUSAL_BATCH_SIZE:
             problems.append(f"plan: batch {batch} has {count} episodes over the cap")
+    if sorted(batches) != list(range(1, expected_batch_count + 1)):
+        problems.append(
+            f"plan: batches {sorted(batches)} are not 1..{expected_batch_count}"
+        )
     cache: dict[str, memory_pilot.ObservableFile] = {}
     cases_by_id = {case.case_id: case for case in cases}
     for episode in episodes:
@@ -520,7 +588,7 @@ def plan_problems(
             problems.append(f"plan: prompt digest drifted for {episode.get('key')}")
         if episode.get("fixture_digest") != fixture_hash:
             problems.append(f"plan: fixture digest drifted for {episode.get('key')}")
-    document = plan_document(base, listed, repetitions)
+    document = plan_document(base, listed, repetitions, split)
     if document["plan_digest"] != plan_digest(document):
         problems.append("plan: plan digest is not a content address of the plan")
     if set(document["pins"]) != set(memory_contract.PIN_FIELDS):
@@ -911,7 +979,7 @@ def record(
     pins = plan.get("pins")
     revision = pins.get("source-revision") if isinstance(pins, Mapping) else None
     return {
-        "protocol": CAUSAL_PROTOCOL,
+        "protocol": plan.get("protocol", CAUSAL_PROTOCOL),
         "status": status,
         "evidence": _evidence_label(plan, status),
         "decision": _decision_label(plan, status, contrasts),
@@ -978,7 +1046,7 @@ def result_problems(result: Mapping[str, Any]) -> list[str]:
             problems.append(f"result: missing {name}")
     if problems:
         return problems
-    if result["protocol"] != CAUSAL_PROTOCOL:
+    if result["protocol"] not in set(CAUSAL_SPLIT_PROTOCOLS.values()):
         problems.append("result: wrong protocol")
     if result["status"] not in {"complete", "incomplete"}:
         problems.append(f"result: unknown status {result['status']!r}")
@@ -1054,6 +1122,23 @@ def result_problems(result: Mapping[str, Any]) -> list[str]:
     return problems
 
 
+def _synthetic_action(case: memory_scenario.Scenario, arm: str) -> str:
+    """Return a zero-live synthetic action that exercises the decision gate.
+
+    A baseline arm answers a memory-required case incorrectly and every arm
+    answers a control correctly, so a held-out dry run aggregates to the
+    ``confirmed`` verdict while a development dry run stays ``exploratory``.
+    """
+    if arm in {"repository-only", "raw-history", "flat-memory"} and not memory_corpus.is_control(
+        case
+    ):
+        acceptable = set(case.grading.acceptable_actions)
+        for candidate in case.query.allowed_actions:
+            if candidate not in acceptable:
+                return candidate
+    return case.grading.expected_outcome
+
+
 def _synthetic_samples(plan: Mapping[str, Any], root: Path) -> list[Json]:
     """Return a zero-live synthetic sample set that must aggregate ``complete``."""
     corpus = memory_corpus.load_corpus(root)
@@ -1075,7 +1160,9 @@ def _synthetic_samples(plan: Mapping[str, Any], root: Path) -> list[Json]:
                 "finished_at": "2026-09-13T00:00:12Z",
                 "model": episode["model"],
                 "prompt_digest": episode["prompt_digest"],
-                "raw_output": json.dumps({"action": case.grading.expected_outcome}),
+                "raw_output": json.dumps(
+                    {"action": _synthetic_action(case, str(episode["arm"]))}
+                ),
                 "telemetry": {
                     **{
                         metric: 1
@@ -1089,11 +1176,11 @@ def _synthetic_samples(plan: Mapping[str, Any], root: Path) -> list[Json]:
     return samples
 
 
-def dry_run(root: Path | None = None) -> Json:
+def dry_run(root: Path | None = None, split: str = "development") -> Json:
     """Build, validate, and synthetically analyze the plan without a live call."""
     base = _base(root)
-    plan = plan_document(base)
-    problems = plan_problems(base)
+    plan = plan_document(base, split=split)
+    problems = plan_problems(base, split=split)
     if problems:
         raise CausalError("; ".join(problems))
     result = record(plan, _synthetic_samples(plan, base), base)
@@ -1102,15 +1189,16 @@ def dry_run(root: Path | None = None) -> Json:
         raise CausalError("; ".join(problems))
     if result["status"] != "complete":
         raise CausalError(f"dry run did not aggregate complete: {result['status']}")
-    if result["evidence"] != "exploratory":
-        raise CausalError(f"development dry run is not exploratory: {result['evidence']}")
+    expected = _evidence_label(plan, "complete")
+    if result["evidence"] != expected:
+        raise CausalError(f"{split} dry run is not {expected}: {result['evidence']}")
     return result
 
 
-def dry_run_problems(root: Path | None = None) -> list[str]:
+def dry_run_problems(root: Path | None = None, split: str = "development") -> list[str]:
     """Return the problems the zero-live dry run finds; empty means it passed."""
     try:
-        dry_run(root)
+        dry_run(root, split)
     except CausalError as error:
         return str(error).split("; ")
     return []
@@ -1121,6 +1209,12 @@ def verify() -> list[str]:
     problems: list[str] = []
     if CAUSAL_PROTOCOL != "memory-causal-v1":
         problems.append("protocol literal drifted")
+    if CAUSAL_CONFIRMATORY_PROTOCOL != "memory-causal-confirmatory-v1":
+        problems.append("confirmatory protocol literal drifted")
+    if set(CAUSAL_SPLIT_PROTOCOLS) != set(memory_contract.SPLITS):
+        problems.append("protocol map does not cover the contract splits")
+    if CAUSAL_SPLIT_PROTOCOLS.get("development") != CAUSAL_PROTOCOL:
+        problems.append("development split protocol drifted")
     if tuple(CAUSAL_ARMS) != memory_contract.CANONICAL_ARM_IDS:
         problems.append("arms drifted from the contract")
     if set(CAUSAL_BASELINE_ARMS) | {CAUSAL_TREATMENT_ARM, CAUSAL_CEILING_ARM} != set(CAUSAL_ARMS):
@@ -1149,8 +1243,8 @@ def verify() -> list[str]:
 
 
 _USAGE = (
-    "usage: braintree benchmark causal plan\n"
-    "       braintree benchmark causal dry-run\n"
+    "usage: braintree benchmark causal plan [--split development|held-out]\n"
+    "       braintree benchmark causal dry-run [--split development|held-out]\n"
     "       braintree benchmark causal record --input RAW.json [--output RESULT.json]\n"
     "Plan, dry-run, or record the matched five-arm causal memory experiment."
 )
@@ -1224,6 +1318,23 @@ def _record_cli(arguments: Sequence[str]) -> int:
     return 0
 
 
+def _split_argument(arguments: Sequence[str]) -> str:
+    """Return the ``--split`` value, defaulting to the development split."""
+    values = list(arguments)
+    split = "development"
+    index = 0
+    while index < len(values):
+        name = values[index]
+        if name == "--split" and index + 1 < len(values):
+            split = values[index + 1]
+            index += 2
+            continue
+        raise CausalError(f"unknown argument: {name}")
+    if split not in CAUSAL_SPLIT_PROTOCOLS:
+        raise CausalError(f"unknown split: {split}")
+    return split
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run ``plan``, ``dry-run``, or ``record`` for the five-arm causal runner."""
     arguments = list(sys.argv[1:] if argv is None else argv)
@@ -1232,16 +1343,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0 if arguments else 2
     command = arguments[0]
     try:
-        if command == "plan":
-            if len(arguments) != 1:
-                raise CausalError(f"unknown argument: {arguments[1]}")
-            _print_plan(plan_document())
-            return 0
-        if command == "dry-run":
-            if len(arguments) != 1:
-                raise CausalError(f"unknown argument: {arguments[1]}")
-            result = dry_run()
+        if command in {"plan", "dry-run"}:
+            split = _split_argument(arguments[1:])
+            if command == "plan":
+                _print_plan(plan_document(split=split))
+                return 0
+            result = dry_run(split=split)
             print(field("protocol", result["protocol"]))
+            print(field("split", result["split"]))
             print(field("status", result["status"]))
             print(field("evidence", result["evidence"]))
             print(field("decision", result["decision"]))
