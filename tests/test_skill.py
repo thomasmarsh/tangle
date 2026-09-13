@@ -190,6 +190,37 @@ _ENTERED_GATE_BRIEF_RULE = (
     "can reject a correctly authored new file",
 )
 
+# One session records one session `FBK` node and the coordinator owns it, so
+# parallel workers do not each create one: a worker reports friction in its run
+# report instead of creating a node, and only the coordinator can admit the
+# report as the session node, fold it into one already recorded, or dispose it.
+# The one-per-session rule scopes to the orchestration session, not each run.
+_SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE = (
+    "One session records one session `FBK` node, and the coordinator owns it",
+    "a worker that hits friction reports it in its run report",
+    "the attempted action, the friction, and the improvement",
+    "instead of creating a node",
+    "the coordinator decides whether that report becomes the session `FBK` "
+    "node, folds into one already recorded, or is disposed",
+    "A worker creates an `FBK` node only when the coordinator explicitly "
+    "grants it",
+    "The one-per-session rule scopes to the orchestration session, not to each "
+    "worker run",
+    "two workers that each hit friction in one session owe one report, not two "
+    "nodes",
+)
+
+# Falsification probe for the ownership rule: the feedback-node introduction
+# already names the `FBK` type and how feedback is discovered but states no
+# owner, so the guard must reject it. The probe fails when the guard stops
+# detecting the ownership rule rather than when the reference merely reflows.
+_SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY = (
+    "A consuming project records Braintree friction as an `FBK` node. The `FBK` "
+    "type is the one feedback marker, so `find .braintree -name 'FBK-*.md'` "
+    "discovers feedback from Markdown alone, with no sidecar, network, or write "
+    "to the scanned vault."
+)
+
 # Proving the absence of a branch on a named mode or scenario accepts a
 # checked-in source-text guard over the module when it is paired with a
 # falsification probe, and it names the exact tokens it forbids and the
@@ -539,6 +570,19 @@ def test_negative_assertion_names_its_probe_tokens_and_modules() -> None:
 
 def test_brief_names_the_gates_an_entered_directory_enumerates() -> None:
     _assert_contains(_reference("authoring"), _ENTERED_GATE_BRIEF_RULE)
+
+
+def test_single_session_feedback_node_is_coordinator_owned() -> None:
+    _assert_contains(_reference("authoring"), _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE)
+
+
+def test_single_session_feedback_ownership_guard_rejects_the_intro_alone() -> None:
+    """Falsification probe: the guard must reject an intro with no owner."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY,
+            _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE,
+        )
 
 
 def test_reference_topics_are_canonical() -> None:

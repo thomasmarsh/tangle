@@ -134,6 +134,15 @@ A consuming project records Braintree friction as an `FBK` node. The `FBK` type
 is the one feedback marker, so `find .braintree -name 'FBK-*.md'` discovers feedback
 from Markdown alone, with no sidecar, network, or write to the scanned vault.
 
+One session records one session `FBK` node, and the coordinator owns it: a worker
+that hits friction reports it in its run report — the attempted action, the
+friction, and the improvement — instead of creating a node, and the coordinator
+decides whether that report becomes the session `FBK` node, folds into one
+already recorded, or is disposed. A worker creates an `FBK` node only when the
+coordinator explicitly grants it. The one-per-session rule scopes to the
+orchestration session, not to each worker run, so two workers that each hit
+friction in one session owe one report, not two nodes.
+
 - Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route
   into its own vault, like any node.
 - Carry the installed Braintree revision as `braintree_revision:` frontmatter,
