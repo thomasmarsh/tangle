@@ -2,7 +2,7 @@
   "protocol": "memory-corpus-v1",
   "schema_version": "memory-scenario-v1",
   "cases": 53,
-  "digest": "sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1",
+  "digest": "sha256:cabe4ac352feb613cef7d9ed025e9a383b8a04f1d4c0306796fac1f94a3f379c",
   "families": [
     {
       "family": "admission",
@@ -10,7 +10,7 @@
       "corpus_version": "memory-admission-corpus-v1",
       "source_revision": "86d81e3",
       "cases": 15,
-      "digest": "sha256:5605bd7e02824948f284c3fe19d15157c12f40ebf2a914ff8911ce73d3cd1418"
+      "digest": "sha256:9e7309a0097b41398c13e7f52f654bcf295c0bf109b7539f49bbe3283e6f1a88"
     },
     {
       "family": "cascading-invalidation",
@@ -42,7 +42,7 @@
       "corpus_version": "memory-forgetting-and-interference-corpus-v1",
       "source_revision": "f91f3be",
       "cases": 4,
-      "digest": "sha256:e9051385898ce829bf3c281da43cdcf5f56ba12f382944af0b1c639a96158c9c"
+      "digest": "sha256:95416f96af3fd100a99ac540c3f7230cfb6d3855363e7a00a8387796d4df8c0d"
     },
     {
       "family": "implicit-retrieval",
@@ -58,7 +58,7 @@
       "corpus_version": "memory-poisoning-and-authority-corpus-v1",
       "source_revision": "f91f3be",
       "cases": 4,
-      "digest": "sha256:5dd83c2339894db61b1b84790261ce9a7386cd96208f255d318c559c9d605151"
+      "digest": "sha256:ace3da199387f5170475a6be416ddd9dc470789824c6ffc862cae2491e12ad1e"
     },
     {
       "family": "resumption",

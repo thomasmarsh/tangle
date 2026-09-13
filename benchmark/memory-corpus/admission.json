@@ -188,7 +188,7 @@
         ]
       },
       "query": {
-        "task": "A curator proposes recording an unmeasured guess that the corpus's derived family classification will keep its current balance as cases are added, and adding an explicit label field would be needed to track it precisely. Decide how to treat the guess.",
+        "task": "A curator proposes recording an unmeasured guess that the corpus's derived family classification will keep its current balance as cases are added, and adding an explicit label field would be needed to track it precisely. The corpus admits only claims that a committed case or measurement supports. Decide how to treat the guess.",
         "observable_paths": [
           "src/braintree/memory_scenario.py"
         ],
@@ -207,7 +207,7 @@
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "The unmeasured forecast is decision-relevant because it gates a later schema choice, so the project retains it as an unsupported hypothesis instead of discarding it or adding a label field now.",
+            "statement": "The unmeasured forecast is decision-relevant because it gates a later schema choice, so the project retains it as an explicitly unsupported hypothesis rather than admitting it as a supported claim, discarding it, or adding a label field now.",
             "source_episodes": [
               "ep-1",
               "ep-2"

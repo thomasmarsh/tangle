@@ -129,7 +129,7 @@
         ]
       },
       "query": {
-        "task": "Two workers in separate worktrees are about to create new nodes. Neither can see the other's files, and a local `find` shows no matching id. Decide how each should choose its new id.",
+        "task": "Two workers in separate worktrees are about to create new nodes. Neither can see the other's files, and a local `find` shows no matching id. The project's capture path reserves every new numeric id through one atomic primitive on the host. Decide how each worker should choose its new id.",
         "observable_paths": [
           "src/braintree/toon.py"
         ],
@@ -148,7 +148,7 @@
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "The parallel-worktree allocation decision assigns each worktree a coordinator-preallocated disjoint range; the shared reservation primitive is for a shared host, so each worker takes the next id from its own range.",
+            "statement": "The parallel-worktree allocation decision assigns each worktree a coordinator-preallocated disjoint range; the one-primitive capture convention is for a shared host and each separate worktree has its own sidecar, so each worker takes the next id from its own range.",
             "source_episodes": [
               "ep-1",
               "ep-2"
