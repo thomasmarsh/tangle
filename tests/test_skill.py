@@ -304,6 +304,36 @@ _SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY = (
     "to the scanned vault."
 )
 
+# A `DEF` resolves only when every consumer-visible shape its consumers must
+# author is defined in it, or the definition explicitly names the successor node
+# that will define it; a shape deferred to an implementing task with no named
+# successor is disallowed at resolution. An additive consumer-visible shape names
+# the definition version, or the other signal a consumer reads, that
+# distinguishes a consumer with the new shape from one without.
+_DEFINITION_COMPLETENESS_RULE = (
+    "A `DEF` resolves only when every consumer-visible shape its consumers must "
+    "author is defined in it, or the definition explicitly names the successor "
+    "node that will define it",
+    "a shape deferred to an implementing task with no named successor is "
+    "disallowed at resolution",
+    "An additive consumer-visible shape names the definition version, or the "
+    "other signal a consumer reads",
+    "distinguishes a consumer with the new shape from one without",
+    "an unversioned additive slice leaves a consumer unable to tell the two apart",
+)
+
+# Falsification probe for the completeness rule: the pre-change sentence stages
+# the settled/unsettled `DEF` resolution but states no completeness condition,
+# no successor route, and no additive version signal, so the guard must reject
+# it. The probe fails when the guard stops detecting the rule rather than when
+# the reference merely reflows.
+_DEFINITION_COMPLETENESS_DEFERRAL_ONLY = (
+    "A settled `DEF` or `DEC` is `resolved`; while its invariant or decision is "
+    "still unsettled it stays `proposed`, so resolving it is the act of settling "
+    "it. A resolved `DEF` or `DEC` is current knowledge unless its sparse "
+    "`disposition` says `deprecated` or `superseded`."
+)
+
 # Proving the absence of a branch on a named mode or scenario accepts a
 # checked-in source-text guard over the module when it is paired with a
 # falsification probe, and it names the exact tokens it forbids and the
@@ -837,6 +867,18 @@ def test_single_session_feedback_ownership_guard_rejects_the_intro_alone() -> No
         _assert_contains(
             _SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY,
             _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE,
+        )
+
+
+def test_definition_covers_each_consumer_visible_shape_or_names_a_successor() -> None:
+    _assert_contains(_reference("authoring"), _DEFINITION_COMPLETENESS_RULE)
+
+
+def test_completeness_guard_rejects_the_settled_definition_sentence_alone() -> None:
+    """Falsification probe: the guard must reject the settled/unsettled sentence."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _DEFINITION_COMPLETENESS_DEFERRAL_ONLY, _DEFINITION_COMPLETENESS_RULE
         )
 
 
