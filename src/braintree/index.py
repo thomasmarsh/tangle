@@ -28,6 +28,7 @@ from collections import Counter, deque
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import lru_cache
 
 from . import semantic
 from .graph_check import (
@@ -943,8 +944,13 @@ def search_filter(root: str, filters: SearchFilters) -> Callable[[str], bool]:
     return lambda node_id: node_id in allowed
 
 
+@lru_cache(maxsize=4096)
 def _token_counts(text: str) -> Counter[str]:
-    """Return the lowercased alphanumeric token counts of ``text``."""
+    """Return the lowercased alphanumeric token counts of ``text``.
+
+    Ranking scans the same node text once per query, so the pure tokenization
+    is cached and callers must treat the returned counter as read-only.
+    """
     return Counter(_ALNUM.findall(text.lower()))
 
 

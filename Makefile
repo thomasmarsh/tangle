@@ -1,8 +1,9 @@
-.PHONY: test benchmark diagnostic-benchmark storage-comparison verb-benchmark
+.PHONY: test test-benchmarks benchmark diagnostic-benchmark storage-comparison verb-benchmark
 
-# The Python suite and the remaining end-to-end shell screens are independent
-# and process-spawn bound, so run them concurrently. Every job is waited on and
-# any failure fails the target.
+# The fast Python suite and the remaining end-to-end shell screens are
+# independent and process-spawn bound, so run them concurrently. Benchmark
+# verification is excluded here and runs with `make test-benchmarks`. Every job
+# is waited on and any failure fails the target.
 test:
 	@set -eu; \
 	uv run ruff check; \
@@ -16,6 +17,9 @@ test:
 	for pid in $$pids; do wait "$$pid" || status=1; done; \
 	git diff --check; \
 	exit $$status
+
+test-benchmarks:
+	uv run pytest -q -m benchmark
 
 benchmark:
 	uv run braintree benchmark token --protocol

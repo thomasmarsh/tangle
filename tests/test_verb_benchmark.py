@@ -8,6 +8,9 @@ import pytest
 
 from braintree import verb_benchmark
 
+# Benchmark verification spawns the verb gate, so it is opt-in.
+pytestmark = pytest.mark.benchmark
+
 
 def test_verify_matches_tracked_baseline(capsys: pytest.CaptureFixture[str]) -> None:
     assert verb_benchmark.main(["--verify"]) == 0

@@ -8,6 +8,9 @@ import pytest
 
 from braintree import token_benchmark
 
+# Benchmark verification replays recorded sessions and fixtures, so it is opt-in.
+pytestmark = pytest.mark.benchmark
+
 _FIXTURES = Path(__file__).parent / "fixtures"
 _FAKE_CODEX = _FIXTURES / "fake-codex-mutation.py"
 _SESSION = _FIXTURES / "token-usage-session.jsonl"

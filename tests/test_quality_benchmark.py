@@ -24,6 +24,9 @@ import pytest
 from braintree import embedding_benchmark, main
 from braintree import quality_benchmark as harness
 
+# Benchmark verification scores the committed corpus, so it is opt-in.
+pytestmark = pytest.mark.benchmark
+
 _ROOT = Path(__file__).resolve().parents[1]
 _WIDTH = 8
 _HEAVY_MODULES = (

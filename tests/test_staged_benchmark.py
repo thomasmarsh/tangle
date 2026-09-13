@@ -11,6 +11,9 @@ import pytest
 from braintree import main as bt_main
 from braintree import staged_benchmark, token_benchmark
 
+# Benchmark verification replays recorded samples, so it is opt-in.
+pytestmark = pytest.mark.benchmark
+
 Json = dict[str, Any]
 
 _ZERO_MEDIAN = {

@@ -86,8 +86,15 @@ Changes to `SKILL.md` change the skill contract and are covered by
 
 ## Before finishing
 
-Run the full offline suite and keep the tree clean:
+Run the fast offline suite and keep the tree clean:
 
 ```sh
 make test
+```
+
+Benchmark verification is opt-in so the default suite stays fast. Run it too
+when a change touches a benchmark harness or a committed benchmark baseline:
+
+```sh
+make test-benchmarks
 ```

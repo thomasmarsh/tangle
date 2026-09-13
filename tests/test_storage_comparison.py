@@ -6,6 +6,9 @@ import pytest
 
 from braintree import storage_comparison
 
+# Benchmark verification rebuilds throwaway Git fixtures, so it is opt-in.
+pytestmark = pytest.mark.benchmark
+
 
 def test_verify_matches_tracked_baseline(capsys: pytest.CaptureFixture[str]) -> None:
     assert storage_comparison.main(["--verify"]) == 0

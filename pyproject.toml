@@ -58,4 +58,9 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra"
+# Benchmark verification recomputes full-corpus results and rebuilds throwaway
+# Git fixtures, so it is opt-in: `make test-benchmarks` runs the marked tests.
+addopts = "-ra -m 'not benchmark'"
+markers = [
+  "benchmark: end-to-end verification of a development benchmark artifact",
+]

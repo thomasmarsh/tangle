@@ -6,6 +6,9 @@ import pytest
 
 from braintree import behavioral_benchmark
 
+# Benchmark verification recomputes full fixtures, so it is opt-in.
+pytestmark = pytest.mark.benchmark
+
 
 def test_verify_matches_tracked_baseline(capsys: pytest.CaptureFixture[str]) -> None:
     assert behavioral_benchmark.main(["--verify"]) == 0
