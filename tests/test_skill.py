@@ -98,6 +98,24 @@ _COMPLETION_RECEIPT_RULE = (
     "when a run times out while the worker is still composing prose",
 )
 
+# An additive, optional, behavior-preserving field on a seam a resolved sibling
+# owns is authored by the assigned worker when its own Done-when requires it,
+# rather than escalated: the worker records the field and the affected consumer
+# in its own result, stays out of the resolved node, keeps mechanical literal
+# updates in the owner's tests in its own write set, and the coordinator decides
+# at integration whether the owner's `context_rev` needs a bump.
+_ADDITIVE_RESOLVED_SEAM_FIELD_RULE = (
+    "an additive, optional, behavior-preserving field on a seam a resolved "
+    "sibling owns, when the assigned node's `Done when` requires it, is "
+    "authored by the assigned worker rather than escalated",
+    "records the field and the affected consumer in its own",
+    "does not edit the resolved node",
+    "mechanical literal updates in the owner's tests stay inside the consumer's "
+    "write set",
+    "the coordinator decides at integration whether the owner's `context_rev` "
+    "needs a bump",
+)
+
 # Resolving a frontier child includes advancing the coordinating parent's
 # `next`, so the resolving worker owns that edit; when the handoff's write set
 # excludes the parent, the handoff must name the parent (or its `next`) or the
@@ -347,6 +365,10 @@ def test_write_set_is_the_change_closure() -> None:
 
 def test_completion_receipt_is_the_trusted_signal() -> None:
     _assert_contains(_reference("coordination"), _COMPLETION_RECEIPT_RULE)
+
+
+def test_additive_field_on_a_resolved_seam_is_authored_by_the_consumer() -> None:
+    _assert_contains(_reference("coordination"), _ADDITIVE_RESOLVED_SEAM_FIELD_RULE)
 
 
 def test_parent_next_advance_names_the_write_set_exception() -> None:

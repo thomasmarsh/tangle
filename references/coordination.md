@@ -78,6 +78,13 @@ write set before work begins.
   or the public schema contract, is escalated rather than authored. A
   coordinating task names any primitive or seam its slice must introduce, so the
   worker does not have to infer it.
+- Additive, optional fields are the exception: an additive, optional,
+  behavior-preserving field on a seam a resolved sibling owns, when the assigned
+  node's `Done when` requires it, is authored by the assigned worker rather than
+  escalated. The worker records the field and the affected consumer in its own
+  `# Result` and does not edit the resolved node; mechanical literal updates in
+  the owner's tests stay inside the consumer's write set; and the coordinator
+  decides at integration whether the owner's `context_rev` needs a bump.
 - The assigned write set is the compile-and-golden closure of the approved
   change, not a crate directory: membership covers every file the change must
   touch, including exhaustive matches and struct literals on the changed types,
