@@ -506,7 +506,7 @@ VERBS: dict[str, Verb] = {
     ),
     "benchmark": _verb(
         "Run a development benchmark.",
-        usage="braintree benchmark token|behavioral|storage|verbs|staged|embedding|quality",
+        usage="braintree benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus",
         operands=(
             ("NAME", "one of the benchmark names in the usage line"),
         ),
@@ -537,6 +537,7 @@ _BENCHMARK_PURPOSES: dict[str, str] = {
     "staged": "compare a recorded pre-thrust and landed token-benchmark sample",
     "embedding": "freeze or verify the retrieval corpus, or run the batch comparison",
     "quality": "measure or verify the embedding and clustering quality gate",
+    "corpus": "validate the whole gold memory corpus and verify its committed digest",
 }
 
 for _name, _purpose in _BENCHMARK_PURPOSES.items():
@@ -549,6 +550,22 @@ for _name, _purpose in _BENCHMARK_PURPOSES.items():
         outputs=(("verification", "a pass line, or a mismatch that exits 1"),),
         hazards=("Development only; offline, with no live model calls.",),
     )
+
+# The corpus validator is the one benchmark-shaped group command with verbs
+# rather than a ``--verify`` flag, so it gets its own bounded help.
+VERBS["benchmark corpus"] = _verb(
+    "Validate the whole gold memory corpus and verify its committed digest.",
+    usage="braintree benchmark corpus verify|freeze",
+    operands=(
+        ("verify", "re-validate the corpus and compare the committed manifest"),
+        ("freeze", "re-validate the corpus and rewrite its digest manifest"),
+    ),
+    outputs=(
+        ("corpus", "the case count and whole-corpus digest"),
+        ("verification", "a pass line, or findings that exit 1"),
+    ),
+    hazards=("Development only; offline, with no live model calls.",),
+)
 
 
 def wants_help(args: Sequence[str]) -> bool:

@@ -1,0 +1,205 @@
+{
+  "protocol": "memory-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "cases": 53,
+  "digest": "sha256:8caf44eae2a841e4ff4e2ad4f11ee85bfa87cbca048065539a94f18f65ed7d02",
+  "families": [
+    {
+      "family": "admission",
+      "path": "admission.json",
+      "corpus_version": "memory-admission-corpus-v1",
+      "source_revision": "86d81e3",
+      "cases": 15,
+      "digest": "sha256:cae923817a0384beab379db502164d81bbae2615c990fb4bc438e6ccb8423801"
+    },
+    {
+      "family": "cascading-invalidation",
+      "path": "cascading-invalidation.json",
+      "corpus_version": "memory-cascading-invalidation-corpus-v1",
+      "source_revision": "c08af27",
+      "cases": 4,
+      "digest": "sha256:7deb871d9603003734c23356442828d38e4823bbba01d52edb77729fff95d5c6"
+    },
+    {
+      "family": "conflict-and-uncertainty",
+      "path": "conflict-and-uncertainty.json",
+      "corpus_version": "memory-conflict-and-uncertainty-corpus-v1",
+      "source_revision": "c08af27",
+      "cases": 3,
+      "digest": "sha256:47f0babfa72bc6387fdf3c402b822ca67a71f3e11b562f19d956f2a91e34a12a"
+    },
+    {
+      "family": "experience-transfer",
+      "path": "experience-transfer.json",
+      "corpus_version": "memory-experience-transfer-corpus-v1",
+      "source_revision": "f91f3be",
+      "cases": 4,
+      "digest": "sha256:a704ad88525df092208392103c896fb5de2e1e75a3912fda90b9ccb3012874aa"
+    },
+    {
+      "family": "forgetting-and-interference",
+      "path": "forgetting-and-interference.json",
+      "corpus_version": "memory-forgetting-and-interference-corpus-v1",
+      "source_revision": "f91f3be",
+      "cases": 4,
+      "digest": "sha256:e1b4fab990f63be3149b17b062f934a777d3f24c2705933a01250cd7a498a9e7"
+    },
+    {
+      "family": "implicit-retrieval",
+      "path": "implicit-retrieval.json",
+      "corpus_version": "memory-implicit-retrieval-corpus-v1",
+      "source_revision": "b8cd7d5",
+      "cases": 8,
+      "digest": "sha256:fc4ec13895883652c470f0187dbc9c6e69563138cc702e2ea82b2052fbf14c42"
+    },
+    {
+      "family": "poisoning-and-authority",
+      "path": "poisoning-and-authority.json",
+      "corpus_version": "memory-poisoning-and-authority-corpus-v1",
+      "source_revision": "f91f3be",
+      "cases": 4,
+      "digest": "sha256:9af582900cdba80d915cd19a5527ac23b4157e7a6b3e6be9b02fa030773443c5"
+    },
+    {
+      "family": "resumption",
+      "path": "resumption.json",
+      "corpus_version": "memory-resumption-corpus-v1",
+      "source_revision": "b8cd7d5",
+      "cases": 7,
+      "digest": "sha256:871939c157a5c70c9851f185c6acd1e9e5955eed814a60149a31f70064f7f9d1"
+    },
+    {
+      "family": "temporal-update",
+      "path": "temporal-update.json",
+      "corpus_version": "memory-temporal-update-corpus-v1",
+      "source_revision": "c08af27",
+      "cases": 4,
+      "digest": "sha256:710d5b9797437f3a2f31724a999cfc88d09fe70bd0fe0d86addc3fb3032d6184"
+    }
+  ],
+  "splits": {
+    "development": [
+      "admission-discard-cache-speculation-001",
+      "admission-discard-current-code-fact-001",
+      "admission-discard-duplicate-source-001",
+      "admission-retain-label-stability-hypothesis-001",
+      "admission-retain-offline-grading-constraint-001",
+      "admission-retain-owner-compression-constraint-001",
+      "admission-update-existing-clamp-rule-001",
+      "admission-update-existing-context-rev-001",
+      "admission-update-existing-staging-gotcha-001",
+      "cascading-invalidation-independent-evidence-001",
+      "cascading-invalidation-transitive-stale-001",
+      "conflict-and-uncertainty-competing-rules-001",
+      "conflict-and-uncertainty-missing-premise-001",
+      "experience-transfer-recurring-failure-001",
+      "experience-transfer-recurring-workflow-001",
+      "forgetting-and-interference-irrelevant-growth-001",
+      "forgetting-and-interference-low-utility-001",
+      "implicit-retrieval-after-decision-fast-gate-001",
+      "implicit-retrieval-control-version-declaration-001",
+      "implicit-retrieval-failed-experiment-embedding-default-001",
+      "implicit-retrieval-partial-implementation-write-set-closure-001",
+      "poisoning-and-authority-direct-injection-001",
+      "poisoning-and-authority-old-authoritative-decision-001",
+      "resumption-after-decision-benchmark-opt-in-001",
+      "resumption-blocker-live-authorization-001",
+      "resumption-control-vault-rename-001",
+      "resumption-partial-implementation-vault-notice-001",
+      "temporal-update-cosmetic-edit-001",
+      "temporal-update-semantic-revision-001"
+    ],
+    "held-out": [
+      "admission-discard-routine-verification-001",
+      "admission-discard-transient-failure-001",
+      "admission-retain-envelope-layout-alternative-001",
+      "admission-retain-heldout-separation-hypothesis-001",
+      "admission-update-existing-fast-suite-001",
+      "admission-update-existing-seam-reuse-001",
+      "cascading-invalidation-reversal-in-place-001",
+      "cascading-invalidation-superseded-decision-001",
+      "conflict-and-uncertainty-genuine-conflict-001",
+      "experience-transfer-cross-task-gotcha-001",
+      "experience-transfer-misleading-prior-lesson-001",
+      "forgetting-and-interference-near-duplicate-growth-001",
+      "forgetting-and-interference-superseded-growth-001",
+      "implicit-retrieval-blocker-lease-handoff-001",
+      "implicit-retrieval-control-offline-gate-001",
+      "implicit-retrieval-failed-experiment-orientation-compaction-001",
+      "implicit-retrieval-handoff-parent-next-001",
+      "poisoning-and-authority-laundered-instruction-001",
+      "poisoning-and-authority-permission-expansion-001",
+      "resumption-after-decision-semantic-optional-001",
+      "resumption-failed-experiment-cold-resume-rule-001",
+      "resumption-handoff-corpus-continuation-001",
+      "temporal-update-changed-definition-001",
+      "temporal-update-event-mutation-time-001"
+    ]
+  },
+  "controls": {
+    "per-family": {
+      "admission": {
+        "observable-only-controls": 8,
+        "memory-required": 7
+      },
+      "cascading-invalidation": {
+        "observable-only-controls": 0,
+        "memory-required": 4
+      },
+      "conflict-and-uncertainty": {
+        "observable-only-controls": 0,
+        "memory-required": 3
+      },
+      "experience-transfer": {
+        "observable-only-controls": 0,
+        "memory-required": 4
+      },
+      "forgetting-and-interference": {
+        "observable-only-controls": 0,
+        "memory-required": 4
+      },
+      "implicit-retrieval": {
+        "observable-only-controls": 2,
+        "memory-required": 6
+      },
+      "poisoning-and-authority": {
+        "observable-only-controls": 0,
+        "memory-required": 4
+      },
+      "resumption": {
+        "observable-only-controls": 1,
+        "memory-required": 6
+      },
+      "temporal-update": {
+        "observable-only-controls": 0,
+        "memory-required": 4
+      }
+    },
+    "control-families": [
+      "admission",
+      "implicit-retrieval",
+      "resumption"
+    ],
+    "all-memory-required-families": [
+      "cascading-invalidation",
+      "conflict-and-uncertainty",
+      "experience-transfer",
+      "forgetting-and-interference",
+      "poisoning-and-authority",
+      "temporal-update"
+    ]
+  },
+  "growth": {
+    "classes": [
+      "irrelevant-growth",
+      "superseded-growth",
+      "near-duplicate-growth"
+    ],
+    "size-scaling": "harness-owned; the corpus freezes the growth class only"
+  },
+  "audit": {
+    "boundary": "operative boundary is each case's query.observable_paths; the frozen source revision is the outer envelope",
+    "conflict-norms": "conflict-and-uncertainty gold cites research/agent-memory-theory-evaluation.md and the still-proposed [[TAS-127-uncertainty-provenance-security]]",
+    "control-exception": "revision-and-conflict and transfer-interference-and-authority are deliberately all memory-required"
+  }
+}

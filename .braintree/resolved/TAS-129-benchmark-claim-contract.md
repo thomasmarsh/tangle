@@ -1,7 +1,7 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P1
-updated: 2026-09-13T14:10:54Z
+updated: 2026-09-13T15:50:18Z
 summary: Specify the benchmark claim, memory boundary, causal arms, and decision criteria.
 ---
 

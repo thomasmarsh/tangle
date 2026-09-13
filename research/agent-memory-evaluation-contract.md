@@ -31,6 +31,14 @@ current repository cannot support the claim, however well Braintree scores it.
 source revision, the system prompt and tool definitions, the current
 environment state, and tool output produced within the arm's budget.
 
+The frozen source revision is the **outer envelope**: every path a case cites
+must exist at that revision, and the scenario schema records the revision so
+the boundary is reproducible. The **operative boundary** for a case is its
+`query.observable_paths`, the subset of that revision the arm is given. A case's
+deciding history is unobservable when it exists in the repository but outside
+the paths the query exposes, which is how the curated families keep their cases
+memory-required while still citing real files.
+
 Supported memory is decision-relevant historical state. The scope is
 prospective task state, semantic definitions and decisions, reflective thoughts
 and feedback, procedural skill text, and compressed episodic results. Model
@@ -82,8 +90,12 @@ curation groups so a corpus is stratified and balanced by family and outcome:
 | revision-and-conflict | temporal-update, cascading-invalidation, conflict-and-uncertainty |
 | transfer-interference-and-authority | experience-transfer, forgetting-and-interference, poisoning-and-authority |
 
-Every family includes both memory-required and memory-irrelevant cases, so a
-system cannot score by always consulting memory.
+The corpus must carry memory-irrelevant controls in more than one family, so a
+system cannot score by always consulting memory. The revision-and-conflict and
+transfer-interference-and-authority groups are deliberately all memory-required,
+because every case there tests a memory-dependent action or a memory-hostile
+outcome; the whole-corpus validator records the per-family control balance and
+these reviewed exceptions.
 
 ## 5. Endpoints and the correctness gate
 

@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T14:03:33Z
+updated: 2026-09-13T15:54:29Z
 summary: Audit whether repository-only and oracle conditions separate on a bounded pilot.
 next: Run a bounded separability pilot after recording any required live-run authorization.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-121-evaluation-foundation]].
 
 # Context
 
-Gated on [[TAS-135-corpus-validator-splits]].
+Depends on [[TAS-135-corpus-validator-splits]] at context_rev 1.
 
 # Outcome
 

@@ -23,6 +23,7 @@ from typing import Any
 
 import pytest
 
+from braintree import memory_corpus
 from braintree import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -318,7 +319,7 @@ def test_every_cited_path_exists_in_the_repository() -> None:
         paths.update(scenario.query.observable_paths)
         for episode in scenario.construction.episodes:
             paths.update(episode.evidence)
-    missing = sorted(path for path in paths if not (_ROOT / path).exists())
+    missing = sorted(path for path in paths if not memory_corpus.path_exists(_ROOT, path))
     assert missing == []
 
 

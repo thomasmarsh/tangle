@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T14:17:17Z
+updated: 2026-09-13T15:50:18Z
 summary: Define one scenario schema and deterministic grading interface for the gold corpus.
 ---
 
@@ -9,7 +9,7 @@ Parent [[TAS-121-evaluation-foundation]].
 
 # Context
 
-Depends on [[TAS-129-benchmark-claim-contract]] at context_rev 1.
+Depends on [[TAS-129-benchmark-claim-contract]] at context_rev 2.
 
 # Outcome
 
