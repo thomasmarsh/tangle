@@ -206,6 +206,43 @@ _PENDING_ADVANCE_REFERENCE_RULE = (
     "the coordinator's integration gate is the plain",
 )
 
+# A handoff that orders reuse of an existing artifact names its concrete path — or
+# the node that owns it — and a new ordered artifact has its path and format
+# declared by the handoff or the node's plan: the worker reads an input instead of
+# inferring a shape, and stops and asks the coordinator rather than inventing a
+# referenced artifact that does not exist, because a fabricated artifact silently
+# becomes the interface a downstream slice consumes.
+_HANDOFF_ARTIFACT_NAMING_RULE = (
+    "A handoff that orders reuse of an existing artifact names its concrete path",
+    "or the node that owns it",
+    "A worker that cannot resolve an ordered artifact to a path or an owning node "
+    "does not invent it",
+    "it stops and asks the coordinator",
+    "When the ordered artifact is new, the handoff or the node's plan declares its "
+    "path and format",
+)
+
+# Falsification probe for the artifact-naming rule: the pre-change handoff
+# paragraph named the assigned write set and the changed, created, and moved paths
+# a worker reports but stated no rule that an ordered artifact is named or that a
+# worker stops rather than inventing one, so the guard must reject it. The probe
+# fails when the guard stops detecting the rule rather than when the paragraph
+# merely reflows.
+_HANDOFF_ARTIFACT_NAMING_PROBE = (
+    "Before editing, a worker records the integration base and its assigned node "
+    "path and write set, hashes its starting Markdown node with `braintree hash`, "
+    "and claims it with `braintree claim`. `braintree hash` takes the node's bare "
+    "ID or full node name, never the path the handoff supplies, and its "
+    "`content_hash` field is the bare digest passed as `--base-hash`; `claim` and "
+    "`release` treat NODE as the same opaque claim key. The base hash names the "
+    "node content as handed off: the node's own frontier transition — the status "
+    "move and `# Context` edit — belongs to the claimed edit, not to the handoff. "
+    "Before handoff, verify every changed, created, and moved path remains in that "
+    "assigned write set, then release the matching claim. Report the base, touched "
+    "paths, created paths, moved paths, dependency evidence, and test evidence to "
+    "the coordinator."
+)
+
 # Falsification probe for the transient rule: the pre-change paragraph stated the
 # stale-route definition and the ownership exception but no completion path and
 # no distinction between a pending advance and a genuine stale route, so the
@@ -745,6 +782,18 @@ def test_internal_reuse_of_a_resolved_seam_is_authored_by_the_consumer() -> None
 
 def test_parent_next_advance_names_the_write_set_exception() -> None:
     _assert_contains(_read(_SKILL), _PARENT_NEXT_OWNERSHIP_RULE)
+
+
+def test_handoff_names_a_referenced_artifact() -> None:
+    _assert_contains(_reference("coordination"), _HANDOFF_ARTIFACT_NAMING_RULE)
+
+
+def test_artifact_naming_guard_rejects_the_handoff_protocol_alone() -> None:
+    """Falsification probe: the guard must reject a handoff protocol with no rule."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _HANDOFF_ARTIFACT_NAMING_PROBE, _HANDOFF_ARTIFACT_NAMING_RULE
+        )
 
 
 def test_pending_advance_transient_is_stated() -> None:

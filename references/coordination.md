@@ -151,6 +151,15 @@ and moved path remains in that assigned write set, then release the matching
 claim. Report the base, touched paths, created paths, moved paths, dependency
 evidence, and test evidence to the coordinator.
 
+A handoff that orders reuse of an existing artifact names its concrete path — or
+the node that owns it — so the worker reads an input instead of inferring a
+shape. A worker that cannot resolve an ordered artifact to a path or an owning
+node does not invent it: it stops and asks the coordinator, because a fabricated
+artifact silently becomes the interface a downstream slice consumes. When the
+ordered artifact is new, the handoff or the node's plan declares its path and
+format before the worker authors it, so a downstream consumer is handed a named
+artifact rather than an inferred one.
+
 A handoff whose write set excludes the coordinating parent cannot advance its
 `next`. Either the handoff names the parent — or the parent's `next` line — in
 the write set, so the resolving worker owns the advance, or the coordinator owns
