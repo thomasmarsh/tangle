@@ -28,6 +28,7 @@ from . import (
     node_record,
     provider,
     quality_benchmark,
+    reservations,
     staged_benchmark,
     storage_comparison,
     token_benchmark,
@@ -46,6 +47,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("init", "create or repair local coordination state"),
     ("migrate [ROOT]", "rename a legacy nodes/ vault to .braintree/"),
     ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
+    (
+        "reservations",
+        "list allocated id prefixes and the burned ids no node uses",
+    ),
     (
         "claim NODE AGENT --base-hash HASH [--lease-seconds N]",
         "acquire or renew an exclusive lease (default 900 seconds)",
@@ -233,6 +238,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return help.render_verb(help.verb_key(args))
     if command == "check":
         return graph_check.main(args[1:])
+    if command == "reservations":
+        return reservations.main(args[1:])
     # ``node record`` is the capture path beside ``feedback record``; a bare
     # ``node NODE`` stays with the sidecar/index engine that owns it.
     if command == "node" and len(args) > 1 and args[1] == "record":

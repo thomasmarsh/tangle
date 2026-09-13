@@ -164,6 +164,19 @@ VERBS: dict[str, Verb] = {
         ),
         hazards=(
             "A reservation is not a node; a local find is collision detection only.",
+            "A discarded allocation is burned permanently and never reused.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "reservations": _verb(
+        "List allocated id prefixes and the burned ids no node uses.",
+        usage="braintree reservations",
+        outputs=(
+            ("reservations", "prefix,next,burned rows for allocated ids"),
+        ),
+        hazards=(
+            "Read-only; it writes no state and needs no initialized sidecar.",
+            "A burned id was allocated and discarded, so it is not a missing node.",
         ),
         topic=_COORDINATION_TOPIC,
     ),

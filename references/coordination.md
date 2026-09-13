@@ -129,7 +129,13 @@ write set before work begins.
   offline alternatives. A local `find` checks for an existing collision only; it
   is never an ID reservation. Branch-local `owner` or claim metadata is
   insufficient because separate worktrees can make the same claim without seeing
-  each other.
+  each other. An allocated id is burned permanently: the counter only advances,
+  so an allocation the caller discards is never returned and never reused, and
+  `braintree reservations` lists each prefix's burned ids — reserved with no
+  node on disk — so a gap in the vault is a discarded allocation, not a missing
+  node. There is no release or reclaim: a reused id could collide with a node an
+  in-flight worktree already wrote under it, and the sidecar cannot distinguish
+  a discarded allocation from a pending one.
 
 ## Worker handoff
 

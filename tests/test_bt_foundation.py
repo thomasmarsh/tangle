@@ -100,6 +100,41 @@ def test_allocate_is_atomic_and_per_prefix(tmp_path: Path, run_bt: RunBt) -> Non
     assert run_bt("allocate", "DEF", env=env).stdout.strip() == 'id: "DEF-001"'
 
 
+def test_reservations_takes_no_arguments_and_reports_none_when_uninitialized(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    empty = run_bt("reservations", env=env)
+    assert empty.returncode == 0
+    assert empty.stdout.strip() == "reservations: 0 prefixes"
+
+    unknown = run_bt("reservations", "extra", env=env)
+    assert unknown.returncode == 2
+    assert 'error: "reservations takes no arguments: extra"' in unknown.stdout
+
+
+def test_reservations_lists_burned_ids_apart_from_missing_nodes(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    vault = tmp_path / "vault" / "nodes"
+    assert run_bt("init", env=env).returncode == 0
+    # Three allocations the caller discards and never writes as nodes: the
+    # counter still advances past them, so they are burned, not missing.
+    for expected in ("TAS-001", "TAS-002", "TAS-003"):
+        assert run_bt("allocate", "TAS", env=env).stdout.strip() == f'id: "{expected}"'
+    # The fourth allocation is written, so only 001-003 stay burned.
+    assert run_bt("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-004"'
+    (vault / "active").mkdir(parents=True)
+    (vault / "active" / "TAS-004-written.md").write_text(_FRONTMATTER, encoding="utf-8")
+
+    listed = run_bt("reservations", env=env)
+    assert listed.returncode == 0
+    assert "prefix,next,burned" in listed.stdout
+    # TAS-001 through TAS-003 are burned; TAS-004 is a node; the next id is 005.
+    assert '"TAS","5","1-3"' in listed.stdout
+
+
 def test_claim_renew_conflict_and_release(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
     first = run_bt(

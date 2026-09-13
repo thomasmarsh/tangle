@@ -356,6 +356,39 @@ _JUST_IN_TIME_LIVE_CONSUMER_RULE = (
     "or the node's `next` names that consumer as a mandatory companion",
 )
 
+# `braintree allocate` advances a counter that never rewinds, so an allocation
+# the caller discards is burned permanently and no contract may leave that id
+# invisible: the reference states the burn, the read-only `braintree status`
+# listing that names the burned ids, and the no-reclaim rationale.
+_ALLOCATION_BURN_RULE = (
+    "An allocated id is burned permanently",
+    "an allocation the caller discards is never returned and never reused",
+    "`braintree reservations` lists each prefix's burned ids",
+    "reserved with no node on disk",
+    "so a gap in the vault is a discarded allocation, not a missing node",
+    "There is no release or reclaim",
+)
+
+# Falsification probe for the burn rule: the pre-change reference names the
+# allocate reservation but states no burn, visibility, or reclaim rule, so the
+# guard must reject it. The probe fails when the guard stops detecting the rule
+# rather than when the allocate bullet merely reflows.
+_ALLOCATION_BURN_SIGNAL_ONLY = (
+    "For parallel creation, use `braintree allocate PREFIX` to atomically reserve "
+    "an ID; Coordinator preallocation or explicitly disjoint numeric ranges are "
+    "valid offline alternatives. A local `find` checks for an existing collision "
+    "only; it is never an ID reservation."
+)
+
+# The burn rule must also survive in the always-loaded core, not only the
+# reference, because a worker reads the mutation rules before any coordination
+# reference.
+_ALLOCATION_BURN_CORE_RULE = (
+    "A discarded `braintree allocate` burns its id permanently",
+    "there is no release or reclaim",
+    "`braintree reservations` lists each prefix's reserved-but-unwritten ids",
+)
+
 # A recorded premise or `# Outcome` statement the code contradicts is a
 # factual correction, not a scope change: the worker records the corrected state
 # and its evidence in `# Result`, bumps `context_rev` only when a pinned consumer
@@ -480,6 +513,7 @@ _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("location",),
     ("init",),
     ("allocate",),
+    ("reservations",),
     ("claim",),
     ("release",),
     ("index",),
@@ -584,6 +618,17 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
 
 def test_just_in_time_slice_includes_or_names_a_live_consumer() -> None:
     _assert_contains(_read(_SKILL), _JUST_IN_TIME_LIVE_CONSUMER_RULE)
+
+
+def test_allocation_burn_and_visibility_are_stated() -> None:
+    _assert_contains(_reference("coordination"), _ALLOCATION_BURN_RULE)
+    _assert_contains(_read(_SKILL), _ALLOCATION_BURN_CORE_RULE)
+
+
+def test_allocation_burn_guard_rejects_the_reservation_signal_alone() -> None:
+    """Falsification probe: the guard must reject a reservation with no burn rule."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_ALLOCATION_BURN_SIGNAL_ONLY, _ALLOCATION_BURN_RULE)
 
 
 def test_premise_correction_rule_is_stated() -> None:
