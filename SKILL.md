@@ -76,6 +76,8 @@ Load **dependencies** (`braintree help dependencies`) for staleness, the semanti
 4. For each context-bearing dependency, compare its header `context_rev` with the pin and confirm it is `resolved`; follow only mismatched, blocking, or required pointers.
 5. Execute the smallest coherent unit and update summary, `next`, evidence, status, `context_rev`, and `updated`.
 
+A recorded premise or `# Outcome` statement that the code contradicts is a factual correction, not a scope change: record the corrected state and the evidence that shows it in `# Result`, and bump `context_rev` only when a pinned consumer relied on the premise. Escalate instead of correcting when the correction would change the declared scope, outcome, or `Done when`. When the coordinating parent repeats the same wrong premise, the worker that found it reports the correction with evidence and the coordinator, which owns the shared parent, edits the parent; the worker edits only the node it owns.
+
 One orientation pass is enough. Never bulk-dump `.braintree/`; filter and count in the shell, then open only the fragments needed. If a search returns nothing, report it rather than retrying with different flags. Report graph lists in compact TOON with only the fields needed, state zero results explicitly, and name the resolved node, new status, and advanced frontier in a completion report.
 
 ## References and command help

@@ -310,6 +310,34 @@ _JUST_IN_TIME_LIVE_CONSUMER_RULE = (
     "or the node's `next` names that consumer as a mandatory companion",
 )
 
+# A recorded premise or `# Outcome` statement the code contradicts is a
+# factual correction, not a scope change: the worker records the corrected state
+# and its evidence in `# Result`, bumps `context_rev` only when a pinned consumer
+# relied on the premise, and escalates only when the correction would change the
+# declared scope, outcome, or `Done when`. A repeated wrong premise in the
+# coordinating parent is corrected by the coordinator, which owns the shared
+# parent, so the finding worker never edits outside its own node.
+_PREMISE_CORRECTION_RULE = (
+    "A recorded premise or `# Outcome` statement that the code contradicts is a "
+    "factual correction, not a scope change",
+    "record the corrected state and the evidence that shows it in `# Result`",
+    "bump `context_rev` only when a pinned consumer relied on the premise",
+    "Escalate instead of correcting when the correction would change the "
+    "declared scope, outcome, or `Done when`",
+    "the worker that found it reports the correction with evidence",
+    "the coordinator, which owns the shared parent, edits the parent",
+)
+
+# Falsification probe for the premise-correction rule: read-and-execute step 5
+# already names the evidence, `context_rev`, and `updated` a worker writes but
+# states no rule for a contradicted premise, so the guard must reject it. The
+# probe fails when the guard stops detecting the rule rather than when the loop
+# step merely reflows.
+_PREMISE_CORRECTION_PROBE_STEP_ONLY = (
+    "Execute the smallest coherent unit and update summary, `next`, evidence, "
+    "status, `context_rev`, and `updated`."
+)
+
 # Literal grammar the graph checker and clients genuinely depend on. Each token
 # is emitted or parsed, not narrative: status directories, canonical edges, the
 # pin and gate forms, frontmatter keys, and the ``Refs:`` footer convention.
@@ -507,6 +535,16 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
 
 def test_just_in_time_slice_includes_or_names_a_live_consumer() -> None:
     _assert_contains(_read(_SKILL), _JUST_IN_TIME_LIVE_CONSUMER_RULE)
+
+
+def test_premise_correction_rule_is_stated() -> None:
+    _assert_contains(_read(_SKILL), _PREMISE_CORRECTION_RULE)
+
+
+def test_premise_correction_guard_rejects_the_loop_step_alone() -> None:
+    """Falsification probe: the guard must reject a step with no correction rule."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_PREMISE_CORRECTION_PROBE_STEP_ONLY, _PREMISE_CORRECTION_RULE)
 
 
 def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
