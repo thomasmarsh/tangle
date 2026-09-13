@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T15:14:28Z
+updated: 2026-09-13T15:38:43Z
 summary: Define and freeze the first gold corpus for memory-dependent engineering evaluation.
-next: "[[TAS-134-transfer-interference-authority-scenarios]]"
+next: "[[TAS-135-corpus-validator-splits]]"
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].

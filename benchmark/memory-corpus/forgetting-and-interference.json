@@ -1,0 +1,313 @@
+{
+  "corpus_version": "memory-forgetting-and-interference-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "forgetting-and-interference",
+  "source_revision": "f91f3be",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "forgetting-and-interference-low-utility-001",
+      "family": "forgetting-and-interference",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "f91f3be",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "failure",
+            "statement": "A constructed retained note records one batch-run timeout that never reproduced and had no measured cause.",
+            "evidence": [
+              "research/agent-memory-theory-evaluation.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "A transient failure with no measured cause should not silently become a deterministic conclusion; a single unreproduced failure has no decision-relevant support.",
+            "evidence": [
+              "research/agent-memory-theory-evaluation.md",
+              "src/braintree/memory_contract.py"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "The default test suite keeps benchmark verification opt-in.",
+            "evidence": [
+              ".braintree/resolved/TAS-110-fast-default-test-suite.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A retained note recorded one unreproduced timeout and reads as a warning that a helper is unreliable. Decide whether to change the action because of it.",
+        "observable_paths": [
+          "src/braintree/behavioral_benchmark.py"
+        ],
+        "allowed_actions": [
+          "act-on-current-evidence",
+          "add-a-retry-for-the-helper",
+          "halt-until-the-timeout-reproduces"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "act-on-current-evidence",
+        "acceptable_actions": [
+          "act-on-current-evidence"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A transient with no measured cause is low-utility; act on current authoritative evidence and do not generalize the single timeout into a durable conclusion.",
+            "source_episodes": [
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "forgetting-and-interference-irrelevant-growth-001",
+      "family": "forgetting-and-interference",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "f91f3be",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "Parallel creation must reserve an id atomically with `braintree allocate PREFIX` or a coordinator-preallocated range; a local filename search checks for an existing collision only and is never an id reservation.",
+            "evidence": [
+              "references/coordination.md",
+              ".braintree/resolved/TAS-023-parallel-id-allocation.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "A capture path that derived the next number from Markdown let two parallel callers with different slugs write the same numeric id, so both record paths now reserve through one shared primitive.",
+            "evidence": [
+              ".braintree/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "A legacy vault migration prints one notice naming both paths on stderr.",
+            "evidence": [
+              ".braintree/resolved/TAS-119-announce-vault-migration.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A sidecar index rebuilds derived node, edge, and backlink data from Markdown.",
+            "evidence": [
+              "references/coordination.md"
+            ]
+          },
+          {
+            "id": "ep-5",
+            "sequence": 5,
+            "kind": "observation",
+            "statement": "The default test suite excludes benchmark verification behind a marker.",
+            "evidence": [
+              ".braintree/resolved/TAS-110-fast-default-test-suite.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Two workers in separate worktrees are about to create new nodes, and a local `find` shows no matching id. Decide how each should choose its new id.",
+        "observable_paths": [
+          "src/braintree/toon.py"
+        ],
+        "allowed_actions": [
+          "reserve-an-id-atomically",
+          "use-the-next-id-the-find-shows",
+          "each-picks-a-range-independently"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "reserve-an-id-atomically",
+        "acceptable_actions": [
+          "reserve-an-id-atomically"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Irrelevant memory volume does not change the allocation rule: a filename search is collision detection only, so parallel creation must reserve an id atomically or use a coordinator-preallocated range.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "forgetting-and-interference-superseded-growth-001",
+      "family": "forgetting-and-interference",
+      "split": "held-out",
+      "severity": "moderate",
+      "source_revision": "f91f3be",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "Supersede only when the outcome moves to a different node: the obsolete node is resolved, marked superseded, and records the canonical `Superseded by` replacement link.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A superseded node is no longer current; retrieval prefers the replacement, and recency alone is not authority.",
+            "evidence": [
+              "references/dependencies.md",
+              "references/authoring.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "A constructed retained memory holds an earlier decision marked disposed with a forward replacement link, plus unrelated later decisions.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A different outcome was reversed in place and bumped its own revision instead of moving nodes.",
+            "evidence": [
+              ".braintree/resolved/TAS-082-reversal-semantics.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Memory holds an earlier decision marked disposed with a replacement link, plus several unrelated later decisions. Decide which decision the installer should follow.",
+        "observable_paths": [
+          "src/braintree/revision.py"
+        ],
+        "allowed_actions": [
+          "follow-the-current-replacement-decision",
+          "follow-the-disposed-earlier-decision",
+          "merge-both-decisions"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "follow-the-current-replacement-decision",
+        "acceptable_actions": [
+          "follow-the-current-replacement-decision"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The disposed earlier decision is superseded, not merely older; follow its replacement link and treat unrelated later decisions as interference.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "forgetting-and-interference-near-duplicate-growth-001",
+      "family": "forgetting-and-interference",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "f91f3be",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "Install the Braintree program once per root at a stable location; each agent install copies only the skill prose it discovers and does not carry or build a second program.",
+            "evidence": [
+              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A constructed retained paraphrase says each agent should install its own full program copy.",
+            "evidence": [
+              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "A second constructed paraphrase says one program should be shared across all roots.",
+            "evidence": [
+              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "The launcher target is per root and stable, so reinstalling any agent does not repoint it.",
+            "evidence": [
+              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Three retained notes describe how the installer should lay out the program and skill copies, and they disagree. Decide what the installer should do.",
+        "observable_paths": [
+          "src/braintree/help.py"
+        ],
+        "allowed_actions": [
+          "install-one-shared-program-per-root",
+          "install-a-full-program-per-agent",
+          "share-one-program-across-roots"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "install-one-shared-program-per-root",
+        "acceptable_actions": [
+          "install-one-shared-program-per-root"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The authoritative decision installs one shared program per root and copies only prose per agent; the near-duplicate paraphrases each contradict it.",
+            "source_episodes": [
+              "ep-1"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
