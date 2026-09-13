@@ -3,6 +3,7 @@ name: memory-pilot-child
 description: Isolated one-shot solver for the memory separability pilot; emits one JSON action with no tools or inherited context.
 tools:
 extensions:
+completionGuard: false
 systemPromptMode: replace
 inheritProjectContext: false
 inheritGlobalContext: false
