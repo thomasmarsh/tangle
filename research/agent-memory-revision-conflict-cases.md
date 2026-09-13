@@ -102,7 +102,7 @@ minimal memory from surrounding noise.
 
 | Case | Kind | Split | Severity | Cue | Gold memory | Distractor |
 |---|---|---|---|---|---|---|
-| `temporal-update-cosmetic-edit-001` | cosmetic-versus-semantic | development | minor | Decide whether a matching pin and a reworded sentence force a reread | A reworded contract sentence with an omitted revision bump still forces a reread; a matching pin is not proof | A convention that rereads follow only a recorded mismatch |
+| `temporal-update-cosmetic-edit-001` | cosmetic-versus-semantic | development | minor | Decide whether a matching pin and a reworded sentence force a reread | A reworded contract sentence with an omitted revision bump still forces a reread; a matching pin and a documentation-only label are not proof | A convention that rereads follow only a recorded mismatch |
 | `temporal-update-semantic-revision-001` | stale-consumer | development | major | Act after a dependency reports a higher revision | A revision mismatch forces reread, assumption update, and pin reset before executing | One shared pin verdict |
 | `temporal-update-event-mutation-time-001` | event-time-differs | held-out | moderate | Refresh a timestamp that is ahead of the host clock | Use the later of the host clock and the previous timestamp; note the clamp | Write-set closure for a public test surface |
 | `temporal-update-changed-definition-001` | changed-definition | held-out | major | Preserve an exact version literal to prove byte-identical behavior | One semantic version is declared once and never frozen as an invariant | Vault dot-directory migration |
