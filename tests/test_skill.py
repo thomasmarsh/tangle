@@ -166,14 +166,60 @@ _INTERNAL_SEAM_REUSE_RULE = (
 
 # Resolving a frontier child includes advancing the coordinating parent's
 # `next`, so the resolving worker owns that edit; when the handoff's write set
-# excludes the parent, the handoff must name the parent (or its `next`) or the
-# coordinator owns the advance and the worker reports the stale route.
+# names the parent, the advance folds into the child's resolution commit, and
+# when it excludes the parent the child's resolution commit completes the slice
+# and the pending advance is the handoff action.
 _PARENT_NEXT_OWNERSHIP_RULE = (
     "the resolving worker owns that edit",
-    "A handoff whose write set excludes the parent must name the parent (or its "
-    "`next`) in the write set",
-    "otherwise the coordinator owns the advance",
-    "reports the stale route",
+    "A handoff whose write set names the parent — or its `next` line — folds "
+    "that advance into the child's resolution commit",
+    "A handoff whose write set excludes the parent cannot make that edit",
+    "the child's resolution commit completes the worker's slice and the pending "
+    "advance is its handoff action",
+)
+
+# The multi-writer transient — a resolved frontier child whose parent advance a
+# handoff still owes — is the same Markdown as a genuine stale route, so the
+# stateless checker separates them by declaration: the sanctioned
+# `--allow-pending-advance PARENT` names the one pending advance, and the plain
+# gate keeps failing for a genuine stale route until the coordinator advances.
+_PENDING_ADVANCE_RULE = (
+    "check with `braintree check --allow-pending-advance PARENT`",
+    "which sanctions that declared pending advance",
+    "That window is the multi-writer transient, not a failed slice",
+    "a genuine stale route",
+    "the plain `braintree check` flags as `next-resolved-node`",
+    "the coordinator clears it at integration",
+)
+
+_PENDING_ADVANCE_REFERENCE_RULE = (
+    "The window between the child's resolution and the parent's advance is the "
+    "multi-writer transient",
+    "the parent's `next` names an already-resolved child while its advance is "
+    "still owed",
+    "the failure appears the moment the child's file moves, before any commit",
+    "A genuine stale route is the same Markdown with no pending advance behind it",
+    "no file content separates the two: the checker is stateless",
+    "therefore separates them by declaration rather than by inference",
+    "sanctions exactly the one named parent whose `next` names an already-resolved "
+    "child and relaxes nothing else",
+    "the coordinator's integration gate is the plain",
+)
+
+# Falsification probe for the transient rule: the pre-change paragraph stated the
+# stale-route definition and the ownership exception but no completion path and
+# no distinction between a pending advance and a genuine stale route, so the
+# widened guard must reject it. The probe fails when the guard stops detecting
+# the rule rather than when the paragraph merely reflows.
+_PENDING_ADVANCE_PROBE_STALE_ROUTE_PARAGRAPH = (
+    "A handoff whose write set excludes the coordinating parent cannot advance "
+    "its `next`. Either the handoff names the parent — or the parent's `next` "
+    "line — in the write set, so the resolving worker owns the advance, or the "
+    "coordinator owns the advance and the worker reports the stale route as its "
+    "handoff action instead of editing outside its set. A stale route is an "
+    "unfinished coordinating node whose `next` is a single direct-child link "
+    "naming an already-resolved child; `braintree check` reports it as "
+    "`next-resolved-node`."
 )
 
 # A brief that places a new artifact in an existing directory names the test
@@ -377,6 +423,9 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "A stale route is an unfinished coordinating node whose `next` is a single "
         "direct-child link naming an already-resolved child",
         "`braintree check` reports it as `next-resolved-node`",
+        "The window between the child's resolution and the parent's advance is the "
+        "multi-writer transient",
+        "The sanction never clears the advance",
         "have workers read or write SQLite directly",
         "it refuses a network-mounted location unless overridden",
     ),
@@ -591,6 +640,20 @@ def test_internal_reuse_of_a_resolved_seam_is_authored_by_the_consumer() -> None
 
 def test_parent_next_advance_names_the_write_set_exception() -> None:
     _assert_contains(_read(_SKILL), _PARENT_NEXT_OWNERSHIP_RULE)
+
+
+def test_pending_advance_transient_is_stated() -> None:
+    _assert_contains(_read(_SKILL), _PENDING_ADVANCE_RULE)
+    _assert_contains(_reference("coordination"), _PENDING_ADVANCE_REFERENCE_RULE)
+
+
+def test_pending_advance_guard_rejects_the_pre_change_stale_route_paragraph() -> None:
+    """Falsification probe: the guard must reject the pre-change paragraph."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _PENDING_ADVANCE_PROBE_STALE_ROUTE_PARAGRAPH,
+            _PENDING_ADVANCE_REFERENCE_RULE,
+        )
 
 
 def test_status_move_is_staged_with_its_body_edit() -> None:

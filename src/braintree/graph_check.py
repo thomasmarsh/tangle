@@ -64,7 +64,7 @@ __all__ = [
 
 _USAGE = (
     "usage: braintree check [--version] [--allow-stale] [--allow-orphan NODE] "
-    "[--format text|toon] [nodes-directory]\n"
+    "[--allow-pending-advance NODE] [--format text|toon] [nodes-directory]\n"
     "Validate a file-only Braintree vault without writing state.\n"
     "--format toon prints one code,node,detail record per finding."
 )
@@ -680,6 +680,7 @@ def _validate(
     *,
     allow_stale: bool,
     allowed_orphans: list[str | None],
+    allowed_pending: Sequence[str | None] = (),
 ) -> tuple[list[Finding], int]:
     errors: list[Finding] = []
     if not os.path.isdir(nodes_dir):
@@ -787,14 +788,23 @@ def _validate(
         ):
             child_nodes = by_name.get(frontier[0])
             if child_nodes is not None and child_nodes[0].status == "resolved":
-                errors.append(
-                    Finding(
-                        "next-resolved-node",
-                        node.path,
-                        f"{node.path}: next frontier [[{frontier[0]}]] is already "
-                        "resolved",
+                # A pending advance — a resolved frontier child whose advance a
+                # handoff still owes — and a genuine stale route are the same
+                # Markdown, so a stateless checker cannot derive the difference
+                # from file content. A declaration names the pending advance;
+                # every undeclared instance remains this failure.
+                if (
+                    node.name not in allowed_pending
+                    and node.node_id not in allowed_pending
+                ):
+                    errors.append(
+                        Finding(
+                            "next-resolved-node",
+                            node.path,
+                            f"{node.path}: next frontier [[{frontier[0]}]] is already "
+                            "resolved",
+                        )
                     )
-                )
 
     for node in nodes:
         if node.status == "resolved":
@@ -877,6 +887,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     allow_stale = False
     allowed_orphans: list[str | None] = []
+    allowed_pending: list[str | None] = []
     output_format = "text"
     while args and args[0].startswith("-"):
         option = args.pop(0)
@@ -884,6 +895,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             allow_stale = True
         elif option == "--allow-orphan":
             allowed_orphans.append(args.pop(0) if args else None)
+        elif option == "--allow-pending-advance":
+            allowed_pending.append(args.pop(0) if args else None)
         elif option == "--format":
             if not args:
                 print("error: --format requires text or toon", file=sys.stderr)
@@ -906,7 +919,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(_USAGE)
         return 2
     errors, node_count = _validate(
-        nodes_dir, allow_stale=allow_stale, allowed_orphans=allowed_orphans
+        nodes_dir,
+        allow_stale=allow_stale,
+        allowed_orphans=allowed_orphans,
+        allowed_pending=allowed_pending,
     )
     if output_format == "toon":
         _print_toon(errors, node_count)

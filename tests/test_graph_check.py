@@ -584,6 +584,67 @@ def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert "usage: braintree check" in capsys.readouterr().out
 
 
+def test_help_names_the_pending_advance_sanction(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert graph_check.main(["--help"]) == 0
+    assert "--allow-pending-advance NODE" in capsys.readouterr().out
+
+
+def test_pending_advance_sanction_covers_the_multi_writer_transient(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A declared pending advance is the transient, not a failed slice."""
+    _mut_next_resolved_node(nodes)
+    assert graph_check.main(["--format", "toon", str(nodes)]) == 1
+    assert "next-resolved-node" in _toon_codes(capsys.readouterr().out)
+    assert graph_check.main(["--allow-pending-advance", "TAS-001-parent", str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_pending_advance_sanction_accepts_the_bare_parent_id(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _mut_next_resolved_node(nodes)
+    assert graph_check.main(["--allow-pending-advance", "TAS-001", str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_pending_advance_sanction_is_scoped_to_the_named_parent(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Naming another node leaves the genuine stale route failing."""
+    _mut_next_resolved_node(nodes)
+    assert (
+        graph_check.main(
+            ["--allow-pending-advance", "TAS-002-child", "--format", "toon", str(nodes)]
+        )
+        == 1
+    )
+    assert "next-resolved-node" in _toon_codes(capsys.readouterr().out)
+
+
+def test_pending_advance_sanction_relaxes_nothing_else(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The sanction covers the pending advance and no other finding."""
+    _mut_next_resolved_node(nodes)
+    _mut_context_rev_mismatch(nodes)
+    assert (
+        graph_check.main(
+            [
+                "--allow-pending-advance",
+                "TAS-001-parent",
+                "--format",
+                "toon",
+                str(nodes),
+            ]
+        )
+        == 1
+    )
+    assert _toon_codes(capsys.readouterr().out) == ["context-rev-mismatch"]
+
+
 def test_unknown_option_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["--bogus"]) == 1
     assert "error: unknown option" in capsys.readouterr().err

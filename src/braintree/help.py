@@ -424,10 +424,17 @@ VERBS: dict[str, Verb] = {
     ),
     "check": _verb(
         "Validate the vault; a legacy nodes/ layout is migrated first.",
-        usage="braintree check [--allow-stale] [--allow-orphan NODE] [--format text|toon] [NODES]",
+        usage=(
+            "braintree check [--allow-stale] [--allow-orphan NODE] "
+            "[--allow-pending-advance NODE] [--format text|toon] [NODES]"
+        ),
         operands=(
             ("--allow-stale", "relax only the revision equality of a pin"),
             ("--allow-orphan", "permit one named orphan; repeatable"),
+            (
+                "--allow-pending-advance",
+                "permit one named parent-next advance a handoff still owes; repeatable",
+            ),
             ("--format", "text diagnostics or the toon findings table"),
             ("NODES", "vault directory; defaults to ./.braintree"),
         ),
@@ -438,6 +445,8 @@ VERBS: dict[str, Verb] = {
         hazards=(
             "--allow-stale is sanctioned only for a deliberate staged-staleness commit.",
             "A pinned dependency to an unresolved target still fails.",
+            "--allow-pending-advance sanctions a declared pending advance; "
+            "the plain gate clears it.",
         ),
         topic=_AUTHORING_TOPIC,
     ),

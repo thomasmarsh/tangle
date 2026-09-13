@@ -153,6 +153,39 @@ of editing outside its set. A stale route is an unfinished coordinating node
 whose `next` is a single direct-child link naming an already-resolved child;
 `braintree check` reports it as `next-resolved-node`.
 
+Resolving the parent's `next` child is the frontier transition that completes
+the slice, and what the worker commits and hands off follows from the write set:
+
+- The write set names the parent — or the parent's `next` line: the worker
+  advances the parent's `next` to the next deliberate child, or removes `next`
+  when the resolved child was the last one, refreshes the parent's `updated`,
+  leaves its `context_rev` unchanged, and commits that advance in the same
+  commit as the child's resolution. No commit then leaves the parent routing to
+  a resolved child, and the coordinator pays no round trip for the advance.
+- The write set excludes the parent: the child's resolution commit is the
+  worker's completion, and the pending advance is the handoff. The worker names
+  the parent and the resolved child, records the pending advance as its handoff
+  action instead of editing outside its set, and verifies its slice with
+  `braintree check --allow-pending-advance PARENT`, whose operand is the
+  parent's node name or bare id.
+
+The window between the child's resolution and the parent's advance is the
+multi-writer transient: the parent's `next` names an already-resolved child
+while its advance is still owed, so an unfinished handoff produces it by design,
+and the failure appears the moment the child's file moves, before any commit. A
+genuine stale route is the same Markdown with no pending advance behind it, and
+no file content separates the two: the checker is stateless and reads the same
+graph either way. `braintree check` therefore separates them by declaration
+rather than by inference. `--allow-pending-advance NODE` sanctions exactly the
+one named parent whose `next` names an already-resolved child and relaxes
+nothing else — the resolved node's status move, the direct-child route, the
+pins, the orphan route, and every other finding still fail — while the
+unsanctioned state stays the `next-resolved-node` failure. The sanction never
+clears the advance: the coordinator's integration gate is the plain
+`braintree check`, so a route that is stale rather than pending still fails
+integration, and the coordinator owns the advance, the plain gate, and the
+parent's `updated`.
+
 A worker records a compact structured completion receipt before its long
 narrative report: the recorded base hash, the `release` result, a gate summary,
 and the commit SHAs. A `release` result at the recorded base hash is the
