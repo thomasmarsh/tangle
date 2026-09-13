@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P1
-updated: 2026-09-13T16:50:47Z
+updated: 2026-09-13T17:04:44Z
 summary: Redesign the gold corpus so memory-required cases separate repository-only from oracle.
-next: Measure each pilot case over three repetitions and treat a case as separating only on a majority, then re-run the pilot.
+next: "[[TAS-148-isolated-repeat-pilot-harness]]"
 ---
 
 Parent [[TAS-121-evaluation-foundation]].
@@ -69,7 +69,18 @@ The three remaining failures are not stable corpus defects. Repeated design
 probes of each show repository-only flips between runs (the resumption and
 implicit cases were repository-only-wrong in most probes yet right in the
 recorded run; the poisoning case flipped too), so a single repetition cannot
-distinguish genuine non-separation from model variance. The durable finding is
-that the bounded pilot is underpowered, not that the deciding history is absent.
-The next action measures each case over three repetitions and decides separation
-on a majority before re-running the phase-one gate.
+distinguish genuine non-separation from model variance.
+
+The recorded run also failed the intended information boundary. It used the
+built-in `delegate` profile, which has `inheritProjectContext: true`; a retained
+child transcript explicitly reasons from `AGENTS.md` even though its task says
+to use only the arm fixture. The result additionally pins
+`deepseek/deepseek-v4-pro`, not the intended `deepseek/deepseek-v4-flash`, and
+does not record all comparison pins required by the evaluation contract.
+Therefore `benchmark/memory-pilot-result.json` remains historical evidence of
+that run but its `stop` verdict does not decide the phase-one gate.
+
+The next valid attempt first hardens and preregisters an isolated,
+multi-repetition Pi harness in [[TAS-148-isolated-repeat-pilot-harness]], then
+runs the authorized 72-episode pilot in
+[[TAS-149-run-isolated-repeat-pilot]].
