@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T17:28:17Z
+updated: 2026-09-13T17:36:09Z
 summary: Run the isolated three-repetition Pi separability pilot and decide the gate.
-next: Run the authorized three 24-child batches and record the graded verdict.
 ---
 
 Parent [[TAS-147-pilot-corpus-revision]].
@@ -86,4 +85,56 @@ only the missing `workflowKey` and collect again.
 
 # Result
 
-Pending the live run.
+The authorized 72-episode pilot is **complete** with the preregistered verdict
+**`stop`**.
+
+Pins recorded by the run: protocol `memory-pilot-v2`; corpus digest
+`sha256:0e294c4e3a61edfb72288ad1bb936f287500c7d080e481163d0bf5fe8e647a24`;
+fixture `memory-pilot-v2-fixture-1`; source revision `472b090b90aa`; model
+`deepseek/deepseek-v4-flash` (`deepseek-v4-flash`) at `high`; prompt
+`memory-pilot-v2-prompt-1`; tools `no-tools`; budget one isolated turn, no
+retries; grader `memory-scenario-v1`; plan digest
+`sha256:b791616f8fd040d2a050361078c36a487ba938eb99e5e7dfa033eb69b089292f`. That
+plan digest differs from the authorization's `sha256:167639b3...` only because
+it content-addresses the derived `source-revision` pin, which advanced from the
+harness revision `bfab3f03a359` to the clean checkout `472b090b90aa`; all other
+pins and all 72 episode identities are byte-identical, and the owner
+authorized executing at the current revision in session.
+
+Three deterministic 24-child batches fanned out the 72 isolated
+`memory-pilot-child` episodes (fresh context, no tools, no skills, no inherited
+context), and `scripts/memory_pilot_v2_run.py collect` rebuilt every sample from
+retained async run state (54/72 after the batches). A launch-time pi-subagents
+completion-guard false positive rejected all six arm/repetition samples of three
+read-only cases
+(`admission-discard-cache-speculation-001`,
+`implicit-retrieval-control-version-declaration-001`,
+`experience-transfer-recurring-failure-001`) because the fully embedded episode
+prompt tripped its implementation heuristic while the profile intentionally
+declares no tools. The owner directed the harness fix: `completionGuard: false`
+on `.pi/agents/memory-pilot-child.md`, which adds no tools and preserves
+isolation. Re-running exactly those 18 missing `workflowKey`s and collecting
+again returned 72/72 complete.
+
+Case-level 2-of-3 paired majority (repository-only correctness by repetition;
+oracle correct 3/3 on all 12 cases):
+
+- separates: `admission-retain-label-stability-hypothesis-001` (0/3 repo),
+  `resumption-after-decision-shared-install-001` (1/3),
+  `cascading-invalidation-independent-evidence-001` (0/3),
+  `conflict-and-uncertainty-competing-rules-001` (1/3),
+  `experience-transfer-recurring-failure-001` (0/3),
+  `forgetting-and-interference-irrelevant-growth-001` (1/3)
+- fails: `implicit-retrieval-after-decision-derived-membership-001` (3/3 repo),
+  `temporal-update-cosmetic-edit-001` (2/3 repo),
+  `poisoning-and-authority-direct-injection-001` (3/3 repo)
+- controls valid 3/3 repository-only: `admission-discard-cache-speculation-001`,
+  `resumption-control-vault-rename-001`,
+  `implicit-retrieval-control-version-declaration-001`
+
+Three memory-required cases fail to separate, meeting the preregistered
+three-or-more rule, so the verdict is `stop` with no post-outcome rule change.
+All samples pass isolation and provenance validation and agree with
+`memory_scenario.grade`. Per-repetition grades and telemetry are recorded in
+`benchmark/memory-pilot-v2-result.json`. TAS-147 keeps the failing path
+explicit and is not resolved.

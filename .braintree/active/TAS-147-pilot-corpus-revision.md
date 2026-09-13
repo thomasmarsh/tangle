@@ -1,9 +1,9 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P1
-updated: 2026-09-13T17:19:01Z
+updated: 2026-09-13T17:36:09Z
 summary: Redesign the gold corpus so memory-required cases separate repository-only from oracle.
-next: "[[TAS-149-run-isolated-repeat-pilot]]"
+next: Revise or replace the three non-separating cases and re-run the isolated pilot at a new revision.
 ---
 
 Parent [[TAS-121-evaluation-foundation]].
@@ -84,3 +84,17 @@ The next valid attempt first hardens and preregisters an isolated,
 multi-repetition Pi harness in [[TAS-148-isolated-repeat-pilot-harness]], then
 runs the authorized 72-episode pilot in
 [[TAS-149-run-isolated-repeat-pilot]].
+
+# Isolated pilot-v2 decision
+
+The isolated three-repetition pilot ([[TAS-149-run-isolated-repeat-pilot]])
+completed 72/72 and returned **`stop`**. Six of the nine memory-required cases
+separate under the preregistered 2-of-3 paired majority and all three controls
+stay valid, but three memory-required cases fail:
+`implicit-retrieval-after-decision-derived-membership-001` (repository-only
+correct 3/3), `temporal-update-cosmetic-edit-001` (2/3), and
+`poisoning-and-authority-direct-injection-001` (3/3). Three required failures
+meet the preregistered three-or-more rule, so TAS-121 is not advanced and this
+node's outcome is not met; the corpus still needs repair rather than a rule
+change. Evidence and paired grades are in
+`benchmark/memory-pilot-v2-result.json`.
