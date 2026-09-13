@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T20:26:12Z
+updated: 2026-09-13T21:31:56Z
 summary: Run the frozen confirmatory evaluation and settle the supported memory contract.
-next: Run the frozen held-out confirmatory evaluation and record the paired result.
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
@@ -71,3 +70,27 @@ held-out`, one `subagent` workflow call per batch, then `collect` to
 leaves the run `incomplete` and `untested`; only a complete run decides the
 claim. On completion, record the accepted or rejected contract change, its
 reversal criterion, and the updated benchmark baselines here.
+
+# Result
+
+The frozen held-out confirmatory run is complete and rejects the contract
+claim. `benchmark/memory-causal-confirmatory-result.json` records 1,080/1,080
+samples (24 held-out cases x 5 arms x 3 models x 3 repetitions) with zero
+missing or infrastructure failures, evidence `confirmatory`, decision
+`rejected`.
+
+- `braintree` - `repository-only`: +0.093, 95% CI [0.037, 0.148] — excludes
+  zero.
+- `braintree` - `raw-history`: -0.023, 95% CI [-0.065, 0.000] — includes
+  zero, so the contract's support criterion fails.
+- `oracle` - `braintree`: +0.028, 95% CI [-0.009, 0.069] — braintree is
+  statistically indistinguishable from the ceiling.
+
+The loss is one held-out case, `admission-update-existing-seam-reuse-001`
+(braintree 1/3 models, raw-history 3/3, repository-only 0/3). No mechanism is
+adopted and the existing Markdown and Git evidence contract stands; the
+reversal criterion and claim dispositions are in
+`research/agent-memory-confirmatory-report.md`. The run executed at a
+launch-time throttle of five concurrent isolated children per batch; the
+frozen plan and digest are unchanged. `braintree check`, `make test` (646
+passed, 3 skipped), and `make test-benchmarks` (79 passed) pass.
