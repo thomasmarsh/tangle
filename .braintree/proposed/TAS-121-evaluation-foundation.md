@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T15:54:29Z
+updated: 2026-09-13T16:16:48Z
 summary: Define and freeze the first gold corpus for memory-dependent engineering evaluation.
-next: "[[TAS-136-pilot-separability-audit]]"
+next: "[[TAS-147-pilot-corpus-revision]]"
 ---
 
 Parent [[TAS-120-agent-memory-evaluation-program]].
