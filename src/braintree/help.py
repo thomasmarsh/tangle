@@ -77,6 +77,13 @@ _COORDINATION_TOPIC = "coordination"
 _DEPENDENCIES_TOPIC = "dependencies"
 _AUTHORING_TOPIC = "authoring"
 
+# The four read-only graph-question verbs share one pre-check: an unfinished node
+# that cannot reach a hub is warned about on stderr before the verb answers.
+_ORPHAN_WARNING_HAZARD = (
+    "An orphaned unfinished node is warned about on stderr; the answer and exit "
+    "code are unchanged."
+)
+
 
 def _verb(
     purpose: str,
@@ -109,7 +116,10 @@ VERBS: dict[str, Verb] = {
             ("active_claims", "leases currently recorded"),
             ("reservations", "prefix,next rows for allocated ids"),
         ),
-        hazards=("Reports state only; it never writes or repairs the database.",),
+        hazards=(
+            "Reports state only; it never writes or repairs the database.",
+            _ORPHAN_WARNING_HAZARD,
+        ),
         topic=_COORDINATION_TOPIC,
     ),
     "location": _verb(
@@ -314,6 +324,7 @@ VERBS: dict[str, Verb] = {
         ),
         hazards=(
             "Candidates are a superset of the frontier; resolve them through the coordinator.",
+            _ORPHAN_WARNING_HAZARD,
         ),
         topic=_COORDINATION_TOPIC,
     ),
@@ -376,6 +387,7 @@ VERBS: dict[str, Verb] = {
             ("section/total", "per-section header and row count"),
             ("rows", "each section's documented columns"),
         ),
+        hazards=(_ORPHAN_WARNING_HAZARD,),
         topic=_COORDINATION_TOPIC,
     ),
     "next": _verb(
@@ -390,7 +402,10 @@ VERBS: dict[str, Verb] = {
             ("total", "candidate count"),
             ("next", "rank,id,status,priority,blocking,updated,summary,next rows"),
         ),
-        hazards=("Candidates are advisory; the coordinator's next route resolves them.",),
+        hazards=(
+            "Candidates are advisory; the coordinator's next route resolves them.",
+            _ORPHAN_WARNING_HAZARD,
+        ),
         topic=_COORDINATION_TOPIC,
     ),
     "clusters": _verb(

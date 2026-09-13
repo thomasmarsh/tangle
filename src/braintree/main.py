@@ -9,6 +9,7 @@ behind this command.
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Callable, Sequence
 
@@ -32,6 +33,7 @@ from . import (
     staged_benchmark,
     storage_comparison,
     token_benchmark,
+    vault,
     verb_benchmark,
 )
 from .revision import reported_version
@@ -130,6 +132,42 @@ _COORDINATION_COMMANDS = frozenset(
         "reconcile",
     }
 )
+
+# The read-only verbs that answer a graph question in one call. Every one of
+# them re-checks the vault for an unfinished node that cannot reach a hub, a
+# reachability failure the client would otherwise see only from `braintree
+# check`.
+_DIRECT_ANSWER_COMMANDS = frozenset({"frontier", "next", "orient", "status"})
+
+
+def _warn_orphans() -> None:
+    """Warn on stderr about each orphaned unfinished node, without failing.
+
+    This is a read-only pre-check on the direct-answer verbs, so the verb still
+    answers and keeps its exit code. The warning goes to stderr because those
+    verbs print machine-readable TOON on stdout, matching the vault resolver's
+    migration notice. The vault is resolved without migrating a legacy
+    directory, so the pre-check has no side effect of its own.
+    """
+    nodes_dir = vault.resolve(migrate_legacy=False)
+    if not os.path.isdir(nodes_dir):
+        return
+    orphans = [
+        finding
+        for finding in graph_check.findings(nodes_dir)
+        if finding.code == "route-orphan"
+    ]
+    if not orphans:
+        return
+    noun = "node" if len(orphans) == 1 else "nodes"
+    print(
+        f"warning: {len(orphans)} orphaned unfinished {noun} cannot reach a hub; "
+        "run `braintree check` for the repair",
+        file=sys.stderr,
+    )
+    for finding in orphans:
+        print(f"warning: {finding.detail}", file=sys.stderr)
+
 
 _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "token": token_benchmark.main,
@@ -236,6 +274,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     # every public verb gets bounded help with no vault and no sidecar.
     if help.wants_help(args):
         return help.render_verb(help.verb_key(args))
+    if command in _DIRECT_ANSWER_COMMANDS:
+        _warn_orphans()
     if command == "check":
         return graph_check.main(args[1:])
     if command == "reservations":

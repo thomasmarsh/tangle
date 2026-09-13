@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T21:49:10Z
+updated: 2026-09-13T23:23:54Z
 summary: Make routine interaction zero-ceremony: warn on orphaned nodes, maintain the index invisibly, and install through an interactive target multi-select.
-next: "[[TAS-162-orphan-warning-on-every-interaction]]"
+next: "[[TAS-163-amortized-transparent-index]]"
 ---
 
 # Context
