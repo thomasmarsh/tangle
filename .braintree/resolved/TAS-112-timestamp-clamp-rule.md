@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T02:14:00Z
+updated: 2026-09-13T02:17:02Z
 summary: State how a worker treats an assigned node's `updated` when it is ahead of the host clock, so refreshing `updated` never moves it backwards.
-next: State the incoming-future `updated` rule in the contract and pin it with a test.
 ---
 
 # Context
@@ -33,3 +32,12 @@ moves the field backwards and it stays a monotonic record a reader can trust.
 - `SKILL.md` states a single rule for an incoming `updated` ahead of the host clock — either the coordinator must stamp the real UTC time rather than a day boundary, or the worker refreshes to `max(now, previous updated)` and notes the clamp — so the two instructions no longer conflict.
 - A contract test in `tests/test_skill.py` pins the stated rule.
 - `make test` passes.
+
+# Result
+
+`SKILL.md` states one rule for an incoming `updated` ahead of the host clock, and a contract test pins it.
+
+- The frontmatter contract bullet now ends: "A coordinator stamps the real UTC time at handoff, and a worker refreshing an inherited `updated` ahead of the host clock uses `max(now, previous updated)` and notes the clamp rather than moving it backwards." The `updated` definition still requires the current UTC ISO-8601 time on every mutation, so the combined rule makes the field monotonic instead of contradictory.
+- `tests/test_skill.py` adds the `_UPDATED_CLAMP_RULE` constant and `test_updated_ahead_of_the_host_clock_is_clamped`, matching the neighbours' literal-substring style; `test_core_stays_concise` still passes at 12,143 bytes against the 16,000-byte bound.
+
+Evidence: `make test` ran 364 passed, 3 skipped, 79 deselected in 41.87s; `uv run pytest tests/test_skill.py -q` passed.

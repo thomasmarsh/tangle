@@ -27,7 +27,7 @@ next: Add the failing boundary test.
 ---
 ```
 
-- Start `context_rev` at `1`; it is a consumer-context revision, not an edit counter: increment it only when a change could alter an assumption, decision, invariant, interface, or other context a pinned consumer must reread. Refresh `updated` to the current UTC ISO-8601 time on every mutation, and never bump `context_rev` for cosmetic edits, history, status moves, or `priority`/`next` changes.
+- Start `context_rev` at `1`; it is a consumer-context revision, not an edit counter: increment it only when a change could alter an assumption, decision, invariant, interface, or other context a pinned consumer must reread. Refresh `updated` to the current UTC ISO-8601 time on every mutation, and never bump `context_rev` for cosmetic edits, history, status moves, or `priority`/`next` changes. A coordinator stamps the real UTC time at handoff, and a worker refreshing an inherited `updated` ahead of the host clock uses `max(now, previous updated)` and notes the clamp rather than moving it backwards.
 - `priority` is optional, task-only `P0`-`P3`. `next` is required for proposed/active tasks, holds a blocked task's unblock action, and is omitted from resolved tasks. `disposition` is optional and sparse: `abandoned`, `deprecated`, or `superseded`, with the replacement link in the body.
 
 ## Admission and the node boundary

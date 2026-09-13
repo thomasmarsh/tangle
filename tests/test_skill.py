@@ -62,6 +62,15 @@ _CORE_INVARIANTS = (
     "Graph bookkeeping never broadens authorization",
 )
 
+# An inherited `updated` ahead of the host clock must not move the field
+# backwards: the coordinator stamps real UTC at handoff and the worker clamps.
+_UPDATED_CLAMP_RULE = (
+    "A coordinator stamps the real UTC time at handoff",
+    "a worker refreshing an inherited `updated` ahead of the host clock uses "
+    "`max(now, previous updated)` and notes the clamp rather than moving it "
+    "backwards",
+)
+
 # The durable-outcome boundary rule the admission decision added; it must not
 # regress out of the always-loaded core.
 _DURABLE_OUTCOME_BOUNDARY = (
@@ -273,6 +282,10 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
     text = _read(_SKILL)
     _assert_contains(text, _DURABLE_OUTCOME_BOUNDARY)
     _assert_absent(text, _SIZING_COMMAND_ABSENT)
+
+
+def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
+    _assert_contains(_read(_SKILL), _UPDATED_CLAMP_RULE)
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:
