@@ -25,7 +25,7 @@ import os
 import re
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -74,7 +74,8 @@ def generate(run_dir: Path) -> int:
             raise SystemExit(f"prompt digest drift for {episode['key']}")
         (run_dir / "prompts" / f"{episode['key']}.txt").write_text(prompt, encoding="utf-8")
     for index in range(mp.PILOT_V2_BATCHES):
-        chunk = plan["episodes"][index * mp.PILOT_V2_BATCH_SIZE : (index + 1) * mp.PILOT_V2_BATCH_SIZE]
+        start = index * mp.PILOT_V2_BATCH_SIZE
+        chunk = plan["episodes"][start : start + mp.PILOT_V2_BATCH_SIZE]
         count = _write_batch(run_dir, chunk, index)
         print(f"batch{index + 1}.js: {count} children")
     print(f"plan: {plan['plan_digest']}  run dir: {run_dir}")
@@ -82,7 +83,7 @@ def generate(run_dir: Path) -> int:
 
 
 def _iso(ms: float) -> str:
-    return datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.fromtimestamp(ms / 1000.0, tz=UTC).isoformat().replace("+00:00", "Z")
 
 
 def _reasoning(run_dir: Path) -> int:
