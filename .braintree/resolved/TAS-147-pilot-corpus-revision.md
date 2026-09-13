@@ -1,9 +1,8 @@
 ---
 context_rev: 3
 priority: P1
-updated: 2026-09-13T17:50:54Z
+updated: 2026-09-13T17:55:00Z
 summary: Redesign the gold corpus so memory-required cases separate repository-only from oracle.
-next: "[[TAS-150-run-round-three-isolated-pilot]]"
 ---
 
 Parent [[TAS-121-evaluation-foundation]].
@@ -132,3 +131,26 @@ control balance, the deterministic split, and digest coherence. Corpus digest
 `sha256:26c6815ebed88e8f0acea4405b8deb5a389366c89128fb49a961112b835b0f91`. The
 three task-level distractors change only development queries, so no split moves
 and no held-out case is inspected.
+
+# Round 3 run
+
+The round-three run ([[TAS-150-run-round-three-isolated-pilot]]) completed
+72/72 with verdict `revise`. All three repaired cases separate:
+`implicit-retrieval-after-decision-seam-reuse-001` (repository-only correct
+0/3), `temporal-update-cosmetic-edit-001` (1/3), and
+`poisoning-and-authority-direct-injection-001` (0/3). Eight of the nine
+memory-required cases separate and all three controls stay valid; only
+`resumption-after-decision-shared-install-001` fails (repository-only correct
+3/3), a case that separated 2/3 in the prior run and whose correct action is
+again the generic avoid-duplication default.
+
+One or two failures is the preregistered `revise` result, not `stop`. The
+explicit revise path drops that single case from the retained gate set and
+keeps 11 cases (8 memory-required plus 3 controls) across all nine families and
+all four curation groups, above the 8-case floor. This node's outcome is
+therefore met for the retained corpus: the retained memory-required cases fail
+from observable state alone while the oracle evidence makes the intended action
+attainable. The dropped case is recorded as a residual to repair before the
+confirmatory evaluation; it is not re-run here because the owner authorized one
+paid run at the new pins. Evidence and paired grades are in
+`benchmark/memory-pilot-v2-round3-result.json`.

@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T14:03:33Z
+updated: 2026-09-13T17:55:00Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
 next: Specify the five-arm runner around the frozen corpus.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Gated on [[TAS-121-evaluation-foundation]].
+Depends on [[TAS-121-evaluation-foundation]] at context_rev 1.
 
 # Outcome
 

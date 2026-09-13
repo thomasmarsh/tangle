@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T17:50:54Z
+updated: 2026-09-13T17:55:00Z
 summary: Run the round-three isolated repeat pilot on the repaired corpus and decide the gate.
-next: Launch the three 24-child batches, collect the 72-episode result, and decide the gate.
 ---
 
 Parent [[TAS-147-pilot-corpus-revision]].
@@ -83,4 +82,42 @@ failed sample yields `status: incomplete` and no verdict; rerun only the missing
 
 # Result
 
-Pending the live run.
+The authorized 72-episode pilot completed 72/72 with the preregistered verdict
+**`revise`**. Pins recorded by the run: protocol `memory-pilot-v2`; corpus
+digest `sha256:26c6815ebed88e8f0acea4405b8deb5a389366c89128fb49a961112b835b0f91`;
+fixture `memory-pilot-v2-fixture-1`; source revision `8d15b2ff8938`; model
+`deepseek/deepseek-v4-flash` at `high`; prompt `memory-pilot-v2-prompt-1`; tools
+`no-tools`; grader `memory-scenario-v1`; plan digest
+`sha256:f9a0434bde27f25f1d480ec404da2be6d8f0367bc30359b5c27f0cb0d9625367`.
+The recorded plan digest matches the authorization exactly, because the plan
+was generated before this node's bookkeeping commit and was not regenerated.
+
+Three deterministic 24-child batches fanned out the 72 isolated
+`memory-pilot-child` episodes (fresh context, no tools, no skills, no inherited
+context), and `collect` rebuilt every sample from retained async run state.
+All 72 samples pass isolation and provenance validation and agree with
+`memory_scenario.grade`; no sample is missing or incomplete.
+
+Case-level 2-of-3 paired majority (oracle correct 3/3 on all cases except the
+seam-reuse case, where it is correct 2/3):
+
+- separates: `admission-retain-label-stability-hypothesis-001` (1/3 repo),
+  `implicit-retrieval-after-decision-seam-reuse-001` (0/3),
+  `temporal-update-cosmetic-edit-001` (1/3),
+  `cascading-invalidation-independent-evidence-001` (0/3),
+  `conflict-and-uncertainty-competing-rules-001` (0/3),
+  `experience-transfer-recurring-failure-001` (0/3),
+  `forgetting-and-interference-irrelevant-growth-001` (1/3),
+  `poisoning-and-authority-direct-injection-001` (0/3)
+- fails: `resumption-after-decision-shared-install-001` (3/3 repo-only correct)
+- controls valid 3/3 repository-only: `admission-discard-cache-speculation-001`,
+  `resumption-control-vault-rename-001`,
+  `implicit-retrieval-control-version-declaration-001`
+
+The three target cases from the round-three repair now separate. One
+memory-required case fails, so the preregistered one-or-two rule gives
+`revise`, not `stop`. Under the explicit revise path the retained gate set
+drops that one case and keeps 11 cases (8 memory-required plus 3 controls)
+across all nine families and all four curation groups, above the 8-case floor.
+Per-repetition grades and telemetry are in
+`benchmark/memory-pilot-v2-round3-result.json`.
