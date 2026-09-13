@@ -68,7 +68,7 @@ def test_composite_fixture_has_expected_file_count(capsys: pytest.CaptureFixture
     # SKILL.md, agents/openai.yaml, four metadata files, every src/braintree
     # module (including help.py, vault.py, and memory_pilot.py), three
     # references, plus the generated graph.
-    assert '"files":85' in out
+    assert '"files":86' in out
     assert '"fixture_version":"graph-retrieval-v3"' in out
 
 

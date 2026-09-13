@@ -1,7 +1,7 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P1
-updated: 2026-09-13T18:40:00Z
+updated: 2026-09-13T19:19:49Z
 summary: Compare repository-only, raw-history, flat-memory, Braintree, and oracle conditions.
 ---
 
@@ -138,47 +138,49 @@ harness, prompts, and fixtures are unchanged by this bookkeeping commit.
 
 # Result
 
-The authorized five-arm causal run completed 540/540 with evidence
-`exploratory` (development split) and decision `exploratory`. Pins: corpus
-digest
-`sha256:92b6b4d7ec018e458d89c90b965a26d339fbe74732b1fa49e24b2482968d54b1`,
+The five-arm causal run was re-executed after the corpus repair that
+[[TAS-151-corpus-separability-repair]] owns, because that repair changed the
+runner's fixture. It completed 540/540 with evidence `exploratory` (development
+split) and decision `exploratory`. Pins: corpus digest
+`sha256:cabe4ac352feb613cef7d9ed025e9a383b8a04f1d4c0306796fac1f94a3f379c`,
 plan digest
-`sha256:abd5c4437fa74638cfd411281c92fde167074e6650d9fb2682efced2cacfc677`,
-source revision `f39f6201bd3b`, three models at `high`. All 540 samples pass
+`sha256:1f8e982d0fae174f7c758a3b800e22c33980c33a75abea1c88c45d9de6f2649f`,
+source revision `4bbf8cc1be2d`, three models at `high`. All 540 samples pass
 isolation, model, prompt, and telemetry validation; none is incomplete.
 
 Paired effects (95% percentile bootstrap, 10,000 fixed-seed resamples over
 `(case, model)` strata, 108 pairs and 36 strata per contrast):
 
-- `braintree - repository-only`: **+0.481**, CI [0.306, 0.611] — excludes zero.
-- `braintree - raw-history`: **0.000**, CI [-0.083, 0.056] — includes zero.
-- `braintree - flat-memory`: +0.046, CI [-0.056, 0.120] — includes zero.
-- `oracle - braintree`: +0.148, CI [0.009, 0.259] — excludes zero, leaving
+- `braintree - repository-only`: **+0.389**, CI [0.204, 0.537] — excludes zero.
+- `braintree - raw-history`: **0.000**, CI [-0.130, 0.093] — includes zero.
+- `braintree - flat-memory`: -0.019, CI [-0.130, 0.065] — includes zero.
+- `oracle - braintree`: +0.287, CI [0.130, 0.417] — excludes zero, leaving
   measurable headroom below the ceiling.
 
 The contract's support criterion requires improvement against both
 repository-only and raw-history; the raw-history interval includes zero, so the
 claim is **not** supported on this development run. The result is labelled
-`exploratory`, not confirmatory, as preregistered.
+`exploratory`, not confirmatory, as preregistered. The re-run reproduces the
+prior qualitative conclusion on the repaired corpus.
 
 Costs over correctness-gated samples:
 
 | Arm | admitted | total tokens | output tokens | model turns | latency ms | cost |
 |---|---|---|---|---|---|---|
-| repository-only | 38 | 75,458 | 15,755 | 38 | 171,544 | $0.1108 |
-| raw-history | 90 | 90,310 | 43,831 | 90 | 425,974 | $0.1409 |
-| flat-memory | 85 | 68,090 | 35,072 | 85 | 352,188 | $0.1099 |
-| braintree | 90 | 44,846 | 29,292 | 90 | 309,179 | $0.0643 |
-| oracle | 106 | 40,913 | 23,131 | 106 | 283,827 | $0.0554 |
+| repository-only | 34 | 30,424 | 25,886 | 34 | 275,926 | $0.0919 |
+| raw-history | 76 | 50,490 | 39,011 | 76 | 383,371 | $0.1078 |
+| flat-memory | 78 | 56,675 | 44,003 | 78 | 438,070 | $0.1271 |
+| braintree | 76 | 49,865 | 38,355 | 76 | 351,799 | $0.0858 |
+| oracle | 107 | 41,663 | 24,855 | 107 | 314,640 | $0.0541 |
 
-Braintree admits as many correct samples as raw-history (90) at less than half
-the total tokens (44,846 versus 90,310) and a lower monetary cost. Of 540
-samples, 131 are incorrect-action failures; none are infrastructure or
-model-output failures. Per-case and per-model arms, per-sample telemetry, and
-failure labels are in `benchmark/memory-causal-result.json`, whose embedded
-reproduction commands pin both digests.
+Braintree admits as many correct samples as raw-history (76) at comparable
+total tokens (49,865 versus 50,490) and a lower monetary cost. Of 540 samples,
+169 are incorrect-action failures; none are infrastructure or model-output
+failures. Per-case and per-model arms, per-sample telemetry, and failure labels
+are in `benchmark/memory-causal-result.json`, whose embedded reproduction
+commands pin both digests.
 
-Residual: the round-four separability re-run returned **`stop`** (see
-`# Pilot verification`); three memory-required cases still do not separate, so
-the corpus is not ready for the confirmatory freeze. That outcome is tracked in
-[[TAS-151-corpus-separability-repair]].
+Residual: the round-five separability pilot returned **`revise`** (see
+[[TAS-151-corpus-separability-repair]]): the three cases this node originally
+reported now separate, and the one remaining non-separating case is tracked in
+[[TAS-152-conflict-separability-residual]].

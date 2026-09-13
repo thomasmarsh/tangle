@@ -10,7 +10,7 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Depends on [[TAS-123-pipeline-diagnostics]] at context_rev 1.
+Depends on [[TAS-123-pipeline-diagnostics]] at context_rev 2.
 
 # Outcome
 

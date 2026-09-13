@@ -1,7 +1,7 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P1
-updated: 2026-09-13T18:53:34Z
+updated: 2026-09-13T19:19:49Z
 summary: Attribute benchmark failures to memory writing, retrieval, reading, or action.
 ---
 
@@ -9,9 +9,9 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Depends on [[TAS-122-causal-baseline-experiment]] at context_rev 1.
+Depends on [[TAS-122-causal-baseline-experiment]] at context_rev 2.
 
-The 540-sample five-arm causal result, including 131 labelled failures, is in
+The 540-sample five-arm causal result, including 169 labelled failures, is in
 `benchmark/memory-causal-result.json`.
 
 # Outcome
@@ -34,9 +34,9 @@ report `benchmark/memory-diagnostics-report.json` offline;
 `research/agent-memory-pipeline-diagnostics.md` is the prose authority and
 `tests/test_memory_diagnostics.py` the contract tests.
 
-The 131 incorrect-action failures attribute as write-miss 70, reader-failure 40,
-and action-failure 21, with zero organization-error, retrieval-miss, and
-stale-or-conflicting-retrieval. All 70 write-misses are the `repository-only`
+The 169 incorrect-action failures attribute as write-miss 74, reader-failure 54,
+and action-failure 41, with zero organization-error, retrieval-miss, and
+stale-or-conflicting-retrieval. All 74 write-misses are the `repository-only`
 floor, so the corpus is memory-required rather than the memory system defective.
 Every memory arm delivered every required source: the shared memory budget (8)
 exceeds the largest case (5 episodes), so the development run cannot demonstrate
@@ -52,14 +52,15 @@ reviewers also found the budget-over-corpus saturation, now recorded in the
 report's `limits` block.
 
 The committed evidence-priority adjudication agrees with the independent
-behaviour-priority reviewer on 115 of 131 failures (0.8779); the 16 explicit
+behaviour-priority reviewer on 151 of 169 failures (0.8935); the 18 explicit
 disagreements are all `repository-only` samples that chose a discard action and
 are kept as write-miss because no memory was ever delivered. Only TAS-127 is
-diagnostically justified (20 poisoning action failures where delivered authority
+diagnostically justified (17 poisoning action failures where delivered authority
 evidence was discarded); TAS-124, TAS-125, and TAS-126 are not demonstrated on
 this development run. The dominant downstream loss is reading or reasoning, not
 a memory mechanism.
 
-Residual: the frozen corpus still has three non-separating memory-required
-cases, so the confirmatory freeze is gated on
-[[TAS-151-corpus-separability-repair]].
+Residual: the round-five separability pilot returned `revise` after the three
+round-four cases were repaired, so one development case still fails the 2-of-3
+majority and the confirmatory freeze carries it as a residual tracked in
+[[TAS-152-conflict-separability-residual]].
