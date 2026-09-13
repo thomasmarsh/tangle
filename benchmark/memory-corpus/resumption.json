@@ -1,0 +1,525 @@
+{
+  "corpus_version": "memory-resumption-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "resumption",
+  "source_revision": "b8cd7d5",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-after-decision-benchmark-opt-in-001",
+      "family": "resumption",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The default pytest run took about 83 seconds because it recomputed full-corpus benchmark verification for the retrieval, embedding, storage, and verb harnesses.",
+            "evidence": [
+              "tests/test_quality_benchmark.py",
+              "tests/test_storage_comparison.py",
+              ".braintree/resolved/TAS-110-fast-default-test-suite.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "The project made benchmark verification opt-in: the default suite is the fast unit gate and `make test-benchmarks` runs the marked verification.",
+            "evidence": [
+              "Makefile",
+              "pyproject.toml"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "The `benchmark` marker was declared and excluded by default, and the shared tokenizer was cached so repeated lexical ranking no longer re-tokenized.",
+            "evidence": [
+              "src/braintree/index.py",
+              "pyproject.toml"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "The token benchmark records cumulative per-turn telemetry so token and round-trip deltas can be compared later.",
+            "evidence": [
+              "src/braintree/token_benchmark.py"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A maintainer proposes that the default `pytest` invocation also run the full retrieval and storage benchmark verification so continuous integration never misses it. Decide what to do.",
+        "observable_paths": [
+          "src/braintree/quality_benchmark.py"
+        ],
+        "allowed_actions": [
+          "keep-verification-opt-in",
+          "enable-verification-by-default",
+          "delete-benchmark-verification"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "keep-verification-opt-in",
+        "acceptable_actions": [
+          "keep-verification-opt-in"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Benchmark verification was deliberately made opt-in so the default suite stays a fast unit gate; running it by default reverses that decision.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-after-decision-semantic-optional-001",
+      "family": "resumption",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "The semantic retrieval layer was frozen as optional, derived, rebuildable, and never authoritative; every core answer must be identical when the capability is absent.",
+            "evidence": [
+              ".braintree/resolved/DEC-006-semantic-layer-capability-boundary.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "result",
+            "statement": "Off-the-shelf embeddings lost near-duplicate retrieval to the lexical baseline in the frozen quality gate and were kept only as an advisory paraphrase and digest layer.",
+            "evidence": [
+              ".braintree/resolved/THO-012-embedding-clustering-retrieval-theory.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The optional extra keeps the default install dependency-free.",
+            "evidence": [
+              "pyproject.toml"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A contributor proposes making embedding similarity the default near-duplicate check for admission, because duplicate detection should not depend on shared tokens. Decide what to do.",
+        "observable_paths": [
+          "tests/test_bt_index.py"
+        ],
+        "allowed_actions": [
+          "keep-lexical-search-as-the-duplicate-reference",
+          "make-embeddings-the-admission-default",
+          "remove-the-optional-similarity-layer"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "keep-lexical-search-as-the-duplicate-reference",
+        "acceptable_actions": [
+          "keep-lexical-search-as-the-duplicate-reference"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Embedding similarity lost near-duplicate retrieval to the lexical baseline and remains an optional advisory layer; the lexical metric stays the correctness reference.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-partial-implementation-vault-notice-001",
+      "family": "resumption",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "The vault lives under `.braintree/` and a legacy `nodes/index-map.md` vault is migrated in place by the default resolver.",
+            "evidence": [
+              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "feedback",
+            "statement": "An operator reported that a capture command relocated `nodes/` to `.braintree/` and printed no notice, so the move was visible only in the diff.",
+            "evidence": [
+              ".braintree/resolved/TAS-119-announce-vault-migration.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "The resolver prints `migrated vault: nodes -> .braintree` on stderr, keeps stdout machine-readable, and reports the resolved vault path.",
+            "evidence": [
+              "src/braintree/vault.py"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "The in-place migration also merges the legacy reservation directory.",
+            "evidence": [
+              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "`braintree feedback record` renamed a project's `nodes/` directory during capture. The operator wants the tool to refuse to write whenever the resolved vault differs from the directory they named. Decide the next action.",
+        "observable_paths": [
+          "src/braintree/feedback_record.py"
+        ],
+        "allowed_actions": [
+          "keep-the-announced-in-place-migration",
+          "keep-in-place-migration-and-add-a-dry-run-preview",
+          "refuse-writes-on-a-different-resolved-vault"
+        ]
+      },
+      "grading": {
+        "grader": "action-acceptable",
+        "expected_outcome": "keep-the-announced-in-place-migration",
+        "acceptable_actions": [
+          "keep-the-announced-in-place-migration",
+          "keep-in-place-migration-and-add-a-dry-run-preview"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The in-place migration is deliberate; its demonstrated defect was the silence, now fixed by an on-stderr notice, so refusal would reverse the decision.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-blocker-live-authorization-001",
+      "family": "resumption",
+      "split": "development",
+      "severity": "critical",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "action",
+            "statement": "The zero-live staged benchmark harness landed as `braintree benchmark staged`, comparing two matched token records.",
+            "evidence": [
+              "src/braintree/staged_benchmark.py"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "No matched pre-thrust and landed sample pair exists to feed the harness.",
+            "evidence": [
+              "src/braintree/staged_benchmark.py"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "decision",
+            "statement": "Producing the pair needs one bounded live model session pair; live or paid model runs require explicit owner authorization recorded before execution, which is not yet given.",
+            "evidence": [
+              "research/agent-memory-evaluation-contract.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "The harness reuses the token benchmark's session parser for round trips.",
+            "evidence": [
+              "src/braintree/staged_benchmark.py"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "The staged benchmark harness is ready. A contributor asks you to record the two matched samples from the pre-thrust and landed checkouts and report the deltas. Decide the next action.",
+        "observable_paths": [
+          "src/braintree/staged_benchmark.py",
+          "Makefile"
+        ],
+        "allowed_actions": [
+          "request-owner-authorization-before-the-live-pair",
+          "run-the-live-session-pair-now",
+          "resolve-the-ab-from-the-existing-records"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "request-owner-authorization-before-the-live-pair",
+        "acceptable_actions": [
+          "request-owner-authorization-before-the-live-pair"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Live or paid model runs require explicit owner authorization recorded before execution; the matched sample pair cannot be produced without it, so the next action is to request that authorization.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-failed-experiment-cold-resume-rule-001",
+      "family": "resumption",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "A concise cold-resume rule was predicted to cut tokens by naming the focus route and limiting reads.",
+            "evidence": [
+              ".braintree/resolved/THO-005-cold-resume-route-screen.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "failure",
+            "statement": "The candidate measured 106,538 total tokens against 84,165 for the baseline, 26.6% higher, in a matched small-scale screen.",
+            "evidence": [
+              ".braintree/resolved/THO-005-cold-resume-route-screen.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "decision",
+            "statement": "The rule was restored and rejected; do not repeat the theory or treat the attempts as evidence.",
+            "evidence": [
+              ".braintree/resolved/THO-005-cold-resume-route-screen.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "feedback",
+            "statement": "The recorder now drops only a leading `Reading` line and parses every remaining event strictly.",
+            "evidence": [
+              "src/braintree/token_benchmark.py"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A contributor wants to add a short instruction to the skill's cold-resume guidance: read only the selected node's header before its body and open other nodes only when required. Decide the next action.",
+        "observable_paths": [
+          "SKILL.md"
+        ],
+        "allowed_actions": [
+          "keep-the-rejected-rule-out",
+          "add-the-cold-resume-rule",
+          "re-run-the-token-screen"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "keep-the-rejected-rule-out",
+        "acceptable_actions": [
+          "keep-the-rejected-rule-out"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The cold-resume route rule raised total tokens 26.6% in a matched screen and was rejected; adding it back or re-running the unchanged screen repeats a rejected theory.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-handoff-corpus-continuation-001",
+      "family": "resumption",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "result",
+            "statement": "The admission family of the gold corpus was frozen as fifteen balanced retain, update-existing, and discard cases with an independent review.",
+            "evidence": [
+              "benchmark/memory-corpus/admission.json",
+              "research/agent-memory-admission-cases.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "The evaluation foundation curates corpus families in order: after admission come resumption and implicit retrieval, then revision and conflict, then transfer, interference, and authority.",
+            "evidence": [
+              ".braintree/proposed/TAS-121-evaluation-foundation.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "feedback",
+            "statement": "The coordinating node's `next` names the resumption and implicit-retrieval curation as the current frontier route, and the whole-corpus validator stays gated on the remaining corpus families.",
+            "evidence": [
+              ".braintree/proposed/TAS-121-evaluation-foundation.md",
+              ".braintree/proposed/TAS-135-corpus-validator-splits.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "The scenario schema and grader already support every family without a per-family field.",
+            "evidence": [
+              "src/braintree/memory_scenario.py"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "The benchmark corpus work is handed to a fresh agent after admission landed. Continue the corpus by taking the current frontier action.",
+        "observable_paths": [
+          "benchmark/memory-corpus/admission.json",
+          "src/braintree/memory_scenario.py",
+          "research/agent-memory-scenario-schema.md"
+        ],
+        "allowed_actions": [
+          "curate-resumption-and-implicit-cases",
+          "re-curate-the-admission-family",
+          "jump-to-the-confirmatory-evaluation"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "curate-resumption-and-implicit-cases",
+        "acceptable_actions": [
+          "curate-resumption-and-implicit-cases"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Admission is complete and the coordinating node's next route names resumption and implicit-retrieval curation before the remaining corpus families.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "resumption-control-vault-rename-001",
+      "family": "resumption",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The resolved decision and the resolver both place the vault under `.braintree/` and migrate a legacy `nodes/` vault in place, announcing the move on stderr.",
+            "evidence": [
+              ".braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+              "src/braintree/vault.py"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A legacy vault is migrated in place by both `braintree migrate` and the default resolver without a manual step.",
+            "evidence": [
+              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A capture command renamed a project's `nodes/` directory to `.braintree/` and printed a one-line notice. A contributor asks whether the rename should be reverted. Decide the next action.",
+        "observable_paths": [
+          ".braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+          "src/braintree/vault.py"
+        ],
+        "allowed_actions": [
+          "keep-the-vault-under-dot-braintree",
+          "revert-the-rename-to-nodes",
+          "refuse-future-migrations"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "keep-the-vault-under-dot-braintree",
+        "acceptable_actions": [
+          "keep-the-vault-under-dot-braintree"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Current observable state already settles this: the resolved decision and the resolver place the vault under `.braintree/`, so no unavailable history is required.",
+            "source_episodes": [
+              "ep-1"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

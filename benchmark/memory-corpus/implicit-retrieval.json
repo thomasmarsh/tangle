@@ -1,0 +1,544 @@
+{
+  "corpus_version": "memory-implicit-retrieval-corpus-v1",
+  "schema_version": "memory-scenario-v1",
+  "family": "implicit-retrieval",
+  "source_revision": "b8cd7d5",
+  "cases": [
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-failed-experiment-embedding-default-001",
+      "family": "implicit-retrieval",
+      "split": "development",
+      "severity": "major",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "result",
+            "statement": "The off-the-shelf similarity layer lost near-duplicate retrieval to the lexical baseline, MRR 0.4420 against 0.5856, in the frozen quality gate.",
+            "evidence": [
+              ".braintree/resolved/THO-012-embedding-clustering-retrieval-theory.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "The layer was kept only as an optional advisory paraphrase and digest layer; the lexical metric remains the correctness reference.",
+            "evidence": [
+              ".braintree/resolved/DEC-006-semantic-layer-capability-boundary.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The optional extra keeps the default install dependency-free.",
+            "evidence": [
+              "pyproject.toml"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Could we let the 'sounds similar' feature become the main way we spot repeated work, so nobody has to share a keyword? Decide the next action.",
+        "observable_paths": [
+          "tests/test_bt_index.py"
+        ],
+        "allowed_actions": [
+          "keep-lexical-search-as-the-duplicate-reference",
+          "promote-similarity-to-the-duplicate-default",
+          "remove-the-optional-similarity-layer"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "keep-lexical-search-as-the-duplicate-reference",
+        "acceptable_actions": [
+          "keep-lexical-search-as-the-duplicate-reference"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Similarity search lost near-duplicate retrieval to the lexical baseline and stays an optional advisory layer; the lexical reference does not change.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-after-decision-fast-gate-001",
+      "family": "implicit-retrieval",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "decision",
+            "statement": "Benchmark verification is opt-in: the default suite is the fast unit gate and `make test-benchmarks` runs the marked verification.",
+            "evidence": [
+              "Makefile",
+              "pyproject.toml"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "A benchmark test module carries `pytestmark = pytest.mark.benchmark`, and the marker is excluded by default.",
+            "evidence": [
+              "tests/test_quality_benchmark.py",
+              "pyproject.toml"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The shared tokenizer is cached so repeated lexical ranking does not re-tokenize.",
+            "evidence": [
+              "src/braintree/index.py"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Why doesn't the everyday gate run the exhaustive checks, and should we change that? Decide the next action.",
+        "observable_paths": [
+          "src/braintree/quality_benchmark.py"
+        ],
+        "allowed_actions": [
+          "leave-benchmark-verification-opt-in",
+          "fold-the-heavy-comparison-into-the-quick-check",
+          "delete-the-heavy-comparison"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "leave-benchmark-verification-opt-in",
+        "acceptable_actions": [
+          "leave-benchmark-verification-opt-in"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The heavy comparison is deliberately opt-in so the quick check stays fast.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-blocker-lease-handoff-001",
+      "family": "implicit-retrieval",
+      "split": "held-out",
+      "severity": "moderate",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "feedback",
+            "statement": "A lapsed lease returned the same `no-op` as a node never held, so a second agent could claim it.",
+            "evidence": [
+              ".braintree/resolved/TAS-100-lease-lifecycle-visibility.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "The default lease is 900 seconds; a claim repeating the same agent and base hash renews the lease; release distinguishes `expired` from `no-op`.",
+            "evidence": [
+              "references/coordination.md",
+              "src/braintree/sidecar.py"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "`release` reports `no-op` for a different agent's lapsed claim.",
+            "evidence": [
+              ".braintree/resolved/TAS-100-lease-lifecycle-visibility.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A worker's job looks abandoned and someone wants to hand it to another agent right now. Decide the next action.",
+        "observable_paths": [
+          "SKILL.md"
+        ],
+        "allowed_actions": [
+          "inspect-lease-remaining-and-reclaim-safely",
+          "wait-until-the-lease-expires-then-reclaim",
+          "force-release-and-reassign"
+        ]
+      },
+      "grading": {
+        "grader": "action-acceptable",
+        "expected_outcome": "inspect-lease-remaining-and-reclaim-safely",
+        "acceptable_actions": [
+          "inspect-lease-remaining-and-reclaim-safely",
+          "wait-until-the-lease-expires-then-reclaim"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The lease has a 900-second default, reclaiming with the same agent and base hash renews it, and release distinguishes an expired lease from one never held, so reassignment needs the remaining lease first.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
+      "family": "implicit-retrieval",
+      "split": "held-out",
+      "severity": "moderate",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "result",
+            "statement": "A compacted orientation loop was measured at 157806 total tokens against 118291 for the baseline, 39515 higher.",
+            "evidence": [
+              ".braintree/resolved/THO-004-orientation-compaction-screen.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "The compaction was rejected; do not retry the unchanged theory or spend another orientation candidate session.",
+            "evidence": [
+              ".braintree/resolved/THO-004-orientation-compaction-screen.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The matched baseline and the candidate were both correctly recorded, so there was no recording-pipeline failure to fix.",
+            "evidence": [
+              ".braintree/resolved/THO-004-orientation-compaction-screen.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "The starting summary is long and repetitive. A contributor proposes collapsing the repeated instructions into a shorter loop. Decide the next action.",
+        "observable_paths": [
+          "SKILL.md"
+        ],
+        "allowed_actions": [
+          "leave-the-orientation-guidance-unchanged",
+          "compact-the-orientation-loop",
+          "rerun-the-orientation-screen"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "leave-the-orientation-guidance-unchanged",
+        "acceptable_actions": [
+          "leave-the-orientation-guidance-unchanged"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Orientation-loop compaction was measured higher in tokens and rejected; do not repeat the unchanged theory.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-handoff-parent-next-001",
+      "family": "implicit-retrieval",
+      "split": "held-out",
+      "severity": "major",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "feedback",
+            "statement": "A slice resolved its node under a handoff whose write set excluded the coordinating parent, so the parent's `next` still named the resolved child.",
+            "evidence": [
+              ".braintree/resolved/TAS-115-parent-next-advance-ownership.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "A handoff whose write set excludes the parent must name the parent or its `next`; otherwise the coordinator owns the advance and the worker reports the stale route as its handoff action.",
+            "evidence": [
+              "SKILL.md",
+              "src/braintree/graph_check.py"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "observation",
+            "statement": "The checker stays silent for an action-sentence `next` and for a blocked node.",
+            "evidence": [
+              ".braintree/resolved/TAS-115-parent-next-advance-ownership.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A child task is finished, but the parent plan still points at it and the worker was told not to touch the parent. Decide what the worker should do.",
+        "observable_paths": [
+          "src/braintree/graph_check.py"
+        ],
+        "allowed_actions": [
+          "report-the-stale-route-as-the-handoff-action",
+          "ask-the-coordinator-to-advance-the-parent-next",
+          "edit-the-parent-outside-the-write-set"
+        ]
+      },
+      "grading": {
+        "grader": "action-acceptable",
+        "expected_outcome": "report-the-stale-route-as-the-handoff-action",
+        "acceptable_actions": [
+          "report-the-stale-route-as-the-handoff-action",
+          "ask-the-coordinator-to-advance-the-parent-next"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "A handoff excluding the parent leaves the advance to the coordinator and makes the stale route the worker's handoff action, not an out-of-set edit.",
+            "source_episodes": [
+              "ep-1",
+              "ep-2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-partial-implementation-write-set-closure-001",
+      "family": "implicit-retrieval",
+      "split": "development",
+      "severity": "moderate",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "feedback",
+            "statement": "A worker handed off a crate-local write set, but the change also required an exhaustive match in the CLI app and updates to goldens and baselines outside every crate directory.",
+            "evidence": [
+              ".braintree/resolved/TAS-113-write-set-change-closure.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "decision",
+            "statement": "The write set is the compile-and-golden closure of the approved change, not a crate directory.",
+            "evidence": [
+              ".braintree/resolved/TAS-113-write-set-change-closure.md"
+            ]
+          },
+          {
+            "id": "ep-3",
+            "sequence": 3,
+            "kind": "result",
+            "statement": "A worker that finds an in-scope closure member includes and reports it; it stops and escalates only for a path owned by another node or a shared hub.",
+            "evidence": [
+              "references/coordination.md"
+            ]
+          },
+          {
+            "id": "ep-4",
+            "sequence": 4,
+            "kind": "observation",
+            "statement": "A worker may author the minimal primitive its own gate needs inside its write set.",
+            "evidence": [
+              ".braintree/resolved/TAS-097-slice-primitive-scope.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "An assignment names one file, but finishing the change also needs a literal update in a neighboring module and a committed expected-output file. Decide the next action.",
+        "observable_paths": [
+          "src/braintree/cli.py",
+          "src/braintree/main.py"
+        ],
+        "allowed_actions": [
+          "include-and-report-in-scope-closure-members",
+          "stop-and-escalate-every-out-of-set-file",
+          "edit-the-extra-files-silently"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "include-and-report-in-scope-closure-members",
+        "acceptable_actions": [
+          "include-and-report-in-scope-closure-members"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "The write set is the compile-and-golden closure of the approved change; an in-scope member is included and reported, while only another node's or a shared hub's path is escalated.",
+            "source_episodes": [
+              "ep-2",
+              "ep-3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-control-version-declaration-001",
+      "family": "implicit-retrieval",
+      "split": "development",
+      "severity": "minor",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "The project ships one semantic version declared once in `pyproject.toml`; no artifact freezes or duplicates the number.",
+            "evidence": [
+              ".braintree/resolved/DEC-003-semantic-versioning.md",
+              "pyproject.toml"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "Every user-visible change bumps that one declared version.",
+            "evidence": [
+              ".braintree/resolved/DEC-003-semantic-versioning.md"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "A contributor asks where the number we bump for every user-visible change lives, and whether it must be updated anywhere else. Decide the next action.",
+        "observable_paths": [
+          ".braintree/resolved/DEC-003-semantic-versioning.md",
+          "pyproject.toml"
+        ],
+        "allowed_actions": [
+          "read-the-single-version-declaration",
+          "bump-the-version-in-every-artifact",
+          "add-a-version-sidecar"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "read-the-single-version-declaration",
+        "acceptable_actions": [
+          "read-the-single-version-declaration"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Current observable state already answers this: the version is declared once in `pyproject.toml`, so no unavailable history is required.",
+            "source_episodes": [
+              "ep-1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "memory-scenario-v1",
+      "case_id": "implicit-retrieval-control-offline-gate-001",
+      "family": "implicit-retrieval",
+      "split": "held-out",
+      "severity": "minor",
+      "source_revision": "b8cd7d5",
+      "construction": {
+        "episodes": [
+          {
+            "id": "ep-1",
+            "sequence": 1,
+            "kind": "observation",
+            "statement": "`make test` runs the offline fast suite, `make test-benchmarks` is the opt-in benchmark verification, and live model runs are part of neither.",
+            "evidence": [
+              "Makefile",
+              "research/agent-memory-evaluation-contract.md"
+            ]
+          },
+          {
+            "id": "ep-2",
+            "sequence": 2,
+            "kind": "observation",
+            "statement": "The token benchmark records cumulative per-turn telemetry so token and round-trip deltas can be compared later.",
+            "evidence": [
+              "src/braintree/token_benchmark.py"
+            ]
+          }
+        ]
+      },
+      "query": {
+        "task": "Before I commit, which check should I run, and will it call out to anything? Decide the next action.",
+        "observable_paths": [
+          "Makefile",
+          "research/agent-memory-evaluation-contract.md"
+        ],
+        "allowed_actions": [
+          "run-the-offline-default-test-gate",
+          "run-a-live-model-benchmark",
+          "skip-the-check"
+        ]
+      },
+      "grading": {
+        "grader": "action-exact",
+        "expected_outcome": "run-the-offline-default-test-gate",
+        "acceptable_actions": [
+          "run-the-offline-default-test-gate"
+        ],
+        "gold_evidence": [
+          {
+            "id": "gold-1",
+            "statement": "Current observable state already answers this: the default gate is offline and benchmark verification is opt-in.",
+            "source_episodes": [
+              "ep-1"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
