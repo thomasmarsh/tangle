@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-13T14:03:33Z
+updated: 2026-09-13T18:53:34Z
 summary: Evaluate evidence-bearing episodes, conservative consolidation, and procedural transfer.
 next: Design the episode and consolidation ablation from diagnosed failures.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-120-agent-memory-evaluation-program]].
 
 # Context
 
-Gated on [[TAS-123-pipeline-diagnostics]].
+Depends on [[TAS-123-pipeline-diagnostics]] at context_rev 1.
 
 # Outcome
 

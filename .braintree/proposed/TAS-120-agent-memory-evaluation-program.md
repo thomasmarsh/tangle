@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P1
-updated: 2026-09-13T18:41:00Z
+updated: 2026-09-13T18:53:34Z
 summary: Establish causal evidence that Braintree memory improves agent decisions at acceptable cost.
-next: "[[TAS-123-pipeline-diagnostics]]"
+next: "[[TAS-151-corpus-separability-repair]]"
 ---
 
 Area [[IDX-001-execution-graph]].

@@ -22,6 +22,7 @@ from . import (
     help,
     memory_causal,
     memory_corpus,
+    memory_diagnostics,
     memory_pilot,
     node_record,
     provider,
@@ -90,7 +91,9 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ),
     ("feedback scan VAULT ...", "collect FBK feedback from external vaults"),
     ("feedback record [OPTIONS]", "record Braintree friction as an FBK node"),
-    ("benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus|pilot|causal",
+    (
+        "benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus|"
+        "pilot|causal|diagnostics",
         "run a development benchmark",
     ),
     ("help [TOPIC]", "print the topic index or one installed workflow reference"),
@@ -133,6 +136,7 @@ _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "corpus": memory_corpus.main,
     "pilot": memory_pilot.main,
     "causal": memory_causal.main,
+    "diagnostics": memory_diagnostics.main,
 }
 
 
