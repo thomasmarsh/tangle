@@ -5,8 +5,8 @@ the id, route, timestamp, and required frontmatter a caller would otherwise
 hand-author: it reserves the next id atomically and discovers the primary
 route to the vault's root hub the way ``braintree feedback record`` does for
 ``FBK``. The Markdown-node writer primitives it holds are the single spelling
-of allocation, route discovery, and non-clobbering writes shared with that
-command. It depends only on the standard library and opens the sidecar solely
+of allocation, route discovery, summary fitting, and non-clobbering writes
+shared with that command. It depends only on the standard library and opens the sidecar solely
 to reserve an id when that sidecar exists and owns the target vault; it never
 touches the network.
 """
@@ -25,9 +25,11 @@ from . import sidecar, vault
 from .toon import field
 
 __all__ = [
+    "SUMMARY_LIMIT",
     "AllocationError",
     "discover_route",
     "existing_ids",
+    "fit_summary",
     "id_number",
     "main",
     "next_number",
@@ -37,6 +39,7 @@ __all__ = [
     "reserved_numbers",
     "single_line",
     "slugify",
+    "summary_warning",
     "taken_numbers",
     "utc_now",
     "write_new",
@@ -72,8 +75,13 @@ _ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
 _WIKILINK_ONLY = re.compile(r"\[\[([^\]]+)\]\]\Z")
 _NON_SLUG = re.compile(r"[^a-z0-9]+")
 _WHITESPACE = re.compile(r"\s+")
-_SUMMARY_LIMIT = 96
 _SLUG_LIMIT = 48
+
+# The one capture summary limit both write paths share. A stored summary is one
+# line of at most this many characters, and an over-long value is cut on a word
+# boundary and marked with the ellipsis below so it never ends mid-phrase.
+SUMMARY_LIMIT = 96
+_ELLIPSIS = "..."
 
 # The portable fallback keeps one ``PREFIX-NNN`` marker per reserved number in
 # ``<vault>/reservations``. The markers are not ``.md``, so the checker's
@@ -97,6 +105,30 @@ _VALUE_OPTIONS = frozenset(
 def single_line(value: str) -> str:
     """Collapse ``value`` to one whitespace-normalized line."""
     return _WHITESPACE.sub(" ", value).strip()
+
+
+def fit_summary(value: str) -> tuple[str, bool]:
+    """Return one summary within ``SUMMARY_LIMIT`` and whether it was shortened.
+
+    The summary is one whitespace-normalized line. A value already within the
+    limit is returned unchanged. A longer value is cut at the last word boundary
+    that leaves room for a trailing ``...``, so the stored summary states its own
+    truncation instead of ending mid-phrase; the boolean tells the caller to warn
+    that the phrase was shortened.
+    """
+    text = single_line(value)
+    if len(text) <= SUMMARY_LIMIT:
+        return text, False
+    head = text[: SUMMARY_LIMIT - len(_ELLIPSIS)]
+    return head.rsplit(" ", 1)[0].rstrip() + _ELLIPSIS, True
+
+
+def summary_warning(summary: str) -> str:
+    """Return the one capture warning for a summary ``fit_summary`` shortened."""
+    return (
+        f"summary exceeds {SUMMARY_LIMIT} characters; stored the word-boundary "
+        f"truncation '{summary}'"
+    )
 
 
 def slugify(value: str, fallback: str) -> str:
@@ -359,7 +391,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(field("error", f"--status must be one of {', '.join(_STATUSES)}"))
         return 2
 
-    summary = single_line(summary or "")[:_SUMMARY_LIMIT].strip()
+    summary, truncated = fit_summary(summary or "")
     if not summary:
         print(field("error", "braintree node record requires --summary"))
         return 2
@@ -462,6 +494,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         node_id = f"{node_type}-{number:03d}"
         path = os.path.join(directory, f"{node_id}-{slug}.md")
         if write_new(path, _render(route, summary, next_line, body, updated)):
+            if truncated:
+                print(field("warning", summary_warning(summary)))
             print(field("result", "recorded"))
             print(field("id", node_id))
             print(field("path", path))

@@ -675,3 +675,131 @@ def test_capture_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
 def test_capture_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> None:
     assert node_record.main(["--bogus"]) == 2
     assert "unknown option: --bogus" in capsys.readouterr().out
+
+
+# A capture summary is one line of at most 96 characters. An over-long value is
+# cut on a word boundary with a trailing ellipsis and reported as a warning, so
+# neither capture path silently stores a mid-phrase summary.
+
+_ELLIPSIS = "..."
+
+
+def _summary_of(path: Path) -> str:
+    match = re.search(r"^summary: (.*)$", path.read_text(encoding="utf-8"), re.MULTILINE)
+    assert match is not None, path
+    return match.group(1)
+
+
+def _summary_at_limit(limit: int) -> str:
+    """Return a word-separated summary of exactly ``limit`` characters."""
+    words = "alpha bravo charlie delta echo foxtrot golf hotel india".split()
+    padding = limit - len(" ".join(words)) - 1
+    assert padding >= 2
+    words.append("p" * padding)
+    text = " ".join(words)
+    assert len(text) == limit
+    return text
+
+
+# The phrase the round-seven probe stored cut in half: ``...so that a truncation
+# becomes`` is exactly what the word-boundary cut must never produce.
+_LONG_SUMMARY = (
+    "Record a summary that is deliberately made much longer than the limit so "
+    "that a truncation becomes visible in the stored frontmatter"
+)
+
+
+def test_summary_limit_is_the_documented_96_characters() -> None:
+    assert node_record.SUMMARY_LIMIT == 96
+
+
+def test_capture_stores_a_summary_at_the_limit_without_a_warning(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    nodes = _hub(tmp_path / "consumer")
+    summary = _summary_at_limit(node_record.SUMMARY_LIMIT)
+    args = _capture_args(nodes, "THO", **{"--summary": summary, "--slug": "at-limit"})
+    assert node_record.main(args) == 0
+    out = capsys.readouterr().out
+    assert _summary_of(nodes / "proposed" / "THO-001-at-limit.md") == summary
+    assert "warning" not in out
+    assert "..." not in summary
+
+
+def test_capture_cuts_one_character_over_the_limit_on_a_word_boundary(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    nodes = _hub(tmp_path / "consumer")
+    summary = _summary_at_limit(node_record.SUMMARY_LIMIT) + "!"
+    assert len(summary) == node_record.SUMMARY_LIMIT + 1
+    args = _capture_args(nodes, "THO", **{"--summary": summary, "--slug": "over-limit"})
+    assert node_record.main(args) == 0
+    capsys.readouterr()
+    stored = _summary_of(nodes / "proposed" / "THO-001-over-limit.md")
+    assert len(stored) <= node_record.SUMMARY_LIMIT
+    assert stored.endswith(_ELLIPSIS)
+    head = stored[: -len(_ELLIPSIS)]
+    assert summary.startswith(head)
+    assert summary[len(head)] == " "
+
+
+def test_capture_never_stores_a_mid_phrase_summary(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    nodes = _hub(tmp_path / "consumer")
+    args = _capture_args(nodes, "THO", **{"--summary": _LONG_SUMMARY, "--slug": "long"})
+    assert node_record.main(args) == 0
+    out = capsys.readouterr().out
+    stored = _summary_of(nodes / "proposed" / "THO-001-long.md")
+    assert len(stored) <= node_record.SUMMARY_LIMIT
+    assert stored.endswith(_ELLIPSIS)
+    head = stored[: -len(_ELLIPSIS)]
+    assert _LONG_SUMMARY.startswith(head)
+    assert _LONG_SUMMARY[len(head)] == " "
+    assert "so that a truncation becomes" not in stored
+    assert f'warning: "summary exceeds {node_record.SUMMARY_LIMIT} characters' in out
+    assert f"stored the word-boundary truncation '{stored}'\"" in out
+
+
+def test_feedback_capture_cuts_the_summary_derived_from_the_friction(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    nodes = _hub(tmp_path / "consumer")
+    friction = (
+        "The allocated id collided with a node already on disk and the stored "
+        "summary stopped in the middle of a phrase instead of naming the field"
+    )
+    assert len(friction) > node_record.SUMMARY_LIMIT
+    assert (
+        feedback_record.main(
+            [
+                "--nodes",
+                str(nodes),
+                "--attempted",
+                "Ran the capture path for a long friction.",
+                "--friction",
+                friction,
+                "--improvement",
+                "Fit the derived summary to the limit.",
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out
+    node = next(iter((nodes / "proposed").glob("FBK-001-*.md")))
+    stored = _summary_of(node)
+    assert len(stored) <= node_record.SUMMARY_LIMIT
+    assert stored.endswith(_ELLIPSIS)
+    head = stored[: -len(_ELLIPSIS)]
+    assert friction.startswith(head)
+    assert friction[len(head)] == " "
+    assert f"stored the word-boundary truncation '{stored}'\"" in out
+
+
+def test_capture_help_surfaces_the_summary_limit(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    for verb in (("node", "record"), ("feedback", "record")):
+        assert braintree_main([*verb, "--help"]) == 0
+        out = capsys.readouterr().out
+        assert "96 characters" in out, out

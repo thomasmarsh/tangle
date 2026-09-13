@@ -335,7 +335,7 @@ VERBS: dict[str, Verb] = {
         usage="braintree node record --type T --summary S --body B [OPTIONS]",
         operands=(
             ("--type", "THO, DEF, DEC, or TAS"),
-            ("--summary", "frontmatter summary"),
+            ("--summary", "frontmatter summary; one line of at most 96 characters"),
             ("--body", "node body text"),
             ("--status", "status directory; defaults to proposed"),
             ("--next", "required for an unfinished TAS; omitted when resolved"),
@@ -344,10 +344,13 @@ VERBS: dict[str, Verb] = {
         outputs=(
             ("path", "the written node file"),
             ("id", "the allocated identity"),
+            ("warning", "present when an over-long summary was shortened"),
         ),
         hazards=(
             "Creates the node you already decided to admit; it does not judge admission.",
             "Reserves the automatically chosen id before writing the file.",
+            "An over-long --summary is cut on a word boundary with a trailing "
+            "... and warned about, never stored mid-phrase.",
         ),
         topic=_AUTHORING_TOPIC,
     ),
@@ -520,9 +523,12 @@ VERBS: dict[str, Verb] = {
         outputs=(
             ("path", "the written .braintree/proposed/FBK-n-slug.md file"),
             ("id", "the allocated identity"),
+            ("warning", "present when the derived summary hit the 96-character limit"),
         ),
         hazards=(
             "Stamps the installed revision; degrades to <version>+unknown without a record.",
+            "The summary derived from --friction is cut on a word boundary with a "
+            "trailing ... at 96 characters, and warned about.",
         ),
         topic=_AUTHORING_TOPIC,
     ),

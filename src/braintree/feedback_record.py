@@ -21,11 +21,13 @@ from .node_record import (
     AllocationError,
     discover_route,
     existing_ids,
+    fit_summary,
     id_number,
     normalize_route,
     reserve_number,
     single_line,
     slugify,
+    summary_warning,
     utc_now,
     write_new,
 )
@@ -43,7 +45,6 @@ _USAGE = (
 )
 
 _FEEDBACK_TYPE = "FBK"
-_SUMMARY_LIMIT = 96
 _VALUE_OPTIONS = frozenset(
     {
         "--nodes",
@@ -163,10 +164,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     route = normalized
 
-    summary = single_line(summary) if summary is not None else friction
-    if not summary:
-        summary = friction
-    summary = summary[:_SUMMARY_LIMIT].strip()
+    chosen = single_line(summary) if summary is not None else friction
+    if not chosen:
+        chosen = friction
+    summary, truncated = fit_summary(chosen)
     slug = slugify(slug if slug is not None else summary, "feedback")
 
     existing = existing_ids(nodes_dir, _FEEDBACK_TYPE)
@@ -208,6 +209,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         path = os.path.join(proposed, f"{node_id}-{slug}.md")
         body = _render(route, summary, revision, attempted, friction, improvement, updated)
         if write_new(path, body):
+            if truncated:
+                print(field("warning", summary_warning(summary)))
             print(field("result", "recorded"))
             print(field("id", node_id))
             print(field("path", path))

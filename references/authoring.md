@@ -130,6 +130,10 @@ braintree node record --type THO \
   `--slug` override the allocated id and the derived slug, `--summary` overrides
   the derived summary, and `--nodes` selects a vault directory other than the
   current one.
+- `--summary` is one line of at most 96 characters. A longer value is shortened
+  at the last word boundary that leaves room for a trailing `...`, and the
+  command prints a `warning:` line naming the limit, so a capture never stores a
+  mid-phrase summary.
 
 The admission threshold is unchanged: the command creates the node the caller has
 already decided to admit, and it never admits a note with no foreseeable decision
@@ -183,7 +187,10 @@ braintree feedback record \
 `--nodes` points at the vault's `.braintree/` directory when it is not the
 current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from
 `index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the
-summary derived from the friction, and the derived slug. The command reads the
+summary derived from the friction, and the derived slug. The derived summary
+obeys the same 96-character limit, so an over-long friction is shortened on a
+word boundary with a trailing `...` and reported by the same `warning:` line
+instead of being stored mid-phrase. The command reads the
 installed `installed-revision` record and degrades explicitly to
 `<version>+unknown` when no record is present, so the node always names the
 Braintree version in use. The result is a valid, routed `FBK` node that
