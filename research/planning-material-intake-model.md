@@ -1,336 +1,380 @@
-# Project-neutral planning-material intake: variability and discovery model
+# Planning-material intake: variability and decision model
 
-## Purpose and scope
+## Purpose and status
 
-This document is the model of record for how Braintree relates to a consuming
-project's *planning material* — the documents, tickets, notebooks, wikis, specs,
-and generated plans that describe what a project intends to do before admitted
-execution state exists. It answers one question: what may Braintree rely on
-universally, what must each project declare or expose, what can be discovered
-through an explicit capability, and what must be left unknown?
+Planning material is any project-designated source used to inform future or
+ongoing work: documents, tickets, notebooks, wikis, specifications, generated
+plans, or other media. It may predate Braintree, coexist with admitted work, or
+continue changing after related graph nodes exist.
 
-It serves the workstream headed by `TAS-167-legacy-plan-intake-lifecycle` and its
-direct frontier child `TAS-168-characterize-legacy-plans`. It is deliberately a
-model, not a schema: nothing here is a required document shape, a required
-section, or a predetermined graph disposition. Concrete examples may falsify or
-refine the model; they cannot define the supported universe, because Braintree is
-infrastructure used by unrelated projects rather than an intake mechanism for a
-known corpus.
+This document is a research handoff for
+`TAS-167-legacy-plan-intake-lifecycle`. It characterizes the decisions an intake
+workflow must make; it is not itself a Braintree contract, source schema,
+coexistence policy, or promise of tool support. `SKILL.md` remains authoritative
+for graph admission, node boundaries, status, dependencies, and revisions. The
+project remains authoritative for the meaning, access rules, and permitted use
+of its source material.
 
-Braintree's own contract is the fixed reference point, not the source material.
-Markdown nodes under the status directories remain the only authority; `SKILL.md`
-owns admission, boundaries, status, dependencies, and `context_rev`. This
-document adds no authority and changes no invariant.
+The model deliberately does not select an authority mode, bridge shape,
+analyzer, drift policy, or renderer. Those decisions belong to the downstream
+nodes that can consider project choices and pilot evidence.
 
-## Universal invariants
+## Braintree-side constraints
 
-These hold for every project regardless of whether planning material exists, what
-form it takes, or who owns it. They are the facts Braintree may rely on without
-asking the consuming project.
+These constraints follow from the current Braintree contract and apply when
+planning material is used with Braintree:
 
-1. **Source material is not project truth.** A long-lived or heavily edited
-   document is not authoritative merely because it exists or predates the graph.
-   Observation of a source is evidence for review, never admission.
-2. **Intake is reviewed and outcome-based.** Node creation and node boundaries
-   are decided by a reviewer against the durable-outcome rule, not by source
-   headings, chunk boundaries, or inferred entities.
-3. **One owner per mutable fact.** Once a fact is admitted, exactly one surface
-   is authoritative for it. No fact has two editable owners.
-4. **Retrieval is not admission.** A command may find, rank, or cite source
-   spans automatically; it may never turn a heading, chunk, or inferred entity
-   into an authoritative node.
-5. **Uncertainty is surfaced, not resolved by inference.** When a source property
-   or required capability is unknown, intake states the unknown and takes the
-   non-destructive branch rather than guessing authority or handling policy.
-6. **The graph is self-contained after admission.** A cold reader can resume
-   admitted work from the vault without the source, network access, or hidden
-   conversational context.
-7. **Capabilities degrade explicitly.** An absent optional capability (semantic
-   provider, Git, network) produces a stated no-op or abstention, never a silent
-   best-effort result presented as authoritative.
-8. **Destructive and authority-bearing actions require project-local policy.**
-   Mutating a source, changing its authority class, or retiring a source is never
-   a default.
-9. **Provenance is the reviewed decision, not the source address.** A source
-   span may be cited, but the durable reason a fact is admitted is the review
-   that admitted it.
+1. A source-native unit is not automatically a graph unit. Headings, chunks,
+   checkboxes, tickets, and extracted entities are evidence for review, not node
+   boundaries.
+2. Retrieval is not admission. Tools may locate or propose source evidence, but
+   a reviewer applies the durable-outcome and update-existing rules before
+   Markdown becomes authoritative graph state.
+3. The vault is authoritative for Braintree graph state. That does not make it
+   the authority for every project fact, requirement, narrative, or source.
+4. Discoverability is not authorization or authority. Being able to read,
+   parse, hash, or version a source says nothing by itself about whether the
+   operation is permitted or whether the source governs a decision.
+5. A degraded or partial observation must not be represented as complete or
+   authoritative.
+6. Admitted work must be resumable without hidden conversational context. Its
+   declared resumption closure may include explicitly named, authorized sources
+   or capabilities; the model does not assume the vault contains every source
+   fact.
 
-## The variability axes
+Two stronger propositions are hypotheses for later work, not settled
+constraints: that every mutable project fact should have exactly one editable
+owner, and that graph-derived views must always be one-way. `TAS-169` and the
+pilot must define their scope and test their consequences.
 
-The axes are open-ended. Each lists dimensions that have been observed or
-plausibly arise; the list is illustrative and non-exhaustive, and no single value
-is a default.
+## Nine variability axes
+
+The axes are prompts for discovery, not enumerations of supported values. A
+project may expose values not listed here, and a source may vary within one
+axis by section, revision, reader, or operation.
 
 ### 1. Source discovery and identity
 
-- **Location:** in-repository, sibling checkout, shared filesystem, wiki or
-  issue tracker, object store, remote URL, generated at build time, addressable
-  only through a project tool, or absent.
-- **Identity:** filesystem path, path plus revision, content hash, section hash,
-  document id in an external system, or no stable id at all.
-- **Stability:** immutable snapshot, append-only log, rewritten in place,
-  regenerated on every run, or deleted and recreated.
-- **Cardinality and relationships:** zero, one, or many sources; independent,
-  parent/child, superseding, or mutually contradictory.
+- How does the project designate a source as planning material?
+- Where can it be addressed: repository path, external identifier, URL,
+  project tool, generated output, or another mechanism?
+- Which identity is stable enough for the intended operation: path, provider
+  ID, revision, content digest, composite identity, or none?
 
-### 2. Role and authority
+Discovery and identity are related but distinct. Finding an object does not
+establish that the same address identifies it across time.
 
-- Historical record; authoritative living specification; narrative rationale;
-  requirements baseline; acceptance criteria; decision log; status checklist;
-  backlog; generated projection; mixed and inconsistent roles.
-- Authority may be document-level, section-level, or absent. It may change over
-  time, and different readers may disagree about it.
+### 2. Cardinality and relationships
 
-### 3. Lifecycle and mutability
+- Are there zero, one, or many designated sources?
+- Are they independent, overlapping, ordered, derived, superseding, or
+  contradictory?
+- Is completeness knowable, or can additional sources appear later?
 
-- Frozen and archived; actively rewritten; edited by humans, LLMs, or both;
-  branched and merged; scheduled for deletion; retention-governed; already
-  partially migrated into another system.
+### 3. Role and authority
 
-### 4. Format and structure
+- Is a source historical evidence, a living specification, rationale, an
+  approval record, a backlog, a status surface, a derived view, or a mixture?
+- Which statements, if any, may govern project action?
+- Who can declare or change that authority, and at what granularity?
 
-- Prose, headings, tables, checklists, diagrams, embedded code, notebooks,
-  tickets, comment threads, binary or mixed-encoding documents, deeply nested
-  structures, machine-generated text.
-- Structure may be meaningful, decorative, or absent. No structure grants
-  authority.
+Role and authority cannot be inferred from age, location, structure, frequency
+of editing, or confident prose.
 
-### 5. Audience and access
+### 4. Lifecycle and mutability
 
-- Public, internal, restricted, credentialed, or per-reader. Access may be
-  time-limited, audited, or unavailable to the agent entirely.
+- Is the source immutable, append-only, rewritten, generated, branched,
+  merged, renamed, archived, or deleted?
+- Who or what edits it, and can edits occur concurrently with graph work?
+- Which lifecycle events invalidate a prior observation or reference?
 
-### 6. Handling and retention
+### 5. Format and structure
 
-- Must be preserved in place; may be copied; may be annotated; must not be
-  mutated; must not leave its system of record; contains restricted content that
-  may not be quoted or stored; subject to data-residency or retention rules.
+- Is the source text, structured data, a notebook, diagram, binary artifact,
+  comment stream, or mixed media?
+- Which structure is semantic and which is presentational?
+- Can the available capability read it faithfully and cite stable evidence?
 
-### 7. Integrations and project-specific semantics
+No format or section structure confers authority or defines graph boundaries.
 
-- Git hooks, CI, issue trackers, chat, LLM pipelines, documentation generators,
-  or bespoke tools that read or write the source.
-- Project-local meaning for terms, ownership, approval, and completion that
-  Braintree does not define and must not presume.
+### 6. Audience and access
 
-## The epistemic partition
+- Who may discover metadata, read content, quote it, or act on it?
+- Are access rights reader-specific, time-limited, credentialed, audited, or
+  unavailable to an agent?
+- Does successful access now imply anything about future resumption access?
 
-Every property relevant to intake falls into exactly one of five classes. The
-partition is the operational core of this model: intake behavior is determined by
-which class a property is in, not by the property's name.
+### 7. Handling and retention
 
-| Class | Meaning | Who supplies it | Intake behavior |
+- May content be copied into the vault, summarized, hashed, cached, logged, or
+  sent to an optional provider?
+- Must the source remain in place or be retained for a defined period?
+- What redaction, residency, deletion, or audit obligations apply?
+
+Read-only access is not sufficient permission to copy, quote, hash, or transmit
+content.
+
+### 8. Integrations
+
+- Which tools read or write the source: Git, CI, issue trackers, generators,
+  chat systems, LLM pipelines, or bespoke services?
+- Which integration side effects, availability assumptions, and failure modes
+  matter to intake?
+- Is there an explicit capability for the operation, and what fidelity does it
+  promise?
+
+### 9. Project-specific semantics
+
+- What do project terms such as owner, approved, done, blocked, requirement,
+  or plan mean?
+- Which project events or roles can settle ambiguity?
+- Which compatibility obligations constrain changes to existing workflows?
+
+Braintree must not redefine these meanings merely to normalize an input.
+
+## Classifying an intake decision
+
+The labels *universal*, *project-declared*, *discoverable*, *unknown*, and
+*unsupported* are useful, but they are not five mutually exclusive classes of
+a source property. They answer different questions:
+
+| Label | Dimension | Question answered | Consequence |
 | --- | --- | --- | --- |
-| **Universal** | A Braintree invariant, above | Braintree | Rely on it unconditionally |
-| **Project-declared** | A policy or authority fact only the project can choose | The consuming project | Require before authority-bearing or destructive action |
-| **Discoverable** | An observable property obtainable through an explicit capability | A named capability | Observe it, cite it, but never let it confer authority |
-| **Unknown** | Relevant but currently unspecified and not observable | No one yet | Surface it; take the non-destructive branch |
-| **Unsupported** | Recognized but outside the supported surface | No one | Decline explicitly and record why |
+| **Braintree-fixed** (universal) | Governing rule | Does the current Braintree contract already constrain this operation? | Apply the contract; do not ask a project to override it. |
+| **Project-declared** | Decision authority | Must an authorized project role choose the policy, meaning, or permission? | Obtain and cite that decision before relying on it. |
+| **Discoverable** | Evidence method | Can a named capability observe the fact with stated scope and fidelity? | Record the observation and its limits; do not turn evidence into policy. |
+| **Unknown** | Current knowledge | Is a relevant answer unresolved, unavailable, or not yet observed? | Decide whether it matters to the proposed operation; do not invent it. |
+| **Unsupported** | Capability relation | Can the chosen capability faithfully perform the requested operation on this input? | Decline that operation or use an explicitly approved alternative. |
 
-Notes:
+The unit of classification is a question about a proposed operation, not an
+entire document. For example, Git tracking can be discovered, permission to
+store excerpts is project-declared, the current completeness of a remote read
+may be unknown, and section-level citation may be unsupported by the selected
+reader. All four can be true simultaneously.
 
-- The class is per property, not per document. A single source can have a
-  discoverable format, a project-declared authority class, and an unknown
-  retention policy at the same time.
-- A discoverable property may never be promoted to project-declared by
-  inference. "The file is Git-tracked" does not mean "the project accepts
-  path-plus-revision identity," and "the document has an `## Acceptance
-  criteria` heading" does not mean "that section is authoritative."
-- An unknown may be promoted to project-declared only by an explicit project
-  statement, or to discoverable only by naming and running a capability that
-  yields it. Silence is never promotion.
+Project declarations and observations also need evidence. A declaration may be
+stored in project policy; an observation should name its capability, target,
+scope, version or time when relevant, and limitations. Confidence from an LLM
+is an observation about a model output, not proof of the source fact it asserts.
 
-## Safe behavior for unknown and unsupported properties
+## Operation gate and safe behavior
 
-Intake that meets an unknown or unsupported property follows one protocol:
+Before an intake operation, answer only the questions material to that
+operation:
 
-1. **Surface.** Record the property, its class, and why it matters in the intake
-   record or bridge. Never let an unknown pass silently into a default.
-2. **Classify the decision.** Is the next action non-destructive and
-   authority-neutral (extract, cite, preview, defer) or is it destructive or
-   authority-bearing (mutate the source, declare an authority class, admit a
-   node whose boundary depends on the unknown)?
-3. **Act on the safe branch.** For non-destructive work, proceed with a preview
-   or a bounded extraction that does not depend on the unknown. For
-   authority-bearing or destructive work, request project-local policy and wait.
-4. **Degrade explicitly.** If a required capability is absent, abstain with a
-   stated reason instead of approximating.
-5. **Record the outcome.** Whether the work proceeded, deferred, or declined,
-   the reason and the unknown are durable so the next reader does not re-derive
-   them.
+1. **Purpose:** What decision or action will the operation support?
+2. **Contract:** Which Braintree rules constrain the result?
+3. **Authority:** Who may authorize the access, handling, policy, and mutation?
+4. **Evidence:** What has actually been observed, at what scope and fidelity?
+5. **Support:** Can the selected capability perform this operation faithfully?
+6. **Admission:** If graph state may change, who will review the proposed
+   outcome and boundary?
 
-Forbidden under all circumstances, because each silently infers authority or
-performs destructive handling:
+Then use the narrowest justified branch:
 
-- Treating a source's existence, length, or age as authority.
-- Choosing a node boundary from a heading, chunk, or embedding cluster.
-- Persisting an inferred entity, summary, or classification as project truth.
-- Writing to, annotating, freezing, or deleting a source without explicit
-  project-local permission.
-- Quoting or storing restricted content the project has not cleared for storage.
-- Presenting a degraded or partial read as a complete one.
+- If an unknown is irrelevant to the operation, leave it unresolved. Do not
+  manufacture durable bookkeeping for every conceivable property.
+- If an unknown is material but the operation remains authorized and useful,
+  proceed with an explicit limitation and preserve only the evidence needed for
+  later review.
+- If permission, authority, or fidelity is material and unresolved, defer that
+  operation or decline it. A read-only operation is not automatically safe.
+- If a capability is unsupported, describe the unsupported operation and
+  input. Do not label the whole source unsupported when another faithful,
+  authorized adapter or manual review may exist.
+- If a reviewer admits or updates graph state, record enough decision context
+  and evidence lineage to resume the outcome. An inference may be adopted after
+  review; it must not masquerade as a source assertion.
 
-## Content categories and failure modes are observations, not a schema
+Never infer any of the following merely from observable source characteristics:
 
-The categories below are useful for review and for designing scenarios. None is
-required to exist in any source. None maps to a required section. None carries a
-predetermined graph disposition. A source may contain all, some, or none of them,
-and the same category may warrant different handling in different projects.
+- authority from existence, age, location, version control, or prose style;
+- permission from technical accessibility;
+- completeness from a successful or large read;
+- node boundaries from layout, chunks, embeddings, or extracted entities;
+- semantic equivalence from matching headings or formatting-only diffs;
+- a safe storage or transmission policy from the absence of a restriction;
+- approval to mutate, annotate, freeze, archive, or delete a source.
 
-Observable content categories:
+### Provenance and resumption
 
-- Narrative rationale and history.
-- Future work that is not yet admitted.
-- Requirements and acceptance criteria.
-- Operative decisions consumers must pin.
-- Status and checklists (mutable execution state).
-- Speculative or exploratory branches.
-- Completed work and its evidence.
-- Contradictions and duplicated owners.
+Evidence provenance and decision rationale are complementary, not substitutes.
+Where material, an intake result should make it possible to reconstruct:
 
-Observable failure modes:
+- which source object and observed version or state supplied evidence;
+- what span or scope was actually reviewed and what was omitted;
+- which capability or person produced the observation;
+- which reviewer accepted, rejected, or transformed it into graph state; and
+- which declared sources or capabilities a future reader still needs.
 
-- Contradictory sections or duplicated owners.
-- Speculative work presented as planned work.
-- Stale checklists that disagree with reality.
-- Content the project may not store or quote.
-- Non-text, mixed-encoding, or unreachable sources.
-- Very large or continuously regenerated documents.
-- Version churn that rewrites headings and prose.
+The bridge decision may choose the durable representation. This model requires
+the information to be sufficient for the claimed resumption and audit behavior;
+it does not mandate frontmatter, a node type, a path-plus-revision identity, or
+a content hash.
 
-Treating any item above as mandatory — requiring a section to exist, or fixing a
-disposition for a category — is a defect in the intake contract, not a
-simplification of it.
+## Content cues and failure modes
+
+The following are review cues, not a document schema or a disposition mapping:
+
+- rationale and history;
+- prospective outcomes, requirements, and acceptance criteria;
+- decisions or definitions that may affect consumers;
+- mutable status, next actions, blockers, or dependencies;
+- speculation and alternatives;
+- completion claims and supporting evidence; and
+- contradictions, duplicated assertions, or stale references.
+
+Common hazards include partial access, restricted content, unstable anchors,
+generated churn, conflicting sources, stale checklists, lossy conversion,
+oversized inputs, and source deletion. The same cue may be ignored, cited,
+retained in the source, used to update an existing node, or support a new node
+after review. Its label alone does not decide the disposition.
 
 ## Scenario matrix
 
-The following synthetic and adapted scenarios challenge the model across
-materially different combinations. They are illustrative. No specific corpus,
-path, repository, or permission to preserve source material is required to
-complete this work, and the list is non-exhaustive.
+These scenarios test whether the model exposes the right decision points. The
+“next probe” is conditional on authorization and capability; it is not a
+predetermined coexistence mode.
 
-| ID | Source shape | Authority | Access | Expected partition outcome | Safe behavior |
-| --- | --- | --- | --- | --- | --- |
-| S1 | Single immutable Markdown snapshot in-repo | Historical | Public | All properties known; snapshot mode | Stamp identity; extract only current frontier; leave source read-only |
-| S2 | Living spec rewritten by an LLM, Git-tracked, public | Living narrative + spec | Public | Authority class project-declared; identity discoverable | Hybrid mode; bridge; one-way derived views; never mirror status back |
-| S3 | Plans spread across wiki, issue tracker, notebooks | Mixed, partly contradictory | Restricted | Cardinality and authority unknown | Surface unknowns; request policy; preview only; decline node admission |
-| S4 | No planning material at all | None | n/a | Only universal invariants apply | Ordinary just-in-time decomposition; no intake machinery exercised |
-| S5 | Machine-generated plan regenerated on each build | Derived projection | Internal | Identity and lifecycle discoverable; authority project-declared | Treat as derived, never authority; re-derive; do not hand-edit |
-| S6 | Living plan with contradictions and stale checklist | Disputed | Internal | Contradictions observable; authority unknown | Pilot stress case; record conflicts; defer admission pending review |
-| S7 | Remote, credentialed, access-gated, not Git-tracked | Unknown | Credentialed | Identity discoverable via content hash; retention unknown | Content-hash identity; request retention policy; never store restricted spans |
-| S8 | Binary or deeply nested generated structures | Unknown | Restricted | Format discoverable as unsupported | Decline explicitly with reason; do not lossily convert as if faithful |
+| ID | Given conditions | Material unknowns | Narrow next probe | Invalid inference to catch |
+| --- | --- | --- | --- | --- |
+| S1 | Immutable in-repository Markdown; project declares it historical | Whether it is complete or still relevant | Record observable identity and review only evidence needed for the selected outcome | Historical does not mean complete or correct |
+| S2 | Git-tracked living spec repeatedly rewritten by an LLM | Section authority, storage permission, stable anchors | Ask the project to identify governing content; test citations across a rewrite | Git history does not select hybrid mode or authority |
+| S3 | Planning material spans a wiki, tracker, and notebooks with partial access | Corpus completeness, cross-source precedence, quote permission | Inventory only permitted metadata and surface missing coverage | A reachable source is not the whole corpus |
+| S4 | The project designates no planning material | None for intake | Use ordinary Braintree planning and admission | Intake machinery is not required |
+| S5 | A plan is regenerated during builds | Generator inputs, edit policy, authority of output | Observe generation behavior and ask which surface, if any, governs | Generated does not automatically mean non-authoritative |
+| S6 | A living plan contradicts its checklist and current graph state | Which assertion governs and whether the conflict itself should be admitted | Cite the conflict at verified versions and request review | Ambiguity does not require rejecting every possible node |
+| S7 | A credentialed remote source has no Git revision | Permission to read, hash, store, and revisit; provider identity guarantees | Use only provider metadata or content operations the policy allows | Non-Git does not imply that content hashing is permitted or sufficient |
+| S8 | A binary or deeply nested source lacks a faithful installed reader | Whether an authorized adapter or human export exists | Decline the attempted parse and name the missing fidelity | One unsupported parser does not make the source globally unsupported |
 
-## Downstream audit: assumptions and requirements
+The matrix should grow from pilot counterexamples. Synthetic cases can test
+safety and classification logic; volunteered real cases are needed before
+claiming representativeness or maintenance benefits.
 
-Each downstream node must not assume a fixed value on a variability axis. This
-audit records the assumptions to check and the requirement each node must
-satisfy. It is the requirements hand-off `TAS-168`'s `Done when` names.
+## Downstream handoff
+
+The model constrains assumptions that downstream work must avoid. It does not
+choose those nodes' outcomes.
 
 ### `TAS-169-settle-plan-graph-authority`
 
-- **Assumptions to audit:** that a source has one fixed role; that narrative,
-  requirements, and acceptance criteria have an inherent owner; that hybrid
-  operation is always a migration stage.
-- **Requirement:** the authority matrix must be keyed by project-declared
-  coexistence mode, define exactly one owner per mutable fact in snapshot,
-  living-specification, and full-migration modes, support permanent hybrid
-  operation as a first-class choice, and never require Git or a fixed document
-  schema.
+- Do not infer authority from source form or observed behavior.
+- Define the granularity of any “one editable owner” rule and distinguish
+  Braintree graph state from other project facts.
+- Decide, rather than assume, the supported coexistence modes, default,
+  exceptions, write-back behavior, and transition events.
 
 ### `TAS-170-define-plan-bridge-contract`
 
-- **Assumptions to audit:** that identity is always path-plus-Git-revision; that
-  source sections are stable anchors; that a new node type or frontmatter is
-  available.
-- **Requirement:** the bridge must support content-hash identity as a fallback
-  for non-Git and external sources, tolerate heading and prose rewrites, remain
-  prose-only unless evidence justifies structure, record unknown properties,
-  and define rollback for restricted or read-only sources.
+- Do not presume Git, stable paths, stable sections, content-hash permission, or
+  one source per bridge.
+- Define identity, reviewed scope, limitations, decision lineage, remaining
+  source dependencies, reconciliation state, completion, and rollback only to
+  the degree needed for demonstrated resumption.
+- Keep the first representation prose-only or add structure based on evidence,
+  not this model.
 
 ### `TAS-171-pilot-incremental-plan-intake`
 
-- **Assumptions to audit:** that a representative corpus exists; that sources
-  live in this repository; that pilots may mutate sources; that success
-  thresholds are universal.
-- **Requirement:** the pilot must accept synthetic, adapted, or volunteered
-  sources, run read-only when permission is absent, treat success and failure
-  thresholds as project-declared, and record which content never needed
-  migration.
+- Select cases across materially different axes and state their authorization
+  boundaries before reading or mutating sources.
+- Predeclare tasks, baselines, measures, and failure criteria. Synthetic cases
+  test known hazards but cannot establish external validity alone.
+- Record when graph-only resumption succeeds and when a declared source or
+  capability remains part of the resumption closure.
 
-### `TAS-173-decide-plan-analyzer-surface` / `TAS-174-build-dry-run-plan-analyzer`
+### `TAS-172-codify-plan-intake-workflow`
 
-- **Assumptions to audit:** that analysis can read whole documents; that text
-  sections exist; that Git is available; that classification is safe to act on.
-- **Requirement:** the analyzer must default to deterministic and offline,
-  abstain on unknown or unsupported properties, produce source-span citations
-  and explicit uncertainty, stay read-only and preview-oriented, and never infer
-  authoritative boundaries or adversarially convert unsupported formats.
+- Promote only constraints supported by the settled decisions and pilot
+  evidence.
+- Preserve the difference between current contract, recommended default,
+  project option, capability limitation, and unresolved question.
 
-### `TAS-175-decide-source-drift-policy` / `TAS-176-build-source-drift-reconciliation`
+### `TAS-173` / `TAS-174` — analyzer decision and implementation
 
-- **Assumptions to audit:** that sources are Git-tracked; that identity can be
-  section-level; that drift is always semantic; that drift should block work.
-- **Requirement:** drift detection must state the identity granularity, treat
-  non-Git and restricted sources as supported or explicitly unsupported,
-  distinguish formatting-only from semantic change, degrade unknown cases to a
-  non-failing advisory, and never block execution without a project-declared
-  policy.
+- Do not assume whole-document access, stable text spans, Git, or permission to
+  transmit content.
+- Make proposals auditable and visibly non-authoritative; represent partial
+  reads, uncertainty, and abstention.
+- Let the decision node choose deterministic, model-assisted, hybrid, or no
+  analyzer from measured pilot costs.
 
-### `TAS-177-decide-derived-plan-rendering` / `TAS-178-build-derived-plan-renderer`
+### `TAS-175` / `TAS-176` — drift decision and implementation
 
-- **Assumptions to audit:** that Markdown is the only format; that consumers are
-  known; that a rendered plan may be an independent authority; that size is
-  unbounded.
-- **Requirement:** rendering must be one-way and explicitly derived, take format,
-  storage, content, and size bounds as project-declared, and never become an
-  independent owner of any mutable fact.
+- Define drift relative to a selected identity, observed states, and the
+  authority policy; do not equate every byte change with semantic drift.
+- Specify behavior for missing access, unstable anchors, non-Git sources, and
+  uncertain classifications.
+- Let the decision node choose cadence and enforcement. This model does not
+  require a non-failing advisory or authorize a blocker.
 
-## Evaluation criteria
+### `TAS-177` / `TAS-178` — rendering decision and implementation
 
-Braintree's model-level evaluation must separate costs that are comparable across
-projects from costs that only the consuming project can set. Mixing them would
-let a project-local threshold masquerade as a universal quality bar.
+- Name the consumer and task that a derived view would serve before selecting
+  format, content, storage, ordering, or size bounds.
+- Test whether the view improves that task and whether users mistake it for an
+  editable authority.
+- Let the decision node dispose the branch when exact graph queries are enough.
 
-### General intake costs (comparable, model-level)
+## Evaluation design
 
-- **Admission correctness:** no node admitted without review; no mutable fact
-  with two owners; no inferred entity persisted as truth.
-- **Cold resumption:** a reader can resume admitted work without the source,
-  the network, or hidden context.
-- **Uncertainty transparency:** every unknown or unsupported property that
-  affected a decision is recorded.
-- **Review burden:** the number of reviewed decisions per admitted outcome.
-- **Reconciliation correctness:** source changes are classified and applied per
-  the declared policy, with formatting-only changes separable from semantic
-  ones.
-- **Decline fidelity:** unsupported work is declined explicitly with a reason,
-  never approximated.
+Evaluation has three layers that should not be collapsed into one list of
+“universal” costs.
 
-### Project-local measures (declared thresholds)
+### Contract and safety checks
 
-- **Discovery burden:** how much effort the project spends naming and exposing
-  its sources and policies.
-- **Source access:** latency, permission, credentialing, and availability.
-- **Authority-conflict rate:** how often source and graph disagree in practice.
-- **Dual-maintenance cost:** the cost of a permanent narrative-plus-graph split.
-- **Retention and handling compliance:** whether the project's data rules are
-  respected.
-- **Integration friction:** hooks, CI, and tooling the project must maintain.
+These are pass/fail properties of the intake behavior:
 
-A project-local measure becomes a success criterion only when the project states
-its threshold. The general measures are Braintree invariants and hold
-regardless.
+- source-native structure does not create or size nodes automatically;
+- partial or degraded reads are labeled with their scope;
+- source access, copying, transmission, and mutation stay within declared
+  authorization;
+- graph mutations receive review and pass ordinary Braintree validation; and
+- an unsupported operation is reported without a lossy result being presented
+  as faithful.
 
-## Open questions deferred to downstream nodes
+### Empirical pilot measures
 
-This model does not settle authority, identity, reconciliation cadence, or
-capability surfaces; those belong to the decision and build nodes above. The
-following remain explicitly open and must be answered with project input and
-pilot evidence:
+Each measure needs a denominator, collection method, and baseline:
 
-- The recommended default coexistence mode and its exceptions.
-- Whether a bridge is prose-only or gains a command surface.
-- Whether an analyzer, drift detector, or renderer are justified at all.
-- The exact form of source identity when both Git and content hashes are absent.
-- Which restricted-content handling rules Braintree can enforce versus only
-  document.
+- **Resumption success:** completion rate on predeclared cold-reader tasks,
+  separately for graph-only and declared-source-available conditions.
+- **Resumption cost:** elapsed time, tool calls, bytes or tokens read, and
+  source or node opens per successful task.
+- **Review yield:** accepted updates or admitted outcomes per proposal reviewed,
+  with rejection reasons.
+- **Duplicate-owner incidence:** conflicting editable claims found per admitted
+  outcome, including conflicts created by the workflow.
+- **Conflict detection:** precision and recall on seeded contradictions, plus
+  reviewed findings on real cases where recall is unknowable.
+- **Reconciliation burden:** review time and edits per material source change,
+  separated from formatting-only churn.
+- **Provenance auditability:** sampled decisions that another reviewer can trace
+  to the evidence and review action claimed.
+- **Abstention quality:** unsafe operations correctly declined and supported,
+  authorized operations unnecessarily declined.
+
+Tokens, files, and time are costs, not evidence of correctness on their own.
+“Cold resumption” must name what the cold reader is allowed to access.
+
+### Project acceptance thresholds
+
+The project chooses acceptable accuracy, latency, privacy, maintenance,
+authority-conflict, and integration-cost thresholds for its deployment. A
+pilot may propose thresholds, but must label them as hypotheses until an
+authorized project role accepts them.
+
+## Open decisions
+
+The following remain deliberately unsettled:
+
+- the recommended coexistence mode and whether permanent hybrid operation is
+  supported;
+- the scope and granularity of a one-owner authority rule;
+- whether a durable bridge is needed and how it identifies and cites sources;
+- whether resumption should ever require source access;
+- which pilot population is representative of intended users;
+- whether analyzer, drift, or renderer capabilities earn their complexity;
+- which reconciliation events warn, block, or require explicit disposition;
+  and
+- which handling rules Braintree can enforce rather than merely document.

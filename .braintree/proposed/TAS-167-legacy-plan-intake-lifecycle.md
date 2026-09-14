@@ -1,6 +1,6 @@
 ---
 context_rev: 2
-updated: 2026-09-14T02:28:45Z
+updated: 2026-09-14T02:42:27Z
 summary: Establish a project-neutral intake lifecycle for planning material.
 next: "[[TAS-169-settle-plan-graph-authority]]"
 ---
