@@ -153,19 +153,13 @@ reservations outside the repository. All worktrees for one Git repository share 
 Losing it does not lose graph content; `braintree init` and `braintree index` rebuild
 the derived state. SQLite coordination assumes one host and a local filesystem.
 
-Semantic retrieval and clustering require the optional extra:
-
-```sh
-uv sync --extra semantic
-
-# Or when installed as a dependency
-pip install 'braintree[semantic]'
-```
-
-An installer can request the same capability with `--semantic`. Queries remain
-offline and require model weights in `BT_MODEL_CACHE` or the usual Hugging Face
-cache. A missing extra or model, or an unhealthy provider, falls back to the
-lexical baseline.
+Semantic retrieval and clustering require the optional extra. An installer
+requests it with `--semantic`, which materializes it into the shared program
+and its generated launcher; a package consumer can install the `semantic`
+extra from the package index (`braintree[semantic]`). Queries remain offline
+and require model weights in `BT_MODEL_CACHE` or the usual Hugging Face cache.
+A missing extra or model, or an unhealthy provider, falls back to the lexical
+baseline.
 
 The default model is `sentence-transformers/all-MiniLM-L6-v2`, with
 `BAAI/bge-small-en-v1.5` as fallback. The measurements do not show a universal win

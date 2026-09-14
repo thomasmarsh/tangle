@@ -2,4 +2,9 @@
 # Run the unified Braintree command from this checkout.
 set -eu
 here=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+# Prefer the prepared checkout environment so a command in a sandbox needs no
+# writable uv cache; fall back to uv only when that environment is absent.
+if [ -x "$here/.venv/bin/braintree" ]; then
+  exec "$here/.venv/bin/braintree" "$@"
+fi
 exec uv run --project "$here" --frozen braintree "$@"

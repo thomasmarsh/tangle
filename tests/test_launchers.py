@@ -21,6 +21,8 @@ def test_launcher_is_executable_and_runs_braintree() -> None:
     assert _LAUNCHER.is_file()
     assert _LAUNCHER.stat().st_mode & 0o111
     text = _LAUNCHER.read_text(encoding="utf-8")
+    assert '[ -x "$here/.venv/bin/braintree" ]' in text
+    assert 'exec "$here/.venv/bin/braintree" "$@"' in text
     assert 'exec uv run --project "$here" --frozen braintree "$@"' in text
 
 

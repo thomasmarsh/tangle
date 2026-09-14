@@ -886,7 +886,7 @@ def _reproduction(
     plan digest so an analysis can be tied to the exact frozen fixture.
     """
     return [
-        f"uv run braintree benchmark causal plan > {plan_path}",
+        f"braintree benchmark causal plan > {plan_path}",
         (
             f"# launch {plan.get('batch_count')} batches of at most "
             f"{plan.get('batch_size')} isolated children from {plan_path} "
@@ -894,10 +894,10 @@ def _reproduction(
         ),
         f"# retained async run root: {runs_root}",
         (
-            "uv run braintree benchmark causal record "
+            "braintree benchmark causal record "
             f"--input {runs_root}/samples.json --output {out_path}"
         ),
-        "uv run braintree benchmark causal dry-run",
+        "braintree benchmark causal dry-run",
         f"# plan digest {plan.get('plan_digest')}",
         f"# corpus digest {plan.get('corpus_digest')}",
     ]
