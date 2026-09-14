@@ -22,7 +22,7 @@ Finding codes by class:
 - Feedback: ``feedback-revision-missing``, ``feedback-revision-format``,
   ``feedback-section-missing``, ``feedback-content-missing``.
 - Context edges: ``context-pin-trailing-text``, ``context-pin-missing``,
-  ``context-unresolved``, ``context-rev-mismatch``.
+  ``context-unresolved``, ``context-rev-mismatch``, ``gate-outside-context``.
 - Index map: ``index-missing``, ``index-copied-state``,
   ``index-root-route-missing``, ``index-root-hub-type``, ``index-broken-link``,
   ``index-focus-without-active``, ``index-focus-target``.
@@ -91,6 +91,12 @@ CONTEXT_EDGE_LINE = re.compile(
     r"^(?:" + "|".join(CONTEXT_RELATIONS) + r")\s+\[\[([^\]]+)\]\](.*)$",
     re.MULTILINE,
 )
+# The gate is a plain relation line, not a context edge: it carries no pin, so
+# only its placement is checked. Anchoring both ends makes the match an exact
+# relation, so prose that mentions or quotes the form is not one.
+GATED_LINE = re.compile(
+    rf"^{GATED_RELATION} \[\[([^\]]+)\]\]\.\s*$", re.MULTILINE
+)
 CONTEXT_PIN = re.compile(r" at context_rev (\d+)\.")
 CONTEXT_PIN_LINE = re.compile(r" at context_rev (\d+)\.\s*")
 
@@ -138,6 +144,7 @@ FINDING_CODES: dict[str, str] = {
     "context-pin-missing": "context edge has no valid context_rev pin",
     "context-unresolved": "pinned dependency is not resolved",
     "context-rev-mismatch": "pinned dependency revision differs from current",
+    "gate-outside-context": "Gated on relation appears outside the # Context section",
     "index-missing": "index-map.md is missing",
     "index-copied-state": "index-map.md copies node state",
     "index-root-route-missing": "index-map.md lacks an Indexes root route",
@@ -174,6 +181,7 @@ _PRIMARY_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE
 _NODE_ID = re.compile(r"[A-Z]+-\d+")
 _ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
 _FOCUS_BLOCK = re.compile(r"^# Focus\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
+_CONTEXT_BLOCK = re.compile(r"^# Context\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _BLOCKED_BLOCK = re.compile(r"^# Blocked\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _INDEX_TABLE = re.compile(r"^\| .*\[\[", re.MULTILINE)
 _INDEX_LINK = re.compile(r"\[\[([A-Z]+-\d+[^\]]*)\]\]")
@@ -676,6 +684,31 @@ def _check_context_edges(
                 )
 
 
+def _check_gate_placement(nodes: list[_Node], errors: list[Finding]) -> None:
+    """Flag a gate relation authored outside a node's ``# Context`` section.
+
+    The gate stands in for the pinned context edge until its target resolves,
+    and the section is the one place that edge belongs. A node without a
+    ``# Context`` section offers no valid placement, so its gate is misplaced
+    too. Quoted and fenced copies of the form are masked out before the scan,
+    so only authored relation lines can be flagged.
+    """
+    for node in nodes:
+        masked = _mask_code(node.text)
+        context_spans = [match.span(1) for match in _CONTEXT_BLOCK.finditer(masked)]
+        for match in GATED_LINE.finditer(masked):
+            if any(start <= match.start() < end for start, end in context_spans):
+                continue
+            errors.append(
+                Finding(
+                    "gate-outside-context",
+                    node.path,
+                    f"{node.path}: {GATED_RELATION} [[{match.group(1)}]] must appear "
+                    "in # Context",
+                )
+            )
+
+
 def _validate(
     nodes_dir: str,
     *,
@@ -728,6 +761,7 @@ def _validate(
     focus = list(dict.fromkeys(_WIKILINK.findall(focus_match.group(1) if focus_match else "")))
 
     _check_context_edges(nodes, by_name, allow_stale, errors)
+    _check_gate_placement(nodes, errors)
     for target in _INDEX_LINK.findall(index_text):
         if target not in by_name:
             errors.append(

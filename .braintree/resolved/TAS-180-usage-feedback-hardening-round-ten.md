@@ -1,9 +1,8 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:59:11Z
+updated: 2026-09-14T12:09:55Z
 summary: Fix or dispose the round-ten Tangle FBK-031 findings.
-next: "[[TAS-185-check-gate-placement]]"
 ---
 
 Parent [[THO-027-round-ten-usage-feedback-analysis]].
@@ -53,3 +52,30 @@ tests wherever a documented surface changes.
 - [[TAS-182-worker-host-clock-stamp]] - Tangle `FBK-031` finding 2.
 - [[TAS-183-localized-red-timeout-repair]] - Tangle `FBK-031` finding 3.
 - [[TAS-185-check-gate-placement]] - Tangle `FBK-031` finding 8.
+
+# Result
+
+Resolved. All five leaves are resolved and their contract changes are landed in
+four commits after the `72e7968` base:
+
+- [[TAS-181-closure-names-resolved-sibling-seams]] - `c0926c5`.
+- [[TAS-184-brief-names-mixed-capability-case]] - `605f803`.
+- [[TAS-182-worker-host-clock-stamp]] - `c43d9f6`.
+- [[TAS-183-localized-red-timeout-repair]] - `7dac310`.
+- [[TAS-185-check-gate-placement]] - this commit, the resolution commit; a
+  commit cannot name its own SHA.
+
+`references/coordination.md` now carries the closure-versus-resolved-sibling
+precedence, the mixed-capability acceptance input, the required host-clock read
+for a fresh `updated` with the future-stamp repair rule, and the bounded
+localized-red narrow-repair branch. `SKILL.md` carries the host-clock rule, and
+`references/authoring.md` the mixed-capability input.
+
+`src/braintree/graph_check.py` adds the `gate-outside-context` code and
+`_check_gate_placement`, so `braintree check` flags an exact `Gated on [[X]].`
+relation line outside `# Context` while the same line inside `# Context` stays
+valid and quoted or prose mentions stay clean.
+
+Gate evidence: `make test` passes (731 passed, 3 skipped, with `ruff`, `mypy`,
+and the `install` and `worktree-parallel` shells green) and `braintree check`
+passes (222 nodes).

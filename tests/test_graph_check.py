@@ -472,7 +472,63 @@ def test_gated_dependency_on_unresolved_predecessor_passes(
     _replace(
         nodes / "active" / "TAS-001-parent.md",
         "Depends on [[DEF-001-contract]] at context_rev 1.",
-        f"{graph_check.GATED_RELATION} [[DEF-001-contract]].",
+        f"# Context\n\n{graph_check.GATED_RELATION} [[DEF-001-contract]].",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_gate_outside_context_is_flagged(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"{graph_check.GATED_RELATION} [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "Gated on [[DEF-001-contract]] must appear in # Context" in err
+
+
+def test_gate_inside_context_is_valid(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Depends on [[DEF-001-contract]] at context_rev 1.",
+        f"# Context\n\n{graph_check.GATED_RELATION} [[DEF-001-contract]].",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_quoted_gate_syntax_outside_context_stays_clean(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A quoted gate documents the grammar; it is not an authored relation."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + "The form is `Gated on [[TAS-999-missing]].`.\n"
+        + "```markdown\nGated on [[TAS-999-missing]].\n```\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_prose_mentioning_the_gate_stays_clean(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Only an exact relation line is a gate; a mention or a suffix is prose."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + "Record a gate as Gated on [[DEF-001-contract]]. in the section.\n"
+        + "Gated on [[DEF-001-contract]]. and more context.\n",
+        encoding="utf-8",
     )
     assert graph_check.main([str(nodes)]) == 0
     assert "graph check: passed" in capsys.readouterr().out
@@ -1069,6 +1125,14 @@ def _mut_context_rev_mismatch(nodes: Path) -> None:
     _replace(nodes / "active" / "TAS-001-parent.md", "context_rev 1.", "context_rev 2.")
 
 
+def _mut_gate_outside_context(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Area [[IDX-001-root]].",
+        "Area [[IDX-001-root]].\n\n# Outcome\n\nGated on [[DEF-001-contract]].",
+    )
+
+
 def _mut_index_missing(nodes: Path) -> None:
     (nodes / "index-map.md").unlink()
 
@@ -1231,6 +1295,7 @@ _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
     "context-pin-missing": (_mut_context_pin_missing, "context-pin-missing"),
     "context-unresolved": (_mut_context_unresolved, "context-unresolved"),
     "context-rev-mismatch": (_mut_context_rev_mismatch, "context-rev-mismatch"),
+    "gate-outside-context": (_mut_gate_outside_context, "gate-outside-context"),
     "index-missing": (_mut_index_missing, "index-missing"),
     "index-copied-state": (_mut_index_copied_state, "index-copied-state"),
     "index-root-route-missing": (
