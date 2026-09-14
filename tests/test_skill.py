@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from braintree import graph_check, main
+from braintree import graph_check, main, store
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SKILL = _ROOT / "SKILL.md"
@@ -988,6 +988,13 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _node_text(name: str) -> str:
+    """Read a live node by identity through the shared authority-bearing set."""
+    found = store.find_by_name(str(_NODES), f"{name}.md")
+    assert found is not None, f"missing live node: {name}"
+    return _read(Path(found[1]))
+
+
 def _normalized(text: str) -> str:
     """Collapse whitespace so a rule can be matched across line wrapping."""
     return re.sub(r"\s+", " ", text)
@@ -1499,13 +1506,15 @@ def test_index_is_routing_not_a_catalog() -> None:
     assert hubs
     for hub in hubs:
         assert re.match(r"IDX-\d+", hub)
-        hub_text = _read(_NODES / "resolved" / f"{hub}.md")
+        hub_text = _node_text(hub)
         assert not re.search(r"^(?:Parent|Area) \[\[", hub_text, re.MULTILINE)
 
 
 _FRONTIER_RECIPE = re.compile(r"^- Frontier: `([^`]+)`$", re.MULTILINE)
-_FRONTIER_ID = re.compile(r'^\s*"([A-Z][A-Z0-9_]*-\d+)"', re.MULTILINE)
-_NODE_ID = re.compile(r"^([A-Z][A-Z0-9_]*-\d+)-")
+_CANONICAL_ID = r"(?:tas|tho|def|dec|idx|fbk)-[0-9a-hjkmnp-tv-z]{26}"
+_ANY_ID = rf"(?:[A-Z][A-Z0-9_]*-\d+|{_CANONICAL_ID})"
+_FRONTIER_ID = re.compile(rf'^\s*"({_ANY_ID})"', re.MULTILINE)
+_NODE_ID = re.compile(rf"^({_ANY_ID})(?:-|$)")
 
 
 def _frontier_recipe() -> str:
@@ -1566,10 +1575,11 @@ def test_frontier_recipe_resolves_a_coordinating_next(tmp_path: Path) -> None:
 
 def test_frontier_recipe_matches_the_live_vault() -> None:
     expected: set[str] = set()
-    for path in sorted(_NODES.glob("*/*.md")):
-        if path.parent.name not in {"proposed", "active", "blocked"}:
+    for entry in store.iter_node_paths(str(_NODES)):
+        if entry.status not in {"proposed", "active", "blocked"}:
             continue
-        header = _frontmatter(path.read_text(encoding="utf-8"))
+        path = Path(entry.path)
+        header = _frontmatter(_read(path))
         next_match = re.search(r"^next:\s*(.+)$", header, re.MULTILINE)
         if next_match is not None and "[[" in next_match.group(1):
             continue
@@ -1580,9 +1590,9 @@ def test_frontier_recipe_matches_the_live_vault() -> None:
 
 
 def test_decomposition_roll_up() -> None:
-    parent = _read(_NODES / "resolved" / "TAS-008-fit-for-purpose-hardening.md")
-    child = _read(_NODES / "resolved" / "TAS-012-decomposition-rollup.md")
-    admission = _read(_NODES / "resolved" / "TAS-016-actionable-admission-policy.md")
+    parent = _node_text("TAS-008-fit-for-purpose-hardening")
+    child = _node_text("TAS-012-decomposition-rollup")
+    admission = _node_text("TAS-016-actionable-admission-policy")
     assert "# Outcome\n" in parent
     assert "# Done when\n" in parent
     assert re.search(r"^next:", parent, re.MULTILINE) is None
@@ -1596,8 +1606,8 @@ def test_decomposition_roll_up() -> None:
 
 
 def test_stationary_storage_decision() -> None:
-    storage = _read(_NODES / "resolved" / "TAS-017-stationary-canonical-storage.md")
-    parent = _read(_NODES / "resolved" / "TAS-008-fit-for-purpose-hardening.md")
+    storage = _node_text("TAS-017-stationary-canonical-storage")
+    parent = _node_text("TAS-008-fit-for-purpose-hardening")
     assert re.search(r"^next:", storage, re.MULTILINE) is None
     assert "# Result\n" in storage
     assert "storage-comparison.rb" in storage
@@ -1606,8 +1616,8 @@ def test_stationary_storage_decision() -> None:
 
 
 def test_decision_lifecycle() -> None:
-    decision = _read(_NODES / "resolved" / "DEC-001-decision-node-convention.md")
-    task = _read(_NODES / "resolved" / "TAS-013-decision-memory.md")
+    decision = _node_text("DEC-001-decision-node-convention")
+    task = _node_text("TAS-013-decision-memory")
     for section in ("Decision", "Rationale", "Consequences"):
         assert f"# {section}\n" in decision
     assert "Parent [[TAS-013-decision-memory]]." in decision

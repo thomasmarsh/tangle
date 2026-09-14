@@ -1,5 +1,5 @@
 ---
-updated: 2026-09-13T01:41:48Z
+updated: 2026-09-14T23:48:31Z
 summary: Route agents from the durable execution-graph root hub to authoritative queries.
 ---
 
@@ -11,12 +11,12 @@ summary: Route agents from the durable execution-graph root hub to authoritative
 
 - Frontier: `braintree frontier`
 - Known item: `find .braintree -type f -name 'TAS-007-*'`
-- Unfinished: `find .braintree -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'`
-- Blocked: `find .braintree -type f -path '*/blocked/TAS-*.md'`
-- Highest actionable priority: `find .braintree -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +`
+- Unfinished: `rg -l '^status: (proposed|active|blocked)$' .braintree`
+- Blocked: `rg -l '^status: blocked$' .braintree`
+- Highest actionable priority: `rg -l '^priority: P0$' .braintree | xargs rg -l '^status: active$'`
 - Changed definition: `braintree impact ID`
 - Exceptional lifecycle: `rg -l '^disposition:' .braintree`
 - Recent: `rg -H '^updated:' .braintree | awk -F ': ' '{print $2 " " $1}' | sort -r | head -5`
 - Primary routes: `rg -n '^(Parent|Area) \[\[' .braintree`
 
-Node files and status directories are authoritative. This file contains intent and recipes, not copied node state.
+Node files are authoritative; the status field is authoritative for a stationary node and the status directory is legacy. This file contains intent and recipes, not copied node state.
