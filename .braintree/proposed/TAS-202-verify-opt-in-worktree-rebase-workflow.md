@@ -1,7 +1,7 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P1
-updated: 2026-09-14T18:55:52Z
+updated: 2026-09-14T19:35:47Z
 summary: Document and verify the opt-in worktree rebase workflow.
 next: Exercise and document worktree reconciliation from submission through recovery.
 ---
@@ -26,4 +26,5 @@ A fresh integrator can reconcile and accept selected worktree contributions agai
 - Compatibility tests pin the existing bounded `braintree reconcile --base/--head` view and verify any new richer output only behind explicit options or new verbs.
 - A control path proves disjoint, preassigned worktrees may continue using the current claim, handoff, and serial-integration contract without creating change bundles.
 - Installation and reference tests prove progressive disclosure: `SKILL.md` contains only the escalation route, the detailed workflow is loaded conditionally, and per-command help carries syntax.
+- Worktree guidance makes the project-owned hash census and Markdown projections implicit command behavior, not handoff duties. It distinguishes clone-stable project UID, local alias, lowercase node identity, content hash, and Git object identity without requiring clients to maintain mappings or view files.
 - `braintree check`, `make test`, and `make test-benchmarks` pass because this phase touches the worktree harness or its committed baseline.

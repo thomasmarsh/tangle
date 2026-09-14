@@ -52,6 +52,16 @@ integration of disjoint assigned node edits.
 
 This reduces textual conflicts. It does not resolve semantic overlap.
 
+The status-directory benchmark that selected this representation measured path
+changes, body reads, merge conflicts, and stale derived views before the current
+multi-writer intake problem existed. A stable canonical path now has additional
+potential value: receipts and external tools retain one locator, a status
+transition is no longer confused with deletion, and globally unique identities
+can be created without coordinating a numeric sequence. Those are new criteria,
+not evidence that the earlier benchmark was wrong, so stationary storage should
+be reevaluated under the derived-index architecture rather than assumed or
+rejected from the earlier result alone.
+
 ### Same-host identity and exclusion
 
 The external SQLite sidecar is keyed by Git's common directory, so all local
@@ -164,7 +174,7 @@ accept or reject an operation. They are asserted provenance metadata for users a
 external systems to interpret. Proposal and integration identities remain unique
 even when every actor field is absent, duplicated, or misleading.
 
-### Permanent node IDs should be allocated late
+### Permanent node IDs should be assigned late
 
 Cross-host proposals cannot safely share a local sequence. More importantly,
 allocating canonical IDs while ideas are still redundant or subject to
@@ -172,10 +182,109 @@ consolidation creates needless burns and encourages proposal identity to become
 graph identity.
 
 A new-node contribution can use a proposal-scoped symbol, addressed globally as
-`proposal_id#symbol`. The integrator allocates the permanent
-`TAS`/`THO`/`DEF`/`DEC`/`FBK` ID only when it admits the node, then records the
+`proposal_id#symbol`. The integrator generates the permanent
+`tas`/`tho`/`def`/`dec`/`fbk` ID only when it admits the node, then records the
 mapping in the acceptance record and receipt. References among nodes created by
 one bundle use proposal-scoped symbols until that mapping is fixed.
+
+Late assignment does not require a shared numeric sequence. A stronger candidate
+is a lowercase, globally collision-resistant ID generated from acceptance-local
+entropy or from a domain-separated digest of the proposal identity and local
+symbol. The type prefix remains part of the identity (`tas-...`, `tho-...`,
+`def-...`, `idx-...`, or `fbk-...`), while the content hash remains the version
+and optimistic-concurrency witness. A hash of the current Markdown bytes must not
+be the logical ID because an ordinary edit would change it; a hash of the initial
+bytes would cease to be a content address.
+
+Canonical identity spelling should be lowercase ASCII. A CLI may accept legacy or
+mixed-case input and normalize it at the boundary, but newly stored filenames,
+references, project aliases, and URI components use one lowercase spelling, and
+duplicate detection compares normalized identities so case-sensitive and
+case-insensitive filesystems cannot disagree. Existing uppercase numeric IDs
+remain readable; any path migration uses an intermediate name rather than relying
+on a case-only rename.
+
+### Project identity and reference scope are distinct from node identity
+
+A globally unique node ID makes an unqualified reference safe inside its own
+project, but a reference to another project still needs durable authority and a
+way to locate that project. Introduce a random, immutable project UID committed
+with the vault and shared by its clones. This is distinct from the current
+same-host sidecar identity derived from a Git common-directory path, which is a
+local storage key and changes across clones.
+
+A lowercase project alias such as `tangle` is presentation and local registry
+state, not durable identity. Clients may accept a convenient spelling such as
+`tangle:tas-ab2bbaa9bfef22c941d07f3b`, with the unqualified node ID meaning the
+current project, but a sealed proposal, receipt, or canonical cross-project edge
+expands the alias to an immutable project UID. Aliases may be renamed or collide;
+the UID settles identity and the registry settles local location.
+
+Ordinary wikilinks remain local-vault references. A colon-qualified external
+reference must not masquerade as an Obsidian wikilink: Braintree owns a separate
+qualified reference or URI grammar and can project a registered external target
+into a local Markdown link or proxy note. If the target project is not registered,
+the durable external reference remains visible and unresolved rather than becoming
+a broken local node or disappearing.
+
+### Stable storage needs project-owned projections
+
+A stationary canonical store should not make each client scan files, construct
+status lists, copy summaries into aliases, or maintain symlinks. Braintree owns
+those projections as an explicit side effect of its commands. One candidate
+layout is a stable, optionally sharded path derived from the immutable ID, with an
+immutable creation label for filesystem readability and authoritative `status`
+inside the node. The exact path is a versioned format decision, not user-authored
+indexing policy.
+
+Generated Markdown view pages provide portable navigation without becoming a
+second graph authority. They may group nodes by status, area, priority, recent
+activity, or registered external project and render the current canonical summary
+as link display text. They are deterministic, disposable, excluded from canonical
+node discovery, and regenerated by Braintree; clients neither edit them nor copy
+their contents into canonical nodes. Symlink status trees may be an optional view
+backend, but correctness, discovery, and acceptance never depend on a link being
+present or portable.
+
+The derived index and views must account for direct Markdown edits made between
+commands. Every project-scoped command that reads or mutates graph state begins
+with a complete census of the canonical node store; global `--help`, `--version`,
+installation, and equivalent repository-independent operations do not require a
+vault:
+
+1. enumerate every canonical node path, excluding proposals, receipts,
+   acceptances, views, and temporary files;
+2. read and hash every node's exact bytes rather than trusting modification time,
+   size, an OS watcher, or a caller-supplied changed-path list;
+3. compare the path, normalized identity, and digest set with the sidecar, parsing
+   new or changed bytes, deleting vanished rows, and rebuilding affected edges,
+   search entries, reservations, and other derived answers in one transaction;
+4. answer the requested command only from that reconciled snapshot; and
+5. when the command mutates canonical nodes, apply its known post-mutation index
+   delta and atomically regenerate affected Markdown views before returning.
+
+This is an `O(total canonical Markdown bytes)` verification pass per interaction,
+with parsing and view writes proportional to detected changes. It is intentionally
+stronger than an mtime shortcut: a point edit must be visible to the next command
+even when timestamps are coarse, preserved, or misleading. A watcher or file
+metadata may accelerate hints but cannot replace the hash census. Hash state is
+derived and disposable; loss causes a full parse and view rebuild, never loss of
+knowledge.
+
+Same-directory Braintree commands serialize census, index reconciliation,
+canonical mutation, and view publication with a project-scoped reconciliation
+lease. A direct editor does not participate in that lease, so a file that changes
+during the census causes a retry or an explicit concurrent-edit result rather than
+a false clean snapshot; an edit after the command's validated boundary is observed
+by the next command. The protocol does not claim an atomic multi-file snapshot
+against arbitrary nonconforming writers.
+
+Projection failure does not make a view authoritative. The command reports the
+failure, and the next successful interaction repairs it from canonical Markdown.
+A mutation's canonical acceptance boundary and its projection publication order
+must be defined so a crash cannot make a generated page evidence that an
+unaccepted mutation succeeded. Deterministic ordering and same-directory temporary
+renames keep regenerated pages stable and avoid needless Git or editor churn.
 
 ### Coordination cost should follow coordination risk
 
@@ -203,6 +312,12 @@ not leak into a universal authoring burden: hashes, exact footprints, base bytes
 and mechanically derivable preconditions should be captured by tools whenever
 possible, and an agent or human should supply extra metadata or a semantic
 disposition only when the selected mode or an actual ambiguity requires it.
+
+The full hash census and projection upkeep are tool behavior, not agent workflow.
+They may run universally because they require no semantic choice or authored
+metadata from the client. This is compatible with pay-for-what-you-use: ordinary
+clients pay bounded local I/O for trustworthy derived answers, while only clients
+that select concurrent intake pay the proposal and reconciliation protocol cost.
 
 The skill should therefore retain only a compact routing rule: continue with the
 ordinary workflow by default, and load a dedicated coordination or change-intake
@@ -253,7 +368,7 @@ A minimal envelope needs:
 
 ```yaml
 format: braintree-change/v1
-proposal_id: 01J...
+proposal_id: 01j...
 producer_id: worker-7        # optional, opaque, informational
 run_id: optional-run-42      # optional, opaque, informational
 created: 2026-09-14T16:00:00Z
@@ -295,7 +410,8 @@ Operations should express graph intent rather than only a raw unified diff:
   intended initial status;
 - `amend`: propose a result against a node ID plus starting content hash and
   status;
-- `transition`: couple a status move with the required body/frontmatter changes;
+- `transition`: couple an authoritative status-field change (or a legacy status
+  path move) with the required body/frontmatter changes;
 - `advance`: change a coordinating parent's frontier route with an expected old
   `next`;
 - `supersede`: preserve an obsolete node and point it to its replacement;
@@ -349,7 +465,7 @@ not proof that the original conclusion survives.
 Proposals should not disappear when handled. Before building a commit, an
 acceptance attempt chooses a globally unique `integration_id`. The candidate
 tree contains a uniquely named immutable acceptance record with that ID, the
-selected proposal IDs and digests, their dispositions, the allocated canonical
+selected proposal IDs and digests, their dispositions, the generated canonical
 IDs, and the plan hash. It deliberately does not contain the commit OID: a Git
 commit cannot contain its own hash.
 
@@ -398,12 +514,14 @@ proposal IDs through the same stages.
 
 ### 1. Collect and verify
 
-Read immutable bundles, verify their digest, resolve their bases, and derive their
-repository and graph footprints. Consult both receipts and canonical acceptance
-records: an accepted-but-unreceipted proposal is receipt-recovery work, not pending
-work. A malformed or unverifiable proposal remains separate from graph validity.
-Optional actor metadata does not affect either classification; any authentication
-or authorization check happens outside Braintree.
+First run the universal canonical-store hash census and reconcile the sidecar and
+Markdown views. Then read immutable bundles, verify their digest, resolve their
+bases, and derive their repository and graph footprints against that reconciled
+snapshot. Consult both receipts and canonical acceptance records: an
+accepted-but-unreceipted proposal is receipt-recovery work, not pending work. A
+malformed or unverifiable proposal remains separate from graph validity. Optional
+actor metadata does not affect either classification; any authentication or
+authorization check happens outside Braintree.
 
 ### 2. Normalize exact equivalence
 
@@ -415,7 +533,7 @@ classify the rest as `absorbed` rather than creating duplicate nodes.
 
 Connect proposals that share any of:
 
-- canonical target identity or status path;
+- canonical target identity, authoritative status field, or legacy status path;
 - parent `next` or another singleton field;
 - dependency whose revision one changes and another consumes;
 - proposed local-symbol mapping;
@@ -456,12 +574,13 @@ clean patch replay is not enough to upgrade `needs-revision` to `clean-rebase`.
 Apply only selected or provably replayable operations and their bound repository
 payloads to a scratch worktree or temporary tree. Keep new IDs and acceptance
 timestamps as typed symbolic values in the plan. To exercise the existing checker,
-derive tentative IDs from the expected head and stable proposal order, and use one
-valid but explicitly noncanonical validation timestamp. Derive the index from that
-candidate Markdown, run `braintree check`, and run the tests required by the full
-repository change. Recompute stale consumers against this combined candidate, not
-only against each head independently. Acceptance rematerializes the real timestamp
-and reruns the gates on the exact candidate it may commit.
+derive deterministic, explicitly noncanonical validation IDs from the project UID,
+proposal digest, and local symbol, and use one valid but noncanonical validation
+timestamp. Derive the index and views from that candidate Markdown, run
+`braintree check`, and run the tests required by the full repository change.
+Recompute stale consumers against this combined candidate, not only against each
+head independently. Acceptance rematerializes the real identity spelling and
+timestamp and reruns the gates on the exact candidate it may commit.
 
 This catches the important case where every branch is internally valid but their
 union is not. Only after this stage may an `apparently-disjoint` component become
@@ -493,20 +612,19 @@ count.
 ### 7. Serialize acceptance
 
 Acquire a repository integration lease. Read the expected Git head, order selected
-proposals and their local symbols by a specified stable key, and allocate each
-prefix from the first unused canonical number visible at that head. Materialize
-one real host-clock timestamp for the attempt, create the acceptance record and one
-coherent repository commit, and update the ref with compare-and-swap semantics.
-The plan hash covers the symbolic plan and expected head, not the attempt's
-timestamps, allocated IDs, or commit OID.
+proposals and their local symbols by a specified stable key, and generate each new
+lowercase canonical ID under the resolved collision-resistant identity contract.
+Materialize one real host-clock timestamp for the attempt, create the acceptance
+record and one coherent repository commit, and update the ref with compare-and-swap
+semantics. The plan hash covers the symbolic plan and expected head, not the
+attempt's timestamps, generated canonical IDs, or commit OID.
 
 If the head moved, publish neither terminal receipts nor canonical mappings. The
-attempt's ID allocation and candidate tree are invalid, and reconciliation restarts
-against the winning head. This optimistic rule is also the cross-host allocation
-protocol: two hosts may tentatively choose the same next number, but only the CAS
-winner makes its mapping canonical; the loser recomputes from the new head. A
-same-host `braintree allocate` reservation is not evidence of a cross-host
-canonical allocation.
+attempt's candidate tree is invalid, and reconciliation restarts against the
+winning head. A collision-resistant ID may remain the attempt's deterministic
+candidate, but it grants no canonical identity before the CAS succeeds. Legacy
+same-host numeric reservations remain compatibility state and are not evidence of
+a cross-host canonical allocation.
 
 After a successful ref update, publish receipts that point from each proposal and
 the acceptance record's integration ID to the resulting commit OID. A crash before
@@ -531,11 +649,16 @@ contribute asynchronously, each instead submits a uniquely named sealed bundle.
 Submission performs only exclusive creation. Any actor may continue working and
 submit more bundles; no actor rewrites another's proposal.
 
-An integration pass serializes canonical changes. If no coordinator exists, the
-first actor to acquire the integration lease may become the temporary integrator.
-The lease conveys no permission or trust; it only prevents another conforming
-integrator from accepting concurrently. Ambiguous components stay pending until an
-explicit decision is supplied.
+Every project-scoped graph command first hashes and reconciles the complete
+canonical store, so a direct point edit made by a human or another tool before
+submission or integration is part of the actual base rather than invisible
+sidecar drift. An integration pass then serializes canonical changes. If no
+coordinator exists, the first actor to acquire
+the integration lease may become the temporary integrator. The lease conveys no
+permission or trust; it only prevents another conforming integrator from accepting
+concurrently. Ambiguous components stay pending until an explicit decision is
+supplied. The successful mutation refreshes the derived index and Markdown views;
+no producer authors either.
 
 ### Several worktrees on one host
 
@@ -552,12 +675,11 @@ base, never as global truth.
 
 Local leases cannot coordinate them. Each host can still create globally unique
 sealed proposals. Git transport or an orchestration service collects them. Only
-the final ref update needs cross-host serialization. Canonical node numbers are
-tentatively derived from the expected head in stable proposal order and become
-allocated only for the compare-and-swap winner. A deployment must not mix this
-mode with speculative direct canonical ID allocation on independent hosts unless a
-central allocator or explicitly disjoint ranges prevent an unseen direct edit from
-using the same ID.
+the final ref update needs cross-host serialization. New lowercase canonical node
+IDs are generated collision-resistantly at admission and become authoritative only
+for the compare-and-swap winner. No shared numeric allocator is required for the
+new identity format; legacy numeric creation still needs the existing allocator or
+explicitly disjoint ranges.
 
 ### Two agents discover the same missing work
 
@@ -625,28 +747,41 @@ never claims must still be unable to bypass acceptance preconditions.
 
 1. Canonical Markdown and Git remain the durable authority for accepted graph
    knowledge.
-2. Derived SQLite state can be lost without losing accepted knowledge or pending
-   durable proposals.
-3. No mutable global queue manifest is required for submission.
-4. One sealed proposal has immutable bytes and a globally unique identity.
-5. Actor and run fields are optional, opaque, informational metadata that never
+2. Canonical nodes have stable paths and immutable lowercase logical identities;
+   content hashes identify revisions, not nodes.
+3. Every project-scoped graph command hashes the complete canonical node store
+   before answering, so direct point edits, additions, and deletions reconcile
+   automatically; repository-independent help and version operations need no vault.
+4. Derived SQLite state and generated Markdown views can be lost without losing
+   accepted knowledge or pending durable proposals.
+5. Clients never maintain indexes, status pages, summary aliases, or projection
+   symlinks; Braintree regenerates every supported projection from canonical
+   Markdown.
+6. A committed immutable project UID supplies cross-clone authority. Lowercase
+   project aliases are mutable presentation and local lookup state.
+7. Local wikilinks remain meaningful local-vault links. Cross-project references
+   use a distinct durable Braintree grammar and may gain Obsidian links only
+   through a generated projection.
+8. No mutable global queue manifest is required for submission.
+9. One sealed proposal has immutable bytes and a globally unique identity.
+10. Actor and run fields are optional, opaque, informational metadata that never
    affect acceptance.
-6. An integration lease grants exclusion among conforming clients and conveys no
+11. An integration lease grants exclusion among conforming clients and conveys no
    permission, identity, or trust.
-7. Permanent node identity is assigned at admission, not speculative creation.
-8. A compound graph and bound repository transition is accepted entirely or not
+12. Permanent node identity is assigned at admission, not speculative creation.
+13. A compound graph and bound repository transition is accepted entirely or not
    at all.
-9. Acceptance checks the proposal's base assumptions against the actual
+14. Acceptance checks the proposal's base assumptions against the actual
    integration snapshot.
-10. Every terminal disposition has one idempotent receipt, and every accepted
+15. Every terminal disposition has one idempotent receipt, and every accepted
     commit carries enough non-self-referential data to recover a missing receipt.
-11. Semantic redundancy and node-boundary changes are surfaced for judgment;
+16. Semantic redundancy and node-boundary changes are surfaced for judgment;
     advisory similarity never decides them.
-12. The plain `braintree check` and the gates required by the bound repository
+17. The plain `braintree check` and the gates required by the bound repository
     change pass at every completed integration boundary.
-13. Semantic ambiguity requires an explicit decision, but Braintree neither
+18. Semantic ambiguity requires an explicit decision, but Braintree neither
     authenticates its source nor judges who may provide it.
-14. Canonical nodes are retired with durable dispositions rather than deleted.
+19. Canonical nodes are retired with durable dispositions rather than deleted.
 
 ## What not to build first
 
@@ -659,6 +794,15 @@ never claims must still be unable to bypass acceptance preconditions.
   outcome.
 - A sidecar-only durable queue. Sidecar loss is currently allowed and cross-host
   visibility is not guaranteed.
+- Client-maintained indexes, aliases, or status projections. They duplicate
+  canonical facts and make correctness depend on every caller remembering
+  bookkeeping.
+- A content hash as mutable node identity. It turns an ordinary edit into an
+  identity change instead of a revision.
+- A project alias as durable authority. Human names can be renamed or collide;
+  the committed project UID owns identity.
+- Cross-project references disguised as local wikilinks. A projection may make
+  them convenient, but the canonical reference must survive without that view.
 - Blind application of `git merge` results followed only by repair. The tool
   should validate a hypothetical union before it becomes the accepted graph.
 
@@ -667,27 +811,38 @@ never claims must still be unable to bypass acceptance preconditions.
 The smallest useful experiments are narrower than a complete orchestration
 system:
 
-1. Define and schema-test the canonical proposal encoding and digest boundary,
+1. Define and schema-test lowercase project and node identity, local and qualified
+   reference grammar, the stable canonical path, compatibility with uppercase
+   numeric IDs, and the distinction between logical identity and content hash.
+2. Re-run the stationary-storage comparison with the derived sidecar, a full-file
+   hash census, point edits with preserved metadata, deterministic Markdown view
+   pages, sidecar loss, case-only migration, and an optional symlink backend.
+3. Implement and fault-test per-command full-store hashing, transactional index
+   reconciliation, and atomic projection regeneration before proposal intake
+   relies on the resulting snapshot.
+4. Define and schema-test the canonical proposal encoding and digest boundary,
    with `create`, `amend`, and `compound` operations.
-2. Add a read-only adapter that turns one or more Git refs into those logical
+5. Add a read-only adapter that turns one or more Git refs into those logical
    operations, classifying any semantically ambiguous diff as `unknown` and
    preserving today's `reconcile` output as a compatibility view.
-3. Extend reconciliation fixtures with prohibited node deletion, an
+6. Extend reconciliation fixtures with prohibited node deletion, an
    identity-preserving move, exact duplicate work under different IDs, concurrent
    parent advances, cross-node parent cycles, and a split-versus-amend case.
-4. Build a scratch-tree validator that applies bound code and artifact changes as
+7. Build a scratch-tree validator that applies bound code and artifact changes as
    well as graph operations, reports whether the selected set passes
    `braintree check` and its required gates, and never writes the current worktree.
-5. Test read/write-footprint derivation and prove that a clean textual rebase with
+8. Test read/write-footprint derivation and prove that a clean textual rebase with
    an uncertain semantic read remains `needs-revision`.
-6. Test stable proposal ordering, late canonical ID allocation, and symbolic plan
-   hashing under concurrent and arbitrarily ordered submission.
-7. Test receipt idempotency by crashing immediately after a successful canonical
+9. Test stable proposal ordering, late collision-resistant ID generation, and
+   symbolic plan hashing under concurrent and arbitrarily ordered submission.
+10. Test receipt idempotency by crashing immediately after a successful canonical
    ref update and recovering the receipt from the acceptance record.
-8. Add a compare-and-swap integration prototype and deliberately race integrators
+11. Add a compare-and-swap integration prototype and deliberately race integrators
    carrying distinct, duplicated, and absent optional actor metadata.
-9. Measure proposal accumulation, false-positive overlap components, human or
-   coordinator resolution effort, and recovery after a producer disappears.
+12. Measure full-census latency and bytes read as the vault grows, projection
+   rewrite frequency, proposal accumulation, false-positive overlap components,
+   human or coordinator resolution effort, and recovery after a producer
+   disappears.
 
 The key falsification test is not merely that disjoint files merge. It is that a
 mixed workload of additions, amendments, dependency bumps, redundant outcomes,

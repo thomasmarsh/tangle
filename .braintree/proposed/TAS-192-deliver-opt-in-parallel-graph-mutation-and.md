@@ -1,7 +1,7 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P0
-updated: 2026-09-14T18:55:20Z
+updated: 2026-09-14T19:35:47Z
 summary: Deliver opt-in parallel graph mutation and reconciliation.
 next: "[[DEF-003-opt-in-change-intake-protocol-v1]]"
 ---
@@ -21,6 +21,8 @@ Braintree accepts asynchronous graph contributions through an opt-in, immutable 
 # Done when
 
 - A versioned contract defines the escalation triggers, proposal identity and encoding, supported operations, preconditions, repository-effect boundary, dispositions, receipts, and compatibility behavior.
+- Stable lowercase node and project identities, stationary canonical paths, and a durable local-versus-qualified reference grammar eliminate shared allocation and path-churn assumptions before intake is implemented.
+- Every project-scoped graph command reconciles a complete canonical-file hash census before answering, and Braintree—not its clients—maintains deterministic Markdown navigation projections from that snapshot.
 - Same-directory clients can submit immutable graph proposals concurrently, inspect the pending set, reconcile overlap deterministically, require explicit decisions only for ambiguity, and serialize accepted canonical mutations with recovery evidence.
 - Worktree contributions can be normalized, checked against a moved target, reconciled during rebase or integration, and accepted only with their bound repository effect.
 - The skill retains only a compact routing rule; conditional references and command help contain the detailed protocol.
