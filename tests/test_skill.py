@@ -551,6 +551,40 @@ _SESSION_SLICE_PROBE_SESSION_SPAN_ONLY = (
     "and one session may advance several frontier nodes."
 )
 
+# Several already-named acceptance outcomes justify decomposition before
+# dispatch, because that evidence is semantic rather than predictive: the
+# authored `# Done when` exposes a distinct independently resumable outcome per
+# child, and duration, worker windows, budgets, file counts, and anticipated
+# commits are never evidence. The negative case is the ordinary slice: several
+# steps that together produce one acceptance outcome remain one node.
+_PRE_DISPATCH_BOUNDARY_RULE = (
+    "That boundary evidence is semantic, not predictive",
+    "when the authored `# Done when` already names several outcomes that each "
+    "carry their own acceptance, verification, consumption, blocking, "
+    "resumption, or rollback boundary",
+    "the coordinator may create one direct child per outcome before dispatch",
+    "The parent's `# Done when` remains the coordinator's acceptance and its "
+    "`next` routes to the first child",
+    "never evidence",
+    "several implementation steps that together produce one acceptance outcome "
+    "remain one node, executed as slices",
+)
+
+# Falsification probe for the pre-dispatch rule: the pre-change authoring
+# paragraph stated only just-in-time decomposition, so the guard must reject
+# it. The probe fails when the guard stops detecting the rule rather than when
+# the paragraph merely reflows.
+_PRE_DISPATCH_BOUNDARY_PROBE = (
+    "Decompose just in time, only after the node-admission threshold, at a "
+    "distinct independently resumable outcome, blocker, dependency, or "
+    "verification boundary that also retains durable execution-memory value. A "
+    "child states its outcome or decision, completion criterion, primary `Parent "
+    "[[...]]` or `Area [[IDX-...]]` route, and executable `next`. Do not "
+    "pre-create speculative trees. A user-requested plan is the exception: "
+    "create its children up front as `proposed`, then resolve or dispose each as "
+    "reality arrives."
+)
+
 # Clearing a blocker is a status move plus a `next` change, so it never bumps
 # `context_rev`; a consumer reads readiness from the status directory, and a
 # gated consumer's gate clears when the target resolves, not when the node
@@ -584,7 +618,9 @@ _DURABLE_OUTCOME_BOUNDARY = (
     "not an estimated session, commit, agent assignment, or amount of code",
     "one node may span sessions, and one session may advance several frontier nodes",
     "Reassess a boundary when execution reveals new evidence",
-    "split when execution reveals another outcome that can be accepted, verified,",
+    "or when the authored `# Done when` already names outcomes with independent "
+    "completion evidence",
+    "split when an outcome can be accepted, verified,",
     "retains durable execution-memory value",
     "consolidate adjacent nodes when they share one outcome, completion evidence,",
     "no checker or command claims semantic authority over scope",
@@ -1167,6 +1203,16 @@ def test_session_slice_guard_rejects_the_session_span_boundary_alone() -> None:
         _assert_contains(
             _SESSION_SLICE_PROBE_SESSION_SPAN_ONLY, _SESSION_SLICE_RULE
         )
+
+
+def test_pre_dispatch_boundary_evidence_is_stated() -> None:
+    _assert_contains(_reference("authoring"), _PRE_DISPATCH_BOUNDARY_RULE)
+
+
+def test_pre_dispatch_boundary_guard_rejects_just_in_time_only_text() -> None:
+    """Falsification probe: the guard must reject the pre-change JIT-only text."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_PRE_DISPATCH_BOUNDARY_PROBE, _PRE_DISPATCH_BOUNDARY_RULE)
 
 
 def test_clearing_a_blocker_is_not_a_context_rev_bump() -> None:

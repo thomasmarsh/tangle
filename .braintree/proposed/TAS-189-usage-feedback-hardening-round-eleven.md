@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-14T13:39:55Z
+updated: 2026-09-14T13:54:02Z
 summary: Resolve or dispose the round-eleven Tangle FBK-032 findings.
-next: "[[THO-029-pre-dispatch-boundary-evidence]]"
+next: "[[TAS-190-opt-in-reconnaissance-references]]"
 ---
 
 Parent [[THO-028-round-eleven-usage-feedback-analysis]].

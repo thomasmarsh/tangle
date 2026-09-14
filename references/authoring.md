@@ -43,10 +43,20 @@ into it. A focus pointer is advisory; validate its target before acting.
 
 Decompose just in time, only after the node-admission threshold, at a distinct
 independently resumable outcome, blocker, dependency, or verification boundary
-that also retains durable execution-memory value. A child states its outcome or
-decision, completion criterion, primary `Parent [[...]]` or `Area [[IDX-...]]`
-route, and executable `next`. Do not pre-create speculative trees. A
-user-requested plan is the exception: create its children up front as
+that also retains durable execution-memory value. That boundary evidence is
+semantic, not predictive, so it can arrive before dispatch: when the authored
+`# Done when` already names several outcomes that each carry their own
+acceptance, verification, consumption, blocking, resumption, or rollback
+boundary, the coordinator may create one direct child per outcome before
+dispatch and keep the original node as their coordinating parent. The parent's
+`# Done when` remains the coordinator's acceptance and its `next` routes to the
+first child; duration, worker windows, token or model budgets, file counts, and
+anticipated commits are never evidence, and several implementation steps that
+together produce one acceptance outcome remain one node, executed as slices.
+A child states its outcome or decision, completion criterion, primary `Parent
+[[...]]` or `Area [[IDX-...]]` route, and executable `next`. Do not pre-create
+speculative trees, and never manufacture children to fit a session. A
+user-requested plan is also created up front: create its children as
 `proposed`, then resolve or dispose each as reality arrives.
 
 A direct child uses the current node as its primary route. A coordinating task
