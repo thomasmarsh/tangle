@@ -97,9 +97,10 @@ _FUTURE_STAMP_INTEGRATION_RULE = (
 
 # A slice write set is the compile-and-golden closure of its change, not a
 # crate directory: the worker includes and reports additional in-scope paths,
-# and stops and escalates only for another node's path or a shared hub. The
-# closure also names the workspace manifest and lockfile a dependency needs and
-# the generated artifacts a source shape change invalidates.
+# and stops and escalates only for another node's path or a shared hub that no
+# compiler or touched test mechanically forces. The closure also names the
+# workspace manifest and lockfile a dependency needs and the generated
+# artifacts a source shape change invalidates.
 _WRITE_SET_CLOSURE_RULE = (
     "write set is the compile-and-golden closure of the approved change, not a "
     "crate directory",
@@ -111,14 +112,15 @@ _WRITE_SET_CLOSURE_RULE = (
     "the generated artifacts a source shape change invalidates (JSON schemas, "
     "snapshots, pinned-hash fixtures)",
     "includes and reports the additional in-scope paths",
-    "stops and escalates for a path owned by another node or a shared hub",
+    "The worker still stops and escalates when the change alters",
 )
 
 # Falsification probe for the closure enumeration: the pre-change paragraph
 # named only goldens and baselines, so the guard must reject it. The probe
 # carries the new enumeration's forbidden tokens by their absence, and it fails
 # when the guard stops detecting them rather than when the reference merely
-# reflows.
+# reflows. It is the precedence probe too: it names no mechanical-closure
+# precedence for a resolved sibling's path, so the guard must reject it there.
 _WRITE_SET_CLOSURE_PRE_CHANGE = (
     "The assigned write set is the compile-and-golden closure of the approved "
     "change, not a crate directory: membership covers every file the change must "
@@ -146,18 +148,10 @@ _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE = (
     "touched test",
     "the worker makes the mechanical edit and reports it with the closure rather "
     "than escalating",
-    "A change to the seam's behavior, its public contract, or the meaning of the "
-    "landed seam still stops and escalates",
-)
-
-# Falsification probe for the precedence rule: the pre-change paragraph told a
-# worker to stop and escalate for a path owned by another node with no
-# mechanical-closure precedence, so the guard must reject escalation-only text.
-_RESOLVED_SIBLING_CLOSURE_PRE_CHANGE = (
-    "The assigned write set is the compile-and-golden closure of the approved "
-    "change, not a crate directory. When the closure exceeds the assigned set, "
-    "the worker includes and reports the additional in-scope paths; it stops "
-    "and escalates for a path owned by another node or a shared hub."
+    "The worker still stops and escalates when the change alters the seam's "
+    "behavior, its public contract, or the meaning of the landed seam, or when "
+    "the path is owned by another node or a shared hub and neither the compiler "
+    "nor a touched test mechanically forces it",
 )
 
 # A worker records a compact completion receipt before its long narrative
@@ -1094,7 +1088,7 @@ def test_resolved_sibling_closure_guard_rejects_escalation_only_text() -> None:
     """Falsification probe: the guard must reject escalation-only closure text."""
     with pytest.raises(AssertionError):
         _assert_contains(
-            _RESOLVED_SIBLING_CLOSURE_PRE_CHANGE,
+            _WRITE_SET_CLOSURE_PRE_CHANGE,
             _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE,
         )
 

@@ -458,7 +458,7 @@ def test_missing_pin_to_unresolved_target_names_the_gated_form(
     assert code == 1
     assert (
         "invalid or missing context_rev pin for [[DEF-001-contract]]; "
-        "a not-yet-resolved predecessor is recorded as Gated on "
+        "a not-yet-resolved predecessor is recorded in `# Context` as Gated on "
         "[[DEF-001-contract]]." in err
     )
 
@@ -528,6 +528,36 @@ def test_prose_mentioning_the_gate_stays_clean(
         parent.read_text(encoding="utf-8")
         + "Record a gate as Gated on [[DEF-001-contract]]. in the section.\n"
         + "Gated on [[DEF-001-contract]]. and more context.\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_gate_outside_a_real_context_section_is_flagged(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A present ``# Context`` and a later ``# Outcome`` gate still fails."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + "\n# Context\n\nThe parent consumes the contract for its child.\n"
+        + f"\n# Outcome\n\n{graph_check.GATED_RELATION} [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "Gated on [[DEF-001-contract]] must appear in # Context" in err
+
+
+def test_period_less_gate_line_stays_clean(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The anchoring requires the final period, so a truncated line is prose."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"{graph_check.GATED_RELATION} [[DEF-001-contract]]\n",
         encoding="utf-8",
     )
     assert graph_check.main([str(nodes)]) == 0
@@ -633,7 +663,7 @@ def test_pinned_dependency_not_resolved(
     assert code == 1
     assert "pinned dependency [[DEF-001-contract]] is proposed, not resolved" in err
     assert (
-        "a not-yet-resolved predecessor is recorded as Gated on "
+        "a not-yet-resolved predecessor is recorded in `# Context` as Gated on "
         "[[DEF-001-contract]]." in err
     )
 

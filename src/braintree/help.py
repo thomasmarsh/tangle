@@ -168,7 +168,7 @@ VERBS: dict[str, Verb] = {
         usage="braintree allocate PREFIX [COUNT]",
         operands=(
             ("PREFIX", "uppercase letters, digits, underscores, or hyphens"),
-            ("COUNT", "positive number of consecutive ids; default 1"),
+            ("COUNT", "positive number of consecutive ids; default 1, no upper bound"),
         ),
         outputs=(
             ("id", "the reserved identity, for example TAS-106"),

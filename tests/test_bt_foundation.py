@@ -450,6 +450,7 @@ def test_allocate_help_and_command_index_name_the_count_operand(
     assert verb.returncode == 0
     assert 'usage: "braintree allocate PREFIX [COUNT]"' in verb.stdout
     assert '"COUNT"' in verb.stdout
+    assert '"positive number of consecutive ids; default 1, no upper bound"' in verb.stdout
 
     index = run_bt("--help", env=env)
     assert index.returncode == 0
@@ -553,6 +554,43 @@ def test_reconcile_verb_is_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
 # reservation otherwise, so capture never duplicates an automatically chosen id.
 
 _RECORD_BODY = "# Outcome\n\nReserve the id atomically."
+
+
+def test_allocate_batch_and_node_record_share_one_counter(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    """The batch allocator and the capture path number one vault identically."""
+    repo = tmp_path / "repo"
+    _write_vault(repo / ".braintree")
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    env = _record_env(tmp_path, "allocate-record-shared")
+    assert run_bt("init", cwd=repo, env=env).returncode == 0
+
+    batch = run_bt("allocate", "TAS", "2", cwd=repo, env=env)
+    assert batch.returncode == 0, batch.stdout
+    assert batch.stdout.strip().splitlines() == [
+        "ids[2]{id}:",
+        '  "TAS-001"',
+        '  "TAS-002"',
+    ]
+
+    recorded = run_bt(
+        "node",
+        "record",
+        "--type",
+        "TAS",
+        "--summary",
+        "Continue the counter allocate advanced.",
+        "--body",
+        _RECORD_BODY,
+        "--next",
+        "Add the shared-counter test.",
+        cwd=repo,
+        env=env,
+    )
+    assert recorded.returncode == 0, recorded.stdout
+    # Capture resumes past the reserved batch rather than restarting at TAS-001.
+    assert 'id: "TAS-003"' in recorded.stdout
 
 
 def test_record_reserves_through_the_project_sidecar(

@@ -114,11 +114,10 @@ not first discovered as an owned-seam escalation.
   consumer — is in the change's closure even when a resolved sibling owns the
   path, whether named before dispatch or discovered only by the compiler or a
   touched test; the worker makes the mechanical edit and reports it with the
-  closure rather than escalating. A change to the seam's behavior, its public
-  contract, or the meaning of the landed seam still stops and escalates for a
-  path owned by another node or a shared hub, as does a path owned by another
-  node or a shared hub that the compiler and touched tests do not mechanically
-  force.
+  closure rather than escalating. The worker still stops and escalates when the
+  change alters the seam's behavior, its public contract, or the meaning of the
+  landed seam, or when the path is owned by another node or a shared hub and
+  neither the compiler nor a touched test mechanically forces it.
 - A worktree is a snapshot, not global truth; workers do not assume unseen work
   or IDs are unclaimed.
 - A worktree slice is not a node boundary: a fresh worker may continue the
@@ -243,9 +242,10 @@ establish whether that partial state is behavior-preserving.
   any of those conditions is not established, revert it and re-scope the
   remaining slice against the reverted base rather than continuing on a state
   whose behavior is unknown.
-- When the partial state does not compile or fails a touched test, it is not
-  green: revert it and re-scope the remaining slice against the reverted base
-  rather than continuing on a state whose behavior is unknown.
+- When the partial state does not compile, or fails a touched test outside the
+  localized-red conditions above, it is not green: revert it and re-scope the
+  remaining slice against the reverted base rather than continuing on a state
+  whose behavior is unknown.
 - A run that timed out after resolving its node and splitting the remainder needs
   only coordinator verification: the resolved node, its recorded evidence, and
   its advanced `next` route are the finished slice, so verify them instead of

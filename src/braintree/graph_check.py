@@ -22,7 +22,8 @@ Finding codes by class:
 - Feedback: ``feedback-revision-missing``, ``feedback-revision-format``,
   ``feedback-section-missing``, ``feedback-content-missing``.
 - Context edges: ``context-pin-trailing-text``, ``context-pin-missing``,
-  ``context-unresolved``, ``context-rev-mismatch``, ``gate-outside-context``.
+  ``context-unresolved``, ``context-rev-mismatch``.
+- Gate placement: ``gate-outside-context``.
 - Index map: ``index-missing``, ``index-copied-state``,
   ``index-root-route-missing``, ``index-root-hub-type``, ``index-broken-link``,
   ``index-focus-without-active``, ``index-focus-target``.
@@ -286,16 +287,17 @@ class _Node:
 def _gate_hint(target: str, target_status: str | None) -> str:
     """Name the sanctioned gate form when the target is not yet ``resolved``.
 
-    The gate is the unpinned ``Gated on [[X]].`` line that stands in for a
-    context edge whose target cannot be consumed yet; returning the same clause
-    for both the missing-pin and unresolved-target diagnostics keeps them
-    pointing at that one documented form. A resolved or missing target has no
-    gate to name, so the hint is empty.
+    The gate is the unpinned ``Gated on [[X]].`` line, recorded in ``# Context``,
+    that stands in for a context edge whose target cannot be consumed yet;
+    returning the same clause for both the missing-pin and unresolved-target
+    diagnostics keeps them pointing at that one documented form. Naming the
+    section keeps the repair from itself triggering ``gate-outside-context``. A
+    resolved or missing target has no gate to name, so the hint is empty.
     """
     if target_status is None or target_status == "resolved":
         return ""
     return (
-        f"; a not-yet-resolved predecessor is recorded as "
+        f"; a not-yet-resolved predecessor is recorded in `# Context` as "
         f"{GATED_RELATION} [[{target}]]."
     )
 
