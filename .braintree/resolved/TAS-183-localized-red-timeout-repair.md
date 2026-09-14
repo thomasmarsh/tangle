@@ -1,9 +1,8 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:27:54Z
+updated: 2026-09-14T11:59:11Z
 summary: Add a bounded localized-red timeout repair branch.
-next: Define the evidence threshold and bounded write set for localized-red recovery in references/coordination.md and pin them with a test.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -36,3 +35,20 @@ branch.
 - The fallback remains revert-and-re-scope when that evidence is incomplete.
 - A contract test in `tests/test_skill.py` pins the rule.
 - `make test` passes.
+
+# Result
+
+`references/coordination.md` gains a localized-red bullet in `## Timed-out
+worker recovery`, between the green and unknown/non-localized red branches. It
+authorizes a narrow repair only on established evidence — a reproducible
+failure, causal localization to the intended change, an understood cause and
+repair write set, and green remaining touched gates — retaining the partial
+slice and recording the evidence, the bounded repair brief, and the branch
+taken; incomplete evidence falls back to the existing revert-and-re-scope
+branch, which is preserved unchanged.
+
+`tests/test_skill.py` adds `_LOCALIZED_RED_RECOVERY_RULE` and
+`test_localized_red_timeout_repair_is_stated`, pinning the branch and its
+evidence conditions against `references/coordination.md`. `pytest tests/test_skill.py
+-k "localized_red or timed_out_worker_recovery"` passes (3 passed). `make test`
+passes.

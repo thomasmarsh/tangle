@@ -234,6 +234,14 @@ establish whether that partial state is behavior-preserving.
   or accept the coherent slice on the same node instead of reverting it, because
   reverting a compiling, passing slice discards work for no gain. The node stays
   `proposed` until the finishing worker resolves it.
+- When the partial state is red on one localized, understood case while the rest
+  is green, a narrow repair is authorized only when the failure is reproducible,
+  localized to the intended change, its cause and repair write set are
+  understood, and the remaining touched gates are green: retain the partial slice
+  and record that evidence, the bounded repair brief, and the branch taken. When
+  any of those conditions is not established, revert it and re-scope the
+  remaining slice against the reverted base rather than continuing on a state
+  whose behavior is unknown.
 - When the partial state does not compile or fails a touched test, it is not
   green: revert it and re-scope the remaining slice against the reverted base
   rather than continuing on a state whose behavior is unknown.

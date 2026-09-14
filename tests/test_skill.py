@@ -501,6 +501,20 @@ _TIMED_OUT_WORKER_RECOVERY_SIGNAL_ONLY = (
     "states the work is finished even though the run reported failure."
 )
 
+# A localized-red partial is neither green nor unknown: a narrow repair is
+# authorized only on established evidence — a reproducible failure, causal
+# localization to the intended change, an understood repair write set, and green
+# remaining touched gates — while incomplete evidence falls back to the
+# revert-and-re-scope branch.
+_LOCALIZED_RED_RECOVERY_RULE = (
+    "red on one localized, understood case while the rest is green",
+    "reproducible, localized to the intended change",
+    "its cause and repair write set are understood",
+    "the remaining touched gates are green",
+    "record that evidence, the bounded repair brief, and the branch taken",
+    "revert it and re-scope the remaining slice against the reverted base",
+)
+
 # A status move and the node's body edit belong in one commit: `git mv` can
 # stage the pre-edit blob, so the destination is `git add`-ed after the move,
 # and the move is the last step before committing that node.
@@ -1099,6 +1113,10 @@ def test_timed_out_worker_recovery_guard_rejects_the_timeout_signal_alone() -> N
         _assert_contains(
             _TIMED_OUT_WORKER_RECOVERY_SIGNAL_ONLY, _TIMED_OUT_WORKER_RECOVERY_RULE
         )
+
+
+def test_localized_red_timeout_repair_is_stated() -> None:
+    _assert_contains(_reference("coordination"), _LOCALIZED_RED_RECOVERY_RULE)
 
 
 def test_additive_field_on_a_resolved_seam_is_authored_by_the_consumer() -> None:

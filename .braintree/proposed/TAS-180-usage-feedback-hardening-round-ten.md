@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:55:07Z
+updated: 2026-09-14T11:59:11Z
 summary: Fix or dispose the round-ten Tangle FBK-031 findings.
-next: "[[TAS-183-localized-red-timeout-repair]]"
+next: "[[TAS-185-check-gate-placement]]"
 ---
 
 Parent [[THO-027-round-ten-usage-feedback-analysis]].
