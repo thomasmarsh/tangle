@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 priority: P0
-updated: 2026-09-14T19:35:47Z
+updated: 2026-09-14T20:01:50Z
 summary: Deliver opt-in parallel graph mutation and reconciliation.
-next: "[[DEF-003-opt-in-change-intake-protocol-v1]]"
+next: "[[TAS-193-same-directory-graph-contribution-intake]]"
 ---
 
 Area [[IDX-001-execution-graph]].

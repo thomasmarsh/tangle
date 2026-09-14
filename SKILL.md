@@ -85,8 +85,9 @@ One orientation pass is enough. Never bulk-dump `.braintree/`; filter and count 
 
 ## References and command help
 
-Command syntax lives in per-verb help: run `braintree <verb> --help` for a verb's operands, output fields, exit meanings, and command-specific hazards. Conditional workflow prose lives in the installed references, readable as Markdown and printed by `braintree help TOPIC`. Load only the reference the current operation requires.
+Run `braintree <verb> --help` for command syntax. Conditional workflow prose is installed Markdown printed by `braintree help TOPIC`. Load only the reference the current operation requires.
 
+- **change-intake** — `braintree help change-intake` for asynchronous contributions ([references/change-intake.md](references/change-intake.md)).
 - **coordination** — `braintree help coordination` before claims, leases, parallel worktrees, handoff, integration, or multi-host work ([references/coordination.md](references/coordination.md)).
 - **dependencies** — `braintree help dependencies` before pinning, gating, bumping `context_rev`, staged-staleness commits, reversal, supersession, or regenerating a resolved node's derived artifact ([references/dependencies.md](references/dependencies.md)).
 - **authoring** — `braintree help authoring` before writing node bodies, feedback nodes, capture commands, or decomposition and roll-up detail ([references/authoring.md](references/authoring.md)).

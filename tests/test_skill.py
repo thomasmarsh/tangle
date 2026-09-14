@@ -28,9 +28,9 @@ _REFERENCES = _ROOT / "references"
 _NODES = _ROOT / ".braintree"
 _INDEX = _NODES / "index-map.md"
 
-# The three conditional workflows the core routes to. Each name is both a
+# The conditional workflows the core routes to. Each name is both a
 # ``braintree help`` topic and a canonical installed Markdown file.
-_TOPICS = ("coordination", "dependencies", "authoring")
+_TOPICS = ("change-intake", "coordination", "dependencies", "authoring")
 
 # The compact baseline this refactor must approach; the pre-split file measured
 # 30,244 bytes. The bound keeps the core concise while allowing correct prose.
@@ -1476,7 +1476,7 @@ def test_global_help_is_the_command_and_topic_index(
     assert main.main(["--help"]) == 0
     out = capsys.readouterr().out
     assert "commands[" in out
-    assert "topics[3]{topic,purpose}:" in out
+    assert "topics[4]{topic,purpose}:" in out
     for topic in _TOPICS:
         assert f'"{topic}"' in out
     assert len(out) < 8_000, "global help is no longer the short index"

@@ -1,6 +1,6 @@
 ---
-context_rev: 3
-updated: 2026-09-14T19:47:25Z
+context_rev: 4
+updated: 2026-09-14T20:01:50Z
 summary: Define the opt-in change-intake protocol v1.
 ---
 
@@ -32,3 +32,15 @@ A versioned change-intake contract defines one normalized internal model without
 - Compatibility and versioning rules preserve ordinary node commands and the existing read-only `braintree reconcile` view.
 - The definition allocates detailed protocol prose to a conditional reference and per-command help, leaving only a compact escalation route in `SKILL.md`.
 - Contract fixtures cover casing and identity canonicalization, clone-stable project scope, local and qualified reference resolution, direct edits with preserved metadata, projection recovery, corruption, unsupported operations, absent actor metadata, stale bases, and downgrade or unknown-version rejection.
+
+# Result
+
+Resolved `braintree-change/v1` in `references/change-intake.md`: it defines the
+opt-in escalation boundary, canonical envelope and digest, identity/reference
+grammar, census and projections, graph-only MVP boundary, reconciliation and
+semantic decisions, serialized acceptance and receipt recovery, retention, and
+the compatibility surface. `TAS-203` owns stable identity/store implementation;
+`TAS-204` owns universal census/projection implementation; `TAS-195` through
+`TAS-198` own local proposal commands and verification; `TAS-199` through
+`TAS-202` own the bound-worktree extension. The help topic exposes the reference
+without imposing it on ordinary direct Markdown work.

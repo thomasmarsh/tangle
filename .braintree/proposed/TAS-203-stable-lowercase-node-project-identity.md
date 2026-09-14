@@ -1,7 +1,7 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P0
-updated: 2026-09-14T19:47:25Z
+updated: 2026-09-14T20:01:50Z
 summary: Implement stable lowercase node and project identity.
 next: Implement the stable store, identity grammar, and compatibility migration.
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-193-same-directory-graph-contribution-intake]].
 
 # Context
 
-Gated on [[DEF-003-opt-in-change-intake-protocol-v1]].
+Depends on [[DEF-003-opt-in-change-intake-protocol-v1]] at context_rev 4.
 
 This task separates logical identity, project authority, canonical location, content revision, and presentation before proposal encoding depends on any of them. Existing uppercase numeric nodes are legacy inputs, not a reason to preserve centralized numeric allocation for new nodes.
 

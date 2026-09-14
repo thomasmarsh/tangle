@@ -136,6 +136,8 @@ braintree feedback record \
 Run `braintree --help` for the command index or `braintree <verb> --help` for one
 command. The installed topical references contain the workflow contracts:
 
+- [`references/change-intake.md`](references/change-intake.md) covers the opt-in
+  sealed-proposal, reconciliation, acceptance, and recovery protocol.
 - [`references/authoring.md`](references/authoring.md) covers node bodies,
   admission, decomposition, and feedback.
 - [`references/dependencies.md`](references/dependencies.md) covers pins, gates,

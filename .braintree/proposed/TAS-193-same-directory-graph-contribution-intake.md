@@ -1,7 +1,7 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P0
-updated: 2026-09-14T19:35:47Z
+updated: 2026-09-14T20:01:50Z
 summary: Deliver same-directory graph contribution intake.
 next: "[[TAS-203-stable-lowercase-node-project-identity]]"
 ---
@@ -10,7 +10,7 @@ Parent [[TAS-192-deliver-opt-in-parallel-graph-mutation-and]].
 
 # Context
 
-Gated on [[DEF-003-opt-in-change-intake-protocol-v1]].
+Depends on [[DEF-003-opt-in-change-intake-protocol-v1]] at context_rev 4.
 
 This is the first and highest-priority delivery phase. It first replaces coordinated numeric identity and movable canonical paths for new nodes, then makes full-store hash reconciliation and Markdown projections universal tool behavior. It supports several clients in one working directory by making their graph contributions append-only and non-authoritative until one local integrator accepts them. It does not promise safe concurrent source editing or accept an unbound repository effect.
 

@@ -36,11 +36,17 @@ __all__ = [
 # the command, so a rendered topic always matches the installed revision.
 REFERENCE_DIRECTORY = "references"
 
-# Ordering is the reading order the design names: coordination, dependencies,
-# then authoring detail.
-REFERENCE_TOPICS: tuple[str, ...] = ("coordination", "dependencies", "authoring")
+# Ordering places the opt-in asynchronous protocol before the existing
+# coordination, dependency, and authoring details.
+REFERENCE_TOPICS: tuple[str, ...] = (
+    "change-intake",
+    "coordination",
+    "dependencies",
+    "authoring",
+)
 
 TOPIC_PURPOSES: dict[str, str] = {
+    "change-intake": "sealed proposals, reconciliation, acceptance, recovery",
     "coordination": "claims, leases, parallel worktrees, handoff, integration",
     "dependencies": "pins, gates, revision bumps, staged staleness, reversals",
     "authoring": "node bodies, capture commands, feedback nodes, decomposition",
