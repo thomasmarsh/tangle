@@ -18,6 +18,7 @@ from . import (
     allocation,
     behavioral_benchmark,
     cli,
+    decompose,
     embedding_benchmark,
     feedback_record,
     feedback_scan,
@@ -88,6 +89,14 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     (
         "node references NODE",
         "show one node with the reconnaissance it directly references",
+    ),
+    (
+        "node decompose --parent P --plan F [--dry-run]",
+        "atomically write ordered direct children and advance the parent",
+    ),
+    (
+        "node advance PARENT CHILD",
+        "advance a coordinating parent's next to a direct child",
     ),
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
@@ -362,6 +371,12 @@ def _dispatch(command: str, args: list[str]) -> int:
     # ``node NODE`` stays with the sidecar/index engine that owns it.
     if command == "node" and len(args) > 1 and args[1] == "references":
         return node_references.main(args)
+    # ``node decompose`` and ``node advance`` are the transactional authoring
+    # paths beside ``node record``.
+    if command == "node" and len(args) > 1 and args[1] == "decompose":
+        return decompose.main(args)
+    if command == "node" and len(args) > 1 and args[1] == "advance":
+        return decompose.advance_main(args)
     if command == "feedback":
         return _feedback(args[1:])
     if command == "semantic":

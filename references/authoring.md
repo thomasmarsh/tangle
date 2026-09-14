@@ -64,6 +64,33 @@ states its outcome and `# Done when`; its `next` is one concrete frontier action
 or one wikilinked direct child, never a child list. Roll up from evidence, not
 child counts.
 
+When the decomposition is deliberate, author it in one transactional step
+instead of one capture per child. `braintree node decompose --parent PARENT
+--plan FILE` validates the whole plan before it mutates anything, reserves every
+child id, writes each child with the canonical `Parent [[PARENT]]` route and its
+executable `next`, and advances the parent's `next` to the first child. The plan
+is one JSON document:
+
+```json
+{"children": [
+  {"type": "TAS", "summary": "Validate signed manifests.",
+   "next": "Run the signed-manifest validation.",
+   "body": "# Context\n\n..."}
+]}
+```
+
+`type` is a capture type, `summary` and `body` are required, `next` is required
+for an unfinished `TAS`, and `status` (default `proposed`) and `slug` are
+optional; an unknown key is rejected rather than ignored. `--dry-run` validates
+and prints the ordered plan without reserving or writing. A rejected plan burns
+no id and writes nothing; a write failure removes the children already written
+and leaves the parent unchanged, while ids reserved before the failure stay
+burned. The command never writes a reciprocal child list, never rewrites the
+parent's `# Done when` or body, and never infers a semantic boundary the plan did
+not declare: it only routes and stamps. `braintree node advance PARENT CHILD` is
+the parent-advance-only shorthand for a case where only that one line needs to
+change; prefer it over hand-editing the parent when no other edit is due.
+
 An increment brief — a node's body or a worker handoff — that places a new
 artifact in an existing directory carries a "gates my artifact enters" line
 naming the test suites that enumerate that directory, before the artifact path
@@ -138,6 +165,13 @@ has `# Blocked`, `Blocked by`, and `Unblocks when`. See
 at the last word boundary that leaves room for a trailing `...`, and the command
 prints a `warning:` line naming the limit, so a capture never stores a mid-phrase
 summary.
+
+The derived filename slug is the summary lowercased and hyphenated, capped at 48
+characters and cut at the last whole-word boundary inside the cap; a single word
+longer than the cap is clipped at it. Pass `--slug` to override the derived slug
+entirely, which is the escape hatch when even a whole-word cut is not the
+basename you want to reproduce in wikilinks. As with `--summary`, an explicit
+`--slug` is taken as given and is not word-boundary processed.
 
 ## Feedback nodes
 

@@ -34,6 +34,7 @@ __all__ = [
     "main",
     "next_number",
     "normalize_route",
+    "render",
     "reservation_dir",
     "reserve_number",
     "reserved_numbers",
@@ -132,9 +133,21 @@ def summary_warning(summary: str) -> str:
 
 
 def slugify(value: str, fallback: str) -> str:
-    """Return a lowercase filename slug, or ``fallback`` when none survives."""
+    """Return a lowercase filename slug, or ``fallback`` when none survives.
+
+    The slug is capped at :data:`_SLUG_LIMIT` characters. An over-long value is
+    cut at the last whole-word boundary inside the cap so a derived basename
+    does not end in a mid-word fragment; a single word longer than the cap has
+    no boundary to cut at, so it is clipped at the cap and the fallback still
+    applies when nothing survives. The caller can always override the result
+    with ``--slug``.
+    """
     slug = _NON_SLUG.sub("-", value.lower()).strip("-")
-    return slug[:_SLUG_LIMIT].strip("-") or fallback
+    if len(slug) > _SLUG_LIMIT:
+        head = slug[:_SLUG_LIMIT]
+        boundary = head.rsplit("-", 1)[0].rstrip("-")
+        slug = boundary or head.rstrip("-")
+    return slug or fallback
 
 
 def id_number(node_id: str, prefix: str) -> int | None:
@@ -325,6 +338,17 @@ def _render(route: str, summary: str, next_line: str | None, body: str, updated:
         header.append(f"next: {_next_field(next_line)}")
     header.append("---")
     return "\n".join(header) + "\n\n" + f"{route}.\n\n" + body + "\n"
+
+
+def render(route: str, summary: str, next_line: str | None, body: str, updated: str) -> str:
+    """Render one captured node's Markdown from its validated fields.
+
+    This is the single spelling of the captured-node shape shared by
+    ``braintree node record`` and the transactional
+    ``braintree node decompose`` path, so a child a decomposition writes byte-
+    matches one the single-record path would have written.
+    """
+    return _render(route, summary, next_line, body, updated)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

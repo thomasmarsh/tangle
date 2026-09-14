@@ -371,6 +371,44 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_AUTHORING_TOPIC,
     ),
+    "node decompose": _verb(
+        "Write ordered direct children and advance the parent atomically.",
+        usage="braintree node decompose --parent P --plan F [--nodes DIR] [--dry-run]",
+        operands=(
+            ("--parent", "existing unfinished node that becomes the children's route"),
+            ("--plan", "JSON file with a non-empty children list"),
+            ("--nodes", "vault directory override"),
+            ("--dry-run", "validate and print the plan without writing or reserving"),
+        ),
+        outputs=(
+            ("parent/next", "the parent and the first child it now routes to"),
+            ("children", "id,status,filename rows for the children written"),
+        ),
+        hazards=(
+            "Validates every child before reserving an id or writing a file.",
+            "A write failure removes the children already written and leaves the "
+            "parent unchanged; ids reserved before the failure stay burned.",
+            "The parent's # Done when and body are never rewritten; only its "
+            "next and updated change.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
+    "node advance": _verb(
+        "Advance one coordinating parent's next to a direct child.",
+        usage="braintree node advance PARENT CHILD [--nodes DIR]",
+        operands=(
+            ("PARENT", "unfinished coordinating node"),
+            ("CHILD", "direct child whose Parent route names PARENT"),
+        ),
+        outputs=(
+            ("parent/next", "the parent and the child it now routes to"),
+        ),
+        hazards=(
+            "Edits only the parent's next and updated lines; the child is unchanged.",
+            "Refuses a child whose Parent route does not name PARENT.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
     "node references": _verb(
         "Show one node with the reconnaissance it directly references.",
         usage="braintree node references NODE",

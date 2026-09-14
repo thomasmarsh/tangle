@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-14T13:55:51Z
-summary: Resolve or dispose the round-eleven Tangle FBK-032 findings.
-next: "[[TAS-191-transactional-decomposition-authoring]]"
+updated: 2026-09-14T13:56:18Z
+summary: Round-eleven findings are decided, implemented, or disposed, and all three children resolved.
 ---
 
 Parent [[THO-028-round-eleven-usage-feedback-analysis]].
@@ -33,3 +32,9 @@ Every open round-eleven Braintree finding is decided, implemented, or explicitly
 - [[THO-029-pre-dispatch-boundary-evidence]] - Tangle `FBK-032` finding 1.
 - [[TAS-190-opt-in-reconnaissance-references]] - new reconnaissance half of finding 5.
 - [[TAS-191-transactional-decomposition-authoring]] - finding 6 plus the findings 2, 3, and 4 clarity residuals.
+
+# Result
+
+Finding 1 is decided and implemented by [[THO-029-pre-dispatch-boundary-evidence]] in `3a56c13`: `SKILL.md` and `references/authoring.md` admit several authored acceptance outcomes as pre-dispatch boundary evidence, keep duration and budget out of the test, and preserve the negative slice case, with a `tests/test_skill.py` guard and falsification probe. The reconnaissance half of finding 5 is implemented by [[TAS-190-opt-in-reconnaissance-references]] in `0aa2f23`: the non-pinned `Informed by [[THO|DEF|DEC]]` relation in `# Context`, four structural `braintree check` findings, and the one-hop `braintree node references NODE` read surface, with plain `braintree node` unchanged. Finding 6 and the findings 2, 3, and 4 residuals are implemented by [[TAS-191-transactional-decomposition-authoring]] in this commit: `braintree node decompose --parent --plan` validates the whole plan before mutating, rolls back a mid-write failure, and routes the parent to its first child; `braintree node advance` is the parent-advance-only shorthand; the authoring reference documents the plan grammar, the transactional guarantees, and `--slug`; coordination guidance names the exact `--allow-pending-advance PARENT` acceptance command and prefers `path (Symbol)` seams; and derived slugs cut at a whole-word boundary while retaining the cap and fallback.
+
+The size half of finding 5 stays routed to [[THO-024-whether-node-files-need-a-bounded-load-band-with]] and is not duplicated. No child touched a benchmark harness or baseline, so `make test` is the verification: it passes after each commit. The live vault passes `braintree check`.

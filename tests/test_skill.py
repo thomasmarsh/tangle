@@ -612,6 +612,56 @@ _RECONNAISSANCE_REFERENCE_PROBE = (
     "`braintree node` reports the relation."
 )
 
+# A resolving worker whose parent is outside its write set cannot run the plain
+# gate; the acceptance line names the exact sanctioned command, and the report
+# surfaces the pending advance. A seam citation in a large module names the
+# owning call-site function as `path (Symbol)`, not a bare line that can point
+# at a different compilation stage.
+_BRIEF_ACCEPTANCE_AND_SEAM_RULE = (
+    "its acceptance line names that exact command rather than the plain gate",
+    "the report surfaces the pending advance as the coordinator's integration "
+    "action",
+    "A seam citation in a large module prefers `path (Symbol)`",
+    "the owning call-site function",
+    "the same helper can be invoked from a different compilation stage than the "
+    "field it must read",
+)
+
+# Falsification probe for the acceptance-and-seam rule: a protocol-only
+# paragraph names the command but neither the acceptance-line requirement nor
+# the symbol citation, so the guard must reject it.
+_BRIEF_ACCEPTANCE_AND_SEAM_PROBE = (
+    "When a frontier child resolves, its coordinating parent's `next` must "
+    "advance. Otherwise the worker cannot edit the parent and uses "
+    "`braintree check --allow-pending-advance PARENT`."
+)
+
+# Deliberate decomposition is one transactional command rather than one capture
+# per child followed by a second parent-advance pass: the whole plan is
+# validated before any mutation, a rejected plan or a write failure leaves no
+# half-built tree, and the command routes and stamps only.
+_TRANSACTIONAL_DECOMPOSITION_RULE = (
+    "`braintree node decompose --parent PARENT --plan FILE` validates the whole "
+    "plan before it mutates anything",
+    "reserves every child id, writes each child with the canonical `Parent "
+    "[[PARENT]]` route and its executable `next`, and advances the parent's "
+    "`next` to the first child",
+    "A rejected plan burns no id and writes nothing",
+    "a write failure removes the children already written and leaves the parent "
+    "unchanged, while ids reserved before the failure stay burned",
+    "never writes a reciprocal child list, never rewrites the parent's "
+    "`# Done when` or body, and never infers a semantic boundary",
+    "`braintree node advance PARENT CHILD` is the parent-advance-only shorthand",
+)
+
+# Falsification probe for the decomposition rule: a prose mention of the
+# command records none of its transactional guarantees, so the guard must
+# reject it.
+_TRANSACTIONAL_DECOMPOSITION_PROBE = (
+    "Create the children of a plan with `braintree node decompose`, then advance "
+    "the parent's `next` when convenient."
+)
+
 # Clearing a blocker is a status move plus a `next` change, so it never bumps
 # `context_rev`; a consumer reads readiness from the status directory, and a
 # gated consumer's gate clears when the target resolves, not when the node
@@ -814,6 +864,8 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "The sanction never clears the advance",
         "A client never reads or writes the local coordination state directly",
         "The derived index maintains itself on every interaction",
+        "its acceptance line names that exact command rather than the plain gate",
+        "A seam citation in a large module prefers `path (Symbol)`",
     ),
     "dependencies": (
         "The pin must terminate its line",
@@ -833,6 +885,9 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "`.braintree/index-map.md` holds intent and routing, not state",
         "Decompose just in time",
         "Roll up from evidence, not child counts",
+        "braintree node decompose --parent PARENT --plan FILE",
+        "Pass `--slug` to override the derived slug",
+        "`braintree node advance PARENT CHILD` is the parent-advance-only shorthand",
     ),
 }
 
@@ -899,6 +954,8 @@ _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("node",),
     ("node", "record"),
     ("node", "references"),
+    ("node", "decompose"),
+    ("node", "advance"),
     ("impact",),
     ("orient",),
     ("next",),
@@ -1252,6 +1309,30 @@ def test_reconnaissance_reference_guard_rejects_a_prose_mention() -> None:
     with pytest.raises(AssertionError):
         _assert_contains(
             _RECONNAISSANCE_REFERENCE_PROBE, _RECONNAISSANCE_REFERENCE_RULE
+        )
+
+
+def test_brief_names_the_pending_advance_acceptance_and_symbol_seams() -> None:
+    _assert_contains(_reference("coordination"), _BRIEF_ACCEPTANCE_AND_SEAM_RULE)
+
+
+def test_brief_acceptance_guard_rejects_the_protocol_alone() -> None:
+    """Falsification probe: a protocol-only paragraph records no rule."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _BRIEF_ACCEPTANCE_AND_SEAM_PROBE, _BRIEF_ACCEPTANCE_AND_SEAM_RULE
+        )
+
+
+def test_transactional_decomposition_is_stated() -> None:
+    _assert_contains(_reference("authoring"), _TRANSACTIONAL_DECOMPOSITION_RULE)
+
+
+def test_decomposition_guard_rejects_a_command_mention() -> None:
+    """Falsification probe: a command mention records no transactional rule."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _TRANSACTIONAL_DECOMPOSITION_PROBE, _TRANSACTIONAL_DECOMPOSITION_RULE
         )
 
 

@@ -1,8 +1,7 @@
 ---
 context_rev: 1
-updated: 2026-09-14T13:39:48Z
-summary: Make ordered decomposition atomic and its briefs immediately executable.
-next: Specify the plan input and all-or-nothing mutation contract.
+updated: 2026-09-14T13:56:18Z
+summary: Author ordered direct children and the parent advance in one all-or-nothing command.
 ---
 
 Parent [[TAS-189-usage-feedback-hardening-round-eleven]].
@@ -28,3 +27,9 @@ A coordinator can author an ordered set of direct children and route the parent 
 - The authoring reference documents the existing `--slug` override.
 - Derived slugs cut at a whole-word boundary when possible, retain the existing length and fallback guarantees, and have capture tests for long single-word and multi-word summaries; if this is rejected, the result records why the explicit override is sufficient.
 - `make test` passes.
+
+# Result
+
+`braintree node decompose --parent PARENT --plan FILE` is the one transactional command. The plan is a closed JSON document, `{"children": [...]}`, with per-child `type`, `summary`, `body`, required `next` for an unfinished `TAS`, and optional `status` (default `proposed`) and `slug`; an unknown plan or child key is rejected rather than ignored. `src/braintree/decompose.py` parses and validates every child before it reserves any id, then reserves ids in order, writes each child with the canonical `Parent [[PARENT]]` route and its executable `next` through the shared `node_record.render`, and advances the parent. A rejected plan reserves and writes nothing; a write failure unlinks the children already written and leaves the parent byte-identical, while ids reserved before the failure stay burned, consistent with the discard rule. The parent's `# Done when` and body are never touched: only its `next` and `updated` lines change, written through a same-directory temp rename. `--dry-run` validates and prints the ordered plan with no reservation or write. `braintree node advance PARENT CHILD` is the parent-advance-only shorthand and refuses a child whose `Parent` route does not name PARENT.
+
+Derived slugs now cut at the last whole-word boundary inside the existing 48-character cap, keeping the cap and the fallback; a single word longer than the cap is clipped at it. `references/authoring.md` documents the plan grammar, the transactional guarantees, the parent-advance shorthand, and the existing `--slug` override. `references/coordination.md` states that a resolving worker whose parent is outside its write set names `braintree check --allow-pending-advance PARENT` on its acceptance line rather than the plain gate, and prefers `path (Symbol)` seam citations in large modules. `tests/test_decompose.py` covers ordering, the dry run, invalid and unknown-key plans, the mid-write rollback, the advance shorthand, and both slug boundaries. `make test` passes.

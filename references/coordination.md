@@ -56,7 +56,10 @@ coordinator assigns each worker a direct node path and an exclusive write set
 before work begins. Before dispatch, the brief names the known resolved-sibling
 compiler seams the approved change can force — the concrete paths or the
 resolved owners — so a mechanically required conformance edit is not first
-discovered as an owned-seam escalation.
+discovered as an owned-seam escalation. A seam citation in a large module
+prefers `path (Symbol)` — the owning call-site function — over a bare
+`file:line`, because the same helper can be invoked from a different compilation
+stage than the field it must read.
 
 - One agent writes a node and status path at a time. Shared parents,
   `index-map.md`, definitions, and root hubs are coordinator-owned unless their
@@ -139,7 +142,10 @@ When a frontier child resolves, its coordinating parent's `next` must advance:
   excludes the parent cannot make that edit: the child's resolution commit
   completes the worker's slice and the pending advance is its handoff action.
   Name the parent and resolved child, then verify with
-  `braintree check --allow-pending-advance PARENT`.
+  `braintree check --allow-pending-advance PARENT`. When the node being resolved
+  is the current `next` of a parent outside the write set, its acceptance line
+  names that exact command rather than the plain gate, and the report surfaces
+  the pending advance as the coordinator's integration action.
 
 A stale route is an unfinished coordinating node whose `next` is a single
 direct-child link naming an already-resolved child; `braintree check` reports it
