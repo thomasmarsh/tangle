@@ -16,21 +16,34 @@ from pathlib import Path
 
 import pytest
 
+from braintree import store
 from braintree.graph_check import CONTEXT_RELATIONS
 
 RunBt = Callable[..., subprocess.CompletedProcess[str]]
 
 _ROOT = Path(__file__).resolve().parents[1]
 _FINAL_STATUSES = {"proposed", "active", "blocked"}
-_NODE_ID = re.compile(r"([A-Z][A-Z0-9_]*-\d+)-")
+# A legacy uppercase numeric id or a canonical lowercase Crockford id, each
+# followed by an optional slug. The stationary layout carries status in
+# frontmatter, so discovery uses the shared authority-bearing file set.
+_NODE_ID = re.compile(
+    r"^((?:[A-Z][A-Z0-9_]*-\d+)|"
+    r"(?:(?:tas|tho|def|dec|idx|fbk)-[0-9a-hjkmnp-tv-z]{26}))(?:-|$)"
+)
+
+
+def _unfinished(root: Path) -> list[Path]:
+    return [
+        Path(entry.path)
+        for entry in store.iter_node_paths(str(root))
+        if entry.status in _FINAL_STATUSES
+    ]
 
 
 def _markdown_frontier_ids(root: Path) -> set[str]:
     """Derive the frontier the documented recipe yields, straight from Markdown."""
     ids: set[str] = set()
-    for path in sorted(root.glob("*/*.md")):
-        if path.parent.name not in _FINAL_STATUSES:
-            continue
+    for path in _unfinished(root):
         match = _NODE_ID.match(path.stem)
         if match is None:
             continue
@@ -50,9 +63,7 @@ def _named_frontier_targets(root: Path) -> set[str]:
     """
     candidates = _markdown_frontier_ids(root)
     named: set[str] = set()
-    for path in sorted(root.glob("*/*.md")):
-        if path.parent.name not in _FINAL_STATUSES:
-            continue
+    for path in _unfinished(root):
         next_match = re.search(
             r"^next: (.*)$", path.read_text(encoding="utf-8"), re.MULTILINE
         )
