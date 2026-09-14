@@ -1,5 +1,9 @@
 # Braintree
 
+<p align="center">
+  <img src="assets/braintree.jpg" alt="A brain growing into a tree, with branching roots and smaller brains among the leaves" width="100%">
+</p>
+
 Braintree keeps execution memory in a repository-local Markdown graph. Tasks,
 decisions, definitions, blockers, and dependency state remain readable in Git and
 Obsidian. An optional local sidecar provides faster queries and same-host
