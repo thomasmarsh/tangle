@@ -585,6 +585,33 @@ _PRE_DISPATCH_BOUNDARY_PROBE = (
     "reality arrives."
 )
 
+# Opt-in reconnaissance references are non-pinned: they record shared context a
+# reader may want without becoming a dependency, so readiness, staleness,
+# primary routing, ownership, and automatic context loading are all unchanged,
+# and the checker validates only the author's structure.
+_RECONNAISSANCE_REFERENCE_RULE = (
+    "A node records that durable reconnaissance informed it with a non-pinned "
+    "`Informed by [[TARGET]].` line in `# Context`",
+    "where `TARGET` is a knowledge node",
+    "It is deliberately not a dependency: it carries no `context_rev` pin",
+    "it never affects readiness, staleness, primary routing, ownership, or "
+    "automatic context loading",
+    "`braintree node references NODE` is the opt-in read surface",
+    "returns the node and its directly referenced reconnaissance in one "
+    "deterministic hop",
+    "it reports a target that is absent as `missing`",
+    "validates only the relation's structure",
+)
+
+# Falsification probe for the reconnaissance rule: a topic-level mention of a
+# reference records no non-pinned shape, so the guard must reject it. It fails
+# when the guard stops detecting the rule rather than when the section merely
+# reflows.
+_RECONNAISSANCE_REFERENCE_PROBE = (
+    "A work node records the reconnaissance it used in `# Context`, and "
+    "`braintree node` reports the relation."
+)
+
 # Clearing a blocker is a status move plus a `next` change, so it never bumps
 # `context_rev`; a consumer reads readiness from the status directory, and a
 # gated consumer's gate clears when the target resolves, not when the node
@@ -871,6 +898,7 @@ _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("frontier",),
     ("node",),
     ("node", "record"),
+    ("node", "references"),
     ("impact",),
     ("orient",),
     ("next",),
@@ -1213,6 +1241,18 @@ def test_pre_dispatch_boundary_guard_rejects_just_in_time_only_text() -> None:
     """Falsification probe: the guard must reject the pre-change JIT-only text."""
     with pytest.raises(AssertionError):
         _assert_contains(_PRE_DISPATCH_BOUNDARY_PROBE, _PRE_DISPATCH_BOUNDARY_RULE)
+
+
+def test_opt_in_reconnaissance_reference_is_stated() -> None:
+    _assert_contains(_reference("authoring"), _RECONNAISSANCE_REFERENCE_RULE)
+
+
+def test_reconnaissance_reference_guard_rejects_a_prose_mention() -> None:
+    """Falsification probe: a topic mention records no non-pinned shape."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _RECONNAISSANCE_REFERENCE_PROBE, _RECONNAISSANCE_REFERENCE_RULE
+        )
 
 
 def test_clearing_a_blocker_is_not_a_context_rev_bump() -> None:

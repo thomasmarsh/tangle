@@ -24,6 +24,9 @@ Finding codes by class:
 - Context edges: ``context-pin-trailing-text``, ``context-pin-missing``,
   ``context-unresolved``, ``context-rev-mismatch``.
 - Gate placement: ``gate-outside-context``.
+- Reconnaissance references: ``reference-malformed``,
+  ``reference-outside-context``, ``reference-target-type``,
+  ``reference-duplicate``.
 - Index map: ``index-missing``, ``index-copied-state``,
   ``index-root-route-missing``, ``index-root-hub-type``, ``index-broken-link``,
   ``index-focus-without-active``, ``index-focus-target``.
@@ -57,9 +60,13 @@ __all__ = [
     "PROBLEM_MISSING",
     "PROBLEM_UNPINNED",
     "PROBLEM_UNRESOLVED",
+    "REFERENCE_LINE",
+    "REFERENCE_RELATION",
+    "REFERENCE_TARGET_TYPES",
     "context_pin_problem",
     "findings",
     "main",
+    "reference_targets",
     "stale_reason",
 ]
 
@@ -88,6 +95,22 @@ CONTEXT_RELATIONS: tuple[str, ...] = (
     "Governed by",
 )
 GATED_RELATION = "Gated on"
+# One canonical, non-pinned reference relation: a node cites durable
+# reconnaissance (a THO, DEF, or DEC) it was informed by without making it a
+# dependency. It carries no `context_rev` pin, so it never affects readiness,
+# staleness, primary routing, ownership, or automatic context loading; the
+# directly referenced context is loaded only when a reader asks for it.
+REFERENCE_RELATION = "Informed by"
+REFERENCE_TARGET_TYPES = ("THO", "DEF", "DEC")
+REFERENCE_LINE = re.compile(
+    rf"^{REFERENCE_RELATION} \[\[([^\]]+)\]\]\.$", re.MULTILINE
+)
+# The malformed-use detector is intentionally anchored on the wikilink form so an
+# ordinary prose sentence that merely begins with the relation words is not a
+# reference line at all.
+REFERENCE_ANY = re.compile(
+    rf"^{REFERENCE_RELATION} \[\[.*$", re.MULTILINE
+)
 CONTEXT_EDGE_LINE = re.compile(
     r"^(?:" + "|".join(CONTEXT_RELATIONS) + r")\s+\[\[([^\]]+)\]\](.*)$",
     re.MULTILINE,
@@ -146,6 +169,10 @@ FINDING_CODES: dict[str, str] = {
     "context-unresolved": "pinned dependency is not resolved",
     "context-rev-mismatch": "pinned dependency revision differs from current",
     "gate-outside-context": "Gated on relation appears outside the # Context section",
+    "reference-malformed": "reference relation is not exactly Informed by [[TARGET]].",
+    "reference-outside-context": "reference relation appears outside the # Context section",
+    "reference-target-type": "referenced reconnaissance is not a THO, DEF, or DEC",
+    "reference-duplicate": "node repeats the same reconnaissance reference",
     "index-missing": "index-map.md is missing",
     "index-copied-state": "index-map.md copies node state",
     "index-root-route-missing": "index-map.md lacks an Indexes root route",
@@ -379,6 +406,18 @@ def _extract_frontmatter(text: str) -> str | None:
 def _read_text(path: str) -> str:
     with open(path, encoding="utf-8") as handle:
         return handle.read()
+
+
+def reference_targets(text: str) -> list[str]:
+    """Return the reconnaissance targets a node references, in authored order.
+
+    This is the one canonical reader for :data:`REFERENCE_RELATION`. It masks
+    quoted code like every other graph scan, so a relation shape documented
+    inside an inline code span or fenced block is not itself a reference.
+    """
+    return [
+        match.group(1) for match in REFERENCE_LINE.finditer(_mask_code(text))
+    ]
 
 
 def _check_feedback(
@@ -711,6 +750,71 @@ def _check_gate_placement(nodes: list[_Node], errors: list[Finding]) -> None:
             )
 
 
+def _check_references(
+    nodes: list[_Node], by_name: dict[str, list[_Node]], errors: list[Finding]
+) -> None:
+    """Validate the non-pinned reconnaissance reference relation structurally.
+
+    The checker answers only structural questions: the line is exactly
+    ``Informed by [[TARGET]].`` with no pin or trailing text, it sits in
+    ``# Context``, its target is a knowledge node (a ``THO``/``DEF``/``DEC``),
+    and a node does not repeat a target. It never judges whether the referenced
+    reconnaissance is useful, current, or sufficient. A missing target is
+    already a ``node-broken-link``, so it is not reported again here; the read
+    surface reports it as ``missing``.
+    """
+    for node in nodes:
+        masked = _mask_code(node.text)
+        context_spans = [match.span(1) for match in _CONTEXT_BLOCK.finditer(masked)]
+        seen: set[str] = set()
+        for match in REFERENCE_ANY.finditer(masked):
+            line = match.group(0).rstrip()
+            exact = REFERENCE_LINE.fullmatch(line)
+            if exact is None:
+                errors.append(
+                    Finding(
+                        "reference-malformed",
+                        node.path,
+                        f"{node.path}: {REFERENCE_RELATION} line must be exactly "
+                        f"'{REFERENCE_RELATION} [[TARGET]].'",
+                    )
+                )
+                continue
+            target = exact.group(1)
+            if not any(start <= match.start() < end for start, end in context_spans):
+                errors.append(
+                    Finding(
+                        "reference-outside-context",
+                        node.path,
+                        f"{node.path}: {REFERENCE_RELATION} [[{target}]] must appear "
+                        "in # Context",
+                    )
+                )
+            if target in seen:
+                errors.append(
+                    Finding(
+                        "reference-duplicate",
+                        node.path,
+                        f"{node.path}: repeated {REFERENCE_RELATION} [[{target}]]",
+                    )
+                )
+                continue
+            seen.add(target)
+            target_nodes = by_name.get(target)
+            if target_nodes is None:
+                continue
+            node_type = (target_nodes[0].node_id or "").split("-", 1)[0]
+            if node_type not in REFERENCE_TARGET_TYPES:
+                errors.append(
+                    Finding(
+                        "reference-target-type",
+                        node.path,
+                        f"{node.path}: {REFERENCE_RELATION} [[{target}]] must be a "
+                        f"{'/'.join(REFERENCE_TARGET_TYPES)} node",
+                    )
+                )
+
+
 def _validate(
     nodes_dir: str,
     *,
@@ -764,6 +868,7 @@ def _validate(
 
     _check_context_edges(nodes, by_name, allow_stale, errors)
     _check_gate_placement(nodes, errors)
+    _check_references(nodes, by_name, errors)
     for target in _INDEX_LINK.findall(index_text):
         if target not in by_name:
             errors.append(

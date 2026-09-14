@@ -30,6 +30,7 @@ from . import (
     memory_diagnostics,
     memory_pilot,
     node_record,
+    node_references,
     provider,
     quality_benchmark,
     reservations,
@@ -83,6 +84,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     (
         "node record [OPTIONS]",
         "create one routed, stamped node of a named type",
+    ),
+    (
+        "node references NODE",
+        "show one node with the reconnaissance it directly references",
     ),
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
@@ -353,6 +358,10 @@ def _dispatch(command: str, args: list[str]) -> int:
     # ``node NODE`` stays with the sidecar/index engine that owns it.
     if command == "node" and len(args) > 1 and args[1] == "record":
         return node_record.main(args[2:])
+    # ``node references`` is the opt-in reconnaissance read surface; a bare
+    # ``node NODE`` stays with the sidecar/index engine that owns it.
+    if command == "node" and len(args) > 1 and args[1] == "references":
+        return node_references.main(args)
     if command == "feedback":
         return _feedback(args[1:])
     if command == "semantic":

@@ -77,6 +77,26 @@ input: one participant carries the new state or capability and an existing
 participant in the same stage does not. The brief also names that case's expected
 fallback or rejection behavior, so a non-panic alone is not acceptance.
 
+## Opt-in reconnaissance references
+
+A node records that durable reconnaissance informed it with a non-pinned
+`Informed by [[TARGET]].` line in `# Context`, where `TARGET` is a knowledge node
+(`THO`, `DEF`, or `DEC`). The relation is one-directional and stored only on the
+consumer; a node may cite several targets, one line each, and must not repeat a
+target. It is deliberately not a dependency: it carries no `context_rev` pin, so
+it never affects readiness, staleness, primary routing, ownership, or automatic
+context loading, and `braintree node` never follows it.
+
+Use it for shared orientation that a reader may want but that must not become a
+blocking edge — reconnaissance a `THO` already owns instead of restating it in
+every task. `braintree node references NODE` is the opt-in read surface: it
+returns the node and its directly referenced reconnaissance in one deterministic
+hop, so a reference cycle between two nodes terminates, and it reports a target
+that is absent as `missing` rather than dropping or failing. `braintree check`
+validates only the relation's structure — the exact line form, its `# Context`
+placement, a knowledge-node target, no duplicate target, and the existing
+broken-link rule — and never judges whether the referenced context is useful.
+
 ## Negative assertions
 
 Prove the absence of a branch on a named mode or scenario with an observable

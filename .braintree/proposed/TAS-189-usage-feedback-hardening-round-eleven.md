@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-14T13:54:02Z
+updated: 2026-09-14T13:55:51Z
 summary: Resolve or dispose the round-eleven Tangle FBK-032 findings.
-next: "[[TAS-190-opt-in-reconnaissance-references]]"
+next: "[[TAS-191-transactional-decomposition-authoring]]"
 ---
 
 Parent [[THO-028-round-eleven-usage-feedback-analysis]].

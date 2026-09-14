@@ -15,6 +15,11 @@ links. A node is stale when a dependency is missing, unpinned, or at a different
 unchanged after a semantic bump so a backlink search finds the reconciliation
 work.
 
+The non-pinned `Informed by [[TARGET]].` reconnaissance reference is none of
+these: it records optional shared context, carries no pin, and changes no
+readiness, staleness, or routing answer. See `braintree help authoring` for its
+shape and the opt-in `braintree node references NODE` read surface.
+
 An unresolved target has no consumable context. Record it as a gate instead of a
 context edge: put `Gated on [[DEF-auth-protocol]].` in `# Context`, leave the
 consumer `proposed`, and never pin the gate. Replace it with a pinned

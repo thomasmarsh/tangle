@@ -592,6 +592,108 @@ def test_non_context_relation_is_not_pinned(
     assert "graph check: passed" in capsys.readouterr().out
 
 
+def test_reference_inside_context_is_valid(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A non-pinned reconnaissance reference passes and needs no pin."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"\n# Context\n\n{graph_check.REFERENCE_RELATION} [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_reference_outside_context_is_flagged(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"{graph_check.REFERENCE_RELATION} [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "Informed by [[DEF-001-contract]] must appear in # Context" in err
+
+
+def test_pinned_reference_is_malformed(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The reference relation is non-pinned; a pin makes the line malformed."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"\n# Context\n\n{graph_check.REFERENCE_RELATION} [[DEF-001-contract]] "
+        "at context_rev 1.\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "Informed by line must be exactly" in err
+
+
+def test_reference_target_must_be_a_knowledge_node(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"\n# Context\n\n{graph_check.REFERENCE_RELATION} [[IDX-001-root]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "Informed by [[IDX-001-root]] must be a THO/DEF/DEC node" in err
+
+
+def test_duplicate_reference_is_flagged(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + f"\n# Context\n\n{graph_check.REFERENCE_RELATION} [[DEF-001-contract]].\n"
+        + f"{graph_check.REFERENCE_RELATION} [[DEF-001-contract]].\n",
+        encoding="utf-8",
+    )
+    code, err = _run(nodes, capsys)
+    assert code == 1
+    assert "repeated Informed by [[DEF-001-contract]]" in err
+
+
+def test_quoted_reference_stays_clean(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A quoted reference documents the grammar; it is not an authored edge."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + "The form is `Informed by [[TAS-999-missing]].`.\n"
+        + f"```markdown\n{graph_check.REFERENCE_RELATION} [[TAS-999-missing]].\n```\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
+def test_prose_mentioning_the_reference_stays_clean(
+    nodes: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Only the wikilink relation line is a reference; a sentence is prose."""
+    parent = nodes / "active" / "TAS-001-parent.md"
+    parent.write_text(
+        parent.read_text(encoding="utf-8")
+        + "Informed by the contract, the parent keeps its pin.\n",
+        encoding="utf-8",
+    )
+    assert graph_check.main([str(nodes)]) == 0
+    assert "graph check: passed" in capsys.readouterr().out
+
+
 def test_context_pin_with_trailing_text_names_it(
     nodes: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -1163,6 +1265,43 @@ def _mut_gate_outside_context(nodes: Path) -> None:
     )
 
 
+def _mut_reference_outside_context(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Area [[IDX-001-root]].",
+        f"Area [[IDX-001-root]].\n\n{graph_check.REFERENCE_RELATION} "
+        "[[DEF-001-contract]].",
+    )
+
+
+def _mut_reference_malformed(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Area [[IDX-001-root]].",
+        "Area [[IDX-001-root]].\n\n# Context\n\n"
+        f"{graph_check.REFERENCE_RELATION} [[DEF-001-contract]] at context_rev 1.",
+    )
+
+
+def _mut_reference_target_type(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Area [[IDX-001-root]].",
+        "Area [[IDX-001-root]].\n\n# Context\n\n"
+        f"{graph_check.REFERENCE_RELATION} [[IDX-001-root]].",
+    )
+
+
+def _mut_reference_duplicate(nodes: Path) -> None:
+    _replace(
+        nodes / "active" / "TAS-001-parent.md",
+        "Area [[IDX-001-root]].",
+        "Area [[IDX-001-root]].\n\n# Context\n\n"
+        f"{graph_check.REFERENCE_RELATION} [[DEF-001-contract]].\n"
+        f"{graph_check.REFERENCE_RELATION} [[DEF-001-contract]].",
+    )
+
+
 def _mut_index_missing(nodes: Path) -> None:
     (nodes / "index-map.md").unlink()
 
@@ -1326,6 +1465,19 @@ _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
     "context-unresolved": (_mut_context_unresolved, "context-unresolved"),
     "context-rev-mismatch": (_mut_context_rev_mismatch, "context-rev-mismatch"),
     "gate-outside-context": (_mut_gate_outside_context, "gate-outside-context"),
+    "reference-malformed": (_mut_reference_malformed, "reference-malformed"),
+    "reference-outside-context": (
+        _mut_reference_outside_context,
+        "reference-outside-context",
+    ),
+    "reference-target-type": (
+        _mut_reference_target_type,
+        "reference-target-type",
+    ),
+    "reference-duplicate": (
+        _mut_reference_duplicate,
+        "reference-duplicate",
+    ),
     "index-missing": (_mut_index_missing, "index-missing"),
     "index-copied-state": (_mut_index_copied_state, "index-copied-state"),
     "index-root-route-missing": (

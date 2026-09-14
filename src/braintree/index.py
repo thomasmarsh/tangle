@@ -36,6 +36,7 @@ from .graph_check import (
     CONTEXT_RELATIONS,
     context_pin_problem,
     findings,
+    reference_targets,
     stale_reason,
 )
 from .sidecar import SidecarError, content_hash
@@ -58,9 +59,11 @@ __all__ = [
     "OrientSection",
     "Orientation",
     "RankedCandidate",
+    "Reconnaissance",
     "ReconcileError",
     "ReconcilePlan",
     "ReconcileStep",
+    "ReferenceView",
     "SearchFilters",
     "SimilarCandidate",
     "backlinks",
@@ -78,6 +81,7 @@ __all__ = [
     "orient",
     "prefix_maxima",
     "reconcile",
+    "reference_view",
     "reindex",
     "refresh",
     "resolve_node",
@@ -664,6 +668,33 @@ class NodeView:
 
 
 @dataclass(frozen=True)
+class Reconnaissance:
+    """One directly referenced reconnaissance node in a reference view.
+
+    ``missing`` marks a reference whose target is absent from the vault, so the
+    bounded read surface reports it instead of dropping it; the structural
+    failure is ``braintree check``'s ``node-broken-link`` finding.
+    """
+
+    id: str
+    name: str
+    status: str
+    context_rev: int
+    summary: str
+    missing: bool
+
+
+@dataclass(frozen=True)
+class ReferenceView:
+    """The one-hop reconnaissance view ``braintree node references`` prints."""
+
+    node: IndexedNode
+    route_relation: str
+    route: str
+    references: tuple[Reconnaissance, ...]
+
+
+@dataclass(frozen=True)
 class ImpactEdge:
     """One dependent edge reached from the impact target with its shared verdict."""
 
@@ -947,6 +978,64 @@ def node_view(root: str, node: str) -> NodeView | None:
         route=route_match.group(2) if route_match is not None else "",
         context_edges=_context_edges(target, by_name),
         backlinks=_backlinks_for(target, nodes),
+    )
+
+
+def reference_view(root: str, node: str) -> ReferenceView | None:
+    """Return a node with the reconnaissance it directly references.
+
+    Expansion is exactly one hop, so a reference cycle between two nodes is
+    reported symmetrically and every request terminates. A reference whose
+    target is absent is reported with ``missing`` set rather than dropped, so
+    the output stays deterministic; ``braintree check`` is what fails such a
+    vault. Repeated targets collapse to one row, and rows sort by target name so
+    the answer is stable across reindexes.
+    """
+    nodes = _read_nodes(root)
+    target = next(
+        (candidate for candidate in nodes if node in {candidate.id, candidate.name}),
+        None,
+    )
+    if target is None:
+        return None
+    by_name = {candidate.name: candidate for candidate in nodes}
+    by_id = {candidate.id: candidate for candidate in nodes}
+    route_match = _PRIMARY_ROUTE.search(target.body)
+    seen: set[str] = set()
+    references: list[Reconnaissance] = []
+    for reference in reference_targets(target.body):
+        if reference in seen:
+            continue
+        seen.add(reference)
+        resolved = by_name.get(reference) or by_id.get(reference)
+        if resolved is None:
+            references.append(
+                Reconnaissance(
+                    id=reference,
+                    name=reference,
+                    status="missing",
+                    context_rev=0,
+                    summary="",
+                    missing=True,
+                )
+            )
+            continue
+        references.append(
+            Reconnaissance(
+                id=resolved.id,
+                name=resolved.name,
+                status=resolved.status,
+                context_rev=_context_rev(resolved.metadata),
+                summary=resolved.metadata.get("summary", ""),
+                missing=False,
+            )
+        )
+    references.sort(key=lambda item: (item.name, item.id))
+    return ReferenceView(
+        node=target,
+        route_relation=route_match.group(1) if route_match is not None else "",
+        route=route_match.group(2) if route_match is not None else "",
+        references=tuple(references),
     )
 
 

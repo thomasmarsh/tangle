@@ -371,6 +371,25 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_AUTHORING_TOPIC,
     ),
+    "node references": _verb(
+        "Show one node with the reconnaissance it directly references.",
+        usage="braintree node references NODE",
+        operands=(("NODE", "bare ID or full node name"),),
+        outputs=(
+            ("node/name/status/path/summary", "identity and location"),
+            ("route_relation/route", "primary Parent or Area edge"),
+            ("references", "id,status,context_rev,summary rows for direct references"),
+        ),
+        hazards=(
+            "Expands exactly one hop, so reference cycles terminate and output "
+            "is bounded by the node's direct references.",
+            "A reference with no target is reported as status missing; the "
+            "structural failure is `braintree check`'s node-broken-link.",
+            "The relation is non-pinned and changes no readiness, staleness, or "
+            "routing answer.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
     "impact": _verb(
         "List direct and transitive dependents of a node.",
         usage="braintree impact NODE",
