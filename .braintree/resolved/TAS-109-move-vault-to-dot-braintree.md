@@ -1,6 +1,6 @@
 ---
 context_rev: 1
-updated: 2026-09-13T01:55:40Z
+updated: 2026-09-14T02:22:36Z
 summary: Move the vault to .braintree/ with automatic legacy migration across code, docs, tests, and this
 ---
 
@@ -26,7 +26,7 @@ The vault is `.braintree/` and a legacy `nodes/` vault is migrated in place.
 
 - `src/braintree/vault.py` owns resolution: `default_directory`, `legacy_directory`, `migrate` (with the nested reservation merge), and `resolve`. `resolve` returns an explicit operand or `BT_NODES_DIR` unchanged and migrates only the default `nodes/index-map.md` when `root/.braintree` is absent.
 - `braintree migrate [ROOT]` reports `migrated` or `no-op`; the default resolver, `check`, `index`, `node record`, and `feedback record` migrate automatically. `feedback scan` reads `.braintree/` or legacy `nodes/` without migrating an external vault, and reservations moved from `nodes/.braintree/reservations` to `.braintree/reservations`.
-- `SKILL.md`, `AGENTS.md`, `references/`, `README.md`, `BENCHMARK.md`, `.braintree/index-map.md`, and per-verb help name `.braintree`; `.gitignore` ignores only `.braintree/reservations/` and `.braintree/.obsidian/`.
+- `SKILL.md`, `AGENTS.md`, `references/`, `README.md`, `BENCHMARK.md`, `.braintree/index-map.md`, and per-verb help name `.braintree`; `.gitignore` ignores only `.braintree/reservations/` and `.braintree/.obsidian/`. The migration commit also tracked the five `.braintree/.obsidian/` workspace files, so the ignore rule never applied; they were removed from tracking with `git rm -r --cached` while staying on disk.
 - This repository's vault moved to `.braintree/`. `.braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md` records the decision, [[DEC-005-reinstall-not-migration]] was amended to `context_rev 2`, and its pin in [[TAS-065-language-agnostic-braintree-command]] was reconciled.
 - `pyproject.toml` moved `0.5.0` to `0.6.0`, the MAJOR vault-format change [[DEC-003-semantic-versioning]] requires.
 
