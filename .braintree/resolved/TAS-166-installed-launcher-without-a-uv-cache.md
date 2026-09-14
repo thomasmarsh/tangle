@@ -1,9 +1,8 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-14T01:30:28Z
+updated: 2026-09-14T01:34:21Z
 summary: Run the installed braintree command from the shared program's prepared environment so read-only commands need no uv cache.
-next: Materialize the shared program environment in scripts/install.sh and exec it from the generated launcher.
 ---
 
 # Context
@@ -42,3 +41,23 @@ fallback for a program whose environment is absent.
   read-only `UV_CACHE_DIR`, and the semantic provider and no-op assertions still
   pass.
 - `make test` passes.
+
+# Result
+
+`scripts/install.sh` now materializes `<program>/.venv` with `uv sync --project
+<program> --frozen` at install time, adding `--extra semantic` only for a
+`--semantic` install, and the generated launcher execs
+`<program>/.venv/bin/braintree` when it exists, falling back to the previous
+`uv run --project <program> --frozen` invocation otherwise. The fallback keeps
+the first run working before an environment exists and preserves the
+`--extra semantic` provider default.
+
+Evidence: a fresh `--codex --project` install produced a launcher that runs the
+prepared environment directly, and `UV_CACHE_DIR=<unwritable> <launcher> help
+authoring` rendered the authoring reference without touching uv, where the same
+command previously failed at `Failed to initialize cache`. `tests/install.sh`
+now exercises that read-only, cache-less path from `check_launcher` and stands
+in a fake uv for both the install-time sync and the launcher fallback in the
+semantic section. `make test` passes: ruff and strict mypy clean, `install tests:
+passed`, `worktree-parallel` passed, and the pytest suite reported 720 passed, 3
+skipped, 79 deselected. `braintree check` passed at 201 nodes.

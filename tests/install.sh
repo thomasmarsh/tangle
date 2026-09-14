@@ -73,6 +73,16 @@ check_launcher() {
   launcher="$1/.local/bin/braintree"
   [ -x "$launcher" ]
   [ "$("$launcher" --version)" = "$expected_record" ]
+  # A read-only command must run the prepared program environment directly and
+  # never initialize a uv cache: sandboxes commonly deny the user-home cache,
+  # and uv run initializes it before dispatching. An unwritable UV_CACHE_DIR
+  # proves the launcher did not fall back to uv run.
+  read_only_cache=$(mktemp -d "$test_root/uv-cache.XXXXXX")
+  chmod 0500 "$read_only_cache"
+  rendered=$(UV_CACHE_DIR="$read_only_cache" "$launcher" help authoring 2>&1) || rendered=
+  chmod 0700 "$read_only_cache"
+  rm -rf "$read_only_cache"
+  case "$rendered" in *'# Authoring reference'*) ;; *) exit 1;; esac
 }
 
 run_installed() {
@@ -252,8 +262,9 @@ check_record "$claude_home/.local/share/braintree"
 
 # An explicit --semantic install requests the optional extra and defaults the
 # provider, so the installed capability is zero-config; a plain install keeps the
-# launcher on the dependency-free frozen set. A fake uv reads the launcher's
-# environment without syncing the extra, keeping this offline.
+# launcher on the dependency-free frozen set. A fake uv stands in for both the
+# install-time environment sync and the launcher's fallback, reading the
+# launcher's environment without syncing the extra, keeping this offline.
 fake_bin="$test_root/fake-bin"
 mkdir -p "$fake_bin"
 cat > "$fake_bin/uv" <<'FAKE_UV'
@@ -267,12 +278,12 @@ chmod 0755 "$fake_bin/uv"
 
 semantic_project="$test_root/semantic-project"
 mkdir -p "$semantic_project"
-$repo_root/scripts/install.sh --codex --project "$semantic_project" >/dev/null
+PATH="$fake_bin:$PATH" "$repo_root/scripts/install.sh" --codex --project "$semantic_project" >/dev/null
 semantic_launcher="$semantic_project/.local/bin/braintree"
 if grep -q -- '--extra semantic' "$semantic_launcher"; then exit 1; fi
 plain_env=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
 case "$plain_env" in *'provider=<unset>'*) ;; *) exit 1;; esac
-semantic_install=$($repo_root/scripts/install.sh --codex --project "$semantic_project" --semantic)
+semantic_install=$(PATH="$fake_bin:$PATH" "$repo_root/scripts/install.sh" --codex --project "$semantic_project" --semantic)
 case "$semantic_install" in
   *'result: "installed"'*'provider: "defaults to braintree semantic embed'*) ;;
   *) exit 1 ;;
@@ -285,7 +296,7 @@ case "$semantic_override" in *'provider=[custom provider]'*) ;; *) exit 1;; esac
 semantic_empty=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" BT_SEMANTIC_PROVIDER='' "$semantic_launcher")
 case "$semantic_empty" in *'provider=[]'*) ;; *) exit 1;; esac
 [ "$(cat "$semantic_project/.local/share/braintree/src/braintree/installed-revision")" = "$expected_record" ]
-semantic_repeat=$($repo_root/scripts/install.sh --codex --project "$semantic_project" --semantic)
+semantic_repeat=$(PATH="$fake_bin:$PATH" "$repo_root/scripts/install.sh" --codex --project "$semantic_project" --semantic)
 case "$semantic_repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 
 if $repo_root/scripts/install.sh --codex >/dev/null 2>&1; then exit 1; fi
