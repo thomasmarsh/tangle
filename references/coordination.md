@@ -133,10 +133,11 @@ not first discovered as an owned-seam escalation.
   a recorded gate claim, so it can never be the sole sign-off; when only such a
   reviewer is available, the coordinator reruns the gates and attaches the
   transcript it verifies.
-- For parallel creation, use `braintree allocate PREFIX` to atomically reserve an
-  ID; Coordinator preallocation or explicitly disjoint numeric ranges are valid
-  offline alternatives. A local `find` checks for an existing collision only; it
-  is never an ID reservation. Branch-local `owner` or claim metadata is
+- For parallel creation, use `braintree allocate PREFIX [COUNT]` to atomically
+  reserve one ID, or a batch of `COUNT` consecutive ids in one call, in a single
+  transaction; Coordinator preallocation or explicitly disjoint numeric ranges
+  are valid offline alternatives. A local `find` checks for an existing collision
+  only; it is never an ID reservation. Branch-local `owner` or claim metadata is
   insufficient because separate worktrees can make the same claim without seeing
   each other. An allocated id is burned permanently: the counter only advances,
   so an allocation the caller discards is never returned and never reused, and

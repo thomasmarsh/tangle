@@ -15,6 +15,7 @@ import sys
 from collections.abc import Callable, Sequence
 
 from . import (
+    allocation,
     behavioral_benchmark,
     cli,
     embedding_benchmark,
@@ -51,7 +52,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("location", "show the stable project identity and state path"),
     ("init", "create or repair local coordination state"),
     ("migrate [ROOT]", "rename a legacy nodes/ vault to .braintree/"),
-    ("allocate PREFIX", "atomically allocate PREFIX-NNN"),
+    ("allocate PREFIX [COUNT]", "atomically allocate COUNT consecutive PREFIX-NNN ids"),
     (
         "reservations",
         "list allocated id prefixes and the burned ids no node uses",
@@ -116,7 +117,6 @@ _COORDINATION_COMMANDS = frozenset(
         "location",
         "init",
         "migrate",
-        "allocate",
         "claim",
         "release",
         "index",
@@ -344,6 +344,11 @@ def _dispatch(command: str, args: list[str]) -> int:
         return graph_check.main(args[1:])
     if command == "reservations":
         return reservations.main(args[1:])
+    # ``allocate`` is served by its own module because ``cli.py`` and
+    # ``sidecar.py`` are frozen observable prompt files; see
+    # ``braintree.allocation``.
+    if command == "allocate":
+        return allocation.main(args)
     # ``node record`` is the capture path beside ``feedback record``; a bare
     # ``node NODE`` stays with the sidecar/index engine that owns it.
     if command == "node" and len(args) > 1 and args[1] == "record":

@@ -165,12 +165,14 @@ VERBS: dict[str, Verb] = {
     ),
     "allocate": _verb(
         "Atomically reserve PREFIX-NNN across worktrees.",
-        usage="braintree allocate PREFIX",
+        usage="braintree allocate PREFIX [COUNT]",
         operands=(
             ("PREFIX", "uppercase letters, digits, underscores, or hyphens"),
+            ("COUNT", "positive number of consecutive ids; default 1"),
         ),
         outputs=(
             ("id", "the reserved identity, for example TAS-106"),
+            ("ids", "one row per reserved id when COUNT is greater than 1"),
         ),
         hazards=(
             "A reservation is not a node; a local find is collision detection only.",

@@ -361,6 +361,101 @@ def test_allocate_skips_on_disk_identity_with_empty_sidecar(
     assert result.stdout.strip() == 'id: "TAS-008"'
 
 
+def test_allocate_reserves_a_count_of_consecutive_ids(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    batch = run_bt("allocate", "TAS", "3", env=env)
+    assert batch.returncode == 0
+    # One call reserves the whole batch in a stable, parseable table.
+    assert batch.stdout.strip().splitlines() == [
+        "ids[3]{id}:",
+        '  "TAS-001"',
+        '  "TAS-002"',
+        '  "TAS-003"',
+    ]
+    # The counter advanced past the batch, so the next call continues it.
+    assert run_bt("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-004"'
+
+
+def test_allocate_count_of_one_keeps_the_single_id_output(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    default = run_bt("allocate", "TAS", env=env)
+    assert default.returncode == 0
+    assert default.stdout.strip() == 'id: "TAS-001"'
+    explicit = run_bt("allocate", "TAS", "1", env=env)
+    assert explicit.returncode == 0
+    assert explicit.stdout.strip() == 'id: "TAS-002"'
+
+
+def test_allocate_count_skips_on_disk_identities_and_stays_consecutive(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    vault = tmp_path / "vault" / "nodes"
+    (vault / "active").mkdir(parents=True)
+    (vault / "active" / "TAS-002-existing.md").write_text(_FRONTMATTER, encoding="utf-8")
+    env = _env(tmp_path)
+    env["BT_NODES_DIR"] = str(vault)
+
+    batch = run_bt("allocate", "TAS", "2", env=env)
+    assert batch.returncode == 0
+    # TAS-002 is on disk, so the batch skips it and still returns two ids.
+    assert batch.stdout.strip().splitlines() == [
+        "ids[2]{id}:",
+        '  "TAS-001"',
+        '  "TAS-003"',
+    ]
+
+
+def test_allocate_batch_burns_the_reserved_ids_it_never_wrote(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    assert run_bt("init", env=env).returncode == 0
+    assert run_bt("allocate", "TAS", "3", env=env).returncode == 0
+
+    listed = run_bt("reservations", env=env)
+    assert listed.returncode == 0
+    assert '"TAS","4","1-3"' in listed.stdout
+
+
+def test_allocate_rejects_a_bad_count_or_extra_operand_without_reserving(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    for arguments, expected in (
+        ((), 'error: "allocate requires PREFIX"'),
+        (("TAS", "0"), 'error: "COUNT must be a positive integer"'),
+        (("TAS", "x"), 'error: "COUNT must be a positive integer"'),
+        (
+            ("TAS", "1", "2"),
+            'error: "allocate accepts at most PREFIX and COUNT"',
+        ),
+    ):
+        rejected = run_bt("allocate", *arguments, env=env)
+        assert rejected.returncode == 2, arguments
+        assert expected in rejected.stdout, arguments
+    # Every rejection happened before any sidecar write, so the first id is
+    # still free.
+    assert run_bt("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-001"'
+
+
+def test_allocate_help_and_command_index_name_the_count_operand(
+    tmp_path: Path, run_bt: RunBt
+) -> None:
+    env = _env(tmp_path)
+    verb = run_bt("allocate", "--help", env=env)
+    assert verb.returncode == 0
+    assert 'usage: "braintree allocate PREFIX [COUNT]"' in verb.stdout
+    assert '"COUNT"' in verb.stdout
+
+    index = run_bt("--help", env=env)
+    assert index.returncode == 0
+    assert '"allocate PREFIX [COUNT]"' in index.stdout
+
+
 def test_frontier_and_node_verbs_are_dispatched(tmp_path: Path, run_bt: RunBt) -> None:
     env = _env(tmp_path)
     help_output = run_bt("--help", env=env)

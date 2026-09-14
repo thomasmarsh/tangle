@@ -62,7 +62,7 @@ Load **dependencies** (`braintree help dependencies`) for staleness, the semanti
 
 ## Mutation rules
 
-- Use `find` (or `braintree allocate PREFIX` in parallel) to avoid ID collisions; a local `find` detects collisions only and never reserves an ID. A discarded `braintree allocate` burns its id permanently: there is no release or reclaim, and `braintree reservations` lists each prefix's reserved-but-unwritten ids.
+- Use `find` (or `braintree allocate PREFIX [COUNT]` in parallel, which reserves COUNT consecutive ids in one call) to avoid ID collisions; a local `find` detects collisions only and never reserves an ID. A discarded `braintree allocate` burns its id permanently: there is no release or reclaim, and `braintree reservations` lists each prefix's reserved-but-unwritten ids.
 - Refresh only the mutated node's `updated`; increment `context_rev` only for a consumer-relevant semantic change. Never edit unrelated nodes or the index as bookkeeping.
 - Give each node one primary `Parent [[...]]` or `Area [[IDX-...]]` link; do not add a `Child`/`Parent of` copy to the parent.
 - `resolved` only when the outcome is complete; for a coordinating task verify `Done when`, evidence, and child dispositions first. Remove `next` and keep concise evidence.

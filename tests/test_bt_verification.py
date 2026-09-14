@@ -115,6 +115,43 @@ def test_concurrent_allocation_is_unique_and_dense(
     assert ids == [f"CON-{number:03d}" for number in range(1, 9)]
 
 
+def test_concurrent_batch_allocation_is_unique_and_dense(
+    tmp_path: Path, bt_command: BtCommand
+) -> None:
+    env = _env(
+        BT_SIDECAR_DIR=str(tmp_path / "sidecar"),
+        BT_PROJECT_ID="verification-test",
+    )
+    subprocess.run([*bt_command(), "init"], env=env, capture_output=True, check=True)
+    per_process = 3
+    processes = [
+        subprocess.Popen(
+            [*bt_command(), "allocate", "CON", str(per_process)],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        for _ in range(4)
+    ]
+    outputs = [process.communicate()[0] for process in processes]
+    assert all(process.returncode == 0 for process in processes)
+    blocks = [
+        [
+            int(match.group(1))
+            for match in re.finditer(r'^  "CON-(\d+)"$', output, re.MULTILINE)
+        ]
+        for output in outputs
+    ]
+    # Each call reserved its own whole block in one transaction, so the twelve
+    # ids are dense with no call straddling another call's block.
+    for block in blocks:
+        assert len(block) == per_process, block
+        assert block == list(range(block[0], block[0] + per_process)), block
+    ids = sorted(number for block in blocks for number in block)
+    assert ids == list(range(1, 4 * per_process + 1))
+
+
 def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) -> None:
     sidecar = tmp_path / "sidecar"
     env = _env(BT_SIDECAR_DIR=str(sidecar), BT_PROJECT_ID="verification-test")
