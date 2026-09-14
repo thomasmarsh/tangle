@@ -18,7 +18,6 @@ for ``braintree allocate`` states.
 
 from __future__ import annotations
 
-import glob
 import json
 import os
 import re
@@ -27,7 +26,7 @@ import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from . import index, node_record, vault
+from . import index, node_record, store, vault
 from .toon import field
 
 __all__ = ["advance_main", "main"]
@@ -95,15 +94,15 @@ def _atomic_write(path: str, text: str) -> None:
 def _find_node(nodes_dir: str, reference: str) -> tuple[str, str] | None:
     """Resolve a bare id or full node name to ``(status, path)``, or ``None``."""
     matches = [
-        path
-        for path in sorted(glob.glob(os.path.join(nodes_dir, "*", "*.md")))
-        if (stem := os.path.basename(path)[:-3]) == reference
+        entry
+        for entry in store.iter_node_paths(nodes_dir)
+        if (stem := os.path.basename(entry.path)[:-3]) == reference
         or stem.startswith(reference + "-")
     ]
     if len(matches) != 1:
         return None
-    path = matches[0]
-    return os.path.basename(os.path.dirname(path)), path
+    entry = matches[0]
+    return (entry.status, entry.path) if entry.status is not None else None
 
 
 def _parse_child(index: int, item: object) -> tuple[PlanChild | None, str | None]:

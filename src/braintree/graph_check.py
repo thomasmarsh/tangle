@@ -37,14 +37,13 @@ Finding codes by class:
 
 from __future__ import annotations
 
-import glob
 import os
 import re
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from . import vault
+from . import store, vault
 from .revision import reported_version
 from .toon import field, table
 
@@ -206,14 +205,18 @@ _UPDATED_LINE = re.compile(r"^updated: ([^\n]+)$", re.MULTILINE)
 _UPDATED_VALUE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
 _WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
 _PRIMARY_ROUTE = re.compile(r"^(?:Parent|Area) \[\[([^\]]+)\]\]\.", re.MULTILINE)
-_NODE_ID = re.compile(r"[A-Z]+-\d+")
+_NODE_ID = re.compile(
+    r"(?:[A-Z][A-Z0-9_]*-\d+|(?:tas|tho|def|dec|idx|fbk)-[0-7][0-9a-hjkmnp-tv-z]{25})"
+)
 _ROOT_ROUTE = re.compile(r"^\s*- Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
 _FOCUS_BLOCK = re.compile(r"^# Focus\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _CONTEXT_BLOCK = re.compile(r"^# Context\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _BLOCKED_BLOCK = re.compile(r"^# Blocked\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _INDEX_TABLE = re.compile(r"^\| .*\[\[", re.MULTILINE)
 _INDEX_LINK = re.compile(r"\[\[([A-Z]+-\d+[^\]]*)\]\]")
-_ID_ANCHOR = re.compile(r"IDX-\d+")
+_ID_ANCHOR = re.compile(
+    r"(?:IDX-\d+|idx-[0-7][0-9a-hjkmnp-tv-z]{25})(?:-|\Z)"
+)
 _FEEDBACK_BLOCK = re.compile(r"^# Feedback\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
 _FEEDBACK_LINE = re.compile(
     r"^(" + "|".join(_FEEDBACK_LABELS) + r"):\s*(\S.*)$", re.MULTILINE
@@ -469,14 +472,14 @@ def _check_feedback(
 
 
 def _collect_nodes(nodes_dir: str, errors: list[Finding]) -> list[_Node]:
-    paths = sorted(glob.glob(os.path.join(nodes_dir, "*", "*.md")))
-    if not paths:
+    entries = list(store.iter_node_paths(nodes_dir))
+    if not entries:
         errors.append(
             Finding("vault-no-nodes", "", f"no node files under {nodes_dir}")
         )
     nodes: list[_Node] = []
-    for path in paths:
-        status = os.path.basename(os.path.dirname(path))
+    for entry in entries:
+        path, status = entry.path, entry.status
         name = os.path.basename(path)[:-3]
         text = _read_text(path)
         if status not in _STATUSES:
@@ -484,7 +487,9 @@ def _collect_nodes(nodes_dir: str, errors: list[Finding]) -> list[_Node]:
                 Finding(
                     "node-status-directory",
                     path,
-                    f"{path}: invalid status directory {status}",
+                    f"{path}: invalid "
+                    f"{'frontmatter status' if entry.stationary else 'status directory'} "
+                    f"{status}",
                 )
             )
             continue
@@ -530,7 +535,11 @@ def _collect_nodes(nodes_dir: str, errors: list[Finding]) -> list[_Node]:
             errors.append(
                 Finding("node-summary", path, f"{path}: summary is required")
             )
-        forbidden = [key for key in metadata if key in _FORBIDDEN_FIELDS]
+        forbidden = [
+            key
+            for key in metadata
+            if key in _FORBIDDEN_FIELDS and not (entry.stationary and key == "status")
+        ]
         if forbidden:
             errors.append(
                 Finding(
@@ -540,7 +549,7 @@ def _collect_nodes(nodes_dir: str, errors: list[Finding]) -> list[_Node]:
                 )
             )
         id_match = _NODE_ID.match(name)
-        node_type = id_match.group(0).split("-")[0] if id_match else None
+        node_type = id_match.group(0).split("-")[0].upper() if id_match else None
         if (
             status in {"active", "proposed"}
             and node_type is not None
@@ -803,7 +812,7 @@ def _check_references(
             target_nodes = by_name.get(target)
             if target_nodes is None:
                 continue
-            node_type = (target_nodes[0].node_id or "").split("-", 1)[0]
+            node_type = (target_nodes[0].node_id or "").split("-", 1)[0].upper()
             if node_type not in REFERENCE_TARGET_TYPES:
                 errors.append(
                     Finding(

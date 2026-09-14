@@ -18,7 +18,6 @@ merge.
 
 from __future__ import annotations
 
-import glob
 import math
 import os
 import re
@@ -30,7 +29,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import lru_cache
 
-from . import semantic
+from . import semantic, store
 from .graph_check import (
     CONTEXT_PIN_LINE,
     CONTEXT_RELATIONS,
@@ -94,7 +93,9 @@ __all__ = [
 
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
 _FRONTMATTER = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
-_NODE_ID = re.compile(r"([A-Z][A-Z0-9_]*-\d+)-")
+_NODE_ID = re.compile(
+    r"((?:[A-Z][A-Z0-9_]*-\d+|(?:tas|tho|def|dec|idx|fbk)-[0-7][0-9a-hjkmnp-tv-z]{25}))(?:-|$)"
+)
 _EDGE = re.compile(
     r"^([A-Za-z][A-Za-z ]*?)\s+\[\[([^\]]+)\]\](?:\s+at context_rev\s+(\d+))?\.?\s*$",
     re.MULTILINE,
@@ -215,8 +216,8 @@ def _read_snapshot(root: str) -> tuple[list[_DerivedNode], list[DerivedEdge]]:
     """Read the derived node and edge snapshot the Markdown under ``root`` defines."""
     nodes: list[_DerivedNode] = []
     edge_rows: list[tuple[str, str, str, int | None]] = []
-    for path in sorted(glob.glob(os.path.join(root, "*", "*.md"))):
-        status = os.path.basename(os.path.dirname(path))
+    for entry in store.iter_node_paths(root):
+        path, status = entry.path, entry.status
         if status not in _STATUSES:
             continue
         basename = os.path.basename(path)[:-3]
@@ -262,6 +263,8 @@ def _maxima(nodes: Sequence[_DerivedNode]) -> dict[str, int]:
     maxima: dict[str, int] = {}
     for node in nodes:
         prefix, _, digits = node.id.rpartition("-")
+        if not digits.isdecimal():
+            continue
         maxima[prefix] = max(maxima.get(prefix, 0), int(digits))
     return maxima
 
@@ -273,14 +276,16 @@ def existing_allocations(root: str) -> dict[str, set[int]]:
     would collide with an existing node even when the sidecar counter is stale.
     """
     taken: dict[str, set[int]] = {}
-    for path in glob.glob(os.path.join(os.path.abspath(root), "*", "*.md")):
-        status = os.path.basename(os.path.dirname(path))
+    for entry in store.iter_node_paths(root):
+        path, status = entry.path, entry.status
         if status not in _STATUSES:
             continue
         match = _NODE_ID.match(os.path.basename(path)[:-3])
         if match is None:
             continue
         prefix, _, digits = match.group(1).rpartition("-")
+        if not digits.isdecimal():
+            continue
         taken.setdefault(prefix, set()).add(int(digits))
     return taken
 
@@ -297,8 +302,8 @@ def node_hash(root: str, node: str) -> str | None:
     and matches the ``content_hash`` the index stores.
     """
     root = os.path.abspath(root)
-    for path in sorted(glob.glob(os.path.join(root, "*", "*.md"))):
-        status = os.path.basename(os.path.dirname(path))
+    for entry in store.iter_node_paths(root):
+        path, status = entry.path, entry.status
         if status not in _STATUSES:
             continue
         basename = os.path.basename(path)[:-3]
@@ -855,8 +860,8 @@ def _read_nodes(root: str) -> list[IndexedNode]:
     """Read every Markdown node under ``root`` from its status directory."""
     root = os.path.abspath(root)
     nodes: list[IndexedNode] = []
-    for path in sorted(glob.glob(os.path.join(root, "*", "*.md"))):
-        status = os.path.basename(os.path.dirname(path))
+    for entry in store.iter_node_paths(root):
+        path, status = entry.path, entry.status
         if status not in _STATUSES:
             continue
         basename = os.path.basename(path)[:-3]

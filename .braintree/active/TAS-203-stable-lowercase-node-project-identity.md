@@ -1,9 +1,9 @@
 ---
 context_rev: 3
 priority: P0
-updated: 2026-09-14T20:11:57Z
+updated: 2026-09-14T20:20:24Z
 summary: Implement stable lowercase node and project identity.
-next: Implement the stable store, identity grammar, and compatibility migration.
+next: Implement stationary canonical writers and the explicit compatibility migration.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -47,3 +47,11 @@ pass. `make test` reached 791 passing tests but retains the pre-existing
 artifact was changed. Remaining: switch writers and readers to the stationary
 canonical store, then implement the compatibility migration and storage
 benchmark evidence.
+
+Completed the compatibility-reader slice: `store.py` centrally discovers both
+legacy status-directory nodes and stationary canonical nodes, whose `status`
+frontmatter is authoritative. Graph validation, indexing, frontier discovery,
+decomposition lookup, and feedback scans now share that discovery contract;
+mixed-layout stationary fixtures pass their graph and index checks. Remaining:
+write canonical nodes into the stationary layout, implement the collision-safe
+explicit migration, and record the storage benchmark evidence.

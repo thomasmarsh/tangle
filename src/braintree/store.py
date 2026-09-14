@@ -1,0 +1,65 @@
+"""Discover legacy and stationary canonical Markdown nodes.
+
+The compatibility window deliberately permits a vault to contain both historic
+status-directory nodes and stationary ``canonical/`` nodes. Status comes from
+the directory only for the former; stationary nodes carry it in frontmatter.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+from collections.abc import Iterator
+from dataclasses import dataclass
+
+__all__ = ["CANONICAL_DIRECTORY", "NodePath", "iter_node_paths"]
+
+CANONICAL_DIRECTORY = "canonical"
+_STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
+_STATUS = re.compile(r"^status:\s*(?:['\"])?([a-z]+)(?:['\"])?\s*$", re.MULTILINE)
+
+
+@dataclass(frozen=True)
+class NodePath:
+    """A discovered canonical node and its authoritative status, if readable."""
+
+    path: str
+    status: str | None
+    stationary: bool
+
+
+def _stationary_status(path: str) -> str | None:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+    except OSError:
+        return None
+    if not text.startswith("---\n"):
+        return None
+    match = _STATUS.search(text.split("---", 2)[1])
+    return match.group(1) if match is not None else None
+
+
+def iter_node_paths(root: str) -> Iterator[NodePath]:
+    """Yield authority-bearing Markdown while excluding views and local state."""
+    root = os.path.abspath(root)
+    if not os.path.isdir(root):
+        return
+    for name in sorted(os.listdir(root)):
+        if name == CANONICAL_DIRECTORY:
+            continue
+        directory = os.path.join(root, name)
+        if not os.path.isdir(directory):
+            continue
+        for filename in sorted(os.listdir(directory)):
+            path = os.path.join(directory, filename)
+            if filename.endswith(".md") and os.path.isfile(path):
+                yield NodePath(path, name, False)
+    canonical = os.path.join(root, CANONICAL_DIRECTORY)
+    if not os.path.isdir(canonical):
+        return
+    for directory, _subdirectories, names in os.walk(canonical):
+        for name in sorted(names):
+            path = os.path.join(directory, name)
+            if name.endswith(".md") and os.path.isfile(path):
+                yield NodePath(path, _stationary_status(path), True)

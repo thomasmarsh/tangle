@@ -10,13 +10,12 @@ triage in this graph.
 
 from __future__ import annotations
 
-import glob
 import os
 import re
 import sys
 from collections.abc import Sequence
 
-from . import vault
+from . import store, vault
 from .toon import field, row
 
 __all__ = ["main"]
@@ -68,8 +67,10 @@ def _nodes_directory(argument: str) -> str:
 
 def _scan_vault(vault: str, nodes_dir: str) -> list[tuple[str, str, str, str, str]]:
     rows: list[tuple[str, str, str, str, str]] = []
-    for path in sorted(glob.glob(os.path.join(nodes_dir, "*", _FEEDBACK_GLOB))):
-        status = os.path.basename(os.path.dirname(path))
+    for entry in store.iter_node_paths(nodes_dir):
+        path, status = entry.path, entry.status
+        if not os.path.basename(path).startswith("FBK-"):
+            continue
         name = os.path.basename(path)[:-3]
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
@@ -78,7 +79,7 @@ def _scan_vault(vault: str, nodes_dir: str) -> list[tuple[str, str, str, str, st
             (
                 vault,
                 name,
-                status,
+                status or "",
                 _frontmatter_value(header, "braintree_revision") or "",
                 _frontmatter_value(header, "summary") or "",
             )
