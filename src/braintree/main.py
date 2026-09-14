@@ -32,6 +32,7 @@ from . import (
     memory_pilot,
     node_record,
     node_references,
+    packet,
     provider,
     quality_benchmark,
     reservations,
@@ -100,6 +101,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ),
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
+    ("packet", "print the one executable frontier node and its route evidence"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
     (
         "clusters [--limit N]",
@@ -143,6 +145,7 @@ _COORDINATION_COMMANDS = frozenset(
         "node",
         "impact",
         "orient",
+        "packet",
         "next",
         "clusters",
         "digest",
@@ -154,7 +157,7 @@ _COORDINATION_COMMANDS = frozenset(
 # them re-checks the vault for an unfinished node that cannot reach a hub, a
 # reachability failure the client would otherwise see only from `braintree
 # check`.
-_DIRECT_ANSWER_COMMANDS = frozenset({"frontier", "next", "orient", "status"})
+_DIRECT_ANSWER_COMMANDS = frozenset({"frontier", "next", "orient", "packet", "status"})
 
 # The interactions that must not trigger derived-index upkeep: ``init`` creates
 # the local coordination state, ``index`` is its explicit repair or rebuild,
@@ -356,6 +359,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         _warn_orphans()
     if command == "check":
         return graph_check.main(args[1:])
+    if command == "packet":
+        return packet.main(args)
     if command == "reservations":
         return reservations.main(args[1:])
     # ``allocate`` is served by its own module because ``cli.py`` and

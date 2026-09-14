@@ -57,6 +57,12 @@ __all__ = [
     "ORIENT_SECTIONS",
     "OrientSection",
     "Orientation",
+    "PACKET_VERIFICATION",
+    "PacketCandidate",
+    "PacketDependency",
+    "PacketProblem",
+    "PacketRoute",
+    "PacketTerminal",
     "RankedCandidate",
     "Reconnaissance",
     "ReconcileError",
@@ -65,6 +71,7 @@ __all__ = [
     "ReferenceView",
     "SearchFilters",
     "SimilarCandidate",
+    "WorkPacket",
     "backlinks",
     "cluster_source",
     "digest",
@@ -78,6 +85,7 @@ __all__ = [
     "node_hash",
     "node_view",
     "orient",
+    "packet",
     "prefix_maxima",
     "reconcile",
     "reference_view",
@@ -815,6 +823,92 @@ class Digest:
     members: tuple[DigestMember, ...]
 
 
+PACKET_VERIFICATION: tuple[str, ...] = ("braintree check", "make test")
+
+
+@dataclass(frozen=True)
+class PacketRoute:
+    """One parent-to-child hop on the route from a root hub to the packet node.
+
+    The first hop is the hub membership edge, so ``relation`` is the member's
+    primary ``Parent`` or ``Area`` link. Every later hop is a ``next`` route and
+    is always a direct ``Parent`` link.
+    """
+
+    parent: str
+    relation: str
+    child: str
+
+
+@dataclass(frozen=True)
+class PacketDependency:
+    """One context edge of the routed node with the shared readiness verdict."""
+
+    relation: str
+    target: str
+    pinned: str
+    current: str
+    status: str
+    stale: str
+
+
+@dataclass(frozen=True)
+class PacketCandidate:
+    """One executable route terminal with the evidence that routed to it."""
+
+    id: str
+    name: str
+    path: str
+    status: str
+    summary: str
+    next: str
+    route: tuple[PacketRoute, ...]
+    dependencies: tuple[PacketDependency, ...]
+
+    @property
+    def route_text(self) -> str:
+        """Render the hop chain as a compact ``hub > ... > node`` evidence string."""
+        return _route_text(self.route)
+
+
+@dataclass(frozen=True)
+class PacketTerminal:
+    """One non-executable route terminal and why it cannot be executed."""
+
+    node: str
+    status: str
+    summary: str
+    reason: str
+    path: str
+    route: str
+
+
+@dataclass(frozen=True)
+class PacketProblem:
+    """One structural route failure that makes the whole packet invalid."""
+
+    code: str
+    node: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class WorkPacket:
+    """The strict work-packet answer ``braintree packet`` prints.
+
+    ``result`` is one of ``ready``, ``blocked``, ``ambiguous``, or ``invalid``.
+    Exactly one of ``node``, ``candidates``, ``terminals``, and ``problems``
+    is populated for the matching result, so a caller switches on ``result``
+    rather than inferring it from which table is non-empty.
+    """
+
+    result: str
+    node: PacketCandidate | None
+    candidates: tuple[PacketCandidate, ...]
+    terminals: tuple[PacketTerminal, ...]
+    problems: tuple[PacketProblem, ...]
+
+
 class ReconcileError(Exception):
     """A reconcile input the planner cannot read, such as an unknown Git ref."""
 
@@ -946,6 +1040,235 @@ def _frontier_entries(nodes: list[IndexedNode]) -> list[FrontierEntry]:
 def frontier(root: str) -> list[FrontierEntry]:
     """Return the unfinished nodes whose ``next`` is an action rather than a route."""
     return _frontier_entries(_read_nodes(root))
+
+
+# ``index-map.md`` declares each root hub on an ``Indexes`` bullet. The packet
+# route starts at those hubs, so the declaration is read directly rather than
+# copied into the index.
+_INDEX_HUB = re.compile(r"^\s*-\s*Indexes \[\[([^\]]+)\]\]", re.MULTILINE)
+_PACKET_UNFINISHED = frozenset({"proposed", "active", "blocked"})
+# ``next`` holds either one wikilink route or an action sentence. The full-match
+# is deliberate: a value that mentions a wikilink inside prose is malformed
+# rather than a route, and one that contains no link is an action.
+_NEXT_LINK = re.compile(r"\[\[([^\]]+)\]\]\Z")
+
+
+def _root_hubs(root: str) -> list[str]:
+    """Return the root hubs ``index-map.md`` routes to, in declaration order."""
+    try:
+        with open(os.path.join(root, "index-map.md"), encoding="utf-8") as handle:
+            text = handle.read()
+    except OSError:
+        return []
+    return _INDEX_HUB.findall(text)
+
+
+def _primary_route(node: IndexedNode) -> tuple[str, str] | None:
+    """Return one node's primary ``(relation, target)`` route, if it declares one."""
+    match = _PRIMARY_ROUTE.search(node.body)
+    if match is None:
+        return None
+    return (match.group(1), match.group(2))
+
+
+def _route_text(hops: Sequence[PacketRoute]) -> str:
+    """Render a hop chain as the compact ``hub > ... > terminal`` evidence string."""
+    if not hops:
+        return ""
+    return " > ".join([hops[0].parent, *(hop.child for hop in hops)])
+
+
+def _packet_terminal(
+    node: IndexedNode, reason: str, hops: Sequence[PacketRoute]
+) -> PacketTerminal:
+    """Build the non-executable terminal row for ``node`` with its route evidence."""
+    return PacketTerminal(
+        node=node.id,
+        status=node.status,
+        summary=node.metadata.get("summary", ""),
+        reason=reason,
+        path=node.path,
+        route=_route_text(hops),
+    )
+
+
+def _packet_candidate(
+    node: IndexedNode,
+    hops: Sequence[PacketRoute],
+    by_name: dict[str, IndexedNode],
+) -> PacketCandidate:
+    """Build the executable candidate row for ``node`` with its context edges."""
+    dependencies = tuple(
+        PacketDependency(
+            relation=edge.relation,
+            target=edge.target,
+            pinned=edge.pinned,
+            current=edge.current,
+            status=edge.status,
+            stale=edge.stale,
+        )
+        for edge in _context_edges(node, by_name)
+    )
+    return PacketCandidate(
+        id=node.id,
+        name=node.name,
+        path=node.path,
+        status=node.status,
+        summary=node.metadata.get("summary", ""),
+        next=node.metadata.get("next", ""),
+        route=tuple(hops),
+        dependencies=dependencies,
+    )
+
+
+def _walk_packet_route(
+    hub: IndexedNode,
+    member: IndexedNode,
+    relation: str,
+    by_name: dict[str, IndexedNode],
+    by_id: dict[str, IndexedNode],
+) -> tuple[PacketCandidate | None, PacketTerminal | None, tuple[PacketProblem, ...]]:
+    """Follow one hub member's single ``next`` route to its terminal.
+
+    The member's hub edge is the first hop. A blocked node ends the route as a
+    blocked terminal rather than falling through to another candidate; a stale
+    context edge ends it as stale. When ``next`` is a lone wikilink the walk
+    continues only through a direct ``Parent`` link, and a missing target, a
+    non-child link, or a revisited node is a structural failure for the whole
+    packet instead of a terminal.
+    """
+    hops = [PacketRoute(parent=hub.id, relation=relation, child=member.id)]
+    current = member
+    seen = {member.id}
+    while True:
+        if current.status == "blocked":
+            return None, _packet_terminal(current, "blocked", hops), ()
+        if _is_stale(current, by_name):
+            return None, _packet_terminal(current, "stale", hops), ()
+        next_value = current.metadata.get("next", "").strip()
+        link_match = _NEXT_LINK.fullmatch(next_value)
+        if link_match is None:
+            if "[[" in next_value:
+                return (
+                    None,
+                    None,
+                    (PacketProblem("next-malformed", current.id, next_value),),
+                )
+            if not next_value:
+                return None, _packet_terminal(current, "no-next", hops), ()
+            if current.status not in {"proposed", "active"}:
+                return None, _packet_terminal(current, "resolved", hops), ()
+            return _packet_candidate(current, hops, by_name), None, ()
+        link = link_match.group(1)
+        target = by_name.get(link) or by_id.get(link)
+        if target is None:
+            return None, None, (PacketProblem("next-missing", current.id, link),)
+        route = _primary_route(target)
+        if route is None or route[0] != "Parent" or route[1] != current.name:
+            return None, None, (PacketProblem("next-not-child", current.id, link),)
+        if target.id in seen:
+            return None, None, (PacketProblem("next-cycle", current.id, link),)
+        seen.add(target.id)
+        hops.append(PacketRoute(parent=current.id, relation="Parent", child=target.id))
+        current = target
+
+
+def packet(root: str) -> WorkPacket:
+    """Derive the strict executable work packet for a vault.
+
+    Every root hub named by ``index-map.md`` starts one route per unfinished
+    direct member. Each route follows that member's single wikilink ``next``
+    until it reaches a node whose ``next`` is an action, and a node is
+    executable only when it is ``proposed`` or ``active`` with no stale context
+    edge. No candidate is chosen heuristically: exactly one executable route is
+    ``ready``, more than one is ``ambiguous``, and none is ``blocked`` with one
+    row per terminal. Any structural failure makes the whole packet ``invalid``
+    so a broken route is never reported as a work claim.
+    """
+    root = os.path.abspath(root)
+    nodes = _read_nodes(root)
+    by_name = {node.name: node for node in nodes}
+    by_id = {node.id: node for node in nodes}
+    hubs = _root_hubs(root)
+    if not hubs:
+        return WorkPacket(
+            result="invalid",
+            node=None,
+            candidates=(),
+            terminals=(),
+            problems=(
+                PacketProblem(
+                    code="no-root-hub",
+                    node="index-map.md",
+                    detail="index-map.md declares no root hub",
+                ),
+            ),
+        )
+    candidates: list[PacketCandidate] = []
+    terminals: list[PacketTerminal] = []
+    problems: list[PacketProblem] = []
+    for hub_name in hubs:
+        hub = by_name.get(hub_name) or by_id.get(hub_name)
+        if hub is None:
+            problems.append(
+                PacketProblem(
+                    code="hub-missing",
+                    node=hub_name,
+                    detail="root hub is not in the vault",
+                )
+            )
+            continue
+        members: list[tuple[IndexedNode, str]] = []
+        for node in nodes:
+            if node.status not in _PACKET_UNFINISHED:
+                continue
+            route = _primary_route(node)
+            if route is not None and route[1] == hub.name:
+                members.append((node, route[0]))
+        members.sort(key=lambda item: item[0].id)
+        for member, relation in members:
+            candidate, terminal, member_problems = _walk_packet_route(
+                hub, member, relation, by_name, by_id
+            )
+            if candidate is not None:
+                candidates.append(candidate)
+            if terminal is not None:
+                terminals.append(terminal)
+            problems.extend(member_problems)
+    if problems:
+        ordered = sorted(problems, key=lambda problem: (problem.code, problem.node))
+        return WorkPacket(
+            result="invalid",
+            node=None,
+            candidates=(),
+            terminals=(),
+            problems=tuple(ordered),
+        )
+    candidates.sort(key=lambda candidate: candidate.id)
+    terminals.sort(key=lambda terminal: (terminal.node, terminal.reason))
+    if len(candidates) == 1:
+        return WorkPacket(
+            result="ready",
+            node=candidates[0],
+            candidates=tuple(candidates),
+            terminals=tuple(terminals),
+            problems=(),
+        )
+    if len(candidates) > 1:
+        return WorkPacket(
+            result="ambiguous",
+            node=None,
+            candidates=tuple(candidates),
+            terminals=tuple(terminals),
+            problems=(),
+        )
+    return WorkPacket(
+        result="blocked",
+        node=None,
+        candidates=(),
+        terminals=tuple(terminals),
+        problems=(),
+    )
 
 
 def _backlinks_for(node: IndexedNode, nodes: list[IndexedNode]) -> tuple[Backlink, ...]:

@@ -17,7 +17,7 @@ import pytest
 
 RunBt = Callable[..., subprocess.CompletedProcess[str]]
 
-_DIRECT_ANSWER_VERBS = ("frontier", "next", "orient", "status")
+_DIRECT_ANSWER_VERBS = ("frontier", "next", "orient", "packet", "status")
 
 
 def _env(tmp_path: Path, vault: Path) -> dict[str, str]:

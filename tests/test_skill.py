@@ -961,6 +961,7 @@ _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("node", "advance"),
     ("impact",),
     ("orient",),
+    ("packet",),
     ("next",),
     ("clusters",),
     ("digest",),

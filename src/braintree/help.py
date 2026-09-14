@@ -459,6 +459,28 @@ VERBS: dict[str, Verb] = {
         hazards=(_ORPHAN_WARNING_HAZARD,),
         topic=_COORDINATION_TOPIC,
     ),
+    "packet": _verb(
+        "Print the one executable frontier node and its minimal context.",
+        usage="braintree packet",
+        outputs=(
+            ("result", "ready, blocked, ambiguous, or invalid"),
+            ("id/name/path/status/summary/next", "the one routed node when ready"),
+            ("route", "parent,relation,child rows from the root hub to the node"),
+            ("dependencies", "relation,target,pinned,current,status,stale rows"),
+            ("files", "path rows; the node Markdown path"),
+            ("verification", "gate rows; the required final gates"),
+            ("terminals", "node,status,reason,summary,route,path rows when blocked"),
+            ("candidates", "id,status,summary,next,route rows when ambiguous"),
+            ("problems", "code,node,detail rows when invalid"),
+        ),
+        hazards=(
+            "Read-only and strict: it selects no route heuristically, so more than one "
+            "executable route is ambiguous and a structural failure is invalid.",
+            "Exits 0 only for ready; blocked, ambiguous, and invalid exit 1.",
+            _ORPHAN_WARNING_HAZARD,
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
     "next": _verb(
         "Rank frontier candidates for the next actor.",
         usage="braintree next [--rank] [--limit N]",
