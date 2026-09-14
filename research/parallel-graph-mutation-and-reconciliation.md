@@ -3,6 +3,14 @@
 Status: exploratory research. This document describes a possible foundation; it
 does not change the Braintree contract.
 
+Any implementation of this foundation should be pay-for-what-you-use. Ordinary
+single-writer work remains direct Markdown editing under the existing Braintree
+contract. The proposal, reconciliation, and receipt machinery is an opt-in
+coordination path for asynchronous, overlapping, or independently hosted work,
+not a new checklist imposed on every graph mutation. An implementation may use
+the same normalized ingestion model internally for all changes, provided the
+ordinary path does not require an agent to author or reason about that machinery.
+
 ## Problem
 
 Braintree deliberately makes each node a directly editable Markdown file. That
@@ -169,13 +177,49 @@ A new-node contribution can use a proposal-scoped symbol, addressed globally as
 mapping in the acceptance record and receipt. References among nodes created by
 one bundle use proposal-scoped symbols until that mapping is fixed.
 
+### Coordination cost should follow coordination risk
+
+The protocol should be progressively disclosed rather than promoted into the
+core workflow wholesale. There are at least three useful operating levels:
+
+1. A single writer edits canonical Markdown directly, follows the existing node
+   mutation rules, and runs the ordinary acceptance gate. It does not create a
+   proposal, declare a read set, manage a receipt, or acquire an integration
+   lease.
+2. Deliberately partitioned same-host or worktree execution may keep using the
+   current claims, reserved IDs, exclusive write sets, handoffs, and serial
+   integration. Disjoint work does not need to adopt change bundles merely
+   because more than one agent exists.
+3. Actors use sealed proposals and extended reconciliation when work is
+   asynchronous, speculative, plausibly overlapping, independently hosted, or
+   otherwise cannot safely rely on exclusive canonical write sets and an
+   immediately available integrator.
+
+These are escalation levels, not different graph contracts. Every accepted
+result still ends as valid canonical Markdown and Git history. Tooling may
+normalize direct edits, Git refs, and sealed bundles into one internal operation
+model so validation and ingestion stay consistent. That internal uniformity must
+not leak into a universal authoring burden: hashes, exact footprints, base bytes,
+and mechanically derivable preconditions should be captured by tools whenever
+possible, and an agent or human should supply extra metadata or a semantic
+disposition only when the selected mode or an actual ambiguity requires it.
+
+The skill should therefore retain only a compact routing rule: continue with the
+ordinary workflow by default, and load a dedicated coordination or change-intake
+reference when one of the escalation conditions appears. The detailed envelope,
+operation, reconciliation, and receipt contracts belong in that conditional
+reference and per-command help. Merely installing the capability must not make a
+simple task consume or comply with all of its documentation.
+
 ## Proposed foundation: immutable change bundles
 
-Introduce a transport-neutral **change bundle**. A bundle is a non-authoritative
-proposal to transform one canonical graph snapshot into another. Its default
-on-disk representation could be one uniquely named file or directory under an
-explicitly non-node namespace such as `.braintree/proposals/`; the same logical
-format could also arrive from a Git ref, stdin, or an orchestration service.
+For the escalated intake path, introduce a transport-neutral **change bundle**.
+A bundle is a non-authoritative proposal to transform one canonical graph
+snapshot into another. Its default on-disk representation could be one uniquely
+named file or directory under an explicitly non-node namespace such as
+`.braintree/proposals/`; the same logical format could also arrive from a Git
+ref, stdin, or an orchestration service. Direct canonical editing remains the
+default when one writer can safely own and finish the mutation.
 
 The important property is not the exact directory. It is that submitting a
 sealed bundle creates a new unique object and never edits a canonical node or a
@@ -481,9 +525,11 @@ constraints, when wanted, belong to the surrounding environment.
 ### Several agents in one working directory
 
 Direct canonical edits and Git staging remain unsafe because all actors share
-both paths and index state. Each actor instead submits a uniquely named sealed
-bundle. Submission performs only exclusive creation. Any actor may continue
-working and submit more bundles; no actor rewrites another's proposal.
+both paths and index state when they write concurrently. The simplest workflow
+may serialize those edits and retain the ordinary direct path. If the actors must
+contribute asynchronously, each instead submits a uniquely named sealed bundle.
+Submission performs only exclusive creation. Any actor may continue working and
+submit more bundles; no actor rewrites another's proposal.
 
 An integration pass serializes canonical changes. If no coordinator exists, the
 first actor to acquire the integration lease may become the temporary integrator.
