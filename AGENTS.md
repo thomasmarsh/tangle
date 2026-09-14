@@ -72,6 +72,18 @@ admission boundary. Do not keep cross-session planning in chat or ad hoc notes.
 4. Changes to `SKILL.md` change the skill contract and are covered by
    `tests/test_skill.py`; keep those contract strings and the live vault valid.
 
+## Bounded task intake
+
+- Work finished and committed in the current session needs no Braintree node or
+  workflow ceremony; Git is its durable record.
+- For “implement the next task,” start with the current frontier node's `next`
+  action and deliver the smallest coherent slice. Do not infer authorization to
+  investigate or implement every item in its broader outcome or `Done when`.
+- Expand orientation only when a direct dependency, a failing verification, or
+  code evidence requires it. If the broader task remains active, record the
+  completed slice and leave a concrete `next` rather than spending the session
+  on speculative architecture tracing.
+
 ## Before finishing
 
 Run the fast offline suite and keep the tree clean:

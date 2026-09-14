@@ -931,6 +931,9 @@ _AGENTS_PROMOTED_INVARIANTS = (
     "`context_rev` bump",
     "`tests/test_skill.py`; keep those contract strings and the live vault "
     "valid",
+    "Work finished and committed in the current session needs no Braintree node",
+    "start with the current frontier node's `next` action",
+    "Expand orientation only when a direct dependency, a failing verification, or",
     "make test",
     "make test-benchmarks",
 )
