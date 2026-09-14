@@ -32,7 +32,7 @@ next: Add the failing boundary test.
 
 ## Admission and the node boundary
 
-Admit a node only when its conclusion or executable state is likely to change a future decision or action. Never admit conversation transcripts, tool-call logs, routine narration or status, duplicate source material, or observations with no foreseeable decision or action value.
+Admit a node only when its conclusion or executable state is likely to change a future decision or action. Never admit conversation transcripts, tool-call logs, routine narration or status, duplicate source material, or observations with no foreseeable decision or action value. Braintree is durable execution memory, not a worklog: work planned to be committed and finished within one session needs no node, because Git already records it.
 
 Prefer updating the existing node when new information advances the same outcome, question, component, decision, or defect. Independent resumability is necessary but not sufficient: a distinct node must also retain durable execution-memory value that will likely change a later decision or action or materially reduce future resumption cost. Agent boundaries, exclusive write-set boundaries, failed checks, incidental or mechanical cleanup, routine verification, and handoffs alone never qualify. A mechanical change with no independently resumable outcome belongs in the enclosing node's `next` or result, or carries a `Refs:` footer naming that node. A fresh worker may continue the same graph node; agents and nodes are not one-to-one.
 

@@ -53,6 +53,8 @@ _CORE_INVARIANTS = (
     "Obsidian-compatible",
     "Each node lives in exactly one fixed status directory",
     "Admit a node only when its conclusion or executable state is likely to change",
+    "Braintree is durable execution memory, not a worklog",
+    "work planned to be committed and finished within one session needs no node",
     "Independent resumability is necessary but not sufficient",
     "A fresh worker may continue the same graph node; agents and nodes are not one-to-one",
     "Change status by moving the unchanged filename between those directories",
