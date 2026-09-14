@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P2
-updated: 2026-09-14T11:20:50Z
-summary: Name an adversarial mixed-capability acceptance input in a shared-stage brief.
-next: Add the mixed-capability acceptance-input rule to the brief guidance and pin it with a contract test.
+updated: 2026-09-14T11:27:54Z
+summary: Require a falsifying mixed-capability case for shared-stage assumptions.
+next: Add the conditional mixed-capability input and expected-behavior rule to the brief guidance and pin it with a test.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -20,13 +20,19 @@ references/` matches nothing.
 
 # Outcome
 
-`references/coordination.md` or `references/authoring.md` requires a brief for a
-shared-stage invariant change to name an adversarial acceptance input in which an
-existing participant does not carry the new state.
+The increment-brief guidance requires a shared-stage change that assumes new
+state or capability across heterogeneous participants to name a falsifying
+mixed-capability acceptance input: one participant carries the new state or
+capability and an existing participant in the same stage does not. The brief
+also names the expected fallback or rejection behavior, so a non-panic alone is
+not treated as acceptance.
 
 # Done when
 
-- The brief guidance names the mixed-capability adversarial acceptance input for
-  a shared-stage invariant change.
+- The brief rule is conditional on a shared-stage change assuming participant
+  state or capability, rather than applying to every shared-stage edit.
+- It requires a case combining a participant with the new state or capability
+  and an existing participant without it.
+- It requires expected fallback or rejection behavior for that case.
 - A contract test in `tests/test_skill.py` pins the rule.
 - `make test` passes.

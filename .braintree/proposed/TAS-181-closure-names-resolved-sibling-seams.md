@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P2
-updated: 2026-09-14T11:20:50Z
-summary: Require the brief to name the resolved-sibling compiler seams the change can force.
-next: Name the resolved-sibling compiler seams in the brief and classify a mechanical compiler-forced edit as in-scope in references/coordination.md.
+updated: 2026-09-14T11:27:54Z
+summary: Resolve compiler closure precedence at resolved-sibling seams.
+next: Define known-seam briefing, mechanical closure authorization, and the semantic escalation boundary in references/coordination.md.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -20,18 +20,32 @@ shared `required_profile_params` seam, a test could not construct
 `CompiledFacility`, and `compiled_profile` dropped fields `validate_v2` required.
 Three workers stopped and asked instead of editing.
 
+The existing rules conflict at exactly this boundary: the compile-and-golden
+closure includes every required exhaustive match and struct literal, but the
+same paragraph tells a worker to stop for a path owned by another node. A
+resolved sibling's mechanically forced consumer is both. The repair must state
+which rule wins without authorizing a behavioral or public-contract change to a
+landed seam.
+
 # Outcome
 
-`references/coordination.md` requires the coordinator to name, in the brief, every
-resolved-sibling file the approved change can force — exhaustive matches, struct
-literals, generated schema, goldens, and lockfile — alongside the "gates my
-artifact enters" line, and states that a mechanical compiler-forced edit to a
-resolved sibling's file is in the assigned closure and does not require
-escalation.
+`references/coordination.md` requires the coordinator to name the known
+resolved-sibling compiler seams and concrete paths or owners the approved change
+can force before dispatch. A compiler- or touched-test-forced conformance edit
+to an exhaustive match, constructor, fixture, or derived consumer is in the
+change's closure even when a resolved sibling owns the path; discovering an
+unnamed mechanical consumer widens and is reported with the closure rather than
+triggering an owned-seam escalation. A change to behavior, public contract, or
+the meaning of the landed seam still escalates.
 
 # Done when
 
-- `references/coordination.md` carries the resolved-sibling brief rule and the
-  compiler-forced in-scope classification.
+- `references/coordination.md` requires the brief to name known
+  resolved-sibling compiler paths or owners before dispatch.
+- The closure rule explicitly takes precedence for mechanically forced
+  conformance edits, including a consumer discovered only by the compiler or a
+  touched test.
+- The rule preserves escalation for behavioral, public-contract, or landed-seam
+  meaning changes.
 - A contract test in `tests/test_skill.py` pins the rule.
 - `make test` passes.

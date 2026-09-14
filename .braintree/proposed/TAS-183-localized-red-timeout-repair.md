@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P2
-updated: 2026-09-14T11:20:50Z
-summary: Add the localized-red narrow-repair branch to the timed-out worker recovery procedure.
-next: Add the localized-red branch to references/coordination.md and pin it with a contract test.
+updated: 2026-09-14T11:27:54Z
+summary: Add a bounded localized-red timeout repair branch.
+next: Define the evidence threshold and bounded write set for localized-red recovery in references/coordination.md and pin them with a test.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -19,15 +19,20 @@ second branch, so the blanket revert discards a near-complete slice.
 
 # Outcome
 
-`references/coordination.md` adds the localized-red branch to `## Timed-out
-worker recovery`: when the partial state compiles except for one localized,
-understood failing case and the rest is green, authorize a narrow repair run that
-keeps the partial slice instead of reverting it, and record which branch was
-taken and why.
+`references/coordination.md` adds an evidence-bounded localized-red branch to
+`## Timed-out worker recovery`: retain the partial slice and authorize a narrow
+repair only when the failure is reproducible, localized to the intended change,
+its cause and repair write set are understood, and the remaining touched gates
+are green. Record that evidence, the bounded repair brief, and the branch taken.
+When any condition is not established, retain the existing revert-and-re-scope
+branch.
 
 # Done when
 
 - `references/coordination.md` states the localized-red branch beside the green
-  and non-green branches.
+  and unknown/non-localized red branches.
+- The branch requires a reproducible failure, causal localization, a bounded
+  repair write set, and green remaining touched gates.
+- The fallback remains revert-and-re-scope when that evidence is incomplete.
 - A contract test in `tests/test_skill.py` pins the rule.
 - `make test` passes.

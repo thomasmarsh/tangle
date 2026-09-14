@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P2
-updated: 2026-09-14T11:20:50Z
+updated: 2026-09-14T11:29:16Z
 summary: Make braintree check flag a Gated on line outside # Context.
-next: Add a graph-check finding for a Gated on line outside # Context and cover it with tests.
+next: Add gate-outside-context for exact relation lines and cover valid placement and prose exclusions with tests.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -21,14 +21,15 @@ diagnostic hint. The `next` form rules are already enforced by
 
 # Outcome
 
-`braintree check` reports a finding when a `Gated on` line appears outside a
-node's `# Context` section, so the documented gate placement is machine-checked.
+`braintree check` reports `gate-outside-context` for an authored
+`Gated on [[TARGET]].` relation line outside a node's `# Context` section, while
+the same exact relation inside `# Context` remains valid. Prose that merely
+mentions or quotes the gate syntax is not a relation and remains clean.
 
 # Done when
 
-- `src/braintree/graph_check.py` adds a stable finding code for a `Gated on` line
-  outside `# Context`, and the checker's docstring lists it.
-- `tests/` covers the new finding with a positive probe and a compliant node that
-  stays clean.
-- The new finding code is documented on the checker's finding-code surface.
+- `src/braintree/graph_check.py` adds the stable `gate-outside-context` finding
+  code and the checker's finding-code surface documents it.
+- `tests/` covers an exact gate relation outside `# Context`, a compliant gate
+  inside `# Context`, and prose or quoted syntax that stays clean.
 - `make test` passes.

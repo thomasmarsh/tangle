@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 priority: P2
-updated: 2026-09-14T11:20:50Z
-summary: Stamp updated from the host clock in every writer and verify a future stamp at integration.
-next: State the writer host-clock stamp rule and the integration verification in the contract and pin it with a test.
+updated: 2026-09-14T11:27:54Z
+summary: Reject fresh future updated stamps without reversing inherited clamps.
+next: Define the writer clock read and the fresh-versus-inherited future-stamp integration branches and pin them with a test.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -18,16 +18,27 @@ estimated value". A worker still stamped `updated: 2026-09-14T00:55:00Z` while
 the host clock read `2026-09-14T00:50:52Z`, and the clamp rule then forced every
 later edit to carry the future stamp or move it backwards.
 
+The existing clamp makes a bare "correct every future stamp" rule unsafe. The
+integration base distinguishes a fresh guessed stamp, which may be replaced,
+from a future stamp the worker inherited, which must not move backward.
+
 # Outcome
 
-`SKILL.md` or `references/coordination.md` requires every writer to stamp
-`updated` from the host clock, and the coordinator to verify and correct a future
-stamp at integration.
+`SKILL.md` requires every writer to read the host clock when refreshing
+`updated`, rather than estimate or round it. The coordination contract requires
+the coordinator to compare a submitted future stamp with the integration-base
+value: replace a newly introduced future stamp with a fresh host-clock reading,
+but preserve and note the existing clamp when the base already carried the
+future value.
 
 # Done when
 
-- The contract states the writer host-clock rule, using the actual host clock
-  value rather than an estimate.
-- The contract states the coordinator's integration check for a future stamp.
+- The contract states that every writer reads the actual host clock when it
+  refreshes `updated`, rather than estimating or rounding the value.
+- The integration rule compares a future stamp with the integration base and
+  corrects one introduced by the submitted mutation from a fresh host-clock
+  reading.
+- The integration rule preserves and reports an inherited future-stamp clamp
+  instead of moving it backward.
 - A contract test in `tests/test_skill.py` pins the rule.
 - `make test` passes.
