@@ -60,6 +60,12 @@ chosen: a gate that walks a directory and asserts a property of every file in it
 can reject a correctly authored new file, so the enumerating suite is a path
 constraint the brief surfaces rather than a verification surprise.
 
+When a shared-stage change assumes new state or capability across heterogeneous
+participants, the increment brief names a falsifying mixed-capability acceptance
+input: one participant carries the new state or capability and an existing
+participant in the same stage does not. The brief also names that case's expected
+fallback or rejection behavior, so a non-panic alone is not acceptance.
+
 ## Negative assertions
 
 Prove the absence of a branch on a named mode or scenario with an observable

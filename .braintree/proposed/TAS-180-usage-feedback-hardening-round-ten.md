@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:42:56Z
+updated: 2026-09-14T11:50:45Z
 summary: Fix or dispose the round-ten Tangle FBK-031 findings.
-next: "[[TAS-184-brief-names-mixed-capability-case]]"
+next: "[[TAS-182-worker-host-clock-stamp]]"
 ---
 
 Parent [[THO-027-round-ten-usage-feedback-analysis]].

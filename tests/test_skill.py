@@ -306,6 +306,20 @@ _ENTERED_GATE_BRIEF_RULE = (
     "can reject a correctly authored new file",
 )
 
+# A shared-stage change that assumes new participant state or capability is
+# conditional: it is not every shared-stage edit, but the brief names a
+# falsifying mixed-capability acceptance input and that input's expected behavior
+# so a non-panic alone is not acceptance.
+_MIXED_CAPABILITY_SHARED_STAGE_RULE = (
+    "When a shared-stage change assumes new state or capability across "
+    "heterogeneous participants, the increment brief names a falsifying "
+    "mixed-capability acceptance input",
+    "one participant carries the new state or capability and an existing "
+    "participant in the same stage does not",
+    "names that case's expected fallback or rejection behavior",
+    "so a non-panic alone is not acceptance",
+)
+
 # One session records one session `FBK` node and the coordinator owns it, so
 # parallel workers do not each create one: a worker reports friction in its run
 # report instead of creating a node, and only the coordinator can admit the
@@ -1154,6 +1168,10 @@ def test_negative_assertion_names_its_probe_tokens_and_modules() -> None:
 
 def test_brief_names_the_gates_an_entered_directory_enumerates() -> None:
     _assert_contains(_reference("authoring"), _ENTERED_GATE_BRIEF_RULE)
+
+
+def test_brief_requires_a_falsifying_mixed_capability_case() -> None:
+    _assert_contains(_reference("authoring"), _MIXED_CAPABILITY_SHARED_STAGE_RULE)
 
 
 def test_single_session_feedback_node_is_coordinator_owned() -> None:
