@@ -45,6 +45,12 @@ wikilinks supply graph relationships. Every non-root node has one primary `Paren
 or `Area` link that reaches a root hub. Relationships are stored in one direction;
 backlinks and inverse views are derived by search.
 
+<p align="center">
+  <img src="assets/obsidian-graph.png" alt="This repository's .braintree vault visualized in Obsidian Graph view" width="100%">
+  <br>
+  <em>This repository's own <code>.braintree/</code> vault visualized in Obsidian Graph view.</em>
+</p>
+
 A node carries a semantic `context_rev`. Consumers pin the revision they used, so a
 meaningful change can make stale assumptions visible without treating every edit as
 a semantic change.
