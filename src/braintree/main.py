@@ -30,6 +30,7 @@ from . import (
     memory_corpus,
     memory_diagnostics,
     memory_pilot,
+    migration,
     node_record,
     node_references,
     packet,
@@ -55,6 +56,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("location", "show the stable project identity and state path"),
     ("init", "create or repair local coordination state"),
     ("migrate [ROOT]", "rename a legacy nodes/ vault to .braintree/"),
+    (
+        "stationarize [NODES] [--apply]",
+        "move legacy status-directory nodes into the stationary canonical store",
+    ),
     ("allocate PREFIX [COUNT]", "atomically allocate COUNT consecutive PREFIX-NNN ids"),
     (
         "reservations",
@@ -388,6 +393,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _semantic(args[1:])
     if command == "benchmark":
         return _benchmark(args[1:])
+    if command == "stationarize":
+        return migration.main(args[1:])
     if command in _COORDINATION_COMMANDS:
         return cli.main(args)
     return _usage_error(f"unknown command: {command}")

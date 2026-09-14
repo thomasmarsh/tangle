@@ -169,6 +169,26 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_AUTHORING_TOPIC,
     ),
+    "stationarize": _verb(
+        "Move legacy status-directory nodes into the stationary canonical store.",
+        usage="braintree stationarize [NODES] [--apply]",
+        operands=(
+            ("NODES", "vault directory; defaults to ./.braintree"),
+            ("--apply", "perform the planned moves; default is a read-only plan"),
+        ),
+        outputs=(
+            ("result", "planned, migrated, or no-op"),
+            ("moves", "id,status,source,target rows for a plan"),
+            ("moved/project_uid", "the applied move count and committed authority"),
+        ),
+        hazards=(
+            "The default is a read-only plan; only --apply writes or moves files.",
+            "Preserves identity, basename, and wikilinks; every plan is "
+            "collision-checked before any write.",
+            "A failed apply rolls every completed move back to its original bytes.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
     "allocate": _verb(
         "Atomically reserve PREFIX-NNN across worktrees.",
         usage="braintree allocate PREFIX [COUNT]",

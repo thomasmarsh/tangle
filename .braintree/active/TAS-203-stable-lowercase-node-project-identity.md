@@ -1,9 +1,9 @@
 ---
 context_rev: 3
 priority: P0
-updated: 2026-09-14T22:54:08Z
+updated: 2026-09-14T23:34:25Z
 summary: Implement stable lowercase node and project identity.
-next: Implement stationary canonical writers and the explicit compatibility migration.
+next: Record the stationary-storage benchmark evidence for the derived-index architecture.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -65,3 +65,21 @@ Updated capture, index-upkeep, decomposition, installer, and sidecar-boundary
 tests to assert canonical identities while preserving legacy-reader fixtures.
 Remaining: implement the collision-safe explicit migration and record the
 storage benchmark evidence.
+
+Completed the explicit compatibility-migration slice: `migration.py` and
+`braintree stationarize [NODES] [--apply]` plan every legacy status-directory
+node's move to `canonical/<suffix>/` and reject the whole vault before writing
+anything on a duplicate identity or an occupied target. Apply preserves
+identity, basename, and wikilinks, so Git still records a rename and no
+consumer reference changes; it adds the authoritative `status` field, refreshes
+only `updated`, and leaves `context_rev` unchanged because the node's meaning is
+unchanged. A failed apply restores every journalled source byte-for-byte, a
+case-only rename is staged through an intermediate name, and the verb plans by
+default so a dry run writes nothing. Made `tests/test_bt_index.py` derive the
+live frontier through the shared authority-bearing file set instead of a
+status-directory glob, which the stationary layout had invalidated. New
+migration tests, `ruff`, and `mypy` pass; `uv run pytest` is green except the
+pre-existing `test_memory_authority` frozen-artifact derivation failure
+(confirmed failing before this change). Remaining: rerun and record the
+stationary-storage benchmark under the derived-index architecture and its layout
+and rollback evidence.
