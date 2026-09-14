@@ -1,7 +1,7 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P0
-updated: 2026-09-14T19:35:47Z
+updated: 2026-09-14T19:47:25Z
 summary: Document and verify the opt-in same-directory workflow.
 next: Add conditional guidance and exercise the complete local workflow.
 ---
@@ -23,7 +23,7 @@ A fresh agent can choose correctly between direct editing, assigned-write-set co
 - `SKILL.md` adds only a compact escalation rule and routes proposal or integration users to one conditional reference; it does not import the envelope, reconciliation pipeline, or receipt checklist into ordinary mutation instructions.
 - The conditional reference explains local operating conditions, unsupported repository effects, submit/inspect/pending/reconcile/decide/integrate/recover flow, semantic stop conditions, and the return to canonical Markdown and Git. Per-command help owns operands, outputs, exit codes, and hazards.
 - Core documentation states that Braintree performs the complete canonical hash census and maintains generated Markdown navigation pages automatically. Clients never maintain indexes, summaries, aliases, status pages, external proxies, or symlink projections.
-- Installed guidance documents lowercase local and `alias:node` input, committed project UID authority, the distinct durable cross-project reference grammar, legacy uppercase compatibility, stable canonical paths, and why content hashes identify versions rather than nodes.
+- Installed guidance documents full 128-bit lowercase Crockford Base32 node and project IDs, lowercase local and `alias:node` input, committed project UID authority, the distinct durable cross-project reference grammar, legacy uppercase compatibility, stable canonical paths, and why content hashes identify versions rather than nodes. It also explains that collision-aware terminal abbreviations are generated presentation only, while durable and machine-readable surfaces retain full IDs.
 - Packaging and installer tests prove the new reference and command modules ship and that `braintree help` exposes them only through the documented topic route.
 - An end-to-end multi-process fixture covers two clients submitting exact duplicate work, conflicting amendments, concurrent parent advances, a disappearing producer, and two racing integrators; every terminal result is explainable from canonical evidence.
 - A control fixture proves a single writer can edit a canonical node directly, preserve its mtime, and receive the changed content and refreshed Markdown view from the next ordinary command without reading, creating, or managing proposals, leases, decisions, acceptances, receipts, index metadata, or projection files.

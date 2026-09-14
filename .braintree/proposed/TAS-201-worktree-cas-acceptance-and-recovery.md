@@ -1,7 +1,7 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P1
-updated: 2026-09-14T19:35:47Z
+updated: 2026-09-14T19:47:25Z
 summary: Implement compare-and-swap worktree acceptance and recovery.
 next: Accept validated worktree candidates through an expected-head boundary.
 ---
@@ -21,7 +21,7 @@ A validated worktree candidate becomes one coherent canonical repository commit 
 # Done when
 
 - Apply reruns the complete target-store hash census and rereads the expected target, proposal and decision digests, retained bases, and required Git objects immediately before acceptance; any movement invalidates the plan.
-- Real lowercase collision-resistant node IDs and one host-clock timestamp are materialized into the exact candidate, then graph checking and all plan-required repository tests rerun on those exact bytes rather than the illustrative dry-run tree.
+- Real node IDs with lowercase type prefixes and exact 128-bit Crockford Base32 payloads, plus one host-clock timestamp, are materialized into the exact candidate; graph checking and all plan-required repository tests then rerun on those exact bytes rather than the illustrative dry-run tree.
 - The acceptance record and graph plus repository effects inhabit one candidate tree. Commit construction avoids the shared working-tree index, and the target ref update uses compare-and-swap semantics against the expected old OID.
 - A failed ref update publishes no terminal receipt, canonical mapping, index delta, or Markdown projection. The losing attempt discards its tentative authority and timestamp and replans against the winning head; a deterministic candidate ID may recur but is not canonical before CAS, and legacy same-host reservations do not allocate new-format identities.
 - After success, receipts identify the integration, proposals, dispositions, canonical IDs, commit OID, relevant gates, and explicit decisions. Retry searches canonical history first and reconstructs missing receipts instead of applying again.

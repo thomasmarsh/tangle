@@ -187,13 +187,18 @@ A new-node contribution can use a proposal-scoped symbol, addressed globally as
 mapping in the acceptance record and receipt. References among nodes created by
 one bundle use proposal-scoped symbols until that mapping is fixed.
 
-Late assignment does not require a shared numeric sequence. A stronger candidate
-is a lowercase, globally collision-resistant ID generated from acceptance-local
-entropy or from a domain-separated digest of the proposal identity and local
-symbol. The type prefix remains part of the identity (`tas-...`, `tho-...`,
-`def-...`, `idx-...`, or `fbk-...`), while the content hash remains the version
-and optimistic-concurrency witness. A hash of the current Markdown bytes must not
-be the logical ID because an ordinary edit would change it; a hash of the initial
+Late assignment does not require a shared numeric sequence. The canonical payload
+is exactly 128 bits encoded as 26 lowercase Crockford Base32 characters. Its
+grammar is `[0-7][0-9a-hjkmnp-tv-z]{25}`: the restricted first character prevents
+noncanonical 130-bit encodings, and the alphabet omits `i`, `l`, `o`, and `u`.
+The payload is generated from acceptance-local cryptographic entropy or from a
+domain-separated 128-bit digest of the proposal identity and local symbol, as the
+versioned identity contract specifies. The type prefix remains part of the
+identity (`tas-...`, `tho-...`, `def-...`, `dec-...`, `idx-...`, or `fbk-...`),
+so a canonical node ID looks like
+`tas-01k5v6m3x8f2q7c9d4hn8w2pza`. The content hash remains the version and
+optimistic-concurrency witness. A hash of the current Markdown bytes must not be
+the logical ID because an ordinary edit would change it; a hash of the initial
 bytes would cease to be a content address.
 
 Canonical identity spelling should be lowercase ASCII. A CLI may accept legacy or
@@ -204,21 +209,32 @@ case-insensitive filesystems cannot disagree. Existing uppercase numeric IDs
 remain readable; any path migration uses an intermediate name rather than relying
 on a case-only rename.
 
+Compact human terminal views may render a collision-aware abbreviation such as
+`tas-01k5v6m3...`: use at least eight payload characters and lengthen the prefix
+deterministically until it is unique within the rendered result set. The ellipsis
+marks it as presentation, not an identifier. Canonical Markdown, filenames,
+wikilinks, proposals, plans, decisions, receipts, logs intended as durable
+evidence, and structured or machine-readable output always carry the full ID. A
+full-width terminal mode remains available, and no client is responsible for
+choosing or maintaining abbreviations.
+
 ### Project identity and reference scope are distinct from node identity
 
 A globally unique node ID makes an unqualified reference safe inside its own
 project, but a reference to another project still needs durable authority and a
-way to locate that project. Introduce a random, immutable project UID committed
-with the vault and shared by its clones. This is distinct from the current
-same-host sidecar identity derived from a Git common-directory path, which is a
-local storage key and changes across clones.
+way to locate that project. Introduce a cryptographically random, immutable
+128-bit project UID, encoded with the same 26-character lowercase Crockford
+Base32 payload and a `prj-` prefix, committed with the vault and shared by its
+clones. For example: `prj-04r8b1t7n2c6m9x3q5f0hkwdza`. This is distinct from
+the current same-host sidecar identity derived from a Git common-directory path,
+which is a local storage key and changes across clones.
 
 A lowercase project alias such as `tangle` is presentation and local registry
 state, not durable identity. Clients may accept a convenient spelling such as
-`tangle:tas-ab2bbaa9bfef22c941d07f3b`, with the unqualified node ID meaning the
-current project, but a sealed proposal, receipt, or canonical cross-project edge
-expands the alias to an immutable project UID. Aliases may be renamed or collide;
-the UID settles identity and the registry settles local location.
+`tangle:tas-01k5v6m3x8f2q7c9d4hn8w2pza`, with the unqualified node ID meaning
+the current project, but a sealed proposal, receipt, or canonical cross-project
+edge expands the alias to an immutable project UID. Aliases may be renamed or
+collide; the UID settles identity and the registry settles local location.
 
 Ordinary wikilinks remain local-vault references. A colon-qualified external
 reference must not masquerade as an Obsidian wikilink: Braintree owns a separate
@@ -748,7 +764,8 @@ never claims must still be unable to bypass acceptance preconditions.
 1. Canonical Markdown and Git remain the durable authority for accepted graph
    knowledge.
 2. Canonical nodes have stable paths and immutable lowercase logical identities;
-   content hashes identify revisions, not nodes.
+   their IDs use a 128-bit, 26-character Crockford Base32 payload, and content
+   hashes identify revisions, not nodes.
 3. Every project-scoped graph command hashes the complete canonical node store
    before answering, so direct point edits, additions, and deletions reconcile
    automatically; repository-independent help and version operations need no vault.
@@ -758,7 +775,8 @@ never claims must still be unable to bypass acceptance preconditions.
    symlinks; Braintree regenerates every supported projection from canonical
    Markdown.
 6. A committed immutable project UID supplies cross-clone authority. Lowercase
-   project aliases are mutable presentation and local lookup state.
+   project aliases and collision-aware terminal abbreviations are mutable
+   presentation and local lookup state; neither replaces a full canonical ID.
 7. Local wikilinks remain meaningful local-vault links. Cross-project references
    use a distinct durable Braintree grammar and may gain Obsidian links only
    through a generated projection.
@@ -811,7 +829,8 @@ never claims must still be unable to bypass acceptance preconditions.
 The smallest useful experiments are narrower than a complete orchestration
 system:
 
-1. Define and schema-test lowercase project and node identity, local and qualified
+1. Define and schema-test 128-bit lowercase Crockford Base32 project and node
+   identity, collision-aware human terminal abbreviations, local and qualified
    reference grammar, the stable canonical path, compatibility with uppercase
    numeric IDs, and the distinction between logical identity and content hash.
 2. Re-run the stationary-storage comparison with the derived sidecar, a full-file

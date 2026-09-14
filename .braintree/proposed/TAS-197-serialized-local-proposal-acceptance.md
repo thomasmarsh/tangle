@@ -1,7 +1,7 @@
 ---
-context_rev: 2
+context_rev: 3
 priority: P0
-updated: 2026-09-14T19:35:47Z
+updated: 2026-09-14T19:47:25Z
 summary: Implement serialized local proposal acceptance and recovery.
 next: Implement local integration, terminal evidence, and crash recovery.
 ---
@@ -22,7 +22,7 @@ One local integrator can accept a fully decided proposal set exactly once, while
 
 - `integrate --dry-run` consumes a reconciliation plan and explicit decision artifacts, validates the symbolic candidate, and changes neither canonical Markdown nor terminal metadata.
 - Apply acquires a same-host integration lease, reruns the complete canonical-store hash census, rechecks expected Git head and every operation precondition, verifies plan and proposal digests, and refuses unresolved or stale components. The lease provides exclusion only, never authority.
-- Lowercase collision-resistant permanent node IDs are generated under the stable identity contract only for an acceptance attempt; no shared numeric sequence is needed for new-format nodes. One real host timestamp is materialized at acceptance, and compound create, amend, transition, advance, supersede, retire, or restructure operations apply entirely or not at all when v1 supports them.
+- Permanent node IDs use the stable contract's lowercase type prefix and exact 128-bit Crockford Base32 payload and are generated only for an acceptance attempt; no shared numeric sequence is needed for new-format nodes. One real host timestamp is materialized at acceptance, and compound create, amend, transition, advance, supersede, retire, or restructure operations apply entirely or not at all when v1 supports them.
 - The exact candidate passes plain `braintree check` and all gates required by the accepted graph-only change before the specified canonical boundary is crossed. Unsupported or unbound repository effects fail closed.
 - A unique acceptance record captures the integration ID, selected proposal digests, dispositions, ID mappings, decision evidence, gate evidence, and plan hash without attempting to contain its own commit hash.
 - Terminal receipts are idempotent and recoverable from canonical acceptance evidence after a crash. Conflicting terminal dispositions are errors; `needs-revision` remains nonterminal and points to a new proposal when revised.

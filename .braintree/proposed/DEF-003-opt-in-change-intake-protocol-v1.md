@@ -1,6 +1,6 @@
 ---
-context_rev: 2
-updated: 2026-09-14T19:35:47Z
+context_rev: 3
+updated: 2026-09-14T19:47:25Z
 summary: Define the opt-in change-intake protocol v1.
 ---
 
@@ -19,8 +19,9 @@ A versioned change-intake contract defines one normalized internal model without
 # Done when
 
 - The definition names the exact escalation triggers for direct editing, assigned-write-set coordination, local proposal intake, and worktree reconciliation.
-- The definition separates immutable logical node identity, content hashes, stable canonical paths, project authority, project aliases, and human-facing projections. New canonical identifiers and reference components use lowercase ASCII while legacy uppercase numeric IDs remain readable through an explicit migration window.
-- A committed random project UID remains stable across clones and is distinct from the same-host sidecar key. Unqualified node references mean the current project, `alias:node` is input and display shorthand, and durable cross-project references expand aliases to the project UID through a grammar that does not masquerade as a local wikilink.
+- The definition separates immutable logical node identity, content hashes, stable canonical paths, project authority, project aliases, abbreviations, and human-facing projections. New node IDs use a type prefix plus exactly 128 bits encoded as 26 lowercase Crockford Base32 characters with canonical payload grammar `[0-7][0-9a-hjkmnp-tv-z]{25}`; legacy uppercase numeric IDs remain readable through an explicit migration window.
+- A committed cryptographically random project UID uses the same 128-bit lowercase Crockford Base32 payload with a `prj-` prefix, remains stable across clones, and is distinct from the same-host sidecar key. Unqualified node references mean the current project, `alias:node` is input and display shorthand, and durable cross-project references expand aliases to the project UID through a grammar that does not masquerade as a local wikilink.
+- Compact human terminal views may show a type prefix plus at least eight payload characters and an explicit ellipsis, lengthening deterministically until unique in the rendered result set. Full canonical IDs remain available in a full-width terminal mode and mandatory in canonical or durable artifacts and structured or machine-readable output; abbreviations never become accepted or stored identities and require no client-managed index.
 - The stable-store format makes status authoritative in node content rather than path and states whether an immutable creation label remains in the basename. Content hashes identify exact bytes and optimistic preconditions, never mutable logical identity.
 - Every project-scoped command that reads or mutates graph state performs a complete exact-byte hash census of canonical nodes before answering, reconciles new, changed, and vanished files into the derived index transactionally, and makes no client maintain changed-path hints. Mutation commands publish their known post-write delta without a redundant second census; global help, version, and installation operations remain vault-independent.
 - Braintree generates deterministic disposable Markdown pages for status, area, priority, recent, and registered external-project views using canonical summaries as link display text. Views and optional symlinks are excluded from discovery and authority, and their absence or corruption cannot hide a canonical node.
