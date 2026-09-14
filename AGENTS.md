@@ -2,6 +2,14 @@
 
 Instructions for agents working in the Braintree repository.
 
+This file is the always-loaded hard store. It carries only the invariants that
+must hold before [`SKILL.md`](SKILL.md) is loaded, and it routes every other
+rule to the surface that already owns it: [`SKILL.md`](SKILL.md) and the
+references it names own the Braintree contract, and [`README.md`](README.md)
+owns installation. Promote a vault decision into this file only through a
+settled `DEC` node that names the promoted rule in its consequences; the
+promotion and condensation contract is [[THO-020-agents-md-braintree-bridge]].
+
 ## Conventional commits are mandatory
 
 Every commit in this repository MUST use the
@@ -49,42 +57,18 @@ This repository is the source of truth for the Braintree skill. Agents MUST
 plan, track, and execute work through it rather than keeping planning in chat
 or ad hoc notes.
 
-1. Read [`SKILL.md`](SKILL.md) before starting, and follow its contracts for
-   the vault, node admission, indexes, reachability, dependency revisions, and
-   mutation rules.
-2. Treat `.braintree/` as the authoritative vault. Markdown is the durable,
-   human-visible authority; the SQLite sidecar is derived, disposable local
-   coordination state. Never edit the sidecar database directly.
-3. Work from the graph: orient through `.braintree/index-map.md`, derive the
-   frontier from hub membership and each coordinating node's `next`, and
-   prefer advancing an existing node over creating a new one. Admit a new node
-   only when its outcome is likely to change a future decision or action.
-4. Keep node content and its status directory move coherent, update `updated`
-   on every mutation, and increment `context_rev` only for a consumer-relevant
-   semantic change.
-5. Validate graph mutations before finishing:
-
-   ```sh
-   braintree check
-   braintree index   # optional hybrid sidecar index
-   ```
-
-   A commit that deliberately stages a semantic `context_rev` bump without yet
-   reconciling its pinned consumers runs the sanctioned staged-staleness gate
-   instead: `braintree check --allow-stale`. It still requires every
-   context edge to be pinned and relaxes only the revision equality. Reconcile
-   each consumer before it executes and before finishing, so the plain gate
-   passes and a shipped vault has no staged staleness.
-
-6. When the skill is installed into another project, use the documented
-   installer (`./scripts/install.sh --codex|--claude|--pi --project <root>` or
-   `./scripts/install-claude.sh --project <root>`) and the installed
-   `braintree` command from that project root. A bare `./scripts/install.sh`
-   selects targets interactively from a terminal; an automated run must name the
-   explicit flags.
-
-Changes to `SKILL.md` change the skill contract and are covered by
-`tests/test_skill.py`; keep those contract strings and the live vault valid.
+1. Read [`SKILL.md`](SKILL.md) before starting and follow it for the vault,
+   node admission, indexes, reachability, dependency revisions, and mutation
+   rules. The resolved node that settled a rule owns its rationale and
+   evidence, so this file does not restate that rule.
+2. Run `braintree check` before committing or handing off graph mutations. Use
+   `braintree check --allow-stale` only for a deliberately staged `context_rev`
+   bump, exactly as `SKILL.md` and `braintree help dependencies` state.
+3. Install into another project with the documented installer and the installed
+   `braintree` command from that project root; [`README.md`](README.md) names
+   the explicit flags an automated run must pass.
+4. Changes to `SKILL.md` change the skill contract and are covered by
+   `tests/test_skill.py`; keep those contract strings and the live vault valid.
 
 ## Before finishing
 

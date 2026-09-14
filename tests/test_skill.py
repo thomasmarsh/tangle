@@ -726,6 +726,25 @@ _IMPLEMENTATION_LEAKS = (
     ".pi/skills",
 )
 
+# `AGENTS.md` is the always-loaded hard store: it carries only the invariants
+# that must hold before `SKILL.md` is loaded and routes every other rule to the
+# surface that owns it. A condensing pass may not drop a load-bearing rule, so
+# the invariant set is pinned here; the promotion and condensation contract is
+# `[[THO-020-agents-md-braintree-bridge]]`, and promoting a rule into this file
+# re-pins the set deliberately.
+_AGENTS_PROMOTED_INVARIANTS = (
+    "Conventional Commits",
+    "plan, track, and execute work through it",
+    "Read [`SKILL.md`](SKILL.md) before starting",
+    "Run `braintree check` before committing or handing off graph mutations",
+    "`braintree check --allow-stale` only for a deliberately staged "
+    "`context_rev` bump",
+    "`tests/test_skill.py`; keep those contract strings and the live vault "
+    "valid",
+    "make test",
+    "make test-benchmarks",
+)
+
 # Every public verb, as the argv prefix a caller types before `--help`.
 _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("status",),
@@ -888,6 +907,11 @@ def test_documented_surfaces_hide_the_implementation() -> None:
         text = _read(path)
         leaks = [value for value in _IMPLEMENTATION_LEAKS if value in text]
         assert not leaks, f"{path.name} leaks implementation detail: {leaks!r}"
+
+
+def test_agents_md_keeps_the_promoted_invariants() -> None:
+    """The hard store keeps every rule that binds before the skill is loaded."""
+    _assert_contains(_read(_AGENTS), _AGENTS_PROMOTED_INVARIANTS)
 
 
 def test_core_stays_concise() -> None:

@@ -560,10 +560,17 @@ def test_frontier_matches_markdown_on_live_vault(run_bt: RunBt) -> None:
         "BT_SIDECAR_DIR": None,
         "BT_PROJECT_ID": None,
     }
+    expected = _markdown_frontier_ids(nodes)
     result = run_bt("frontier", cwd=_ROOT, env=env)
     assert result.returncode == 0
+    if not expected:
+        # A vault whose every node is resolved has no frontier, and the verb
+        # states that instead of printing an empty TOON table, so the
+        # Markdown recipe and the verb still agree on zero nodes.
+        assert result.stdout.strip() == "frontier: 0 frontier nodes"
+        return
     rows = _toon_rows(result.stdout, "frontier")
-    assert {row[0] for row in rows} == _markdown_frontier_ids(nodes)
+    assert {row[0] for row in rows} == expected
 
 
 def test_frontier_reports_zero_nodes(tmp_path: Path, run_bt: RunBt) -> None:
