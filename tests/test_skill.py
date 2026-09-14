@@ -175,14 +175,14 @@ _COMPLETION_RECEIPT_RULE = (
 # updates in the owner's tests in its own write set, and the coordinator decides
 # at integration whether the owner's `context_rev` needs a bump.
 _ADDITIVE_RESOLVED_SEAM_FIELD_RULE = (
-    "an additive, optional, behavior-preserving field on a seam a resolved "
+    "An additive, optional, behavior-preserving field on a seam a resolved "
     "sibling owns, when the assigned node's `Done when` requires it, is "
     "authored by the assigned worker rather than escalated",
     "records the field and the affected consumer in its own",
     "does not edit the resolved node",
     "mechanical literal updates in the owner's tests stay inside the consumer's "
     "write set",
-    "the coordinator decides at integration whether the owner's `context_rev` "
+    "The coordinator decides at integration whether the owner's `context_rev` "
     "needs a bump",
 )
 
@@ -752,7 +752,7 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
     ),
     "dependencies": (
         "The pin must terminate its line",
-        "record it as a gate instead of a context edge",
+        "Record it as a gate instead of a context edge",
         "never pin the gate",
         "`braintree check --allow-stale`",
         "Reconciliation is separate work owned by each consumer",
