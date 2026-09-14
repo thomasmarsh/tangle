@@ -18,6 +18,7 @@ scope=
 root=
 dry_run=false
 semantic=false
+selector=false
 presentation=${BT_INSTALL_PRESENTATION:-generic}
 
 if [ "$#" -eq 1 ]; then
@@ -37,49 +38,52 @@ field() {
 usage() {
   if [ "$presentation" = claude ]; then
     field description 'Install Braintree for Claude Code into an explicit project or home-root directory.'
-    field usage 'scripts/install-claude.sh (--project DIR | --home DIR) [--dry-run] [--semantic]'
+    field usage 'scripts/install-claude.sh [--project DIR | --home DIR] [--dry-run] [--semantic]'
+    field default 'With no destination flag, installs the shared command and the Claude Code skill into $HOME.'
     field launcher 'DIR/.local/bin/braintree, the single documented entry point'
     field program 'DIR/.local/share/braintree, the one shared program per root the launcher runs'
     printf 'options[7]{flag,meaning}:\n'
     printf '  "--project DIR","install to DIR/.claude/skills/braintree"\n'
-    printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
+    printf '  "--home DIR","use an explicit home root; defaults to $HOME when omitted"\n'
     printf '  "--dry-run","report the destination without writing"\n'
     printf '  "--semantic","request the optional semantic extra in the generated launcher"\n'
     printf '  "--help, -h","show this reference"\n'
     printf '  "--version","print the version only when passed alone"\n'
     printf '  "-v, -V","aliases for bare --version"\n'
     printf 'examples[4]{command,purpose}:\n'
-    printf '  "./scripts/install-claude.sh --project /path/to/project --dry-run","inspect a Claude Code project destination"\n'
+    printf '  "./scripts/install-claude.sh","install the shared command and the Claude Code skill into $HOME"\n'
     printf '  "./scripts/install-claude.sh --project /path/to/project","install for a Claude Code project"\n'
-    printf '  "./scripts/install-claude.sh --home $HOME --semantic","install for Claude Code with the optional semantic extra"\n'
-    printf '  "./scripts/install-claude.sh --home $HOME","install for Claude Code only with an explicit home root"\n'
+    printf '  "./scripts/install-claude.sh --home $HOME --semantic","install with the optional semantic extra"\n'
+    printf '  "./scripts/install-claude.sh --project /path/to/project --dry-run","inspect a Claude Code project destination"\n'
     return
   fi
 
-  field description 'Install Braintree into an explicit project or home-root directory, or select discovered targets from a terminal.'
-  field usage 'scripts/install.sh [(--codex | --claude | --pi) (--project DIR | --home DIR)] [--dry-run] [--semantic]'
-  field interactive 'With no agent or destination, discovers the enclosing project root and the home root and multi-selects their agent targets; a non-interactive run must name both.'
+  field description 'Install Braintree into an explicit project or home-root directory, or select targets interactively.'
+  field usage 'scripts/install.sh [--codex | --claude | --pi] [--project DIR | --home DIR] [--dry-run] [--semantic] [--select]'
+  field default 'With no flags, installs the shared command and every agent skill into $HOME; pass --select to choose other targets.'
+  field interactive 'With --select, discovers the enclosing project root and the home root and multi-selects their agent targets; a bare --select needs a terminal or BT_INSTALL_SELECTION.'
   field claude_wrapper 'scripts/install-claude.sh omits --claude and accepts the same destination flags.'
   field launcher 'DIR/.local/bin/braintree, the single documented entry point'
   field program 'DIR/.local/share/braintree, the one shared program per root the launcher runs'
-  printf 'options[10]{flag,meaning}:\n'
+  printf 'options[11]{flag,meaning}:\n'
   printf '  "--codex","install to DIR/.agents/skills/braintree"\n'
   printf '  "--claude","install to DIR/.claude/skills/braintree"\n'
   printf '  "--pi","install to DIR/.pi/skills/braintree (project) or DIR/.pi/agent/skills/braintree (home)"\n'
   printf '  "--project DIR","use an explicit project directory"\n'
-  printf '  "--home DIR","use an explicit home root; never defaults to $HOME"\n'
+  printf '  "--home DIR","use an explicit home root; defaults to $HOME when the scope is omitted"\n'
+  printf '  "--select","choose discovered targets interactively instead of the defaults"\n'
   printf '  "--dry-run","report the destination without writing"\n'
   printf '  "--semantic","request the optional semantic extra in the generated launcher"\n'
   printf '  "--help, -h","show this reference"\n'
   printf '  "--version","print the version only when passed alone"\n'
   printf '  "-v, -V","aliases for bare --version"\n'
   printf 'examples[6]{command,purpose}:\n'
-  printf '  "./scripts/install.sh","discover install targets and multi-select them from a terminal"\n'
+  printf '  "./scripts/install.sh","install the shared command and every agent skill into $HOME"\n'
+  printf '  "./scripts/install.sh --pi","install pi at $HOME"\n'
+  printf '  "./scripts/install.sh --select","choose discovered targets interactively"\n'
   printf '  "./scripts/install.sh --codex --project /path/to/project --dry-run","inspect a Codex project destination"\n'
-  printf '  "./scripts/install.sh --claude --project /path/to/project","install for a Claude Code project"\n'
   printf '  "./scripts/install.sh --pi --project /path/to/project","install for a pi project"\n'
   printf '  "./scripts/install.sh --pi --home $HOME --semantic","install with the optional semantic extra"\n'
-  printf '  "./scripts/install.sh --codex --home $HOME","install for Codex only with an explicit home root"\n'
 }
 
 usage_error() {
@@ -279,14 +283,57 @@ EOF
   fi
 }
 
-# Bare-invocation selector: discover candidate roots, cross them with the
+# Zero-config install: install the shared command and every supported agent at
+# one root. The shared program and launcher are written once per root, so the
+# first agent may report ``installed`` while the rest report ``no-op``; the
+# aggregate result is ``installed`` when any target changed. Rows use the same
+# shape as the interactive selector, so one parser reads both.
+install_group() {
+  group_scope=$1
+  group_root=$2
+  [ -d "$group_root" ] || runtime_error "directory does not exist: $group_root"
+  group_changed=false
+  group_rows=
+  group_count=0
+  for group_agent in codex claude pi; do
+    install_target "$group_agent" "$group_scope" "$group_root"
+    group_count=$((group_count+1))
+    if [ "$outcome" = installed ]; then
+      group_changed=true
+    fi
+    group_rows="${group_rows}  \"${group_agent}\",\"${destination}\",\"${program_dir}\",\"${launcher}\",\"${outcome}\"
+"
+  done
+  if [ "$dry_run" = true ]; then
+    group_result=dry-run
+  elif [ "$group_changed" = true ]; then
+    group_result=installed
+  else
+    group_result=no-op
+  fi
+  field result "$group_result"
+  field selected "$group_count"
+  field scope "$group_scope"
+  field root "$group_root"
+  field program "$program_dir"
+  if [ "$dry_run" != true ]; then
+    field launcher "$launcher"
+  fi
+  printf 'outcomes[%s]{agent,destination,program,launcher,result}:\n' "$group_count"
+  printf '%s' "$group_rows"
+  if [ "$semantic" = true ] && [ "$dry_run" != true ]; then
+    field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
+  fi
+}
+
+# Interactive selector: discover candidate roots, cross them with the
 # supported agents, present a numbered multi-select, and install every selected
 # target. A non-terminal stdin never prompts, so an automated run stays
 # deterministic instead of hanging. ``BT_INSTALL_SELECTION`` supplies the
 # selection directly, which exercises the selector without a terminal.
 interactive_select() {
   if [ -z "${BT_INSTALL_SELECTION+set}" ] && [ ! -t 0 ]; then
-    field error 'no install target: stdin is not a terminal; pass --codex, --claude, or --pi with --project DIR or --home DIR'
+    field error 'no install target: a bare --select needs a terminal; pass --codex, --claude, or --pi with --project DIR or --home DIR'
     field help 'scripts/install.sh --codex --project <directory> [--dry-run]'
     exit 2
   fi
@@ -413,28 +460,45 @@ while [ "$#" -gt 0 ]; do
       ;;
     --dry-run) dry_run=true ;;
     --semantic) semantic=true ;;
+    --select) selector=true ;;
     --help|-h) usage; exit 0 ;;
     *) usage_error "unknown argument: $1" ;;
   esac
   shift
 done
 
-# A bare invocation selects targets interactively; the explicit flags remain the
-# non-interactive contract.
-if [ -z "$agent" ] && [ -z "$scope" ]; then
+# A bare invocation installs the zero-config defaults; --select opts into the
+# interactive selector, and the explicit flags stay the non-interactive
+# contract. An omitted destination scope is the home root, so the shared command
+# lands on PATH; an omitted agent installs every supported agent.
+if [ "$selector" = true ]; then
+  if [ -n "$agent" ] || [ -n "$scope" ]; then
+    usage_error '--select cannot be combined with an agent or destination'
+  fi
   interactive_select
   exit 0
 fi
 
-[ -n "$agent" ] && [ -n "$scope" ] || usage_error 'agent and destination scope are required'
-install_target "$agent" "$scope" "$root"
-field result "$outcome"
-field agent "$agent"
-field destination "$destination"
-field program "$program_dir"
-if [ "$dry_run" != true ]; then
-  field launcher "$launcher"
-  if [ "$semantic" = true ]; then
-    field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
+if [ -z "$scope" ]; then
+  scope=home
+  root=${HOME-}
+  if [ -z "$root" ]; then
+    usage_error 'no home root: set HOME or pass --project DIR'
   fi
+fi
+
+if [ -n "$agent" ]; then
+  install_target "$agent" "$scope" "$root"
+  field result "$outcome"
+  field agent "$agent"
+  field destination "$destination"
+  field program "$program_dir"
+  if [ "$dry_run" != true ]; then
+    field launcher "$launcher"
+    if [ "$semantic" = true ]; then
+      field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
+    fi
+  fi
+else
+  install_group "$scope" "$root"
 fi

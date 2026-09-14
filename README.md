@@ -70,38 +70,33 @@ has semantic authority over scope.
 
 ## Install
 
-Clone this repository. A bare run from the project you want discovers the
-enclosing project root and the home root, presents their Codex, Claude Code, and
-pi destinations as a numbered multi-select, and installs every selected target:
+Clone this repository and run the installer with no arguments. It installs the
+shared `braintree` command and the Codex, Claude Code, and pi skills into your
+home root, so `~/.local/bin/braintree` is ready with no configuration:
 
 ```sh
 ./scripts/install.sh
 ```
 
-A non-interactive run must name the agent and the destination explicitly. The
-installers never write to `$HOME` implicitly: a home-root install happens only
-when you select it or pass `--home`.
+An explicit agent or destination narrows that. Omitting the agent installs all
+three; omitting the destination uses `$HOME`:
 
 ```sh
-# Codex, project scoped
-./scripts/install.sh --codex --project /path/to/project
+# pi, project scoped
+./scripts/install.sh --pi --project /path/to/project
 
 # Claude Code, project scoped
 ./scripts/install-claude.sh --project /path/to/project
 
-# pi, project scoped
-./scripts/install.sh --pi --project /path/to/project
+# Codex, user scoped
+./scripts/install.sh --codex --home "$HOME"
 ```
 
-For a deliberate user-scoped Claude Code install:
-
-```sh
-./scripts/install-claude.sh --home "$HOME"
-```
-
-Use `--dry-run` to inspect a destination without writing it. Add the generated
-`<root>/.local/bin` directory to `PATH`, then restart the relevant agent so it can
-discover the skill.
+Pass `--select` to discover the enclosing project root and the home root and
+choose targets from a numbered multi-select instead. `--select` needs a terminal
+(or `BT_INSTALL_SELECTION`). Use `--dry-run` to inspect a destination without
+writing it. Add the generated `<root>/.local/bin` directory to `PATH`, then
+restart the relevant agent so it can discover the skill.
 
 Invoke the skill as `$braintree` in Codex, `/braintree` in Claude Code, or
 `/skill:braintree` in pi when automatic selection is not enough.
