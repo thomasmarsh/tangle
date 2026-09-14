@@ -252,8 +252,12 @@ After each integration, run `braintree check`, use the line-anchored
 every context-bearing dependency changed by that handoff, and reconcile stale
 consumers before their dependent execution. The `^` anchor matches an authored pin
 line rather than the command text where a node quotes it, so a zero-consumer
-reading needs no inspection. Resolve a coordinating parent only after its required
-child evidence has been integrated.
+reading needs no inspection. On integration, compare each submitted `updated` with
+the integration base: replace a fresh future stamp introduced by the submitted
+mutation with a fresh host-clock reading, but preserve and report a future stamp
+the base already carried as an inherited clamp rather than moving it backward.
+Resolve a coordinating parent only after its required child evidence has been
+integrated.
 
 Resolution authority is the coordinator's. After required children are
 integrated, the coordinator alone performs a coordinating parent's resolving

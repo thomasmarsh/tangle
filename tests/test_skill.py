@@ -78,6 +78,23 @@ _UPDATED_CLAMP_RULE = (
     "backwards",
 )
 
+# Every writer reads the host clock rather than estimating or rounding it, and
+# integration separates a future stamp the submitted mutation introduced from
+# one the integration base already carried: the first is corrected from a fresh
+# reading, and the second is an inherited clamp the coordinator preserves and
+# reports instead of moving backwards.
+_WRITER_HOST_CLOCK_READ_RULE = (
+    "Every writer reads the actual host clock when it refreshes `updated`",
+    "not an estimated or rounded value",
+)
+_FUTURE_STAMP_INTEGRATION_RULE = (
+    "compare each submitted `updated` with the integration base",
+    "replace a fresh future stamp introduced by the submitted mutation with a "
+    "fresh host-clock reading",
+    "preserve and report a future stamp the base already carried as an "
+    "inherited clamp",
+)
+
 # A slice write set is the compile-and-golden closure of its change, not a
 # crate directory: the worker includes and reports additional in-scope paths,
 # and stops and escalates only for another node's path or a shared hub. The
@@ -1033,6 +1050,14 @@ def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
 
 def test_coordinator_stamps_the_host_clock_at_handoff() -> None:
     _assert_contains(_read(_SKILL), _COORDINATOR_HOST_CLOCK_STAMP_RULE)
+
+
+def test_every_writer_reads_the_host_clock() -> None:
+    _assert_contains(_read(_SKILL), _WRITER_HOST_CLOCK_READ_RULE)
+
+
+def test_future_stamp_integration_repairs_and_preserves() -> None:
+    _assert_contains(_reference("coordination"), _FUTURE_STAMP_INTEGRATION_RULE)
 
 
 def test_write_set_is_the_change_closure() -> None:
