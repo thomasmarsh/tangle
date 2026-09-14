@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import memory_contract, memory_scenario
+from . import memory_contract, memory_scenario, store
 
 __all__ = [
     "CORPUS_DIR_RELATIVE",
@@ -362,8 +362,7 @@ def path_exists(base: Path, path: str) -> bool:
     """
     parts = path.split("/")
     if len(parts) == 3 and parts[0] == ".braintree" and parts[1] in _STATUS_DIRS:
-        name = parts[2]
-        return any((base / ".braintree" / status / name).is_file() for status in _STATUS_DIRS)
+        return store.find_by_name(str(base / ".braintree"), parts[2]) is not None
     return (base / path).exists()
 
 

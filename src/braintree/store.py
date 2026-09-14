@@ -7,12 +7,13 @@ the directory only for the former; stationary nodes carry it in frontmatter.
 
 from __future__ import annotations
 
+import glob
 import os
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-__all__ = ["CANONICAL_DIRECTORY", "NodePath", "iter_node_paths"]
+__all__ = ["CANONICAL_DIRECTORY", "NodePath", "find_by_name", "iter_node_paths"]
 
 CANONICAL_DIRECTORY = "canonical"
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
@@ -63,3 +64,27 @@ def iter_node_paths(root: str) -> Iterator[NodePath]:
             path = os.path.join(directory, name)
             if name.endswith(".md") and os.path.isfile(path):
                 yield NodePath(path, _stationary_status(path), True)
+
+
+def find_by_name(root: str, basename: str) -> tuple[str, str] | None:
+    """Return ``(status, path)`` for one basename across both layouts.
+
+    A caller that cites ``.braintree/<status>/<basename>`` looks a node up by
+    its stable basename, so a node discovered in the stationary layout still
+    answers with the status it carries. The status is the legacy directory or
+    the stationary frontmatter field; ``None`` when a stationary node has no
+    readable status.
+    """
+    if os.path.basename(basename) != basename:
+        return None
+    for status in sorted(_STATUSES):
+        legacy = os.path.join(root, status, basename)
+        if os.path.isfile(legacy):
+            return status, legacy
+    for candidate in sorted(
+        glob.glob(os.path.join(root, CANONICAL_DIRECTORY, "*", basename))
+    ):
+        stationary = _stationary_status(candidate)
+        if stationary in _STATUSES:
+            return stationary, candidate
+    return None

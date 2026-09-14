@@ -38,7 +38,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from . import memory_contract, memory_corpus, memory_scenario
+from . import memory_contract, memory_corpus, memory_scenario, store
 from .toon import field, table
 
 __all__ = [
@@ -198,16 +198,16 @@ def _sha256_canonical(document: Any) -> str:
 def _resolve_observable(root: Path, path: str) -> ObservableFile:
     parts = path.split("/")
     if len(parts) == 3 and parts[0] == ".braintree" and parts[1] in _STATUS_DIRS:
-        for status in _STATUS_DIRS:
-            candidate = root / ".braintree" / status / parts[2]
-            if candidate.is_file():
-                resolved = f".braintree/{status}/{parts[2]}"
-                return ObservableFile(path, resolved, candidate.read_text(encoding="utf-8"))
-        raise PilotError(f"observable path missing from every status directory: {path}")
-    candidate = root / path
-    if not candidate.is_file():
+        found = store.find_by_name(str(root / ".braintree"), parts[2])
+        if found is None:
+            raise PilotError(f"observable path missing from the vault: {path}")
+        status, candidate = found
+        resolved = f".braintree/{status}/{parts[2]}"
+        return ObservableFile(path, resolved, Path(candidate).read_text(encoding="utf-8"))
+    checkout = root / path
+    if not checkout.is_file():
         raise PilotError(f"observable path missing from the checkout: {path}")
-    return ObservableFile(path, path, candidate.read_text(encoding="utf-8"))
+    return ObservableFile(path, path, checkout.read_text(encoding="utf-8"))
 
 
 def build_fixture(
