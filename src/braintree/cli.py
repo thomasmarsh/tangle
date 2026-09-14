@@ -16,7 +16,7 @@ import time
 from collections.abc import Callable, Sequence
 
 from . import help as help_module
-from . import index, semantic, sidecar, vault
+from . import identity, index, semantic, sidecar, vault
 from .revision import reported_version
 from .toon import escape, field
 
@@ -1091,6 +1091,13 @@ def _dispatch(command: str, args: list[str]) -> int:
     if command == "location":
         if len(args) != 1:
             return _usage_error("location accepts no arguments")
+        try:
+            project_uid = identity.read_project_uid(_nodes_directory())
+        except identity.IdentityError as exc:
+            print(field("error", str(exc)))
+            return 1
+        if project_uid is not None:
+            print(field("project_uid", project_uid))
         _print_fields(sidecar.location_fields())
         return 0
     if command == "init":

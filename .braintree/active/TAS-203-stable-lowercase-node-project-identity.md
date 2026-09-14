@@ -1,7 +1,7 @@
 ---
 context_rev: 3
 priority: P0
-updated: 2026-09-14T20:01:50Z
+updated: 2026-09-14T20:11:57Z
 summary: Implement stable lowercase node and project identity.
 next: Implement the stable store, identity grammar, and compatibility migration.
 ---
@@ -32,3 +32,18 @@ Every newly admitted node has a lowercase globally collision-resistant identity 
 - Legacy uppercase numeric IDs, basenames, wikilinks, and status-directory nodes remain readable during a versioned compatibility window. Migration is one-way, collision-checked, recoverable, and uses an intermediate path for case-only renames. It preserves Git history as far as Git can detect and rewrites canonical backlinks coherently.
 - The stationary-storage benchmark is rerun under the derived-index architecture and measures stable paths, status transitions, direct point edits, sidecar loss, Obsidian navigation, case behavior, and optional symlink views. The selected layout and rejected alternatives are recorded with rollback evidence.
 - Tests cover exact 128-bit encoding and rejection of noncanonical payloads, clone-stable project identity, alias collision and rename, local and qualified resolution, full-width output, collision-aware abbreviation lengthening, ID collision injection, content edits without identity changes, case-insensitive equivalence, mixed legacy/new vaults, interrupted migration, and round-trip Markdown preservation. `braintree check`, `make test`, and the storage benchmark gate pass.
+
+# Result
+
+Completed the identity foundation slice: `identity.py` now generates and
+validates exact lowercase 128-bit Crockford IDs and committed `prj-` UIDs,
+normalizes canonical-ID input without accepting abbreviations, resolves
+alias-qualified input to immutable project authority, and produces
+collision-aware terminal abbreviations. Added this vault's committed
+`project-id`; `braintree location` reports it separately from the legacy
+Git-common-directory sidecar key. Focused identity, CLI, lint, and type checks
+pass. `make test` reached 791 passing tests but retains the pre-existing
+`test_memory_authority` frozen-artifact derivation failure; no benchmark
+artifact was changed. Remaining: switch writers and readers to the stationary
+canonical store, then implement the compatibility migration and storage
+benchmark evidence.
