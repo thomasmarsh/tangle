@@ -1,93 +1,76 @@
 # Dependencies reference
 
-Load this before pinning or gating a dependency, bumping `context_rev`, making a
-staged-staleness commit, reversing or superseding an outcome, or regenerating a
-derived artifact a resolved node committed. It is the
-canonical Markdown source that `braintree help dependencies` prints, and it is
-installed beside `SKILL.md` at the same revision as the `braintree` command.
+Load this before pinning or gating a dependency, bumping `context_rev`, staging
+staleness, reversing or superseding an outcome, or regenerating an artifact
+committed by a resolved node. It is the canonical Markdown printed by
+`braintree help dependencies` and is installed with `SKILL.md` and the command.
 
-## Pins, gates, and staleness
+## Pins, gates, and readiness
 
-Pin context-bearing dependencies only: `Depends on [[DEF-auth-protocol]] at
-context_rev 7.` The pin must terminate its line; trailing text after
-`at context_rev N.` is invalid. Do not pin navigation links. A node is `Stale`
-when a dependency is missing, its current `context_rev` differs from the pin, or
-the link lacks a pin; do not add `stale` to status or frontmatter. A semantic
-change leaves dependents' pins unchanged so one exact backlink search finds the
-reconciliation work.
+Pin only resolved, context-bearing dependencies:
+`Depends on [[DEF-auth-protocol]] at context_rev 7.` The pin must terminate its
+line; trailing text after `at context_rev N.` is invalid. Do not pin navigation
+links. A node is stale when a dependency is missing, unpinned, or at a different
+`context_rev`; never store `stale` in status or frontmatter. Leave consumer pins
+unchanged after a semantic bump so a backlink search finds the reconciliation
+work.
 
-Confirm each pinned dependency is `resolved` before executing; resolution does
-not change `context_rev`, so completion is detected from the status directory.
-Clearing a blocker is the same status move with a `next` change, so it never
-bumps `context_rev` either: a consumer reads readiness from the status
-directory, and its gate clears when the target resolves, not when the node
-returns to `proposed`. A dependency whose target is not yet `resolved` has no
-consumable context to pin:
-record it as a gate instead of a context edge, `Gated on
-[[DEF-auth-protocol]].` in `# Context`, leaving the node `proposed` until it can
-execute, and never pin the gate. Find every gate on a target with the
-line-anchored `rg -n '^Gated on \[\[DEF-auth-protocol\]\]\.' .braintree`, and every
-pin with `rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .braintree`.
-The `^` anchor matches an authored pin or gate line, not the command text where a
-node or this reference quotes it, so a zero-consumer reading needs no inspection;
-an unanchored `-F` search for the command text self-matches the quote and forces
-one. Replace the gate with the pinned `Depends on` edge once the target resolves.
+An unresolved target has no consumable context. Record it as a gate instead of a
+context edge: put `Gated on [[DEF-auth-protocol]].` in `# Context`, leave the
+consumer `proposed`, and never pin the gate. Replace it with a pinned
+`Depends on` edge only after the target resolves. Resolution, blocker clearance,
+and other status or `next` changes do not bump `context_rev`; readiness comes
+from the status directory.
 
-`braintree check` reports a pinned dependency whose target is `proposed`,
-`active`, or `blocked`, and `--allow-stale` does not relax that check because it
-only relaxes the revision equality. A pinned edge to a target that is not
-resolved and an unpinned context edge both name the gate form in their
-diagnostic.
+Use line-anchored searches so the reference's command text does not self-match:
 
-## The bump commit shape
+```sh
+rg -n '^Gated on \[\[DEF-auth-protocol\]\]\.' .braintree
+rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .braintree
+```
 
-Commit the semantic `context_rev` bump with the bumped node alone, leaving
-pinned consumers stale on purpose so the exact backlink search finds them. That
-commit runs the sanctioned staged-staleness gate
-`braintree check --allow-stale`, which still rejects a missing or malformed
-pin and relaxes only the revision equality; plain `braintree check`
-remains the normal gate everywhere else.
+The `^` selects an authored relation, not the command text where it is quoted;
+zero results therefore need no inspection. `braintree check` rejects an
+unpinned context edge and any pin whose target is `proposed`, `active`, or
+`blocked`. `--allow-stale` relaxes revision equality only, never target status or
+malformed relations.
+
+## Semantic bump and reconciliation
+
+Commit a semantic `context_rev` bump with the bumped node alone, deliberately
+leaving consumers stale for the exact backlink search. That commit uses the
+sanctioned staged gate `braintree check --allow-stale`; plain
+`braintree check` remains the normal gate.
 
 Reconciliation is separate work owned by each consumer: reread the dependency,
-update assumptions, reset the pin to the current `context_rev`, and pass the
-plain gate before that consumer executes. `--allow-stale` is sanctioned only for
-a deliberate staged-staleness commit: never use it to silence a pin you can
-reconcile now, and never leave a consumer stale across its own execution.
+update its assumptions, pin the current revision, and pass the plain gate before
+execution. Use `--allow-stale` only for the isolated bump commit, never to defer
+a reconciliation that can be completed or to execute a stale consumer.
 
-## Reversal and supersession
+## Reversal, supersession, and derived artifacts
 
-Reversing a partly implemented outcome is an in-place update while the same node
-and scope still own it: rewrite the outcome in the same node, and bump
-`context_rev` because a pinned consumer must reread the changed direction.
+Reverse an outcome in place while the same node and scope own it: update that
+node and bump `context_rev`. Record the earlier commit's short SHA and subject,
+plus whether its change was kept, reverted, or replaced, in the node and a new
+commit; never rewrite, amend, or force-push the earlier commit.
 
-Supersede only when the outcome moves to a different node: move to `resolved`,
-set `disposition: superseded`, record the replacement as `Superseded by [[...]]`
-in the body, and search remaining backlinks. Deprecation follows the same
-resolved-node shape with `disposition: deprecated` and a note on why the outcome
-is retired.
+Supersede only when the outcome moves to a different node: move the old node to
+`resolved`, set `disposition: superseded`, record `Superseded by [[...]]`, and
+search its backlinks. Deprecation uses `disposition: deprecated` and records why
+the outcome is retired.
 
-A reversal records the commit that named the reversed direction — short SHA and
-subject — in the node's body, with whether that commit's change was kept,
-reverted, or replaced. Record the reversal in the node and a new commit; never
-rewrite, amend, or force-push the earlier commit.
+A derived artifact committed by a resolved node—a golden, baseline, snapshot,
+frozen measurement, or generated index—is regenerated by the node whose change
+invalidates it, not by reopening the resolved node. The invalidating node records
+the defect, the falsified artifact, and the regenerated artifact names in its own
+`# Result`, and leaves the resolved node read-only. Regeneration is reported like
+a golden regeneration: the invalidated artifact is a member of the change's
+write-set closure, so the owner includes, regenerates, and reports it. That node
+owns the regeneration while it remains one slice of its outcome.
 
-A derived artifact a resolved node committed — a golden, baseline, snapshot,
-frozen measurement, or generated index — is regenerated by the node whose change
-invalidates it, not by reopening the resolved node: that node performs the
-change, records the defect, the falsified artifact, and the regenerated artifact
-names in its own `# Result`, and leaves the resolved node read-only, because a
-resolution is final and a committed artifact is re-derived by the change that
-invalidates it. Regeneration is reported like a golden regeneration: the
-invalidated artifact is a member of the change's write-set closure, so that node
-includes it, regenerates it, and reports the falsified artifact and the
-regenerated names instead of only reporting that the resolved node went stale.
-
-That node owns the regeneration while the regeneration stays one slice of its own
-outcome. When the regeneration is independently resumable — its own outcome,
-completion evidence, and rollback boundary — admit a child or sibling whose
-`# Context` names the resolved owner and whose `# Done when` carries the
-regeneration, instead of widening the invalidating node. A regeneration that
-cannot be executed faithfully is never approximated to fit: a frozen live
-measurement is re-recorded, or carried as that child or sibling, and never
-replaced by a dry-run artifact, a degraded measurement, or an unrecorded
+If regeneration is independently resumable—with its own outcome, completion
+evidence, and rollback boundary—admit a child or sibling whose `# Context` names
+the resolved owner. A regeneration that cannot be executed faithfully is never
+approximated: re-record a frozen live measurement or carry it as that child or
+sibling; never substitute a dry run, degraded measurement, or unrecorded
 assumption.

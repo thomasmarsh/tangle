@@ -1,103 +1,80 @@
 # Authoring reference
 
-Load this before writing node bodies, recording feedback, capturing a node with
-one command, decomposing or rolling up work, proving the absence of a branch
-with a negative assertion, or editing `index-map.md`. It is the canonical
-Markdown source that `braintree help authoring` prints, and it is installed
-beside `SKILL.md` at the same revision as the `braintree` command.
+Load this before writing node bodies, recording feedback, capturing a node,
+decomposing or rolling up work, proving a negative assertion, or editing
+`index-map.md`. It is the canonical Markdown printed by
+`braintree help authoring` and is installed with `SKILL.md` and the command.
 
-## Node body and status output
+## Bodies, knowledge nodes, and reports
 
-Use body headings only for additional information: `# Context` (with
-`Depends on [[...]] at context_rev N.`), `# Blocked` (`Blocked by`/`Unblocks
-when`), `# Outcome`, `# Done when`, `# Result`, `# Invariant` for definitions,
-and `# Feedback` for feedback nodes. A `DEC` node records a settled choice under
-`# Decision`/`# Rationale`/`# Consequences`. A settled `DEF` or `DEC` is
-`resolved`; while its invariant or decision is still unsettled it stays
-`proposed`, so resolving it is the act of settling it. A `DEF` resolves only
-when every consumer-visible shape its consumers must author is defined in it, or
-the definition explicitly names the successor node that will define it: a shape
-deferred to an implementing task with no named successor is disallowed at
-resolution. An additive consumer-visible shape names the definition version, or
-the other signal a consumer reads, that distinguishes a consumer with the new
-shape from one without, because an unversioned additive slice leaves a consumer
-unable to tell the two apart. A resolved `DEF` or `DEC`
-is current knowledge unless its sparse `disposition` says `deprecated` or
-`superseded`. Index nodes contain pointers, not copied content.
+Use body headings only when they add information:
+
+- `# Context`, including `Depends on [[...]] at context_rev N.`
+- `# Blocked`, with `Blocked by` and `Unblocks when`
+- `# Outcome`, `# Done when`, and `# Result`
+- `# Invariant` for definitions and `# Feedback` for feedback nodes
+- `# Decision`, `# Rationale`, and `# Consequences` for decisions
+
+A settled `DEF` or `DEC` is `resolved`; keep it `proposed` while its invariant
+or decision is unsettled. A `DEF` resolves only when every consumer-visible
+shape its consumers must author is defined in it, or the definition explicitly
+names the successor node that will define it; a shape deferred to an
+implementing task with no named successor is disallowed at resolution. An
+additive consumer-visible shape names the definition version, or the other
+signal a consumer reads, that distinguishes a consumer with the new shape from
+one without, because an unversioned additive slice leaves a consumer unable to
+tell the two apart. Resolved knowledge remains current unless its sparse
+`disposition` says `deprecated` or `superseded`.
 
 Report graph lists in compact TOON, not JSON or narrative tables, with only the
-fields needed, e.g.
+needed fields, for example
 `nodes{id,status,priority,context_rev}: TAS-101,active,P1,3 | DEF-auth,resolved,,7`.
-State zero results explicitly, and name the resolved node, new status, and
-advanced frontier in a completion report.
+State zero results explicitly. A completion report names the resolved node, its
+new status, and the advanced frontier.
 
 ## Index contract
 
-`.braintree/index-map.md` holds intent and routing, not state: a short `# Focus` list,
-durable area entry pointers, and tested query recipes. Never copy node status,
-priority, revision, timestamp, or summary into it. A focus pointer is advisory;
-validate its target before acting.
+`.braintree/index-map.md` holds intent and routing, not state: keep only a short
+`# Focus` list, durable `Indexes [[IDX-...]]` pointers, and tested query recipes.
+Never copy node status, priority, revision, timestamp, summary, or hub members
+into it. A focus pointer is advisory; validate its target before acting.
 
 ## Decomposition and roll-up
 
 Decompose just in time, only after the node-admission threshold, at a distinct
 independently resumable outcome, blocker, dependency, or verification boundary
 that also retains durable execution-memory value. A child states its outcome or
-decision, completion criterion, primary `Parent`/`Area` route, and executable
-`next`. Do not pre-create speculative trees. A user-requested plan is not
-speculative decomposition: create its children up front as `proposed` work and
-resolve or dispose each as reality arrives.
+decision, completion criterion, primary `Parent [[...]]` or `Area [[IDX-...]]`
+route, and executable `next`. Do not pre-create speculative trees. A
+user-requested plan is the exception: create its children up front as
+`proposed`, then resolve or dispose each as reality arrives.
 
-A direct child is a node whose primary `Parent` or `Area` is the current node. A
-coordinating task states its outcome and `Done when` criteria; its `next` is
-either one concrete frontier action or one wikilinked direct child at the current
-frontier, never a child list. Roll up from evidence, not child counts.
+A direct child uses the current node as its primary route. A coordinating task
+states its outcome and `# Done when`; its `next` is one concrete frontier action
+or one wikilinked direct child, never a child list. Roll up from evidence, not
+child counts.
 
 An increment brief — a node's body or a worker handoff — that places a new
 artifact in an existing directory carries a "gates my artifact enters" line
-naming the test suites that enumerate that directory, before the artifact path is
-chosen: a gate that walks a directory and asserts a property of every file in it
-can reject a correctly authored new file, so the enumerating suite is a path
-constraint the brief surfaces rather than a verification surprise.
+naming the test suites that enumerate that directory, before the artifact path
+is chosen; a gate that walks a directory and asserts a property of every file
+in it can reject a correctly authored new file, so the enumerating suite is a
+path constraint rather than a verification surprise.
 
 ## Negative assertions
 
 Prove the absence of a branch on a named mode or scenario with an observable
-check when the code offers one. When it does not, a checked-in source-text guard
-over the module is an acceptable negative assertion when it is paired with a
-falsification probe: a fixture source that carries the forbidden token and that
-the guard must reject, so the test fails when the guard stops detecting rather
-than when the forbidden token merely moves. The guard names the exact tokens it
-forbids and the modules it covers, and matches whole tokens rather than
-substrings, because source text is defeatable by string construction and an
-over-broad pattern matches legitimate strings.
-
-## Direct answers
-
-```sh
-braintree frontier  # frontier
-braintree node ID  # one node
-braintree impact ID  # dependency impact
-braintree orient  # orientation packet
-braintree digest ID  # unresolved direct members of a hub or node
-braintree clusters  # advisory clusters, over-broad routes, and outliers
-find .braintree -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'          # unfinished
-find .braintree -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +  # actionable P0
-rg -n '^(Parent|Area) \[\[' .braintree                                               # primary routes
-```
-
-`braintree digest ID` bounds the summaries and `next` of one hub's or
-coordinating node's unresolved direct members. `braintree clusters` returns
-advisory cluster groupings, over-broad routes, noise, and outliers, and only when
-the optional semantic capability is installed; without it, it prints one advisory
-line and exits zero. Neither answer is a claim, assignment, or authority. Prefer
-bounded results, and do not repeat a backlink search through returned dependents;
-`braintree impact ID` traverses the chain directly.
+check when possible. Otherwise, a checked-in source-text guard over the module
+is an acceptable negative assertion when it is paired with a falsification
+probe: a fixture source that carries the forbidden token and that the guard must
+reject, so the test fails when the guard stops detecting rather than when the
+forbidden token merely moves. The guard names the exact tokens it forbids and
+the modules it covers, and matches whole tokens rather than substrings.
 
 ## Capturing a node
 
-`braintree node record` creates one routed, correctly-stamped node of a named
-type from a summary and body, the way `braintree feedback record` does for `FBK`:
+After deciding that a node meets the admission threshold, capture it in one
+step; the command does not decide admission:
 
 ```sh
 braintree node record --type THO \
@@ -105,111 +82,64 @@ braintree node record --type THO \
   --body 'Question: does a claim survive a move between worktrees?'
 ```
 
-- `--type` is one of `THO`, `DEF`, `DEC`, or `TAS`. `FBK` friction is recorded
-  with `braintree feedback record`, and a root `IDX` hub is declared in
-  `index-map.md`, so neither is a capture target.
-- The command allocates the next id from Markdown, discovers the primary route to
-  the vault's root hub from `index-map.md`, and stamps a positive `context_rev`
-  and the current `updated`, so the result is a routed node the checker accepts.
-- It reserves that id atomically before writing the file, and both one-command
-  capture paths share this one allocation contract. When the project's local
-  coordination state exists and the target `.braintree/` directory is inside the
-  project's own worktree, the reservation comes from the same atomic counter
-  `braintree allocate PREFIX` uses, so parallel worktrees cannot choose the same
-  number. Otherwise it reserves a vault-local marker under
-  `.braintree/reservations/` with an exclusive create, which is collision-safe for
-  callers sharing that vault but does not span worktrees; preallocate with
-  `braintree allocate PREFIX` and pass `--id` when parallel creation crosses
-  worktrees before that state exists.
-- `--status` names the status directory and defaults to `proposed`; the caller
-  owns the body the type and status need, so a `blocked` body carries a
-  `# Blocked` section with `Blocked by` and `Unblocks when`.
-- A `TAS` node in an unfinished status requires `--next` carrying its one action,
-  and a `resolved` node must omit `--next`, matching the `next` rule the checker
-  enforces.
-- `--route 'Area [[IDX-...]]'` overrides the discovered route, `--id` and
-  `--slug` override the allocated id and the derived slug, `--summary` overrides
-  the derived summary, and `--nodes` selects a vault directory other than the
-  current one.
-- `--summary` is one line of at most 96 characters. A longer value is shortened
-  at the last word boundary that leaves room for a trailing `...`, and the
-  command prints a `warning:` line naming the limit, so a capture never stores a
-  mid-phrase summary.
+`braintree node record` accepts `THO`, `DEF`, `DEC`, or `TAS`; use
+`braintree feedback record` for `FBK`, and declare root `IDX` hubs in
+`index-map.md`. It allocates the next id from Markdown, discovers a route to the
+root hub, stamps `context_rev` and `updated`, and reserves the ID before writing.
 
-The admission threshold is unchanged: the command creates the node the caller has
-already decided to admit, and it never admits a note with no foreseeable decision
-or action value on its own.
+When project-local coordination exists and the target vault is in the project
+worktree, capture shares the atomic counter used by `braintree allocate`.
+Otherwise it uses an exclusive vault-local marker: safe for callers sharing the
+vault, but not across worktrees. Before coordination state exists, parallel
+worktrees must preallocate with `braintree allocate PREFIX` and pass `--id`.
+
+The caller supplies body fields required by the selected type and status. An
+unfinished `TAS` requires one `--next`; a resolved node omits it; a blocked node
+has `# Blocked`, `Blocked by`, and `Unblocks when`. See
+`braintree node record --help` for overrides.
+
+`--summary` is one line of at most 96 characters. A longer value is shortened
+at the last word boundary that leaves room for a trailing `...`, and the command
+prints a `warning:` line naming the limit, so a capture never stores a mid-phrase
+summary.
 
 ## Feedback nodes
 
 A consuming project records Braintree friction as an `FBK` node. The `FBK` type
-is the one feedback marker, so `find .braintree -name 'FBK-*.md'` discovers feedback
-from Markdown alone, with no network access and no write to the scanned vault.
+is the one feedback marker, so `find .braintree -name 'FBK-*.md'` discovers
+feedback from Markdown alone, with no network access and no write to the scanned
+vault.
 
-One session records one session `FBK` node, and the coordinator owns it: a worker
-that hits friction reports it in its run report — the attempted action, the
-friction, and the improvement — instead of creating a node, and the coordinator
+One session records one session `FBK` node, and the coordinator owns it: a
+worker that hits friction reports it in its run report — the attempted action,
+the friction, and the improvement — instead of creating a node, and the coordinator
 decides whether that report becomes the session `FBK` node, folds into one
 already recorded, or is disposed. A worker creates an `FBK` node only when the
 coordinator explicitly grants it. The one-per-session rule scopes to the
 orchestration session, not to each worker run, so two workers that each hit
 friction in one session owe one report, not two nodes.
 
-- Name it `FBK-<n>-<slug>.md` and give it one primary `Parent` or `Area` route
-  into its own vault, like any node.
-- Carry the installed Braintree revision as `braintree_revision:` frontmatter,
-  for example `braintree_revision: 0.6.0+g1b58d57`; write
-  `braintree_revision: unknown` when no revision can be determined.
-- Read the revision to record with `braintree --version`: an installed skill
-  prints the installer's generated `installed-revision` stamp,
-  `<version>+g<short-sha>`, or `<version>+unknown` when the source revision could
-  not be determined. Treat the public `<version>` as the compatibility signal and
-  the `+g<short-sha>` as provenance: decide compatibility from the version, and
-  never resolve the source revision against the remote, which the offline record
-  cannot support.
-- State the friction in one `# Feedback` section with an `Attempted:`, a
-  `Friction:`, and an `Improvement:` line.
+Each feedback node:
 
-`braintree check` rejects an `FBK` node that omits or malforms
-`braintree_revision` or lacks the required `# Feedback` content.
+- has one primary `Parent [[...]]` or `Area [[IDX-...]]` route;
+- carries `braintree_revision:` from `braintree --version`, using
+  `<version>+g<short-sha>`, `<version>+unknown`, or `unknown` when unavailable;
+- has one `# Feedback` section with an `Attempted:`, a `Friction:`, and an
+  `Improvement:` line.
 
-Record feedback with the writing half of the mechanism. Run
-`braintree feedback record` from the consuming project's vault root and it
-allocates the next `FBK` id from Markdown, routes the node to the vault's root
-hub, stamps the revision from the installed record, and writes
-`.braintree/proposed/FBK-<n>-<slug>.md` in one step. The id is reserved atomically by
-the same capture contract as `braintree node record`.
+The public version is the compatibility signal and the short SHA is provenance;
+never resolve that SHA against a remote. `braintree check` rejects malformed
+feedback metadata or content.
 
-```sh
-braintree feedback record \
-  --attempted '...' --friction '...' --improvement '...'
-```
+From the consuming vault root, `braintree feedback record --attempted '...'
+--friction '...' --improvement '...'` allocates, routes, stamps, and writes a
+valid proposed node through the same atomic capture contract. The derived
+summary obeys the same 96-character limit and warning behavior. See its
+`--help` for routing and naming overrides.
 
-`--nodes` points at the vault's `.braintree/` directory when it is not the
-current directory. `--route 'Area [[IDX-...]]'` overrides the route discovered from
-`index-map.md`. `--id`, `--summary`, and `--slug` override the allocated id, the
-summary derived from the friction, and the derived slug. The derived summary
-obeys the same 96-character limit, so an over-long friction is shortened on a
-word boundary with a trailing `...` and reported by the same `warning:` line
-instead of being stored mid-phrase. The command reads the
-installed `installed-revision` record and degrades explicitly to
-`<version>+unknown` when no record is present, so the node always names the
-Braintree version in use. The result is a valid, routed `FBK` node that
-`braintree check` accepts.
-
-To collect feedback from another vault, run the read-only
-`braintree feedback scan` command over one or more vault roots:
-
-```sh
-braintree feedback scan /path/to/vault
-```
-
-It reads only `FBK-*.md` frontmatter and prints compact TOON with each node's
-vault, id, status, Braintree revision, and summary; it prints
-`feedback: 0 nodes` when there is none. It works on a read-only checkout with no
-local state and no network, and never writes to the scanned vault.
-
-Triage each scanned result into this graph: admit a node only when the friction
-is likely to change a future decision or action, cite the feedback id and
-revision in the admitted node, and otherwise dispose the result explicitly rather
-than dropping it silently.
+Collect feedback read-only with `braintree feedback scan /path/to/vault`. It
+reads only `FBK-*.md` frontmatter, prints compact TOON fields for each result,
+prints `feedback: 0 nodes` for none, and works without local state or network in
+a read-only checkout. Triage each result into this graph: admit it only when it
+is likely to change a future decision or action, cite its ID and revision, and
+explicitly dispose the rest.
