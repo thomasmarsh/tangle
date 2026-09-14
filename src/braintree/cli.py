@@ -1105,6 +1105,9 @@ def _dispatch(command: str, args: list[str]) -> int:
             return _usage_error("init accepts no arguments")
         sidecar.ensure_sidecar()
         sidecar.reconcile_sequences(index.prefix_maxima(_nodes_directory()))
+        nodes_directory = _nodes_directory()
+        if os.path.isdir(nodes_directory):
+            identity.ensure_project_uid(nodes_directory)
         print(field("result", "initialized"))
         _print_fields(sidecar.location_fields())
         return 0

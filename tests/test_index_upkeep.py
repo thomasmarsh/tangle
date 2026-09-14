@@ -12,6 +12,7 @@ creates that state in the first place.
 from __future__ import annotations
 
 import hashlib
+import re
 import sqlite3
 import subprocess
 import time
@@ -159,12 +160,14 @@ def test_a_mutating_interaction_maintains_the_index(
         env=env,
     )
     assert recorded.returncode == 0, recorded.stdout
-    assert 'id: "TAS-002"' in recorded.stdout
+    match = re.search(r'id: "(tas-[0-7][0-9a-hjkmnp-tv-z]{25})"', recorded.stdout)
+    assert match is not None
 
     nodes, _edges = _snapshot(_database(tmp_path))
-    written = vault / "proposed" / "TAS-002-record-through-the-capture-path.md"
-    assert nodes["TAS-002"] == (
-        "proposed/TAS-002-record-through-the-capture-path.md",
+    node_id = match.group(1)
+    written = next((vault / "canonical").rglob(f"{node_id}-record-through-the-capture-path.md"))
+    assert nodes[node_id] == (
+        str(written.relative_to(vault)),
         hashlib.sha256(written.read_bytes()).hexdigest(),
     )
 

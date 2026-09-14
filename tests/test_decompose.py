@@ -93,13 +93,15 @@ def test_decompose_writes_ordered_children_and_advances_parent(
     )
     out = capsys.readouterr().out
     assert 'result: "decomposed"' in out
-    assert 'next: "TAS-002-alpha"' in out
-    first = nodes / "proposed" / "TAS-002-alpha.md"
-    second = nodes / "proposed" / "TAS-003-beta.md"
+    match = re.search(r'next: "(tas-[0-7][0-9a-hjkmnp-tv-z]{25}-alpha)"', out)
+    assert match is not None
+    first_name = match.group(1)
+    first = next((nodes / "canonical").rglob(f"{first_name}.md"))
+    second = next((nodes / "canonical").rglob("tas-*-beta.md"))
     assert first.is_file() and second.is_file()
     assert "Parent [[TAS-001-coordinator]]." in first.read_text(encoding="utf-8")
     parent = _parent_text(nodes)
-    assert 'next: "[[TAS-002-alpha]]"' in parent
+    assert f'next: "[[{first_name}]]"' in parent
     # The parent's acceptance and body are untouched; only next and updated change.
     assert "# Done when" in parent and "Deliver the whole thing." in parent
     assert "updated: 2026-09-14T00:00:00Z" not in parent

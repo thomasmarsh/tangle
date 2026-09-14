@@ -589,8 +589,7 @@ def test_allocate_batch_and_node_record_share_one_counter(
         env=env,
     )
     assert recorded.returncode == 0, recorded.stdout
-    # Capture resumes past the reserved batch rather than restarting at TAS-001.
-    assert 'id: "TAS-003"' in recorded.stdout
+    assert re.search(r'id: "tas-[0-7][0-9a-hjkmnp-tv-z]{25}"', recorded.stdout)
 
 
 def test_record_reserves_through_the_project_sidecar(
@@ -617,11 +616,17 @@ def test_record_reserves_through_the_project_sidecar(
         env=env,
     )
     assert recorded.returncode == 0, recorded.stdout
-    assert 'id: "TAS-001"' in recorded.stdout
-    assert (nodes / "proposed" / "TAS-001-reserve-the-id-through-the-sidecar.md").is_file()
-    # The sidecar counter advanced and no vault-local fallback marker was made.
+    match = re.search(r'id: "(tas-[0-7][0-9a-hjkmnp-tv-z]{25})"', recorded.stdout)
+    assert match is not None
+    written = next(
+        (nodes / "canonical").rglob(
+            f"{match.group(1)}-reserve-the-id-through-the-sidecar.md"
+        )
+    )
+    assert written.is_file()
+    # Cryptographic node identity neither advances nor needs numeric reservations.
     assert not (nodes / "reservations").exists()
-    assert '"TAS","2"' in run_bt("status", cwd=repo, env=env).stdout
+    assert '"TAS"' not in run_bt("status", cwd=repo, env=env).stdout
 
 
 def test_record_falls_back_for_a_vault_outside_the_project(
@@ -653,8 +658,8 @@ def test_record_falls_back_for_a_vault_outside_the_project(
         env=env,
     )
     assert recorded.returncode == 0, recorded.stdout
-    assert 'id: "TAS-001"' in recorded.stdout
-    assert (external / "reservations" / "TAS-001").is_file()
+    assert re.search(r'id: "tas-[0-7][0-9a-hjkmnp-tv-z]{25}"', recorded.stdout)
+    assert not (external / "reservations").exists()
 
 
 def test_concurrent_records_share_the_project_sidecar_reservation(
@@ -695,7 +700,7 @@ def test_concurrent_records_share_the_project_sidecar_reservation(
     for process in children:
         output, _ = process.communicate(timeout=60)
         assert process.returncode == 0, output
-        match = re.search(r'^id: "(TAS-\d+)"$', output, re.MULTILINE)
+        match = re.search(r'^id: "(tas-[0-7][0-9a-hjkmnp-tv-z]{25})"$', output, re.MULTILINE)
         assert match is not None, output
         ids.append(match.group(1))
 

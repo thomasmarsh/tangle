@@ -132,7 +132,7 @@ EOF
     --friction 'The installed recording path was untested.' \
     --improvement 'Exercise it in the install test.' >/dev/null
   uv run --project "$program" --frozen --quiet braintree check "$vault/.braintree" >/dev/null
-  grep -q "braintree_revision: $expected_record" "$vault"/.braintree/proposed/FBK-001-*.md
+  grep -q "braintree_revision: $expected_record" "$vault"/.braintree/canonical/*/fbk-*.md
   rm -rf "$vault"
 }
 

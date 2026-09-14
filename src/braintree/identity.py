@@ -123,7 +123,14 @@ def read_project_uid(nodes_dir: str | Path) -> str | None:
 def ensure_project_uid(nodes_dir: str | Path) -> str:
     """Read or atomically create the vault's clone-stable project UID."""
     directory = Path(nodes_dir)
-    existing = read_project_uid(directory)
+    try:
+        existing = read_project_uid(directory)
+    except IdentityError:
+        # A concurrent exclusive creator may have published the directory entry
+        # before it has finished writing its fixed-size value.  The FileExists
+        # path below retries that transient state and still rejects a malformed
+        # value that remains after publication.
+        existing = None
     if existing is not None:
         return existing
     path = directory / PROJECT_UID_FILE
@@ -131,10 +138,18 @@ def ensure_project_uid(nodes_dir: str | Path) -> str:
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
     except FileExistsError:
-        raced = read_project_uid(directory)
-        if raced is None:  # pragma: no cover - impossible unless a concurrent remover wins
-            raise IdentityError(f"project UID disappeared while reading {path}") from None
-        return raced
+        # An exclusive create makes the authority unambiguous, but another
+        # thread may observe the just-created file before its writer closes it.
+        # Retry that short publication window instead of treating an empty or
+        # partial file as a malformed committed UID.
+        for _ in range(100):
+            try:
+                raced = read_project_uid(directory)
+            except IdentityError:
+                continue
+            if raced is not None:
+                return raced
+        raise IdentityError(f"project UID was not published while reading {path}") from None
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             handle.write(value + "\n")

@@ -26,7 +26,7 @@ import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from . import index, node_record, store, vault
+from . import identity, index, node_record, store, vault
 from .toon import field
 
 __all__ = ["advance_main", "main"]
@@ -304,17 +304,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             _planned_table(children)
         )
         return 0
-    allocated: list[tuple[int, PlanChild]] = []
+    allocated: list[tuple[str, PlanChild]] = []
     for child in children:
-        allocated.append((node_record.reserve_number(nodes_dir, child.node_type), child))
+        allocated.append((identity.generate_node_id(child.node_type), child))
     created: list[str] = []
     try:
         updated = node_record.utc_now()
-        for number, child in allocated:
-            node_id = f"{child.node_type}-{number:03d}"
-            path = os.path.join(
-                nodes_dir, child.status, f"{node_id}-{child.slug}.md"
-            )
+        for node_id, child in allocated:
+            path = node_record.canonical_path(nodes_dir, node_id, child.slug)
             os.makedirs(os.path.dirname(path), exist_ok=True)
             content = node_record.render(
                 f"Parent [[{parent_name}]]",
@@ -322,12 +319,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 child.next_line,
                 child.body,
                 updated,
+                child.status,
             )
             if not node_record.write_new(path, content):
                 raise _DecomposeError(f"node already exists: {path}")
             created.append(path)
         first = allocated[0]
-        first_name = f"{first[1].node_type}-{first[0]:03d}-{first[1].slug}"
+        first_name = f"{first[0]}-{first[1].slug}"
         _advance(nodes_dir, parent_name, first_name)
     except (_DecomposeError, OSError) as error:
         for path in created:
@@ -427,14 +425,14 @@ def _planned_table(children: Sequence[PlanChild]) -> str:
     )
 
 
-def _recorded_table(allocated: Sequence[tuple[int, PlanChild]]) -> str:
+def _recorded_table(allocated: Sequence[tuple[str, PlanChild]]) -> str:
     rows = []
-    for number, child in allocated:
+    for node_id, child in allocated:
         rows.append(
             (
-                f"{child.node_type}-{number:03d}",
+                node_id,
                 child.status,
-                f"{child.node_type}-{number:03d}-{child.slug}.md",
+                f"{node_id}-{child.slug}.md",
             )
         )
     return index.format_table(

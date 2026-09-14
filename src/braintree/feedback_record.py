@@ -16,15 +16,12 @@ import os
 import sys
 from collections.abc import Sequence
 
-from . import sidecar, vault
+from . import identity, vault
 from .node_record import (
-    AllocationError,
+    canonical_path,
     discover_route,
-    existing_ids,
     fit_summary,
-    id_number,
     normalize_route,
-    reserve_number,
     single_line,
     slugify,
     summary_warning,
@@ -71,6 +68,7 @@ def _render(
     return (
         "---\n"
         "context_rev: 1\n"
+        "status: proposed\n"
         f"updated: {updated}\n"
         f"summary: {summary}\n"
         f"braintree_revision: {revision}\n"
@@ -150,6 +148,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 1
+    try:
+        identity.ensure_project_uid(nodes_dir)
+    except identity.IdentityError as error:
+        print(field("error", str(error)))
+        return 1
 
     if route is None:
         discovered = discover_route(nodes_dir)
@@ -170,43 +173,29 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary, truncated = fit_summary(chosen)
     slug = slugify(slug if slug is not None else summary, "feedback")
 
-    existing = existing_ids(nodes_dir, _FEEDBACK_TYPE)
-    number = 0
+    node_id: str | None = None
     if explicit_id is not None:
-        explicit_id = single_line(explicit_id)
-        reserved_id = id_number(explicit_id, _FEEDBACK_TYPE)
-        if reserved_id is None:
-            print(field("error", "id must look like FBK-001"))
+        try:
+            node_id = identity.normalize_node_id(single_line(explicit_id))
+        except identity.IdentityError:
+            print(field("error", "id must be a canonical fbk identity"))
             return 2
-        if explicit_id in existing:
-            print(field("error", f"feedback node already exists: {existing[explicit_id]}"))
-            return 1
-        number = reserved_id
-
-    proposed = os.path.join(nodes_dir, "proposed")
-    try:
-        os.makedirs(proposed, exist_ok=True)
-    except OSError as error:
-        print(field("error", f"unable to create {proposed}: {error}"))
-        return 1
+        if not node_id.startswith("fbk-") or not identity.CANONICAL_ID.fullmatch(node_id):
+            print(field("error", "id must be a canonical fbk identity"))
+            return 2
 
     revision = feedback_revision()
     updated = utc_now()
     for _ in range(100):
         if explicit_id is None:
-            try:
-                number = reserve_number(nodes_dir, _FEEDBACK_TYPE)
-            except (AllocationError, sidecar.SidecarError) as error:
-                print(field("error", str(error)))
-                print(
-                    field(
-                        "help",
-                        "Repair or remove the sidecar, or check the vault is writable.",
-                    )
-                )
-                return 1
-        node_id = f"{_FEEDBACK_TYPE}-{number:03d}"
-        path = os.path.join(proposed, f"{node_id}-{slug}.md")
+            node_id = identity.generate_node_id(_FEEDBACK_TYPE)
+        assert node_id is not None
+        path = canonical_path(nodes_dir, node_id, slug)
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+        except OSError as error:
+            print(field("error", f"unable to create canonical node directory: {error}"))
+            return 1
         body = _render(route, summary, revision, attempted, friction, improvement, updated)
         if write_new(path, body):
             if truncated:
@@ -220,7 +209,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(field("error", f"feedback node already exists: {path}"))
             return 1
 
-    print(field("error", "unable to allocate a free FBK id"))
+    print(field("error", "unable to generate a unique fbk identity"))
     return 1
 
 

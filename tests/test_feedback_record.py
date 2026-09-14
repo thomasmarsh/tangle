@@ -75,8 +75,8 @@ def test_record_writes_a_routed_revision_stamped_node(
     )
     out = capsys.readouterr().out
     assert 'result: "recorded"' in out
-    assert 'id: "FBK-001"' in out
-    node = nodes / "proposed" / "FBK-001-the-allocated-id-already-existed-on-disk.md"
+    assert re.search(r'id: "fbk-[0-7][0-9a-hjkmnp-tv-z]{25}"', out)
+    node = _recorded(nodes, "FBK", "the-allocated-id-already-existed-on-disk")
     assert node.is_file()
     text = node.read_text(encoding="utf-8")
     assert "context_rev: 1" in text
@@ -148,13 +148,7 @@ def test_capture_announces_a_legacy_vault_migration(
     captured = capsys.readouterr()
     assert captured.err == "migrated vault: nodes -> .braintree\n"
     assert not (root / "nodes").exists()
-    node = (
-        Path.cwd()
-        / ".braintree"
-        / "proposed"
-        / "FBK-001-the-allocated-id-already-existed-on-disk.md"
-    )
-    assert node.is_file()
+    node = _recorded(Path.cwd() / ".braintree", "FBK", "the-allocated-id-already-existed-on-disk")
     assert f'path: "{node}"' in captured.out
     assert "/nodes/proposed" not in captured.out
 
@@ -181,7 +175,7 @@ def test_record_uses_the_installed_revision_record(
         )
         == 0
     )
-    node = nodes / "proposed" / "FBK-001-the-allocated-id-already-existed-on-disk.md"
+    node = _recorded(nodes, "FBK", "the-allocated-id-already-existed-on-disk")
     assert "braintree_revision: 0.4.0+g1b58d57" in node.read_text(encoding="utf-8")
 
 
@@ -195,7 +189,7 @@ def test_record_accepts_explicit_id_route_summary_and_slug(
                 "--nodes",
                 str(nodes),
                 "--id",
-                "FBK-042",
+                "fbk-0123456789abcdefghjkmnpqrs",
                 "--route",
                 "Parent [[IDX-001-root]]",
                 "--summary",
@@ -212,7 +206,7 @@ def test_record_accepts_explicit_id_route_summary_and_slug(
         )
         == 0
     )
-    node = nodes / "proposed" / "FBK-042-allocation-friction.md"
+    node = _recorded(nodes, "FBK", "allocation-friction")
     assert node.is_file()
     text = node.read_text(encoding="utf-8")
     assert "summary: Allocation collided with nodes on disk." in text
@@ -254,7 +248,7 @@ def test_record_allocates_the_next_id(tmp_path: Path) -> None:
         )
         == 0
     )
-    assert (nodes / "proposed" / "FBK-004-the-allocated-id-already-existed-on-disk.md").is_file()
+    assert _recorded(nodes, "FBK", "the-allocated-id-already-existed-on-disk").is_file()
 
 
 def test_record_requires_all_three_content_lines(
@@ -322,7 +316,7 @@ def test_record_refuses_to_overwrite_an_explicit_id(
         "--nodes",
         str(nodes),
         "--id",
-        "FBK-001",
+        "fbk-0123456789abcdefghjkmnpqrs",
         "--attempted",
         _CONTENT[0],
         "--friction",
@@ -386,6 +380,12 @@ _CAPTURE_BODY = {
 _TASK_NEXT = {"--next": "Add the boundary test."}
 
 
+def _recorded(nodes: Path, node_type: str, slug: str) -> Path:
+    matches = list((nodes / "canonical").rglob(f"{node_type.lower()}-*-{slug}.md"))
+    assert len(matches) == 1
+    return matches[0]
+
+
 def _capture_args(nodes: Path, node_type: str, **overrides: str) -> list[str]:
     values = {
         "--nodes": str(nodes),
@@ -410,10 +410,10 @@ def test_capture_creates_a_checker_accepted_node_of_each_type(
     assert node_record.main(_capture_args(nodes, "TAS", **_TASK_NEXT)) == 0
     out = capsys.readouterr().out
     assert out.count('result: "recorded"') == 4
-    assert (nodes / "proposed" / "THO-001-capture-one-tho-node.md").is_file()
-    assert (nodes / "proposed" / "TAS-001-capture-one-tas-node.md").is_file()
-    assert (nodes / "resolved" / "DEF-001-capture-one-def-node.md").is_file()
-    assert (nodes / "resolved" / "DEC-001-capture-one-dec-node.md").is_file()
+    assert _recorded(nodes, "THO", "capture-one-tho-node").is_file()
+    assert _recorded(nodes, "TAS", "capture-one-tas-node").is_file()
+    assert _recorded(nodes, "DEF", "capture-one-def-node").is_file()
+    assert _recorded(nodes, "DEC", "capture-one-dec-node").is_file()
     assert graph_check.main([str(nodes)]) == 0
     assert "graph check: passed (5 nodes)" in capsys.readouterr().out
 
@@ -423,7 +423,7 @@ def test_capture_is_dispatched_as_one_documented_command(
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
     assert braintree_main(["node", "record", *_capture_args(nodes, "THO")]) == 0
-    assert (nodes / "proposed" / "THO-001-capture-one-tho-node.md").is_file()
+    assert _recorded(nodes, "THO", "capture-one-tho-node").is_file()
     assert graph_check.main([str(nodes)]) == 0
     capsys.readouterr()
     assert braintree_main(["--help"]) == 0
@@ -433,7 +433,7 @@ def test_capture_is_dispatched_as_one_documented_command(
 def test_capture_stamps_the_route_revision_and_timestamp(tmp_path: Path) -> None:
     nodes = _hub(tmp_path / "consumer")
     assert node_record.main(_capture_args(nodes, "THO")) == 0
-    text = (nodes / "proposed" / "THO-001-capture-one-tho-node.md").read_text(encoding="utf-8")
+    text = _recorded(nodes, "THO", "capture-one-tho-node").read_text(encoding="utf-8")
     assert text.startswith("---\ncontext_rev: 1\n")
     assert re.search(r"^updated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", text, re.MULTILINE)
     assert "summary: Capture one THO node." in text
@@ -448,8 +448,11 @@ def test_capture_quotes_a_wikilink_next_and_keeps_an_action_next(tmp_path: Path)
         _capture_args(nodes, "TAS", **{"--next": "[[TAS-002-validate-manifests]]"})
     ) == 0
     assert node_record.main(_capture_args(nodes, "TAS", **_TASK_NEXT)) == 0
-    linked = (nodes / "proposed" / "TAS-001-capture-one-tas-node.md").read_text(encoding="utf-8")
-    action = (nodes / "proposed" / "TAS-002-capture-one-tas-node.md").read_text(encoding="utf-8")
+    recorded = list((nodes / "canonical").rglob("tas-*-capture-one-tas-node.md"))
+    assert len(recorded) == 2
+    texts = [path.read_text(encoding="utf-8") for path in recorded]
+    linked = next(text for text in texts if 'next: "[[' in text)
+    action = next(text for text in texts if "next: Add" in text)
     assert 'next: "[[TAS-002-validate-manifests]]"' in linked
     assert "next: Add the boundary test." in action
 
@@ -489,13 +492,12 @@ def test_concurrent_capture_with_different_slugs_never_duplicates_an_id(
         thread.join(timeout=30)
 
     assert codes == [0] * workers
-    recorded = sorted((nodes / "proposed").glob("TAS-*.md"))
+    recorded = sorted((nodes / "canonical").rglob("tas-*.md"))
     assert len(recorded) == workers
-    numbers = [path.name.split("-")[1] for path in recorded]
-    assert len(set(numbers)) == workers
-    # The reservation directory is local coordination state, not a node, so the
-    # checker still accepts the vault with it present.
-    assert (nodes / "reservations").is_dir()
+    identities = [path.name.split("-", 2)[1] for path in recorded]
+    assert len(set(identities)) == workers
+    # Cryptographic identities need no shared numeric reservation state.
+    assert not (nodes / "reservations").exists()
     assert graph_check.main([str(nodes)]) == 0
 
 
@@ -514,8 +516,7 @@ def test_capture_allocates_the_next_id_from_markdown(tmp_path: Path) -> None:
         "Area [[IDX-001-root]].",
     )
     assert node_record.main(_capture_args(nodes, "TAS", **_TASK_NEXT)) == 0
-    assert (nodes / "proposed" / "TAS-004-capture-one-tas-node.md").is_file()
-    assert not (nodes / "proposed" / "TAS-001-capture-one-tas-node.md").exists()
+    assert _recorded(nodes, "TAS", "capture-one-tas-node").is_file()
 
 
 def test_capture_accepts_an_explicit_id_route_summary_and_slug(tmp_path: Path) -> None:
@@ -529,7 +530,7 @@ def test_capture_accepts_an_explicit_id_route_summary_and_slug(tmp_path: Path) -
             "--status",
             "resolved",
             "--id",
-            "TAS-042",
+            "tas-0123456789abcdefghjkmnpqrs",
             "--route",
             "Parent [[IDX-001-root]]",
             "--summary",
@@ -540,7 +541,7 @@ def test_capture_accepts_an_explicit_id_route_summary_and_slug(tmp_path: Path) -
             _CAPTURE_BODY["TAS"],
         ]
     ) == 0
-    node = nodes / "resolved" / "TAS-042-allocation-decision.md"
+    node = _recorded(nodes, "TAS", "allocation-decision")
     text = node.read_text(encoding="utf-8")
     assert "summary: Capture the allocation decision." in text
     assert "Parent [[IDX-001-root]]." in text
@@ -553,14 +554,14 @@ def test_capture_rejects_an_id_of_another_type(
     nodes = _hub(tmp_path / "consumer")
     args = _capture_args(nodes, "THO", **{"--id": "TAS-001"})
     assert node_record.main(args) == 2
-    assert "id must look like THO-001" in capsys.readouterr().out
+    assert "canonical tho identity" in capsys.readouterr().out
 
 
 def test_capture_refuses_to_overwrite_an_explicit_id(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
-    args = _capture_args(nodes, "THO", **{"--id": "THO-001"})
+    args = _capture_args(nodes, "THO", **{"--id": "tho-0123456789abcdefghjkmnpqrs"})
     assert node_record.main(args) == 0
     capsys.readouterr()
     assert node_record.main(args) == 1
@@ -721,7 +722,7 @@ def test_capture_stores_a_summary_at_the_limit_without_a_warning(
     args = _capture_args(nodes, "THO", **{"--summary": summary, "--slug": "at-limit"})
     assert node_record.main(args) == 0
     out = capsys.readouterr().out
-    assert _summary_of(nodes / "proposed" / "THO-001-at-limit.md") == summary
+    assert _summary_of(_recorded(nodes, "THO", "at-limit")) == summary
     assert "warning" not in out
     assert "..." not in summary
 
@@ -735,7 +736,7 @@ def test_capture_cuts_one_character_over_the_limit_on_a_word_boundary(
     args = _capture_args(nodes, "THO", **{"--summary": summary, "--slug": "over-limit"})
     assert node_record.main(args) == 0
     capsys.readouterr()
-    stored = _summary_of(nodes / "proposed" / "THO-001-over-limit.md")
+    stored = _summary_of(_recorded(nodes, "THO", "over-limit"))
     assert len(stored) <= node_record.SUMMARY_LIMIT
     assert stored.endswith(_ELLIPSIS)
     head = stored[: -len(_ELLIPSIS)]
@@ -750,7 +751,7 @@ def test_capture_never_stores_a_mid_phrase_summary(
     args = _capture_args(nodes, "THO", **{"--summary": _LONG_SUMMARY, "--slug": "long"})
     assert node_record.main(args) == 0
     out = capsys.readouterr().out
-    stored = _summary_of(nodes / "proposed" / "THO-001-long.md")
+    stored = _summary_of(_recorded(nodes, "THO", "long"))
     assert len(stored) <= node_record.SUMMARY_LIMIT
     assert stored.endswith(_ELLIPSIS)
     head = stored[: -len(_ELLIPSIS)]
@@ -786,7 +787,7 @@ def test_feedback_capture_cuts_the_summary_derived_from_the_friction(
         == 0
     )
     out = capsys.readouterr().out
-    node = next(iter((nodes / "proposed").glob("FBK-001-*.md")))
+    node = next(iter((nodes / "canonical").rglob("fbk-*.md")))
     stored = _summary_of(node)
     assert len(stored) <= node_record.SUMMARY_LIMIT
     assert stored.endswith(_ELLIPSIS)

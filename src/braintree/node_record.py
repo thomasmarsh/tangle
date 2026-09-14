@@ -21,7 +21,7 @@ import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from . import sidecar, vault
+from . import identity, sidecar, store, vault
 from .toon import field
 
 __all__ = [
@@ -31,6 +31,7 @@ __all__ = [
     "existing_ids",
     "fit_summary",
     "id_number",
+    "canonical_path",
     "main",
     "next_number",
     "normalize_route",
@@ -332,15 +333,32 @@ def _next_field(value: str) -> str:
     return f'"{value}"'
 
 
-def _render(route: str, summary: str, next_line: str | None, body: str, updated: str) -> str:
-    header = ["---", "context_rev: 1", f"updated: {updated}", f"summary: {summary}"]
+def _render(
+    route: str,
+    summary: str,
+    next_line: str | None,
+    body: str,
+    updated: str,
+    status: str | None = None,
+) -> str:
+    header = ["---", "context_rev: 1"]
+    if status is not None:
+        header.append(f"status: {status}")
+    header.extend([f"updated: {updated}", f"summary: {summary}"])
     if next_line is not None:
         header.append(f"next: {_next_field(next_line)}")
     header.append("---")
     return "\n".join(header) + "\n\n" + f"{route}.\n\n" + body + "\n"
 
 
-def render(route: str, summary: str, next_line: str | None, body: str, updated: str) -> str:
+def render(
+    route: str,
+    summary: str,
+    next_line: str | None,
+    body: str,
+    updated: str,
+    status: str | None = None,
+) -> str:
     """Render one captured node's Markdown from its validated fields.
 
     This is the single spelling of the captured-node shape shared by
@@ -348,7 +366,17 @@ def render(route: str, summary: str, next_line: str | None, body: str, updated: 
     ``braintree node decompose`` path, so a child a decomposition writes byte-
     matches one the single-record path would have written.
     """
-    return _render(route, summary, next_line, body, updated)
+    return _render(route, summary, next_line, body, updated, status)
+
+
+def canonical_path(nodes_dir: str, node_id: str, slug: str) -> str:
+    """Return the stationary, sharded canonical path for a new node."""
+    canonical = identity.normalize_node_id(node_id)
+    if not identity.CANONICAL_ID.fullmatch(canonical):
+        raise identity.IdentityError("new nodes require a canonical lowercase identity")
+    return os.path.join(
+        nodes_dir, store.CANONICAL_DIRECTORY, canonical[-2:], f"{canonical}-{slug}.md"
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -466,6 +494,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 1
+    try:
+        identity.ensure_project_uid(nodes_dir)
+    except identity.IdentityError as error:
+        print(field("error", str(error)))
+        return 1
 
     if route is None:
         discovered = discover_route(nodes_dir)
@@ -480,44 +513,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     route = normalized
 
-    number = 0
+    node_id: str | None = None
     if explicit_id is not None:
-        explicit_id = single_line(explicit_id)
-        existing = existing_ids(nodes_dir, node_type)
-        reserved_id = id_number(explicit_id, node_type)
-        if reserved_id is None:
-            print(field("error", f"id must look like {node_type}-001"))
+        try:
+            node_id = identity.normalize_node_id(single_line(explicit_id))
+        except identity.IdentityError:
+            print(field("error", f"id must be a canonical {node_type.lower()} identity"))
             return 2
-        if explicit_id in existing:
-            print(field("error", f"node already exists: {existing[explicit_id]}"))
-            return 1
-        number = reserved_id
-
-    directory = os.path.join(nodes_dir, status)
-    try:
-        os.makedirs(directory, exist_ok=True)
-    except OSError as error:
-        print(field("error", f"unable to create {directory}: {error}"))
-        return 1
+        if not (
+            node_id.startswith(node_type.lower() + "-")
+            and identity.CANONICAL_ID.fullmatch(node_id)
+        ):
+            print(field("error", f"id must be a canonical {node_type.lower()} identity"))
+            return 2
 
     slug = slugify(slug if slug is not None else summary, "node")
     updated = utc_now()
     for _ in range(100):
         if explicit_id is None:
-            try:
-                number = reserve_number(nodes_dir, node_type)
-            except (AllocationError, sidecar.SidecarError) as error:
-                print(field("error", str(error)))
-                print(
-                    field(
-                        "help",
-                        "Repair or remove the sidecar, or check the vault is writable.",
-                    )
-                )
-                return 1
-        node_id = f"{node_type}-{number:03d}"
-        path = os.path.join(directory, f"{node_id}-{slug}.md")
-        if write_new(path, _render(route, summary, next_line, body, updated)):
+            node_id = identity.generate_node_id(node_type)
+        assert node_id is not None
+        path = canonical_path(nodes_dir, node_id, slug)
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+        except OSError as error:
+            print(field("error", f"unable to create canonical node directory: {error}"))
+            return 1
+        if write_new(path, _render(route, summary, next_line, body, updated, status)):
             if truncated:
                 print(field("warning", summary_warning(summary)))
             print(field("result", "recorded"))
@@ -529,7 +551,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(field("error", f"node already exists: {path}"))
             return 1
 
-    print(field("error", f"unable to allocate a free {node_type} id"))
+    print(field("error", f"unable to generate a unique {node_type.lower()} identity"))
     return 1
 
 

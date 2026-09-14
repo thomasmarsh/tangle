@@ -1,7 +1,7 @@
 ---
 context_rev: 3
 priority: P0
-updated: 2026-09-14T20:20:24Z
+updated: 2026-09-14T22:54:08Z
 summary: Implement stable lowercase node and project identity.
 next: Implement stationary canonical writers and the explicit compatibility migration.
 ---
@@ -55,3 +55,13 @@ decomposition lookup, and feedback scans now share that discovery contract;
 mixed-layout stationary fixtures pass their graph and index checks. Remaining:
 write canonical nodes into the stationary layout, implement the collision-safe
 explicit migration, and record the storage benchmark evidence.
+
+Completed the stationary-writer slice: node capture, feedback capture, and
+decomposition now create lowercase 128-bit IDs from cryptographic entropy and
+write each node once under `canonical/<payload-suffix>/`, with authoritative
+frontmatter status. Writers ensure a clone-stable project UID without numerical
+sidecar allocation; concurrent UID creation tolerates the publication race.
+Updated capture, index-upkeep, decomposition, installer, and sidecar-boundary
+tests to assert canonical identities while preserving legacy-reader fixtures.
+Remaining: implement the collision-safe explicit migration and record the
+storage benchmark evidence.
