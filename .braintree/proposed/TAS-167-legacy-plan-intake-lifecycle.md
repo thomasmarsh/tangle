@@ -1,8 +1,8 @@
 ---
 context_rev: 2
-updated: 2026-09-14T02:20:44Z
+updated: 2026-09-14T02:28:45Z
 summary: Establish a project-neutral intake lifecycle for planning material.
-next: "[[TAS-168-characterize-legacy-plans]]"
+next: "[[TAS-169-settle-plan-graph-authority]]"
 ---
 
 Parent [[THO-026-how-should-living-planning-documents-coexist-wit]].
