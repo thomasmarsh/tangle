@@ -112,6 +112,37 @@ _WRITE_SET_CLOSURE_PRE_CHANGE = (
     "stops and escalates for a path owned by another node or a shared hub."
 )
 
+# A resolved sibling's mechanically forced consumer is both inside the
+# compile-and-golden closure and a path another node owns. The brief names the
+# known resolved-sibling compiler seams before dispatch, and a compiler- or
+# touched-test-forced conformance edit is in the change's closure even when a
+# resolved sibling owns the path, whether named or discovered by the compiler
+# or a touched test. Behavioral, public-contract, and landed-seam meaning
+# changes still stop and escalate.
+_RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE = (
+    "the brief names the known resolved-sibling compiler seams the approved "
+    "change can force",
+    "the concrete paths or the resolved owners",
+    "A compiler- or touched-test-forced conformance edit",
+    "is in the change's closure even when a resolved sibling owns the path",
+    "whether named before dispatch or discovered only by the compiler or a "
+    "touched test",
+    "the worker makes the mechanical edit and reports it with the closure rather "
+    "than escalating",
+    "A change to the seam's behavior, its public contract, or the meaning of the "
+    "landed seam still stops and escalates",
+)
+
+# Falsification probe for the precedence rule: the pre-change paragraph told a
+# worker to stop and escalate for a path owned by another node with no
+# mechanical-closure precedence, so the guard must reject escalation-only text.
+_RESOLVED_SIBLING_CLOSURE_PRE_CHANGE = (
+    "The assigned write set is the compile-and-golden closure of the approved "
+    "change, not a crate directory. When the closure exceeds the assigned set, "
+    "the worker includes and reports the additional in-scope paths; it stops "
+    "and escalates for a path owned by another node or a shared hub."
+)
+
 # A worker records a compact completion receipt before its long narrative
 # report, and a `release` result at the recorded base hash is the completion
 # signal the coordinator trusts over the run status when a run times out while
@@ -998,6 +1029,21 @@ def test_write_set_closure_guard_rejects_the_pre_change_enumeration() -> None:
     """Falsification probe: the guard must reject the pre-change closure."""
     with pytest.raises(AssertionError):
         _assert_contains(_WRITE_SET_CLOSURE_PRE_CHANGE, _WRITE_SET_CLOSURE_RULE)
+
+
+def test_closure_takes_precedence_at_a_resolved_sibling_seam() -> None:
+    _assert_contains(
+        _reference("coordination"), _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE
+    )
+
+
+def test_resolved_sibling_closure_guard_rejects_escalation_only_text() -> None:
+    """Falsification probe: the guard must reject escalation-only closure text."""
+    with pytest.raises(AssertionError):
+        _assert_contains(
+            _RESOLVED_SIBLING_CLOSURE_PRE_CHANGE,
+            _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE,
+        )
 
 
 def test_completion_receipt_is_the_trusted_signal() -> None:

@@ -65,7 +65,10 @@ braintree release TAS-085-hash-addressing-and-operand worker --base-hash "$hash"
 
 `# Focus`, `priority`, and `active` status are advisory navigation, never a work
 claim. A coordinator assigns each worker a direct node path and an exclusive
-write set before work begins.
+write set before work begins. Before dispatch, the brief names the known
+resolved-sibling compiler seams the approved change can force — the concrete
+paths or the resolved owners — so a mechanically required conformance edit is
+not first discovered as an owned-seam escalation.
 
 - One agent writes a node and its status path at a time. Shared parents,
   `index-map.md`, definitions, and root hubs are coordinator-owned unless their
@@ -106,8 +109,16 @@ write set before work begins.
   dependency or regenerated artifact is in the set even though the change edits
   no source file in it, so a worker never leaves its set or stops for a closure
   file. When the closure exceeds the assigned set, the worker includes and
-  reports the additional in-scope paths; it stops and escalates for a path owned
-  by another node or a shared hub.
+  reports the additional in-scope paths. A compiler- or touched-test-forced
+  conformance edit — an exhaustive match, constructor, fixture, or derived
+  consumer — is in the change's closure even when a resolved sibling owns the
+  path, whether named before dispatch or discovered only by the compiler or a
+  touched test; the worker makes the mechanical edit and reports it with the
+  closure rather than escalating. A change to the seam's behavior, its public
+  contract, or the meaning of the landed seam still stops and escalates for a
+  path owned by another node or a shared hub, as does a path owned by another
+  node or a shared hub that the compiler and touched tests do not mechanically
+  force.
 - A worktree is a snapshot, not global truth; workers do not assume unseen work
   or IDs are unclaimed.
 - A worktree slice is not a node boundary: a fresh worker may continue the

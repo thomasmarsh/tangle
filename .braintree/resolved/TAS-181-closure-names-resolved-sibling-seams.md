@@ -1,9 +1,8 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:27:54Z
+updated: 2026-09-14T11:42:50Z
 summary: Resolve compiler closure precedence at resolved-sibling seams.
-next: Define known-seam briefing, mechanical closure authorization, and the semantic escalation boundary in references/coordination.md.
 ---
 
 Parent [[TAS-180-usage-feedback-hardening-round-ten]].
@@ -49,3 +48,29 @@ the meaning of the landed seam still escalates.
   meaning changes.
 - A contract test in `tests/test_skill.py` pins the rule.
 - `make test` passes.
+
+# Result
+
+Resolved `references/coordination.md`, `tests/test_skill.py`.
+
+- `references/coordination.md`, "## Parallel worktree contract": the dispatch
+  paragraph now requires the brief to name the known resolved-sibling compiler
+  seams the approved change can force — the concrete paths or the resolved
+  owners — before dispatch. The write-set closure bullet now states the
+  precedence: a compiler- or touched-test-forced conformance edit (exhaustive
+  match, constructor, fixture, or derived consumer) is in the change's closure
+  even when a resolved sibling owns the path, whether named before dispatch or
+  discovered only by the compiler or a touched test; the worker makes the
+  mechanical edit and reports it with the closure rather than escalating.
+  Behavioral, public-contract, and landed-seam meaning changes still stop and
+  escalate, as does a path owned by another node or a shared hub that the
+  compiler and touched tests do not mechanically force.
+- `tests/test_skill.py`: added `_RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE` with
+  `test_closure_takes_precedence_at_a_resolved_sibling_seam`, and the
+  falsification probe `_RESOLVED_SIBLING_CLOSURE_PRE_CHANGE` with
+  `test_resolved_sibling_closure_guard_rejects_escalation_only_text`. The
+  existing `_WRITE_SET_CLOSURE_RULE` and its probe are unchanged and still
+  match.
+- Commands: `uv run pytest tests/test_skill.py -q -k "closure or
+  resolved_sibling or write_set or precedence"` (5 passed) and `make test`
+  (green). `braintree check` passes.

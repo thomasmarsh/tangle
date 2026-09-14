@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:27:54Z
+updated: 2026-09-14T11:42:56Z
 summary: Fix or dispose the round-ten Tangle FBK-031 findings.
-next: "[[TAS-181-closure-names-resolved-sibling-seams]]"
+next: "[[TAS-184-brief-names-mixed-capability-case]]"
 ---
 
 Parent [[THO-027-round-ten-usage-feedback-analysis]].
