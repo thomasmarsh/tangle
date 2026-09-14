@@ -1,7 +1,7 @@
 ---
 context_rev: 1
 priority: P2
-updated: 2026-09-14T12:40:53Z
+updated: 2026-09-14T12:52:13Z
 summary: Reconcile the two independent round-ten reviews into the delivered contract, checker, and allocation slices.
 ---
 
@@ -107,8 +107,9 @@ Gate coverage (contract review finding 4, code review F1).
 `test_gate_outside_a_real_context_section_is_flagged`, which seeds a real
 `# Context` section and a later `# Outcome` carrying a gate line for
 `DEF-001-contract` and asserts exit 1 with the `gate-outside-context` message
-`Gated on` `DEF-001-contract` `must appear in # Context`; the previous fixtures
-all lacked `# Context`, so that branch was uncovered. It also adds
+`Gated on` `DEF-001-contract` `must appear in # Context`; the previous
+outside-context fixtures lacked a `# Context` section, so the mis-placed-gate
+branch was uncovered. It also adds
 `test_period_less_gate_line_stays_clean`, which asserts exit 0 for a col-0 gate
 line naming `DEF-001-contract` with no final period.
 
@@ -129,8 +130,8 @@ edge". `FINDING_CODES` insertion order is unchanged.
 `positive number of consecutive ids; default 1, no upper bound`, and
 `test_allocate_help_and_command_index_name_the_count_operand` pins that wording.
 No frozen baseline changed: `benchmark/verb-baseline.json` records stdout for
-`frontier`, `status`, and `check`, not `allocate --help`, so no re-freeze was
-needed.
+`frontier`, `node`, `impact`, `orient`, `digest`, and `clusters`, not
+`allocate --help`, so no re-freeze was needed.
 
 Shared counter (code review F4). `tests/test_bt_foundation.py` adds
 `test_allocate_batch_and_node_record_share_one_counter`: on one project vault and
@@ -145,6 +146,12 @@ Dispositions for the report-only findings.
   bullet", "landed in four commits" for five bullets). A resolved node body is
   not in this node's write set and repair would edit resolved evidence, so both
   are recorded report-only, not fixed.
+- Review-187 finding 1 (record side effect): resolving this node removed a
+  synthetic probe and re-cut `_WRITE_SET_CLOSURE_RULE`'s tail, so
+  TAS-181-closure-names-resolved-sibling-seams' `# Result` no longer matched the
+  tree. TAS-181 is corrected in place as a factual correction with no
+  `context_rev` bump, because no node pins it; its summary and outcome are
+  unchanged.
 - Contract review finding 7 (`benchmark/memory-corpus/implicit-retrieval.json`
   episode ep-3 paraphrases the pre-TAS-181 escalation clause) is deliberately
   left frozen-historical: it is a recorded decision, not an omission. No test

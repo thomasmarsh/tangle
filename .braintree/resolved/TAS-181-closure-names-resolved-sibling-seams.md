@@ -1,7 +1,7 @@
 ---
 context_rev: 2
 priority: P2
-updated: 2026-09-14T11:42:50Z
+updated: 2026-09-14T12:52:13Z
 summary: Resolve compiler closure precedence at resolved-sibling seams.
 ---
 
@@ -66,11 +66,12 @@ Resolved `references/coordination.md`, `tests/test_skill.py`.
   escalate, as does a path owned by another node or a shared hub that the
   compiler and touched tests do not mechanically force.
 - `tests/test_skill.py`: added `_RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE` with
-  `test_closure_takes_precedence_at_a_resolved_sibling_seam`, and the
-  falsification probe `_RESOLVED_SIBLING_CLOSURE_PRE_CHANGE` with
-  `test_resolved_sibling_closure_guard_rejects_escalation_only_text`. The
-  existing `_WRITE_SET_CLOSURE_RULE` and its probe are unchanged and still
-  match.
+  `test_closure_takes_precedence_at_a_resolved_sibling_seam`, and a
+  falsification guard test. Superseded by
+  `TAS-187-round-ten-review-reconciliation`: the synthetic
+  `_RESOLVED_SIBLING_CLOSURE_PRE_CHANGE` probe was removed and the guard now
+  probes with the verbatim `_WRITE_SET_CLOSURE_PRE_CHANGE`, and the escalation
+  sentence was reworded so `_WRITE_SET_CLOSURE_RULE`'s tail was re-cut to match.
 - Commands: `uv run pytest tests/test_skill.py -q -k "closure or
   resolved_sibling or write_set or precedence"` (5 passed) and `make test`
   (green). `braintree check` passes.
