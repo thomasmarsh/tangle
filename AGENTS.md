@@ -54,8 +54,10 @@ refactor(index): rebuild edges without a sidecar round-trip
 ## This project uses its own Braintree skill
 
 This repository is the source of truth for the Braintree skill. Agents MUST
-plan, track, and execute work through it rather than keeping planning in chat
-or ad hoc notes.
+plan, track, and execute work through it for work whose conclusion must outlive
+the session; work that is finished and committed within one session needs no
+node because Git already records it. [`SKILL.md`](SKILL.md) owns the full
+admission boundary. Do not keep cross-session planning in chat or ad hoc notes.
 
 1. Read [`SKILL.md`](SKILL.md) before starting and follow it for the vault,
    node admission, indexes, reachability, dependency revisions, and mutation
