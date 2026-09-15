@@ -4,8 +4,10 @@
 candidates, but neither states which single node a fresh worker should execute.
 This module adds that one answer: it follows the vault's ``index-map.md`` root
 hubs and each coordinating node's single ``next`` route to at most one
-executable node, and refuses to guess between more than one. It is read-only and
-derives everything from Markdown through :func:`tangle.index.packet`.
+executable node, and refuses to guess between more than one. A ``NODE`` operand
+scopes the answer to that node's own ``next`` route instead of the whole vault.
+It is read-only and derives everything from Markdown through
+:func:`tangle.index.packet`.
 
 The verb lives beside ``index.py`` rather than in ``cli.py`` because
 ``src/tangle/cli.py`` is frozen observable prompt content in
@@ -25,9 +27,10 @@ from .toon import field
 __all__ = ["main"]
 
 _USAGE = (
-    "usage: tangle packet\n"
+    "usage: tangle packet [NODE]\n"
     "Print the one executable frontier node and its minimal execution context,\n"
-    "or a structured blocked, ambiguous, or invalid result. Read-only.\n"
+    "or a structured blocked, ambiguous, or invalid result. With NODE, answer for\n"
+    "that node's next route instead of the whole vault. Read-only.\n"
     "Exits 0 only when result is ready; ambiguous, blocked, and invalid exit 1."
 )
 
@@ -43,9 +46,48 @@ def _usage_error(message: str) -> int:
     return 2
 
 
-def _print_ready(packet: index.WorkPacket) -> int:
+def _packet_files(
+    node: index.PacketCandidate, manifest: index.ManifestView | None
+) -> list[tuple[str, str, str]]:
+    """Return the ``kind,path,state`` rows for the packet node and its manifest paths.
+
+    The node's own Markdown path is always the first row. Manifest ``source``
+    and ``test`` entries follow as repository paths with their derived state, so
+    a still-to-be-created file reads as ``absent`` intent rather than vanishing.
+    """
+    rows: list[tuple[str, str, str]] = [("node", node.path, "present")]
+    if manifest is not None:
+        for entry in manifest.entries:
+            if entry.kind in {"source", "test"}:
+                rows.append((entry.kind, entry.detail or entry.value, entry.state))
+    return rows
+
+
+def _packet_verification(manifest: index.ManifestView | None) -> list[tuple[str]]:
+    """Return the final gates: the fixed gates plus the manifest ``verify`` entries.
+
+    Manifest gates are appended in authored order and deduplicated against the
+    fixed gates, so a node that names ``make test`` does not print it twice.
+    """
+    gates: list[str] = list(index.PACKET_VERIFICATION)
+    if manifest is not None:
+        for entry in manifest.entries:
+            if entry.kind == "verify" and entry.value not in gates:
+                gates.append(entry.value)
+    return [(gate,) for gate in gates]
+
+
+def _packet_compat(manifest: index.ManifestView | None) -> list[tuple[str]]:
+    """Return the manifest ``compat`` constraints as single-column rows."""
+    if manifest is None:
+        return []
+    return [(entry.value,) for entry in manifest.entries if entry.kind == "compat"]
+
+
+def _print_ready(packet: index.WorkPacket, root: str) -> int:
     node = packet.node
     assert node is not None
+    manifest = index.manifest(root, node.id)
     print(field("result", "ready"))
     print(field("id", node.id))
     print(field("name", node.name))
@@ -79,13 +121,22 @@ def _print_ready(packet: index.WorkPacket) -> int:
             ],
         )
     )
-    print(index.format_table("files", "path", "files: 0 files", [(node.path,)]))
+    print(
+        index.format_table(
+            "files", "kind,path,state", "files: 0 files", _packet_files(node, manifest)
+        )
+    )
     print(
         index.format_table(
             "verification",
             "gate",
             "verification: 0 gates",
-            [(gate,) for gate in index.PACKET_VERIFICATION],
+            _packet_verification(manifest),
+        )
+    )
+    print(
+        index.format_table(
+            "compat", "constraint", "compat: 0 constraints", _packet_compat(manifest)
         )
     )
     return 0
@@ -160,14 +211,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args and args[0] in {"-h", "--help"}:
         print(_USAGE)
         return 0
-    if args:
-        return _usage_error(f"packet takes no arguments: {args[0]}")
+    if len(args) > 1:
+        return _usage_error(f"packet takes at most one NODE: {args[1]}")
+    scope = args[0] if args else None
     root = _require_nodes_directory()
     if root is None:
         return 1
-    packet = index.packet(root)
+    packet = index.packet(root, scope)
     if packet.result == "ready":
-        return _print_ready(packet)
+        return _print_ready(packet, root)
     if packet.result == "blocked":
         return _print_blocked(packet)
     if packet.result == "ambiguous":

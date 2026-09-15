@@ -486,14 +486,22 @@ VERBS: dict[str, Verb] = {
     ),
     "packet": _verb(
         "Print the one executable frontier node and its minimal context.",
-        usage="tangle packet",
+        usage="tangle packet [NODE]",
+        operands=(
+            (
+                "NODE",
+                "optional bare ID or full node name; scopes the answer to that "
+                "node's own next route",
+            ),
+        ),
         outputs=(
             ("result", "ready, blocked, ambiguous, or invalid"),
             ("id/name/path/status/summary/next", "the one routed node when ready"),
             ("route", "parent,relation,child rows from the root hub to the node"),
             ("dependencies", "relation,target,pinned,current,status,stale rows"),
-            ("files", "path rows; the node Markdown path"),
-            ("verification", "gate rows; the required final gates"),
+            ("files", "kind,path,state rows; the node path plus manifest source/test entries"),
+            ("verification", "gate rows; the required final gates plus manifest verify entries"),
+            ("compat", "constraint rows; manifest compatibility entries"),
             ("terminals", "node,status,reason,summary,route,path rows when blocked"),
             ("candidates", "id,status,summary,next,route rows when ambiguous"),
             ("problems", "code,node,detail rows when invalid"),
@@ -501,6 +509,10 @@ VERBS: dict[str, Verb] = {
         hazards=(
             "Read-only and strict: it selects no route heuristically, so more than one "
             "executable route is ambiguous and a structural failure is invalid.",
+            "A NODE operand that resolves to no node is invalid with a scope-missing "
+            "problem, never a silent whole-vault answer.",
+            "A manifest source or test path that does not exist yet is absent intent, "
+            "not a failure; a node with no # Manifest keeps its own path as the only file.",
             "Exits 0 only for ready; blocked, ambiguous, and invalid exit 1.",
             _ORPHAN_WARNING_HAZARD,
         ),

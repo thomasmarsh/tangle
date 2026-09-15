@@ -1180,25 +1180,22 @@ def _packet_candidate(
     )
 
 
-def _walk_packet_route(
-    hub: IndexedNode,
-    member: IndexedNode,
-    relation: str,
+def _walk_packet_from(
+    current: IndexedNode,
+    hops: list[PacketRoute],
     by_name: dict[str, IndexedNode],
     by_id: dict[str, IndexedNode],
 ) -> tuple[PacketCandidate | None, PacketTerminal | None, tuple[PacketProblem, ...]]:
-    """Follow one hub member's single ``next`` route to its terminal.
+    """Follow one node's single ``next`` route to its terminal.
 
-    The member's hub edge is the first hop. A blocked node ends the route as a
-    blocked terminal rather than falling through to another candidate; a stale
-    context edge ends it as stale. When ``next`` is a lone wikilink the walk
-    continues only through a direct ``Parent`` link, and a missing target, a
-    non-child link, or a revisited node is a structural failure for the whole
-    packet instead of a terminal.
+    ``hops`` holds the route evidence accumulated before ``current``. A blocked
+    node ends the route as a blocked terminal rather than falling through to
+    another candidate; a stale context edge ends it as stale. When ``next`` is a
+    lone wikilink the walk continues only through a direct ``Parent`` link, and a
+    missing target, a non-child link, or a revisited node is a structural failure
+    for the whole packet instead of a terminal.
     """
-    hops = [PacketRoute(parent=hub.id, relation=relation, child=member.id)]
-    current = member
-    seen = {member.id}
+    seen = {current.id}
     while True:
         if current.status == "blocked":
             return None, _packet_terminal(current, "blocked", hops), ()
@@ -1232,7 +1229,84 @@ def _walk_packet_route(
         current = target
 
 
-def packet(root: str) -> WorkPacket:
+def _walk_packet_route(
+    hub: IndexedNode,
+    member: IndexedNode,
+    relation: str,
+    by_name: dict[str, IndexedNode],
+    by_id: dict[str, IndexedNode],
+) -> tuple[PacketCandidate | None, PacketTerminal | None, tuple[PacketProblem, ...]]:
+    """Follow one hub member's single ``next`` route to its terminal.
+
+    The member's hub edge is the first hop; the rest is the shared single-``next``
+    walk in :func:`_walk_packet_from`.
+    """
+    hops = [PacketRoute(parent=hub.id, relation=relation, child=member.id)]
+    return _walk_packet_from(member, hops, by_name, by_id)
+
+
+def _scoped_packet(
+    scope: str,
+    nodes: Sequence[IndexedNode],
+    by_name: dict[str, IndexedNode],
+    by_id: dict[str, IndexedNode],
+) -> WorkPacket:
+    """Answer the packet for one explicitly named node's single ``next`` route.
+
+    A scope operand names a task or coordinating node directly, so the answer
+    starts at that node rather than at a root hub's members and reports the same
+    ready, blocked, or invalid shape. An operand that resolves to no node is an
+    invalid result with a ``scope-missing`` problem, never a silent global
+    answer.
+    """
+    by_reference: dict[str, IndexedNode] = {}
+    for entry in nodes:
+        by_reference[entry.name] = entry
+        by_reference[entry.id] = entry
+    target = by_reference.get(scope)
+    if target is None:
+        return WorkPacket(
+            result="invalid",
+            node=None,
+            candidates=(),
+            terminals=(),
+            problems=(
+                PacketProblem(
+                    code="scope-missing",
+                    node=scope,
+                    detail="scope does not resolve to a node",
+                ),
+            ),
+        )
+    candidate, terminal, problems = _walk_packet_from(target, [], by_name, by_id)
+    if problems:
+        ordered = sorted(problems, key=lambda problem: (problem.code, problem.node))
+        return WorkPacket(
+            result="invalid",
+            node=None,
+            candidates=(),
+            terminals=(),
+            problems=tuple(ordered),
+        )
+    if candidate is not None:
+        return WorkPacket(
+            result="ready",
+            node=candidate,
+            candidates=(candidate,),
+            terminals=(),
+            problems=(),
+        )
+    assert terminal is not None
+    return WorkPacket(
+        result="blocked",
+        node=None,
+        candidates=(),
+        terminals=(terminal,),
+        problems=(),
+    )
+
+
+def packet(root: str, scope: str | None = None) -> WorkPacket:
     """Derive the strict executable work packet for a vault.
 
     Every root hub named by ``index-map.md`` starts one route per unfinished
@@ -1243,11 +1317,17 @@ def packet(root: str) -> WorkPacket:
     ``ready``, more than one is ``ambiguous``, and none is ``blocked`` with one
     row per terminal. Any structural failure makes the whole packet ``invalid``
     so a broken route is never reported as a work claim.
+
+    When ``scope`` names a node, the answer starts at that node's single
+    ``next`` route instead of the hub walk, so an initiative with one executable
+    route answers ``ready`` even when the whole vault is ``ambiguous``.
     """
     root = os.path.abspath(root)
     nodes = _read_nodes(root)
     by_name = {node.name: node for node in nodes}
     by_id = {node.id: node for node in nodes}
+    if scope is not None:
+        return _scoped_packet(scope, nodes, by_name, by_id)
     hubs = _root_hubs(root)
     if not hubs:
         return WorkPacket(

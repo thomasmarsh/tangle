@@ -43,6 +43,7 @@ def _node(
     context: str = "",
     context_rev: int = 1,
     priority: str = "",
+    manifest: str = "",
 ) -> str:
     header = ["---", f"context_rev: {context_rev}"]
     if priority:
@@ -57,6 +58,8 @@ def _node(
     body = [route, ""]
     if context:
         body.extend([context, ""])
+    if manifest:
+        body.extend([manifest, ""])
     return "\n".join(header) + "\n\n" + "\n".join(body) + "\n"
 
 
@@ -120,11 +123,14 @@ def test_packet_ready_returns_the_unique_executable_node(
     assert _toon_rows(result.stdout, "dependencies") == [
         ["Depends on", "DEF-001-contract", "2", "2", "resolved", ""],
     ]
-    assert _toon_rows(result.stdout, "files") == [["proposed/TAS-101-first.md"]]
+    assert _toon_rows(result.stdout, "files") == [
+        ["node", "proposed/TAS-101-first.md", "present"]
+    ]
     assert _toon_rows(result.stdout, "verification") == [
         ["tangle check"],
         ["make test"],
     ]
+    assert "compat: 0 constraints" in result.stdout
 
 
 def test_packet_blocked_lists_the_terminal_blocked_route(
@@ -326,12 +332,88 @@ def test_packet_invalid_without_a_root_hub(tmp_path: Path, run_tangle_inproc: Ru
     assert _toon_rows(result.stdout, "problems")[0][0] == "no-root-hub"
 
 
-def test_packet_rejects_arguments(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
+def test_packet_rejects_more_than_one_operand(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
-    result = run_tangle_inproc("packet", "extra", env=_env(tmp_path, vault))
+    result = run_tangle_inproc(
+        "packet", "TAS-100", "TAS-101", env=_env(tmp_path, vault)
+    )
     assert result.returncode == 2
-    assert 'error: "packet takes no arguments: extra"' in result.stdout
+    assert 'error: "packet takes at most one NODE: TAS-101"' in result.stdout
+
+
+def test_packet_scoped_operand_selects_one_route_in_an_ambiguous_vault(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A scoped NODE answers ready where the whole vault is ambiguous."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    for name, child in (("TAS-100-plan", "TAS-101-first"), ("TAS-200-plan", "TAS-201-second")):
+        _write(
+            vault / "proposed" / f"{name}.md",
+            _node(status="proposed", summary=f"Coordinate {name}.", next_value=f"[[{child}]]"),
+        )
+        _write(
+            vault / "proposed" / f"{child}.md",
+            _node(
+                status="proposed",
+                summary=f"Execute {child}.",
+                next_value=f"Execute {child}.",
+                route=f"Parent [[{name}]].",
+            ),
+        )
+
+    bare = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert bare.returncode == 1
+    assert 'result: "ambiguous"' in bare.stdout
+
+    scoped = run_tangle_inproc("packet", "TAS-100", env=_env(tmp_path, vault))
+    assert scoped.returncode == 0
+    assert 'result: "ready"' in scoped.stdout
+    assert 'id: "TAS-101"' in scoped.stdout
+    assert _toon_rows(scoped.stdout, "route") == [["TAS-100", "Parent", "TAS-101"]]
+
+
+def test_packet_scoped_leaf_with_an_action_next_answers_for_itself(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """Scoping to the executable leaf itself returns it with empty route evidence."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+        ),
+    )
+
+    result = run_tangle_inproc("packet", "TAS-101-first", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'result: "ready"' in result.stdout
+    assert 'id: "TAS-101"' in result.stdout
+    assert "route: 0 hops" in result.stdout
+
+
+def test_packet_unknown_scope_is_invalid_with_a_named_problem(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    vault = tmp_path / "vault"
+    _hub(vault)
+    result = run_tangle_inproc("packet", "TAS-999-missing", env=_env(tmp_path, vault))
+    assert result.returncode == 1
+    assert 'result: "invalid"' in result.stdout
+    assert _toon_rows(result.stdout, "problems") == [
+        ["scope-missing", "TAS-999-missing", "scope does not resolve to a node"]
+    ]
 
 
 def test_packet_requires_an_existing_nodes_directory(
@@ -340,3 +422,116 @@ def test_packet_requires_an_existing_nodes_directory(
     result = run_tangle_inproc("packet", env=_env(tmp_path, tmp_path / "missing"))
     assert result.returncode == 1
     assert "nodes directory does not exist" in result.stdout
+
+
+def test_packet_ready_assembles_manifest_files_verification_and_compat(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A populated manifest contributes source/test files, verify gates, and compat rows."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(tmp_path / "src" / "present.py", "value = 1\n")
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+            manifest=(
+                "# Manifest\n"
+                "\n"
+                "- source: src/present.py\n"
+                "- source: src/new.py\n"
+                "- test: tests/test_thing.py\n"
+                "- verify: make test\n"
+                "- verify: tangle check\n"
+                "- verify: make test-benchmarks\n"
+                "- compat: keep Markdown as authority\n"
+            ),
+        ),
+    )
+
+    result = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'result: "ready"' in result.stdout
+    assert _toon_rows(result.stdout, "files") == [
+        ["node", "proposed/TAS-101-first.md", "present"],
+        ["source", "src/present.py", "present"],
+        ["source", "src/new.py", "absent"],
+        ["test", "tests/test_thing.py", "absent"],
+    ]
+    assert _toon_rows(result.stdout, "verification") == [
+        ["tangle check"],
+        ["make test"],
+        ["make test-benchmarks"],
+    ]
+    assert _toon_rows(result.stdout, "compat") == [["keep Markdown as authority"]]
+
+
+def test_packet_ready_with_an_empty_manifest_keeps_only_the_node_path(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A manifest with no schema bullets is empty, not a failure."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+            manifest="# Manifest\n\nNo schema bullets here, only prose.\n",
+        ),
+    )
+
+    result = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'result: "ready"' in result.stdout
+    assert _toon_rows(result.stdout, "files") == [
+        ["node", "proposed/TAS-101-first.md", "present"]
+    ]
+    assert _toon_rows(result.stdout, "verification") == [
+        ["tangle check"],
+        ["make test"],
+    ]
+    assert "compat: 0 constraints" in result.stdout
+
+
+def test_packet_ready_marks_an_absent_manifest_source_path(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A declared source that does not exist yet is absent intent, not a failure."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+            manifest="# Manifest\n\n- source: src/not_created_yet.py\n",
+        ),
+    )
+
+    result = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    rows = _toon_rows(result.stdout, "files")
+    assert rows == [
+        ["node", "proposed/TAS-101-first.md", "present"],
+        ["source", "src/not_created_yet.py", "absent"],
+    ]
