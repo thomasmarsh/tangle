@@ -13,9 +13,20 @@ import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-__all__ = ["CANONICAL_DIRECTORY", "NodePath", "find_by_name", "iter_node_paths"]
+__all__ = [
+    "CANONICAL_DIRECTORY",
+    "NON_NODE_DIRECTORIES",
+    "NodePath",
+    "find_by_name",
+    "iter_node_paths",
+]
 
 CANONICAL_DIRECTORY = "canonical"
+# Directories under the vault that hold non-authoritative local state rather
+# than canonical nodes. Node discovery and graph validation skip them, so a
+# generated view or a future proposal, acceptance, or receipt file is never
+# mistaken for a node in an invalid status directory.
+NON_NODE_DIRECTORIES = frozenset({"views", "proposals", "acceptances", "receipts"})
 _STATUSES = frozenset({"proposed", "active", "blocked", "resolved"})
 _STATUS = re.compile(r"^status:\s*(?:['\"])?([a-z]+)(?:['\"])?\s*$", re.MULTILINE)
 
@@ -47,7 +58,7 @@ def iter_node_paths(root: str) -> Iterator[NodePath]:
     if not os.path.isdir(root):
         return
     for name in sorted(os.listdir(root)):
-        if name == CANONICAL_DIRECTORY:
+        if name == CANONICAL_DIRECTORY or name in NON_NODE_DIRECTORIES:
             continue
         directory = os.path.join(root, name)
         if not os.path.isdir(directory):

@@ -120,6 +120,7 @@ VERBS: dict[str, Verb] = {
             ("sidecar", "absolute path of the local coordination state"),
             ("initialized", "whether that state exists"),
             ("active_claims", "leases currently recorded"),
+            ("views", "generated page state: current, stale, or unavailable"),
             ("reservations", "prefix,next rows for allocated ids"),
         ),
         hazards=(
@@ -269,10 +270,12 @@ VERBS: dict[str, Verb] = {
             ("nodes", "node rows indexed"),
             ("edges", "graph edges indexed"),
             ("root", "absolute nodes directory indexed"),
+            ("views", "generated pages current or the count republished"),
         ),
         hazards=(
             "The index maintains itself on every interaction; run this only to "
             "repair or rebuild it.",
+            "Also republishes the disposable Markdown views under views/.",
             "Derived state only; Markdown remains authoritative.",
         ),
         topic=_COORDINATION_TOPIC,

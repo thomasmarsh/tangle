@@ -235,6 +235,15 @@ def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) ->
     assert 'result: "no-op"' in never_held.stdout
 
 
+def _canonical_markdown(vault: Path) -> dict[Path, bytes]:
+    """Return the authoritative Markdown bytes, excluding generated views."""
+    return {
+        path: path.read_bytes()
+        for path in sorted(vault.rglob("*.md"))
+        if "views" not in path.relative_to(vault).parts
+    }
+
+
 def test_reindex_is_read_only_and_recovers(
     tmp_path: Path, bt_command: BtCommand
 ) -> None:
@@ -246,9 +255,7 @@ def test_reindex_is_read_only_and_recovers(
         BT_NODES_DIR=str(vault),
     )
     command = bt_command()
-    before = {
-        path: path.read_bytes() for path in sorted(vault.rglob("*.md"))
-    }
+    before = _canonical_markdown(vault)
     subprocess.run([*command, "index", str(vault)], env=env, capture_output=True, check=True)
     search = subprocess.run([*command, "search", "needle"], env=env, capture_output=True, text=True)
     assert '"DEF-001","resolved"' in search.stdout
@@ -258,10 +265,7 @@ def test_reindex_is_read_only_and_recovers(
     assert '"TAS-001","active","Depends on","1"' in backlinks.stdout
     stale = subprocess.run([*command, "stale"], env=env, capture_output=True, text=True)
     assert '"TAS-001","active","DEF-001","1","2"' in stale.stdout
-    after = {
-        path: path.read_bytes() for path in sorted(vault.rglob("*.md"))
-    }
-    assert before == after
+    assert _canonical_markdown(vault) == before
 
     database = tmp_path / "sidecar" / "projects" / "verification-test" / "graph.sqlite3"
     database.unlink()

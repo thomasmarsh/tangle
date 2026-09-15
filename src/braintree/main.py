@@ -43,6 +43,7 @@ from . import (
     token_benchmark,
     vault,
     verb_benchmark,
+    views,
 )
 from .revision import reported_version
 from .toon import escape, field, table
@@ -222,12 +223,15 @@ def _maintain_index(command: str) -> None:
     Trigger: every dispatched interaction except :data:`_INDEX_UPKEEP_EXCLUDED`,
     and only when the project's local coordination state already exists. Scope:
     the derived node, edge, and full-text rows for the resolved vault, rebuilt
-    from Markdown alone, so repeated calls are idempotent and an unchanged vault
-    writes nothing. Failure: the interaction's answer and exit code never
-    change. An unresolvable state location, an absent state file, and a
-    concurrent writer's lock are silent no-ops, so a read-only interaction
-    creates no local state and a benign race raises no noise; any other failure
-    is one warning on stderr, the same channel the orphan pre-check uses.
+    from Markdown alone, followed by the generated Markdown navigation views
+    published from that same reconciled snapshot; repeated calls are idempotent
+    and an unchanged vault writes nothing. Failure: the interaction's answer and
+    exit code never change. An unresolvable state location, an absent state
+    file, and a concurrent writer's lock are silent no-ops, so a read-only
+    interaction creates no local state and a benign race raises no noise; any
+    other failure is one warning on stderr, the same channel the orphan
+    pre-check uses. A view-publication failure is reported separately and stays
+    retryable: the next interaction rebuilds the pages from canonical Markdown.
     """
     if command in _INDEX_UPKEEP_EXCLUDED:
         return
@@ -253,11 +257,22 @@ def _maintain_index(command: str) -> None:
         _warn_index_upkeep(str(exc))
     except Exception as exc:  # upkeep must never fail a client interaction
         _warn_index_upkeep(str(exc))
+    try:
+        views.publish(nodes_dir)
+    except Exception as exc:  # projection upkeep must never fail the answer
+        _warn_view_upkeep(str(exc))
 
 
 def _warn_index_upkeep(detail: str) -> None:
     print(
         f"warning: unable to maintain the derived index: {detail}",
+        file=sys.stderr,
+    )
+
+
+def _warn_view_upkeep(detail: str) -> None:
+    print(
+        f"warning: unable to publish generated views: {detail}",
         file=sys.stderr,
     )
 

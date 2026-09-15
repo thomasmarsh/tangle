@@ -1,6 +1,7 @@
-# The vault's portable id-reservation markers and Obsidian workspace are local
-# coordination state, not authoritative Markdown.
+# The vault's portable id-reservation markers, generated navigation views, and
+# Obsidian workspace are local coordination state, not authoritative Markdown.
 .braintree/reservations/
+.braintree/views/
 .braintree/.obsidian/
 .lavish/
 graph.sqlite3

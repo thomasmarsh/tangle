@@ -16,7 +16,7 @@ import time
 from collections.abc import Callable, Sequence
 
 from . import help as help_module
-from . import identity, index, semantic, sidecar, vault
+from . import identity, index, semantic, sidecar, vault, views
 from .revision import reported_version
 from .toon import escape, field
 
@@ -224,6 +224,26 @@ def _run_reindex(root: str) -> tuple[int, int, str]:
         return index.reindex(conn, root)
     finally:
         conn.close()
+
+
+def _views_state(root: str) -> str:
+    """Return the generated-view diagnostic for ``root`` without writing.
+
+    ``status`` is a diagnostic, so it never republishes a page: it reports
+    whether the pages on disk already match the canonical snapshot, or how many
+    would change on the next interaction. An unreadable vault is reported as an
+    unavailable or failed state rather than raised, because the rest of the
+    status answer stays useful.
+    """
+    if not os.path.isdir(root):
+        return "unavailable"
+    try:
+        report = views.inspect_report(root)
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        return f"failed: {exc}"
+    if report.current:
+        return f"current ({len(report.unchanged)})"
+    return f"stale ({report.updated} pending)"
 
 
 def _allocate(args: list[str]) -> int:
@@ -1079,6 +1099,7 @@ def _dispatch(command: str, args: list[str]) -> int:
         if len(args) != 1:
             return _usage_error("status accepts no arguments")
         _print_fields(sidecar.status_fields())
+        print(field("views", _views_state(_nodes_directory())))
         print(
             index.format_table(
                 "reservations",
@@ -1127,6 +1148,17 @@ def _dispatch(command: str, args: list[str]) -> int:
         print(f"nodes: {nodes}")
         print(f"edges: {edges}")
         print(f"root: {absolute_root}")
+        try:
+            report = views.publish(absolute_root)
+        except OSError as exc:
+            print(field("views", f"failed: {exc}"))
+            return 1
+        print(
+            field(
+                "views",
+                "current" if report.current else f"updated {report.updated}",
+            )
+        )
         return 0
     if command == "search":
         return _search(args)
