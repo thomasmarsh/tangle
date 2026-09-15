@@ -2,7 +2,7 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T19:24:09Z
+updated: 2026-09-15T19:32:50Z
 summary: Implement full-census indexing and generated Markdown views.
 next: Implement the registry writer and unresolved external references.
 ---
@@ -108,7 +108,12 @@ observable files are unchanged; `./scripts/tangle check` passed (251 nodes).
 Remaining, in order: implement the registry writer and unresolved external
 references; add the fault tests (preserved mtime, add/delete, case change,
 corrupt sidecar and views, interrupted publication, startup race) plus the
-scaling benchmark; and land the project-scoped publication lease.
+scaling benchmark; and land the project-scoped publication lease. The corrupt-
+sidecar fault tests must also cover the two review follow-ups on this module: a
+duplicate `nodes_fts` row for one id is invisible to the dict-keyed content
+comparison, and a non-numeric stored `next_value` raises through `int()` so
+`tangle index` tracebacks instead of repairing; the scaling benchmark should
+record the per-interaction cost of reading every full-text row.
 
 ## Slice: reconciled reindex for the sidecar query verbs
 
@@ -150,8 +155,10 @@ transaction rewrites each stale or absent full-text row for a node whose
 identity row was unchanged, deletes an orphan full-text row, and raises the
 reservations from the same `maxima` the guard compared. An unchanged vault
 still opens no write transaction, so a settled vault pays the two extra reads
-and no write, and the returned index is a faithful derived projection of
-Markdown rather than only of its identity rows.
+and no write, and the returned index converges from its identity rows to the
+full derived projection: full-text content and reservations included. A
+duplicate full-text row for one id and a non-numeric stored reservation remain
+unrepaired and are recorded in the fault-test remaining item above.
 
 Evidence: `tests/test_index_upkeep.py` adds
 `test_identity_preserving_sidecar_corruption_is_repaired`, which builds the
