@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -10,6 +12,32 @@ from tangle import token_benchmark
 
 # Benchmark verification replays recorded sessions and fixtures, so it is opt-in.
 pytestmark = pytest.mark.benchmark
+
+_REPO_ROOT = Path(__file__).parent.parent
+_MANIFEST = _REPO_ROOT / "research" / "fixtures" / "token-install" / "manifest.json"
+# Each recoverable committed sample reproduces from the frozen install snapshot
+# whose recording revision it embeds; see the manifest for the provenance.
+_REPRODUCIBLE_SAMPLES = {
+    "benchmark/token-ab-current.json": "7b8877ae",
+    "benchmark/token-orientation-current.json": "7b8877ae",
+    "benchmark/token-ab2-current.json": "6980501",
+    "benchmark/token-ab-tight.json": "7b8877ae-tight",
+    "benchmark/token-ab2-tight.json": "97e0848",
+}
+_UNREPRODUCIBLE_REASON = (
+    "SKILL.md bytes absent from all git objects (Ruby-era, never committed)"
+)
+_UNREPRODUCIBLE_SAMPLES = {
+    "benchmark/token-cold-resume-baseline-v1.json": (
+        "a50cd53da62c7969a8903cf062e3867be8357e74ba771a572a28be9a1393ee5b"
+    ),
+    "benchmark/token-orientation-baseline-v1.json": (
+        "a50cd53da62c7969a8903cf062e3867be8357e74ba771a572a28be9a1393ee5b"
+    ),
+    "benchmark/token-orientation-candidate-v2.json": (
+        "9a2c639cd0956ea23a5a565a0fadcd68460f00e2bba387ebdc56dec4f39e0e7b"
+    ),
+}
 
 _FIXTURES = Path(__file__).parent / "fixtures"
 _FAKE_CODEX = _FIXTURES / "fake-codex-mutation.py"
@@ -65,11 +93,50 @@ def test_check_fixture_reports_variants(capsys: pytest.CaptureFixture[str]) -> N
 def test_composite_fixture_has_expected_file_count(capsys: pytest.CaptureFixture[str]) -> None:
     assert token_benchmark.main(["--check-fixture"]) == 0
     out = capsys.readouterr().out
-    # SKILL.md, agents/openai.yaml, four metadata files, every src/tangle
-    # module (including help.py, vault.py, memory_pilot.py, and
-    # memory_authority.py), three references, plus the generated graph.
-    assert '"files":87' in out
+    # The frozen ``current`` snapshot supplies the installed tree; the composite
+    # graph fixture adds .gitignore, ten fixed nodes, the scale-many historical
+    # nodes, TASK.txt, and answer.schema.json.
+    installed = len(token_benchmark._installed_skill_files())
+    expected = installed + 10 + token_benchmark.SCALES["small"] + 3
+    assert f'"files":{expected}' in out
     assert '"fixture_version":"graph-retrieval-v3"' in out
+
+
+@pytest.mark.parametrize(("sample", "snapshot"), sorted(_REPRODUCIBLE_SAMPLES.items()))
+def test_committed_samples_reproduce_from_frozen_snapshots(
+    sample: str, snapshot: str, tmp_path: Path
+) -> None:
+    metadata = json.loads((_REPO_ROOT / sample).read_text(encoding="utf-8"))["metadata"]
+    generated = token_benchmark._generate_fixture(
+        str(tmp_path),
+        metadata["representation"],
+        metadata["scale"],
+        metadata["benchmark_case"],
+        snapshot,
+    )
+    assert generated["fixture_sha256"] == metadata["fixture_sha256"]
+    assert generated["skill_sha256"] == metadata["skill_sha256"]
+    skill = _REPO_ROOT / "research" / "fixtures" / "token-install" / snapshot / "SKILL.md"
+    assert hashlib.sha256(skill.read_bytes()).hexdigest() == metadata["skill_sha256"]
+
+
+def test_manifest_records_unreproducible_samples() -> None:
+    manifest = json.loads(_MANIFEST.read_text(encoding="utf-8"))
+    unreproducible = {entry["sample"]: entry for entry in manifest["unreproducible"]}
+    assert set(unreproducible) == set(_UNREPRODUCIBLE_SAMPLES)
+    for sample, skill_sha256 in _UNREPRODUCIBLE_SAMPLES.items():
+        assert unreproducible[sample]["skill_sha256"] == skill_sha256
+        assert unreproducible[sample]["reason"] == _UNREPRODUCIBLE_REASON
+
+
+def test_manifest_hashes_match_the_frozen_files() -> None:
+    manifest = json.loads(_MANIFEST.read_text(encoding="utf-8"))
+    root = _MANIFEST.parent
+    for snapshot in manifest["snapshots"]:
+        for record in snapshot["files"]:
+            path = root / snapshot["key"] / record["path"]
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            assert digest == record["sha256"], f"{snapshot['key']}/{record['path']}"
 
 
 def test_inspect_session_exposes_only_shapes(capsys: pytest.CaptureFixture[str]) -> None:

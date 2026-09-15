@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 status: proposed
-updated: 2026-09-15T21:14:16Z
+updated: 2026-09-15T21:23:51Z
 summary: Separate research and benchmark evidence from the ordinary runtime.
-next: "[[tas-1vmzcb5gewppf0y9bv7w49az1j-freeze-the-token-benchmark-s-installed-skill]]"
+next: Clear the delegation marker once the benchmark-isolation owner resolves.
 ---
 
 Parent [[tas-10sn2b04x59bkd80j8h5hqp4tk-sequence-the-arch-md-section-7-replacement-in]].
@@ -21,6 +21,20 @@ corpus still treats live production source as frozen prompt content.
 observable content in `benchmark/memory-authority-cases.json`, and
 `staged_benchmark.py` embeds `SKILL.md` and `src/tangle`, so a production move
 can invalidate historical evidence.
+
+Delegation marker: the runtime-dispatch half — ordinary startup no longer
+importing the benchmark and `memory_*` modules — is delegated to
+[[tas-3h6n5kky4qzdryvkwe1rxg1hx6-isolate-benchmark-and-memory-evaluation]]. Its
+`# Done when` owns the lazily resolved `_BENCHMARKS` dispatch table, the
+unchanged `benchmark <sub>` help and error text, and the negative-import
+assertion proving an ordinary command loads no benchmark module. The delegated
+surface is `behavioral_benchmark`, `embedding_benchmark`, `memory_authority`,
+`memory_causal`, `memory_corpus`, `memory_diagnostics`, `memory_pilot`,
+`quality_benchmark`, `staged_benchmark`, `storage_comparison`,
+`token_benchmark`, and `verb_benchmark`, plus the transitively loaded
+`clustering`, `reduction`, and `semantic`. Clear this marker and cite the
+owner's `# Result` as this parent's integration step; the dispatch half stays
+gated on that owner.
 
 # Outcome
 
@@ -43,6 +57,7 @@ Decomposed into three direct children, one per independently acceptable
 outcome: reconcile the runtime-dispatch half with its existing owner, freeze the
 memory-evaluation corpus's live observable inputs, and freeze the token
 benchmark's installed-skill fixture inputs. Each fixture child owns its own
-provenance manifest and reproduction check, and the reconciliation child stays
-gated on
-[[tas-3h6n5kky4qzdryvkwe1rxg1hx6-isolate-benchmark-and-memory-evaluation]].
+provenance manifest and reproduction check, and the reconciliation child
+records the delegation to
+[[tas-3h6n5kky4qzdryvkwe1rxg1hx6-isolate-benchmark-and-memory-evaluation]], on
+which this parent's dispatch half remains gated.

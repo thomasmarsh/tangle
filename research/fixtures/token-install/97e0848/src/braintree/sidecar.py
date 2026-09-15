@@ -1,0 +1,310 @@
+"""Local SQLite sidecar coordination for the Braintree graph.
+
+Typed Python port of the coordination half of ``scripts/bt``: project
+identity, external sidecar location, the ``df``-based network-filesystem
+guard, schema initialization, and atomic ID allocation and lease claims.
+Markdown stays authoritative; the sidecar only holds rebuildable indexes and
+same-host coordination state.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import os
+import sqlite3
+import subprocess
+import time
+from collections.abc import Callable
+from pathlib import Path
+
+__all__ = [
+    "ClaimConflict",
+    "SidecarError",
+    "allocate",
+    "claim",
+    "database_path",
+    "ensure_sidecar",
+    "location_fields",
+    "open_connection",
+    "project_id",
+    "release",
+    "state_root",
+    "status_fields",
+]
+
+_DATABASE_NAME = "graph.sqlite3"
+_BUSY_TIMEOUT_SECONDS = 1.0
+_BUSY_RETRIES = 4
+_COORDINATION_SCHEMA = """
+PRAGMA journal_mode = WAL;
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS id_sequences (
+  prefix TEXT PRIMARY KEY,
+  next_value INTEGER NOT NULL CHECK(next_value > 0)
+);
+CREATE TABLE IF NOT EXISTS claims (
+  node_id TEXT PRIMARY KEY,
+  agent_id TEXT NOT NULL,
+  base_content_hash TEXT NOT NULL,
+  lease_expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS claims_lease_expiry ON claims(lease_expires_at);
+"""
+
+
+class SidecarError(Exception):
+    """A recoverable runtime error rendered as a TOON ``error`` field."""
+
+
+class ClaimConflict(Exception):
+    """An existing claim belongs to a different agent or base hash."""
+
+    def __init__(self, owner: str) -> None:
+        super().__init__(owner)
+        self.owner = owner
+
+
+def project_id() -> str:
+    """Return the stable project identity for the current Git common directory."""
+    override = os.environ.get("BT_PROJECT_ID")
+    if override:
+        return override
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise SidecarError(
+            "run bt inside a Git project or set BT_PROJECT_ID for an isolated test"
+        ) from exc
+    common = result.stdout.strip()
+    return hashlib.sha256(common.encode("utf-8")).hexdigest()[:20]
+
+
+def state_root() -> Path:
+    """Return the base directory that holds every project sidecar."""
+    override = os.environ.get("BT_SIDECAR_DIR")
+    if override:
+        return Path(override)
+    xdg = os.environ.get("XDG_STATE_HOME")
+    if xdg:
+        return Path(xdg) / "braintree"
+    home = os.environ.get("HOME")
+    if not home:
+        raise SidecarError("HOME is required when XDG_STATE_HOME is unset")
+    return Path(home) / ".local" / "state" / "braintree"
+
+
+def database_path() -> Path:
+    """Return the SQLite file for the current project."""
+    return state_root() / "projects" / project_id() / _DATABASE_NAME
+
+
+def location_fields() -> list[tuple[str, str]]:
+    """Return the ``project_id`` and ``sidecar`` location fields."""
+    return [("project_id", project_id()), ("sidecar", str(database_path()))]
+
+
+def _network_guard(directory: Path) -> None:
+    """Refuse an apparent network-mounted sidecar location."""
+    if os.environ.get("BT_ALLOW_NETWORK_SIDECAR") == "1":
+        return
+    probe = directory
+    while not probe.exists():
+        parent = probe.parent
+        if parent == probe:
+            break
+        probe = parent
+    try:
+        result = subprocess.run(
+            ["df", "-P", str(probe)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return
+    lines = result.stdout.splitlines()
+    if len(lines) < 2:
+        return
+    fields = lines[1].split()
+    source = fields[0] if fields else ""
+    if source.startswith("//") or ":" in source or source.startswith("nfs"):
+        raise SidecarError(
+            "sidecar filesystem appears network-mounted; "
+            "SQLite WAL requires a local same-host filesystem"
+        )
+
+
+def _retry_busy[T](operation: Callable[[], T]) -> T:
+    attempt = 0
+    while True:
+        try:
+            return operation()
+        except sqlite3.OperationalError as exc:
+            message = str(exc)
+            if ("locked" in message or "busy" in message) and attempt < _BUSY_RETRIES:
+                attempt += 1
+                time.sleep(1)
+                continue
+            raise
+
+
+def _connect(path: Path) -> sqlite3.Connection:
+    return sqlite3.connect(path, timeout=_BUSY_TIMEOUT_SECONDS, isolation_level=None)
+
+
+def _ensure_directory(directory: Path) -> None:
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise SidecarError(f"unable to create sidecar directory: {directory}") from exc
+
+
+def ensure_sidecar() -> Path:
+    """Create or repair the coordination sidecar and return its path."""
+    path = database_path()
+    _network_guard(path.parent)
+    _ensure_directory(path.parent)
+    try:
+        def initialize() -> None:
+            conn = _connect(path)
+            try:
+                conn.executescript(_COORDINATION_SCHEMA)
+            finally:
+                conn.close()
+
+        _retry_busy(initialize)
+    except (sqlite3.Error, SidecarError) as exc:
+        raise SidecarError("unable to initialize the SQLite sidecar") from exc
+    return path
+
+
+def open_connection() -> sqlite3.Connection:
+    """Open the initialized sidecar for a coordination or index command."""
+    ensure_sidecar()
+    return _connect(database_path())
+
+
+def _run_transaction[T](conn: sqlite3.Connection, body: Callable[[sqlite3.Connection], T]) -> T:
+    def operation() -> T:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            result = body(conn)
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
+        conn.execute("COMMIT")
+        return result
+
+    return _retry_busy(operation)
+
+
+def allocate(prefix: str) -> int:
+    """Atomically allocate the next integer for ``prefix``."""
+    try:
+        conn = open_connection()
+        try:
+            def body(connection: sqlite3.Connection) -> int:
+                connection.execute(
+                    "INSERT INTO id_sequences(prefix,next_value) VALUES(?, 2) "
+                    "ON CONFLICT(prefix) DO NOTHING",
+                    (prefix,),
+                )
+                row = connection.execute(
+                    "SELECT next_value - 1 FROM id_sequences WHERE prefix = ?",
+                    (prefix,),
+                ).fetchone()
+                connection.execute(
+                    "UPDATE id_sequences SET next_value = next_value + 1 WHERE prefix = ?",
+                    (prefix,),
+                )
+                return int(row[0])
+
+            return _run_transaction(conn, body)
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise SidecarError("unable to allocate an ID atomically") from exc
+
+
+def claim(node: str, agent: str, base_hash: str, lease_seconds: int) -> tuple[str, str, int]:
+    """Acquire or renew an exclusive lease, returning owner/hash/expiry."""
+    now = int(time.time())
+    expires = now + lease_seconds
+    try:
+        conn = open_connection()
+        try:
+            def body(connection: sqlite3.Connection) -> tuple[str, str, int]:
+                connection.execute("DELETE FROM claims WHERE lease_expires_at <= ?", (now,))
+                connection.execute(
+                    "INSERT INTO claims(node_id,agent_id,base_content_hash,lease_expires_at) "
+                    "VALUES(?,?,?,?) ON CONFLICT(node_id) DO UPDATE SET "
+                    "lease_expires_at=excluded.lease_expires_at "
+                    "WHERE claims.agent_id=excluded.agent_id "
+                    "AND claims.base_content_hash=excluded.base_content_hash",
+                    (node, agent, base_hash, expires),
+                )
+                row = connection.execute(
+                    "SELECT agent_id, base_content_hash, lease_expires_at "
+                    "FROM claims WHERE node_id = ?",
+                    (node,),
+                ).fetchone()
+                return (str(row[0]), str(row[1]), int(row[2]))
+
+            owner, recorded_hash, recorded_expiry = _run_transaction(conn, body)
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise SidecarError("unable to acquire the claim atomically") from exc
+    if owner != agent or recorded_hash != base_hash:
+        raise ClaimConflict(owner)
+    return owner, recorded_hash, recorded_expiry
+
+
+def release(node: str, agent: str, base_hash: str) -> bool:
+    """Release the matching unexpired lease, returning whether one was removed."""
+    now = int(time.time())
+    try:
+        conn = open_connection()
+        try:
+            def body(connection: sqlite3.Connection) -> int:
+                connection.execute("DELETE FROM claims WHERE lease_expires_at <= ?", (now,))
+                cursor = connection.execute(
+                    "DELETE FROM claims WHERE node_id = ? AND agent_id = ? "
+                    "AND base_content_hash = ?",
+                    (node, agent, base_hash),
+                )
+                return int(cursor.rowcount)
+
+            return _run_transaction(conn, body) == 1
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise SidecarError("unable to release the claim atomically") from exc
+
+
+def status_fields() -> list[tuple[str, str]]:
+    """Return the location plus initialization and active-claim fields."""
+    fields = location_fields()
+    path = database_path()
+    if path.is_file():
+        count = "?"
+        try:
+            conn = _connect(path)
+            try:
+                row = conn.execute("SELECT count(*) FROM claims;").fetchone()
+                count = str(row[0])
+            finally:
+                conn.close()
+        except sqlite3.Error:
+            count = "?"
+        fields.append(("initialized", "true"))
+        fields.append(("active_claims", count))
+    else:
+        fields.append(("initialized", "false"))
+        fields.append(("active_claims", "0"))
+    return fields

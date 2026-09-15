@@ -1,0 +1,4 @@
+interface:
+  display_name: "Braintree"
+  short_description: "Manage work through atomic Markdown graph nodes"
+  default_prompt: "Use $braintree to manage this engineering task in the local Markdown vault."

@@ -11,9 +11,11 @@ representation, scale), the requested model, the reasoning effort, and the Codex
 CLI version, so the only deliberate difference is the state under test. The
 generator plus the case name fixes both the generated node set and the prompt, so
 matching those fields matches the fixture and the prompt. ``fixture_sha256`` is
-deliberately not compared: the generated fixture embeds ``SKILL.md`` and
-``src/tangle``, so its hash changes with the state under test even when the
-fixture data and prompt are identical.
+deliberately not compared: the generated fixture embeds the installed skill bytes
+from a frozen ``research/fixtures/token-install`` snapshot (``SKILL.md`` alongside
+``src/tangle``); a snapshot is a fixed byte copy that never tracks live source, so
+the committed arms were recorded from different snapshots and the hash differs even
+when the fixture data and prompt are identical.
 
 Every sample must pass its exact-value gate before any delta is reported: first
 the record's own ``correctness`` flag, and, when the matching raw session and

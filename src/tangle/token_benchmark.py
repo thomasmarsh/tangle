@@ -106,41 +106,46 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _skill_source() -> Path:
-    return _repo_root() / "SKILL.md"
+# The frozen install snapshots make a committed sample reproducible from the
+# revision it was recorded at. ``current`` is a frozen byte copy of revision
+# 726cb43, not a view of the live tree: a frozen snapshot never tracks live
+# source, so refresh it deliberately with a re-record when the measured
+# installed bytes change.
+_SNAPSHOT_ROOT = "research/fixtures/token-install"
+_DEFAULT_SNAPSHOT = "current"
 
 
-def _skill_metadata_source() -> Path:
-    return _repo_root() / "agents" / "openai.yaml"
+def _snapshots() -> Json:
+    with open(_repo_root() / _SNAPSHOT_ROOT / "manifest.json", "rb") as handle:
+        value = json.loads(handle.read())
+    if not isinstance(value, dict):
+        raise _BenchError("install snapshot manifest is not a JSON object")
+    return value
 
 
-def _installed_skill_files() -> dict[str, bytes]:
-    """Map installed-skill relative paths to their repository bytes.
+def _snapshot(key: str = _DEFAULT_SNAPSHOT) -> Json:
+    snapshots = _snapshots().get("snapshots")
+    if not isinstance(snapshots, list):
+        raise _BenchError("install snapshot manifest has no snapshot list")
+    for entry in snapshots:
+        if isinstance(entry, dict) and entry.get("key") == key:
+            return entry
+    raise _BenchError(f"unknown install snapshot {key!r}")
+
+
+def _installed_skill_files(snapshot_key: str = _DEFAULT_SNAPSHOT) -> dict[str, bytes]:
+    """Map installed-skill relative paths to their frozen snapshot bytes.
 
     The installed skill is a ``uv`` project, so a fixture copy mirrors the
-    installer's distributable tree exactly.
+    installer's distributable tree exactly. The bytes come from
+    ``research/fixtures/token-install/<snapshot_key>`` rather than the live
+    checkout, so a committed sample reproduces from its recording revision.
     """
-    package = _repo_root() / "src" / "tangle"
-    paths = [
-        _skill_source(),
-        _skill_metadata_source(),
-        _repo_root() / "pyproject.toml",
-        _repo_root() / "uv.lock",
-        _repo_root() / ".python-version",
-        _repo_root() / "README.md",
-    ]
-    files: dict[str, bytes] = {}
-    for path in paths:
-        files[str(path.relative_to(_repo_root()))] = path.read_bytes()
-    for source in sorted(package.iterdir()):
-        if source.is_file():
-            files[str(source.relative_to(_repo_root()))] = source.read_bytes()
-    # The installer also copies the canonical topical references beside SKILL.md,
-    # so the fixture mirrors the full installed distribution, not only the core.
-    for source in sorted((_repo_root() / "references").iterdir()):
-        if source.is_file():
-            files[str(source.relative_to(_repo_root()))] = source.read_bytes()
-    return files
+    root = _repo_root() / _SNAPSHOT_ROOT / snapshot_key
+    return {
+        record["path"]: (root / record["path"]).read_bytes()
+        for record in _snapshot(snapshot_key)["files"]
+    }
 
 
 def _run_graph_check(nodes_dir: str, *graph_args: str) -> int:
@@ -287,11 +292,15 @@ def _completed_mutation(stream: str, answer_path: str, root: str, before: dict[s
         raise _BenchError("mutated graph is invalid")
 
 
-def _fixture_prompt(representation: str, benchmark_case: str) -> str:
+def _fixture_prompt(
+    representation: str, benchmark_case: str, install_root: str, prompt_verb: str
+) -> str:
+    skill_path = f"{install_root}/SKILL.md"
+    verb = f"${prompt_verb}"
     if benchmark_case == "routine-mutation":
         return (
             "Complete one routine Markdown execution-graph mutation. First explicitly "
-            "invoke $tangle and follow .agents/skills/tangle/SKILL.md.\n"
+            f"invoke {verb} and follow {skill_path}.\n"
             "\n"
             "The signed-schema validation task is complete. Move its existing node to "
             "resolved and make only the necessary node mutation: set its summary exactly "
@@ -306,8 +315,9 @@ def _fixture_prompt(representation: str, benchmark_case: str) -> str:
             "You are resuming a cold engineering session. Inspect this repository's "
             "Markdown execution graph; do not guess from filenames alone.\n"
             "\n"
-            "First explicitly invoke $tangle and follow the project skill at "
-            ".agents/skills/tangle/SKILL.md before inspecting the graph.\n"
+            "First explicitly invoke "
+            f"{verb} and follow the project skill at "
+            f"{skill_path} before inspecting the graph.\n"
             "\n"
             "Return exactly one compact JSON object with these keys and no others:\n"
             '{"frontier":"ID","next":"exact next action"}\n'
@@ -323,8 +333,9 @@ def _fixture_prompt(representation: str, benchmark_case: str) -> str:
         else "conventional plan documents"
     )
     instruction = (
-        "First explicitly invoke $tangle and follow the project skill at "
-        ".agents/skills/tangle/SKILL.md before inspecting the graph."
+        "First explicitly invoke "
+        f"{verb} and follow the project skill at "
+        f"{skill_path} before inspecting the graph."
         if representation == "graph"
         else "Use the conventional plan as the control representation; it expresses "
         "the same current work facts and historical distractors but does not supply "
@@ -372,21 +383,24 @@ def _fixture_hash(root: str) -> str:
     return digest.hexdigest()
 
 
-def _sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _generate_fixture(root: str, representation: str, scale: str, benchmark_case: str) -> Json:
+def _generate_fixture(
+    root: str,
+    representation: str,
+    scale: str,
+    benchmark_case: str,
+    snapshot_key: str = _DEFAULT_SNAPSHOT,
+) -> Json:
     case = CASES[benchmark_case]
     expected = case.expected
     count = SCALES[scale]
+    snapshot = _snapshot(snapshot_key)
     _output, success = _capture_merged(["git", "init", "-q", root])
     if not success:
         raise _BenchError("could not initialize isolated fixture repository")
     _write(os.path.join(root, ".gitignore"), "*\n!.gitignore\n")
     if representation == "graph":
-        skill_root = os.path.join(root, ".agents/skills/tangle")
-        for relative, data in _installed_skill_files().items():
+        skill_root = os.path.join(root, snapshot["install_root"])
+        for relative, data in _installed_skill_files(snapshot_key).items():
             _write(os.path.join(skill_root, relative), data)
         if benchmark_case == "routine-mutation":
             _write(
@@ -540,7 +554,12 @@ def _generate_fixture(root: str, representation: str, scale: str, benchmark_case
         for index in range(count):
             text += f"Historical completed item TAS-{100 + index:03d}.\n"
         _write(os.path.join(root, "plans/data-import.md"), text)
-    _write(os.path.join(root, "TASK.txt"), _fixture_prompt(representation, benchmark_case))
+    _write(
+        os.path.join(root, "TASK.txt"),
+        _fixture_prompt(
+            representation, benchmark_case, snapshot["install_root"], snapshot["prompt_verb"]
+        ),
+    )
     if benchmark_case != "routine-mutation":
         _write(os.path.join(root, "answer.schema.json"), _pretty(_output_schema(expected)) + "\n")
     metadata: Json = {
@@ -550,7 +569,7 @@ def _generate_fixture(root: str, representation: str, scale: str, benchmark_case
         "fixture_sha256": _fixture_hash(root),
     }
     if representation == "graph":
-        metadata["skill_sha256"] = _sha256_file(_skill_source())
+        metadata["skill_sha256"] = snapshot["skill_sha256"]
     return metadata
 
 
@@ -953,18 +972,22 @@ def _newest_session(before: Sequence[str], fixture_dir: str) -> str:
     return matching[0]
 
 
-def _check_fixture(benchmark_case: str) -> int:
+def _check_fixture(benchmark_case: str, snapshot_key: str = _DEFAULT_SNAPSHOT) -> int:
     representations = (
         ["graph"]
         if benchmark_case in {"cold-resume", "routine-mutation"}
         else list(REPRESENTATIONS)
     )
     expected = CASES[benchmark_case].expected
+    snapshot = _snapshot(snapshot_key)
+    installed = _installed_skill_files(snapshot_key)
     variants: list[Json] = []
     for representation in representations:
         for scale in SCALES:
             with tempfile.TemporaryDirectory(prefix="tangle-token-fixture-") as directory:
-                metadata = _generate_fixture(directory, representation, scale, benchmark_case)
+                metadata = _generate_fixture(
+                    directory, representation, scale, benchmark_case, snapshot_key
+                )
                 task_text = Path(directory, "TASK.txt").read_text(encoding="utf-8")
                 if expected and any(
                     isinstance(value, str) and value in task_text
@@ -979,18 +1002,27 @@ def _check_fixture(benchmark_case: str) -> int:
                     )
                     if _run_graph_check(os.path.join(directory, "nodes"), *graph_args) != 0:
                         raise _BenchError("graph fixture structural check failed")
-                    if Path(directory, ".agents/skills/tangle/SKILL.md").read_bytes() != (
-                        _skill_source().read_bytes()
+                    copy_root = os.path.join(directory, snapshot["install_root"])
+                    skill_bytes = installed.get("SKILL.md")
+                    if skill_bytes is None or (
+                        Path(copy_root, "SKILL.md").read_bytes() != skill_bytes
                     ):
                         raise _BenchError(
                             "graph fixture does not copy the exact repository skill"
                         )
-                    if Path(
-                        directory, ".agents/skills/tangle/agents/openai.yaml"
-                    ).read_bytes() != _skill_metadata_source().read_bytes():
+                    metadata_bytes = installed.get("agents/openai.yaml")
+                    if metadata_bytes is None or (
+                        Path(copy_root, "agents/openai.yaml").read_bytes() != metadata_bytes
+                    ):
                         raise _BenchError(
                             "graph fixture does not install the exact skill metadata"
                         )
+                    for relative, data in installed.items():
+                        if Path(copy_root, relative).read_bytes() != data:
+                            raise _BenchError(
+                                "graph fixture does not copy the exact installed file: "
+                                f"{relative}"
+                            )
                     if "stale_dependents" in expected:
                         facts = _graph_fixture_facts(directory)
                         if facts["stale_dependents"] != expected["stale_dependents"]:

@@ -1,0 +1,569 @@
+{
+  "protocol": "token-install-snapshot-v1",
+  "snapshots": [
+    {
+      "key": "7b8877ae",
+      "source_revision": "7b8877ae",
+      "skill_revision": "7b8877ae",
+      "install_root": ".agents/skills/braintree",
+      "prompt_verb": "braintree",
+      "skill_sha256": "277b9a05269c337d09293ec5795b95016ab9f00904d78d7ab5e9f0328d7fd78d",
+      "files": [
+        {
+          "path": ".python-version",
+          "sha256": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d"
+        },
+        {
+          "path": "README.md",
+          "sha256": "26a87144f8a9aa260e8cab11024ecc032905871d97f40a107161ab620a4fb846"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "277b9a05269c337d09293ec5795b95016ab9f00904d78d7ab5e9f0328d7fd78d"
+        },
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "a06f4858901058be00f40f870569638b637a28fe2ef2e88e4ced5c2e245e6cc1"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "74eec19f37166a8e12e502d6bc32ea63ca88bfadf958de4f63bc49d76a10df5a"
+        },
+        {
+          "path": "src/braintree/__init__.py",
+          "sha256": "3e240024b09cf1d73144b5a10826f9190cb4e131d878b331f065bc44e6ee5b90"
+        },
+        {
+          "path": "src/braintree/__main__.py",
+          "sha256": "311edc36bfa23db1bf0f22b40db13c8967e55322d6124de6d61a7914dd8b9cf5"
+        },
+        {
+          "path": "src/braintree/behavioral_benchmark.py",
+          "sha256": "11bdab0bf6936143484bcde38c853106948b77357ed1deccde1640c34e6c606c"
+        },
+        {
+          "path": "src/braintree/cli.py",
+          "sha256": "f8708cb23db53b896beab7908f2f9564960541ec045537118becf67b6b155fa5"
+        },
+        {
+          "path": "src/braintree/graph_check.py",
+          "sha256": "867d92fde6c3005f687ff44627b503dfe7cb88e473ab3dca96290c3a13eb362c"
+        },
+        {
+          "path": "src/braintree/index.py",
+          "sha256": "b0f3ad3148f98eb22aeebf17129d11a041b633bc1054a6c6a80a26d3f70bc5bb"
+        },
+        {
+          "path": "src/braintree/py.typed",
+          "sha256": "c6735103eae5ee37113e9f422c08bd0b31e59397ffbad0de72eb1b6ef520703c"
+        },
+        {
+          "path": "src/braintree/sidecar.py",
+          "sha256": "41a7a8706f1c29bd80137248b0f1b585507f2383a82c12bf79a4fd204a7e644e"
+        },
+        {
+          "path": "src/braintree/storage_comparison.py",
+          "sha256": "207bce91bfd73ab5fe597405b038636a06752f01f1474ed8f9d75320b1ce514f"
+        },
+        {
+          "path": "src/braintree/token_benchmark.py",
+          "sha256": "afa2b64d8943cda412ff99b214718bd5b4e8ce6482574ae1635f61a30376b444"
+        },
+        {
+          "path": "src/braintree/toon.py",
+          "sha256": "774988f13f4da29ca26cff297089875e625946af3f0e5077351c48e970967bc8"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "550e68cf2080c7c28f55dcfbdf8c30243c3da1d111a0a1576187ae2089f5dde4"
+        }
+      ]
+    },
+    {
+      "key": "6980501",
+      "source_revision": "6980501",
+      "skill_revision": "6980501",
+      "install_root": ".agents/skills/braintree",
+      "prompt_verb": "braintree",
+      "skill_sha256": "277b9a05269c337d09293ec5795b95016ab9f00904d78d7ab5e9f0328d7fd78d",
+      "files": [
+        {
+          "path": ".python-version",
+          "sha256": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d"
+        },
+        {
+          "path": "README.md",
+          "sha256": "26a87144f8a9aa260e8cab11024ecc032905871d97f40a107161ab620a4fb846"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "277b9a05269c337d09293ec5795b95016ab9f00904d78d7ab5e9f0328d7fd78d"
+        },
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "a06f4858901058be00f40f870569638b637a28fe2ef2e88e4ced5c2e245e6cc1"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "74eec19f37166a8e12e502d6bc32ea63ca88bfadf958de4f63bc49d76a10df5a"
+        },
+        {
+          "path": "src/braintree/__init__.py",
+          "sha256": "3e240024b09cf1d73144b5a10826f9190cb4e131d878b331f065bc44e6ee5b90"
+        },
+        {
+          "path": "src/braintree/__main__.py",
+          "sha256": "311edc36bfa23db1bf0f22b40db13c8967e55322d6124de6d61a7914dd8b9cf5"
+        },
+        {
+          "path": "src/braintree/behavioral_benchmark.py",
+          "sha256": "11bdab0bf6936143484bcde38c853106948b77357ed1deccde1640c34e6c606c"
+        },
+        {
+          "path": "src/braintree/cli.py",
+          "sha256": "f8708cb23db53b896beab7908f2f9564960541ec045537118becf67b6b155fa5"
+        },
+        {
+          "path": "src/braintree/graph_check.py",
+          "sha256": "867d92fde6c3005f687ff44627b503dfe7cb88e473ab3dca96290c3a13eb362c"
+        },
+        {
+          "path": "src/braintree/index.py",
+          "sha256": "b0f3ad3148f98eb22aeebf17129d11a041b633bc1054a6c6a80a26d3f70bc5bb"
+        },
+        {
+          "path": "src/braintree/py.typed",
+          "sha256": "c6735103eae5ee37113e9f422c08bd0b31e59397ffbad0de72eb1b6ef520703c"
+        },
+        {
+          "path": "src/braintree/sidecar.py",
+          "sha256": "41a7a8706f1c29bd80137248b0f1b585507f2383a82c12bf79a4fd204a7e644e"
+        },
+        {
+          "path": "src/braintree/storage_comparison.py",
+          "sha256": "207bce91bfd73ab5fe597405b038636a06752f01f1474ed8f9d75320b1ce514f"
+        },
+        {
+          "path": "src/braintree/token_benchmark.py",
+          "sha256": "407732f66d803a21377a20942d13c48bd607664ceb4758bd82ee69f0db1c0bff"
+        },
+        {
+          "path": "src/braintree/toon.py",
+          "sha256": "774988f13f4da29ca26cff297089875e625946af3f0e5077351c48e970967bc8"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "550e68cf2080c7c28f55dcfbdf8c30243c3da1d111a0a1576187ae2089f5dde4"
+        }
+      ]
+    },
+    {
+      "key": "97e0848",
+      "source_revision": "97e0848",
+      "skill_revision": "97e0848",
+      "install_root": ".agents/skills/braintree",
+      "prompt_verb": "braintree",
+      "skill_sha256": "d189eef8918cc5a66c3b8de54da6238bf37367898c3cdf12d9f86d4ab8e5f328",
+      "files": [
+        {
+          "path": ".python-version",
+          "sha256": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d"
+        },
+        {
+          "path": "README.md",
+          "sha256": "26a87144f8a9aa260e8cab11024ecc032905871d97f40a107161ab620a4fb846"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "d189eef8918cc5a66c3b8de54da6238bf37367898c3cdf12d9f86d4ab8e5f328"
+        },
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "a06f4858901058be00f40f870569638b637a28fe2ef2e88e4ced5c2e245e6cc1"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "74eec19f37166a8e12e502d6bc32ea63ca88bfadf958de4f63bc49d76a10df5a"
+        },
+        {
+          "path": "src/braintree/__init__.py",
+          "sha256": "3e240024b09cf1d73144b5a10826f9190cb4e131d878b331f065bc44e6ee5b90"
+        },
+        {
+          "path": "src/braintree/__main__.py",
+          "sha256": "311edc36bfa23db1bf0f22b40db13c8967e55322d6124de6d61a7914dd8b9cf5"
+        },
+        {
+          "path": "src/braintree/behavioral_benchmark.py",
+          "sha256": "11bdab0bf6936143484bcde38c853106948b77357ed1deccde1640c34e6c606c"
+        },
+        {
+          "path": "src/braintree/cli.py",
+          "sha256": "f8708cb23db53b896beab7908f2f9564960541ec045537118becf67b6b155fa5"
+        },
+        {
+          "path": "src/braintree/graph_check.py",
+          "sha256": "867d92fde6c3005f687ff44627b503dfe7cb88e473ab3dca96290c3a13eb362c"
+        },
+        {
+          "path": "src/braintree/index.py",
+          "sha256": "b0f3ad3148f98eb22aeebf17129d11a041b633bc1054a6c6a80a26d3f70bc5bb"
+        },
+        {
+          "path": "src/braintree/py.typed",
+          "sha256": "c6735103eae5ee37113e9f422c08bd0b31e59397ffbad0de72eb1b6ef520703c"
+        },
+        {
+          "path": "src/braintree/sidecar.py",
+          "sha256": "41a7a8706f1c29bd80137248b0f1b585507f2383a82c12bf79a4fd204a7e644e"
+        },
+        {
+          "path": "src/braintree/storage_comparison.py",
+          "sha256": "207bce91bfd73ab5fe597405b038636a06752f01f1474ed8f9d75320b1ce514f"
+        },
+        {
+          "path": "src/braintree/token_benchmark.py",
+          "sha256": "407732f66d803a21377a20942d13c48bd607664ceb4758bd82ee69f0db1c0bff"
+        },
+        {
+          "path": "src/braintree/toon.py",
+          "sha256": "774988f13f4da29ca26cff297089875e625946af3f0e5077351c48e970967bc8"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "550e68cf2080c7c28f55dcfbdf8c30243c3da1d111a0a1576187ae2089f5dde4"
+        }
+      ]
+    },
+    {
+      "key": "7b8877ae-tight",
+      "source_revision": "7b8877ae",
+      "skill_revision": "97e0848",
+      "install_root": ".agents/skills/braintree",
+      "prompt_verb": "braintree",
+      "notes": "Recorded from a worktree holding the 7b8877ae installed package plus the uncommitted tight SKILL.md; commit 6980501 that followed changed only src/braintree/token_benchmark.py, so this snapshot pairs 7b8877ae sources with the 97e0848 skill.",
+      "skill_sha256": "d189eef8918cc5a66c3b8de54da6238bf37367898c3cdf12d9f86d4ab8e5f328",
+      "files": [
+        {
+          "path": ".python-version",
+          "sha256": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d"
+        },
+        {
+          "path": "README.md",
+          "sha256": "26a87144f8a9aa260e8cab11024ecc032905871d97f40a107161ab620a4fb846"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "d189eef8918cc5a66c3b8de54da6238bf37367898c3cdf12d9f86d4ab8e5f328"
+        },
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "a06f4858901058be00f40f870569638b637a28fe2ef2e88e4ced5c2e245e6cc1"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "74eec19f37166a8e12e502d6bc32ea63ca88bfadf958de4f63bc49d76a10df5a"
+        },
+        {
+          "path": "src/braintree/__init__.py",
+          "sha256": "3e240024b09cf1d73144b5a10826f9190cb4e131d878b331f065bc44e6ee5b90"
+        },
+        {
+          "path": "src/braintree/__main__.py",
+          "sha256": "311edc36bfa23db1bf0f22b40db13c8967e55322d6124de6d61a7914dd8b9cf5"
+        },
+        {
+          "path": "src/braintree/behavioral_benchmark.py",
+          "sha256": "11bdab0bf6936143484bcde38c853106948b77357ed1deccde1640c34e6c606c"
+        },
+        {
+          "path": "src/braintree/cli.py",
+          "sha256": "f8708cb23db53b896beab7908f2f9564960541ec045537118becf67b6b155fa5"
+        },
+        {
+          "path": "src/braintree/graph_check.py",
+          "sha256": "867d92fde6c3005f687ff44627b503dfe7cb88e473ab3dca96290c3a13eb362c"
+        },
+        {
+          "path": "src/braintree/index.py",
+          "sha256": "b0f3ad3148f98eb22aeebf17129d11a041b633bc1054a6c6a80a26d3f70bc5bb"
+        },
+        {
+          "path": "src/braintree/py.typed",
+          "sha256": "c6735103eae5ee37113e9f422c08bd0b31e59397ffbad0de72eb1b6ef520703c"
+        },
+        {
+          "path": "src/braintree/sidecar.py",
+          "sha256": "41a7a8706f1c29bd80137248b0f1b585507f2383a82c12bf79a4fd204a7e644e"
+        },
+        {
+          "path": "src/braintree/storage_comparison.py",
+          "sha256": "207bce91bfd73ab5fe597405b038636a06752f01f1474ed8f9d75320b1ce514f"
+        },
+        {
+          "path": "src/braintree/token_benchmark.py",
+          "sha256": "afa2b64d8943cda412ff99b214718bd5b4e8ce6482574ae1635f61a30376b444"
+        },
+        {
+          "path": "src/braintree/toon.py",
+          "sha256": "774988f13f4da29ca26cff297089875e625946af3f0e5077351c48e970967bc8"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "550e68cf2080c7c28f55dcfbdf8c30243c3da1d111a0a1576187ae2089f5dde4"
+        }
+      ]
+    },
+    {
+      "key": "current",
+      "source_revision": "726cb43",
+      "skill_revision": "726cb43",
+      "install_root": ".agents/skills/tangle",
+      "prompt_verb": "tangle",
+      "skill_sha256": "ffe2d985e59d3760a5a959b9bfa5287a797b29f130dc179792e78921b41da97c",
+      "files": [
+        {
+          "path": ".python-version",
+          "sha256": "7b55f8e67b5623c4bef3fa691288da9437d79d3aba156de48d481db32ac7d16d"
+        },
+        {
+          "path": "README.md",
+          "sha256": "39a4de31eba57b0852467b36dc612d4d2eb5b606e6215c62dde31717b5d1b61a"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "ffe2d985e59d3760a5a959b9bfa5287a797b29f130dc179792e78921b41da97c"
+        },
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "44d8d09c4c90b749990b43e8abdfa8181f5fd3f7dad76580a8d6e4204a4bee0a"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "60e90d753b6da01ccfde666baa263238b9952e24ee5d640f40e115d44d5960f9"
+        },
+        {
+          "path": "references/authoring.md",
+          "sha256": "bd42e0e4a196d293744c1743be02078fb76a19aecc233005f589b652f40b9d24"
+        },
+        {
+          "path": "references/change-intake.md",
+          "sha256": "a4e51fd8874722afcfa00c78ad70659376e003253ce36b1e3a806c681ba0acf8"
+        },
+        {
+          "path": "references/coordination.md",
+          "sha256": "098f4a8d0355f153da328366bb29c3edb896d9fc66262615f7118e6e6b1872ff"
+        },
+        {
+          "path": "references/dependencies.md",
+          "sha256": "2c03363eb97e4a4e45a0b9dbc16426f9bd597290d720228657c0400f062b7136"
+        },
+        {
+          "path": "src/tangle/__init__.py",
+          "sha256": "4b6b7e3c05fd0ece8e460f9a7b76aa4c68a803857b487b7f672b03ee5a24d2a9"
+        },
+        {
+          "path": "src/tangle/__main__.py",
+          "sha256": "d5f62d75c2c9ef712e3a9bec939c9612f8b2ac39314fe343233dece556e681b4"
+        },
+        {
+          "path": "src/tangle/allocation.py",
+          "sha256": "6596df1c38a09c0fd5d9324ecbb5d7608a7f04314192b9498b2fe297950457ca"
+        },
+        {
+          "path": "src/tangle/behavioral_benchmark.py",
+          "sha256": "ea39d854a5f6c01f1023abeac91ac7c8895027dcc328a959c87c509af62e8332"
+        },
+        {
+          "path": "src/tangle/census.py",
+          "sha256": "7abf8b27465258560c7ccf5745e0166ba314e953562a64c541ee3dc84b97916d"
+        },
+        {
+          "path": "src/tangle/cli.py",
+          "sha256": "21ed89979ce94006a337e978e387799fe498ae21657dc118f6531427f82400fc"
+        },
+        {
+          "path": "src/tangle/clustering.py",
+          "sha256": "bb97aae59842f358f8f2b1fc1d42f5b0e839d5dacd17c23d4578d85f1c9b9c79"
+        },
+        {
+          "path": "src/tangle/decompose.py",
+          "sha256": "49bad6da08f7cb358980e826d57695c1da6766de5872975a550feddf01e3498b"
+        },
+        {
+          "path": "src/tangle/embedding_benchmark.py",
+          "sha256": "b1bc3dc676520ee6d25047b876243a90e68aea0171d64983d7344c5511bdefa7"
+        },
+        {
+          "path": "src/tangle/external_reference.py",
+          "sha256": "34965b289899fcebce0532452bf2bcdf5b6085c7bac91cae665616017af771fa"
+        },
+        {
+          "path": "src/tangle/feedback_record.py",
+          "sha256": "d7623129a492565e38ace9769960e684f0fe10d675cd75f41d888f5a63cdee3f"
+        },
+        {
+          "path": "src/tangle/feedback_scan.py",
+          "sha256": "c18360c26523a649fd5c3c9c70a47b3f52262a04ff2598eade1ae9c6cb3272fd"
+        },
+        {
+          "path": "src/tangle/graph_check.py",
+          "sha256": "1fdbc331afbcd905534784237b73f81c383c3fb11b27c573077711bfec1f413c"
+        },
+        {
+          "path": "src/tangle/help.py",
+          "sha256": "aac4dbc656cfb0422036cbb1c95b74ee066ed5f8d02974ea2abb4e13640d4b69"
+        },
+        {
+          "path": "src/tangle/identity.py",
+          "sha256": "06453f3fa0556cde67603f9e7c9d3a6195c99fcfb7d75447da0eb8c6bfc59c23"
+        },
+        {
+          "path": "src/tangle/index.py",
+          "sha256": "82fc962293aa40fdddc29f60354a767876f9036308b66704415a4816e784bf5f"
+        },
+        {
+          "path": "src/tangle/main.py",
+          "sha256": "896e03ea37ee34781cf5232e7ed64b1b434541d77ab5a0efe79b41d6933db340"
+        },
+        {
+          "path": "src/tangle/manifest.py",
+          "sha256": "1f0acb70450dd8595c8f7b92fc05ead100717f25b2017061de30a9ff9f51a032"
+        },
+        {
+          "path": "src/tangle/memory_authority.py",
+          "sha256": "e39c674f0b053b4ca4ab149f9a556b00d2d5b81c1a5ca680e1711fbee4b5c03a"
+        },
+        {
+          "path": "src/tangle/memory_causal.py",
+          "sha256": "9653405aabe1ab5121ecf3d4381612c04c896bb43c82f10a4265792a85b3666b"
+        },
+        {
+          "path": "src/tangle/memory_contract.py",
+          "sha256": "44d6d0d94c2c013d3eb896d98a508717eae86bd41920496e7e0422e6e936a6f1"
+        },
+        {
+          "path": "src/tangle/memory_corpus.py",
+          "sha256": "1b0e83ec4e0e4a1814804552b3de69a34953b864c0c2d55601aeb220b6466e07"
+        },
+        {
+          "path": "src/tangle/memory_diagnostics.py",
+          "sha256": "dd93033eb563045e7725987a43ae4bd0cf9a79c10bda19c9b772531dd71fb8f4"
+        },
+        {
+          "path": "src/tangle/memory_pilot.py",
+          "sha256": "82f59eaaaa6d7c59b630149566ee571ccb3cedfa814791bb433cc31d25d84984"
+        },
+        {
+          "path": "src/tangle/memory_scenario.py",
+          "sha256": "c1b49c300feca88d5479b27896ffe684f67e436142d5be13c0182ec5970192ce"
+        },
+        {
+          "path": "src/tangle/migration.py",
+          "sha256": "7e3fc63432c9bf86f07f1f039cc77e9e8d622bfcc4e14c52fb7ba6d861db41e1"
+        },
+        {
+          "path": "src/tangle/node_record.py",
+          "sha256": "beb6ff317fb32e79fcb6796f9d09a494457d822eae69dac178eb4ccbf5eeb9b4"
+        },
+        {
+          "path": "src/tangle/node_references.py",
+          "sha256": "71b8fb97076add9ebf4b447d5d41a03d70397994646c87daa83f062a412ad1ec"
+        },
+        {
+          "path": "src/tangle/packet.py",
+          "sha256": "2ebe5a16414dcc188ec9262439d415483db03e34086c40a822f79fe4bdfce57d"
+        },
+        {
+          "path": "src/tangle/project_registry.py",
+          "sha256": "f60ddd100b89afc1d3d13db1a41ef2ca7bf0faed5a550c37e6c3e935d8201efd"
+        },
+        {
+          "path": "src/tangle/provider.py",
+          "sha256": "ec12a5d22206f398f6174cc181e81a8813c2d8168503b1d65daee5b5f08c82ec"
+        },
+        {
+          "path": "src/tangle/py.typed",
+          "sha256": "c6735103eae5ee37113e9f422c08bd0b31e59397ffbad0de72eb1b6ef520703c"
+        },
+        {
+          "path": "src/tangle/quality_benchmark.py",
+          "sha256": "fd1c10654db74cdcdbf4c6452cc9354a69bbf42bf1fc374d297c79e143fcfb93"
+        },
+        {
+          "path": "src/tangle/reduction.py",
+          "sha256": "a6a1dfd78fca45148762358f258ed7431e1fa4ede67420804db5dc55e90bcb4c"
+        },
+        {
+          "path": "src/tangle/reservations.py",
+          "sha256": "9d1d88c4fe60fd47befb4a84cfe77fbf39c692597a26196e028b18557cd00167"
+        },
+        {
+          "path": "src/tangle/revision.py",
+          "sha256": "f2612def6afada0472cd44a8731519acfefbc9e15dd1d4d642c149b083bed1ec"
+        },
+        {
+          "path": "src/tangle/semantic.py",
+          "sha256": "0f93c658e95e69406758fd0896495e92a147f5aa59f7a4f75fee70f7fea0eee1"
+        },
+        {
+          "path": "src/tangle/sidecar.py",
+          "sha256": "15de586f6e39f8d2b379a772d16c3651d42705328b1ffbb7d4e804ff62d25da7"
+        },
+        {
+          "path": "src/tangle/staged_benchmark.py",
+          "sha256": "d2c4474f94f9c5cdce367ed951b910f9d12dde5ab3a99ef8d6a41f189f104105"
+        },
+        {
+          "path": "src/tangle/storage_comparison.py",
+          "sha256": "1774cfd64146368d6feb9de6a56e1a365c41ab590fc699d3086ae2d7a63c3a0a"
+        },
+        {
+          "path": "src/tangle/store.py",
+          "sha256": "ac5f386cdc37d5ba86fb23756a8cd960339f5160aaa0ed6b39a71c192e54e3bd"
+        },
+        {
+          "path": "src/tangle/token_benchmark.py",
+          "sha256": "9a5791c19aaf0f522ececd228bedd9e979c62c60a61635393560908e9301ef1c"
+        },
+        {
+          "path": "src/tangle/toon.py",
+          "sha256": "7d75fa6d030d11ec986b75b398874722c9c0968be0ddd16655a795a7662a6f8f"
+        },
+        {
+          "path": "src/tangle/vault.py",
+          "sha256": "521b45c614cc808d41bc45fdd94aefc0d97d7d9c20c23976775bd8706b411239"
+        },
+        {
+          "path": "src/tangle/verb_benchmark.py",
+          "sha256": "c890a90a06f1e0c4720d21f6b7b215eb570b90bd54aa76bd6f6f8dc1c244e082"
+        },
+        {
+          "path": "src/tangle/views.py",
+          "sha256": "343eaa7e2a4d19beedc3c4b692691c6b479f5f29be329879876ef09131b32e0a"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "d45ac736ae342c5f279041c90b980e8cc2956cece725531b91a2094e2ab44831"
+        }
+      ]
+    }
+  ],
+  "unreproducible": [
+    {
+      "sample": "benchmark/token-cold-resume-baseline-v1.json",
+      "skill_sha256": "a50cd53da62c7969a8903cf062e3867be8357e74ba771a572a28be9a1393ee5b",
+      "reason": "SKILL.md bytes absent from all git objects (Ruby-era, never committed)"
+    },
+    {
+      "sample": "benchmark/token-orientation-baseline-v1.json",
+      "skill_sha256": "a50cd53da62c7969a8903cf062e3867be8357e74ba771a572a28be9a1393ee5b",
+      "reason": "SKILL.md bytes absent from all git objects (Ruby-era, never committed)"
+    },
+    {
+      "sample": "benchmark/token-orientation-candidate-v2.json",
+      "skill_sha256": "9a2c639cd0956ea23a5a565a0fadcd68460f00e2bba387ebdc56dec4f39e0e7b",
+      "reason": "SKILL.md bytes absent from all git objects (Ruby-era, never committed)"
+    }
+  ]
+}
