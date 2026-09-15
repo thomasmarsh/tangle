@@ -738,6 +738,17 @@ _README_BOUNDARY = (
     "no checker or command has semantic authority over scope",
 )
 
+# Scoped verification targets are an iteration gate, not acceptance: the README
+# must name every surface the script defines and route a handoff back to the
+# full suite. The surface vocabulary lives in `scripts/verify-surface.sh`, so the
+# guard reads it there rather than restating it.
+_VERIFY_SCRIPT = _ROOT / "scripts" / "verify-surface.sh"
+_README_SCOPED_VERIFICATION_RULE = (
+    "`make verify` lists the surfaces",
+    "`make verify-<surface>` runs the checks for",
+    "run `make test` before handoff",
+)
+
 # In a warnings-as-errors workspace a type or trait landed before its consumer
 # fails the dead-code gate, so a just-in-time slice is not independently
 # acceptable: the slice includes a live consumer, or the node's `next` names
@@ -1406,6 +1417,28 @@ def test_blocker_clearance_guard_rejects_the_status_move_rule_alone() -> None:
 def test_readme_keeps_the_durable_outcome_boundary() -> None:
     _assert_contains(_read(_README), _README_BOUNDARY)
     _assert_absent(_read(_README), _SIZING_COMMAND_ABSENT)
+
+
+def _verify_surface_names() -> list[str]:
+    """The surface names from the one map in the scoped verification script."""
+    result = subprocess.run(
+        ["sh", str(_VERIFY_SCRIPT), "--list"],
+        capture_output=True,
+        text=True,
+        cwd=str(_ROOT),
+    )
+    assert result.returncode == 0, result.stderr
+    return result.stdout.split()
+
+
+def test_readme_documents_the_scoped_verification_surfaces() -> None:
+    """The iteration gate is documented and never claims to replace `make test`."""
+    text = _read(_README)
+    _assert_contains(text, _README_SCOPED_VERIFICATION_RULE)
+    names = _verify_surface_names()
+    assert names, "the scoped verification script defines no surface"
+    missing = [name for name in names if f"`{name}`" not in text]
+    assert not missing, f"README does not name the surfaces: {missing!r}"
 
 
 def test_derived_artifact_regeneration_names_its_owner() -> None:

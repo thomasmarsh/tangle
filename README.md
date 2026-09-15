@@ -179,6 +179,21 @@ Run the fast offline suite before committing:
 make test
 ```
 
+For faster iteration, verify one affected surface instead of the whole suite.
+`make verify` lists the surfaces; `make verify-<surface>` runs the checks for one
+of them:
+
+```sh
+make verify
+make verify-check
+```
+
+The surfaces are `storage`, `index`, `check`, `intake`, `cli`, `semantic`,
+`memory`, and `benchmarks`. Each target runs the shared lint, type, graph, and
+whitespace gates and then only the focused offline tests that cover that surface,
+so it is materially faster than the full suite. Scoped verification is an
+iteration gate, not acceptance: run `make test` before handoff.
+
 Benchmark verification is opt-in:
 
 ```sh

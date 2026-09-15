@@ -1,4 +1,5 @@
-.PHONY: test test-benchmarks benchmark diagnostic-benchmark storage-comparison verb-benchmark
+.PHONY: test test-benchmarks verify FORCE benchmark diagnostic-benchmark \
+	storage-comparison verb-benchmark
 
 # The fast Python suite and the remaining end-to-end shell screens are
 # independent and process-spawn bound, so run them concurrently. Benchmark
@@ -20,6 +21,21 @@ test:
 
 test-benchmarks:
 	uv run pytest -q -m benchmark
+
+# Scoped verification for one affected surface, as an iteration gate: `make
+# verify` lists the surfaces and `make verify-SURFACE` runs the shared lint,
+# type, graph, and whitespace gates plus that surface's focused tests. It never
+# replaces `make test`, which stays the final acceptance gate before handoff.
+verify:
+	@sh scripts/verify-surface.sh
+
+# The surfaces stay defined in the one map inside the script, so the pattern
+# target covers each of them; the always-out-of-date prerequisite keeps the
+# recipe running even if a same-named file ever appears at the repository root.
+verify-%: FORCE
+	@sh scripts/verify-surface.sh '$*'
+
+FORCE:
 
 benchmark:
 	uv run tangle benchmark token --protocol

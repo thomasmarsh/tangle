@@ -1,9 +1,9 @@
 ---
 status: proposed
 context_rev: 1
-updated: 2026-09-15T01:33:51Z
+updated: 2026-09-15T02:17:07Z
 summary: Improve Tangle workflow efficiency.
-next: "[[tas-0ses1vnewy66nxcm57w1f88wn4-scoped-verification-targets]]"
+next: "[[tas-5f7z20r7we8kafq7t0dws2hj2j-slim-skill-hot-path]]"
 ---
 
 Area [[IDX-001-execution-graph]].
