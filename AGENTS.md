@@ -84,6 +84,13 @@ admission boundary. Do not keep cross-session planning in chat or ad hoc notes.
   completed slice and leave a concrete `next` rather than spending the session
   on speculative architecture tracing.
 
+## Orchestrated sessions
+
+When asked to run an orchestrated, resumable, multi-slice, or subagent-driven
+session, read [`docs/orchestrated-sessions.md`](docs/orchestrated-sessions.md)
+first. It records the roles, the hand-off protocol, the build-warmup trade-off,
+and the known pitfalls; keep this file free of that detail.
+
 ## Before finishing
 
 Run the fast offline suite and keep the tree clean:
