@@ -13,6 +13,7 @@ import threading
 from pathlib import Path
 
 import pytest
+import vault_helpers
 
 from tangle import __version__, feedback_record, graph_check, node_record, revision
 from tangle.main import main as tangle_main
@@ -24,7 +25,7 @@ def _write(path: Path, *lines: str) -> None:
 
 def _hub(root: Path) -> Path:
     nodes = root / "nodes"
-    (nodes / "resolved").mkdir(parents=True, exist_ok=True)
+    nodes.mkdir(parents=True, exist_ok=True)
     _write(
         nodes / "index-map.md",
         "---",
@@ -36,13 +37,12 @@ def _hub(root: Path) -> Path:
         "",
         "- Indexes [[IDX-001-root]]",
     )
-    _write(
-        nodes / "resolved" / "IDX-001-root.md",
-        "---",
-        "context_rev: 1",
-        "updated: 2026-09-12T00:00:00Z",
-        "summary: Root hub.",
-        "---",
+    vault_helpers.write_node(
+        nodes,
+        "IDX-001",
+        "root",
+        "---\nstatus: resolved\ncontext_rev: 1\nupdated: 2026-09-12T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
     )
     return nodes
 
@@ -55,7 +55,7 @@ _CONTENT = (
 
 
 def test_record_writes_a_routed_revision_stamped_node(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], deterministic_ids: None
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
     assert (
@@ -75,7 +75,7 @@ def test_record_writes_a_routed_revision_stamped_node(
     )
     out = capsys.readouterr().out
     assert 'result: "recorded"' in out
-    assert re.search(r'id: "fbk-[0-7][0-9a-hjkmnp-tv-z]{25}"', out)
+    assert f'id: "{vault_helpers.deterministic_id("FBK", 0)}"' in out
     node = _recorded(nodes, "FBK", "the-allocated-id-already-existed-on-disk")
     assert node.is_file()
     text = node.read_text(encoding="utf-8")
@@ -215,23 +215,13 @@ def test_record_accepts_explicit_id_route_summary_and_slug(
 
 def test_record_allocates_the_next_id(tmp_path: Path) -> None:
     nodes = _hub(tmp_path / "consumer")
-    (nodes / "proposed").mkdir()
-    _write(
-        nodes / "proposed" / "FBK-003-old-note.md",
-        "---",
-        "context_rev: 1",
-        "updated: 2026-09-12T00:00:00Z",
-        "summary: Old note.",
-        "tangle_revision: unknown",
-        "---",
-        "",
-        "Area [[IDX-001-root]].",
-        "",
-        "# Feedback",
-        "",
-        "Attempted: one.",
-        "Friction: two.",
-        "Improvement: three.",
+    vault_helpers.write_node(
+        nodes,
+        "FBK-003",
+        "old-note",
+        "---\nstatus: proposed\ncontext_rev: 1\nupdated: 2026-09-12T00:00:00Z\n"
+        "summary: Old note.\ntangle_revision: unknown\n---\n\nArea [[IDX-001-root]].\n\n"
+        "# Feedback\n\nAttempted: one.\nFriction: two.\nImprovement: three.\n",
     )
     assert (
         feedback_record.main(
@@ -258,7 +248,7 @@ def test_record_requires_all_three_content_lines(
     assert feedback_record.main(["--nodes", str(nodes), "--attempted", "x", "--friction", "y"]) == 2
     out = capsys.readouterr().out
     assert "--improvement" in out
-    assert not (nodes / "proposed").exists()
+    assert len(vault_helpers.iter_nodes(nodes)) == 1
 
 
 def test_record_rejects_a_bad_route(
@@ -289,7 +279,7 @@ def test_record_needs_a_route_without_an_index_map(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = tmp_path / "bare" / "nodes"
-    (nodes / "proposed").mkdir(parents=True)
+    nodes.mkdir(parents=True)
     assert (
         feedback_record.main(
             [
@@ -381,7 +371,7 @@ _TASK_NEXT = {"--next": "Add the boundary test."}
 
 
 def _recorded(nodes: Path, node_type: str, slug: str) -> Path:
-    matches = list((nodes / "canonical").rglob(f"{node_type.lower()}-*-{slug}.md"))
+    matches = vault_helpers.find_nodes(nodes, node_type, slug)
     assert len(matches) == 1
     return matches[0]
 
@@ -448,7 +438,7 @@ def test_capture_quotes_a_wikilink_next_and_keeps_an_action_next(tmp_path: Path)
         _capture_args(nodes, "TAS", **{"--next": "[[TAS-002-validate-manifests]]"})
     ) == 0
     assert node_record.main(_capture_args(nodes, "TAS", **_TASK_NEXT)) == 0
-    recorded = list((nodes / "canonical").rglob("tas-*-capture-one-tas-node.md"))
+    recorded = vault_helpers.find_nodes(nodes, "TAS", "capture-one-tas-node")
     assert len(recorded) == 2
     texts = [path.read_text(encoding="utf-8") for path in recorded]
     linked = next(text for text in texts if 'next: "[[' in text)
@@ -492,7 +482,7 @@ def test_concurrent_capture_with_different_slugs_never_duplicates_an_id(
         thread.join(timeout=30)
 
     assert codes == [0] * workers
-    recorded = sorted((nodes / "canonical").rglob("tas-*.md"))
+    recorded = vault_helpers.find_typed(nodes, "TAS")
     assert len(recorded) == workers
     identities = [path.name.split("-", 2)[1] for path in recorded]
     assert len(set(identities)) == workers
@@ -503,17 +493,12 @@ def test_concurrent_capture_with_different_slugs_never_duplicates_an_id(
 
 def test_capture_allocates_the_next_id_from_markdown(tmp_path: Path) -> None:
     nodes = _hub(tmp_path / "consumer")
-    (nodes / "proposed").mkdir()
-    _write(
-        nodes / "proposed" / "TAS-003-old-work.md",
-        "---",
-        "context_rev: 1",
-        "updated: 2026-09-12T00:00:00Z",
-        "summary: Old work.",
-        "next: Add the boundary test.",
-        "---",
-        "",
-        "Area [[IDX-001-root]].",
+    vault_helpers.write_node(
+        nodes,
+        "TAS-003",
+        "old-work",
+        "---\nstatus: proposed\ncontext_rev: 1\nupdated: 2026-09-12T00:00:00Z\n"
+        "summary: Old work.\nnext: Add the boundary test.\n---\n\nArea [[IDX-001-root]].\n",
     )
     assert node_record.main(_capture_args(nodes, "TAS", **_TASK_NEXT)) == 0
     assert _recorded(nodes, "TAS", "capture-one-tas-node").is_file()
@@ -578,7 +563,7 @@ def test_capture_requires_type_summary_and_body(
     assert "requires --summary" in capsys.readouterr().out
     assert node_record.main(["--nodes", str(nodes), "--type", "THO", "--summary", "s"]) == 2
     assert "requires --body" in capsys.readouterr().out
-    assert not (nodes / "proposed").exists()
+    assert len(vault_helpers.iter_nodes(nodes)) == 1
 
 
 def test_capture_names_the_feedback_path_for_fbk(
@@ -599,7 +584,7 @@ def test_capture_names_the_feedback_path_for_fbk(
     out = capsys.readouterr().out
     assert "tangle feedback record" in out
     assert "IDX" in out
-    assert not (nodes / "proposed").exists()
+    assert len(vault_helpers.iter_nodes(nodes)) == 1
 
 
 def test_capture_requires_next_for_an_unfinished_task(
@@ -608,7 +593,7 @@ def test_capture_requires_next_for_an_unfinished_task(
     nodes = _hub(tmp_path / "consumer")
     assert node_record.main(_capture_args(nodes, "TAS")) == 2
     assert "requires --next" in capsys.readouterr().out
-    assert not (nodes / "proposed").exists()
+    assert len(vault_helpers.iter_nodes(nodes)) == 1
 
 
 def test_capture_refuses_next_on_a_resolved_node(
@@ -655,7 +640,7 @@ def test_capture_needs_a_route_without_an_index_map(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = tmp_path / "bare" / "nodes"
-    (nodes / "proposed").mkdir(parents=True)
+    nodes.mkdir(parents=True)
     assert node_record.main(_capture_args(nodes, "THO")) == 1
     assert "unable to discover a root hub" in capsys.readouterr().out
 
@@ -787,7 +772,7 @@ def test_feedback_capture_cuts_the_summary_derived_from_the_friction(
         == 0
     )
     out = capsys.readouterr().out
-    node = next(iter((nodes / "canonical").rglob("fbk-*.md")))
+    node = vault_helpers.find_typed(nodes, "FBK")[0]
     stored = _summary_of(node)
     assert len(stored) <= node_record.SUMMARY_LIMIT
     assert stored.endswith(_ELLIPSIS)

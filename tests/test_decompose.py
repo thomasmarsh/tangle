@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 import pytest
+import vault_helpers
 
 from tangle import node_record
 from tangle.main import main as tangle_main
@@ -24,26 +25,27 @@ def _write(path: Path, text: str) -> None:
 
 def _hub(root: Path) -> Path:
     nodes = root / ".tangle"
-    (nodes / "active").mkdir(parents=True, exist_ok=True)
+    nodes.mkdir(parents=True, exist_ok=True)
     _write(
         nodes / "index-map.md",
         "---\nupdated: 2026-09-14T00:00:00Z\nsummary: Route agents.\n---\n\n"
         "# Root hubs\n\n- Indexes [[IDX-001-root]]\n",
     )
-    _write(
-        nodes / "resolved" / "IDX-001-root.md",
-        "---\ncontext_rev: 1\nupdated: 2026-09-14T00:00:00Z\nsummary: Root hub.\n---\n",
+    vault_helpers.write_node(
+        nodes,
+        "IDX-001",
+        "root",
+        "---\nstatus: resolved\ncontext_rev: 1\nupdated: 2026-09-14T00:00:00Z\n"
+        "summary: Root hub.\n---\n",
     )
-    _write(
-        nodes / "active" / "TAS-001-coordinator.md",
-        _parent_body("Do the first thing."),
-    )
+    vault_helpers.write_node(nodes, "TAS-001", "coordinator", _parent_body("Do the first thing."))
     return nodes
 
 
 def _parent_body(next_line: str) -> str:
     return (
         "---\n"
+        "status: active\n"
         "context_rev: 1\n"
         "updated: 2026-09-14T00:00:00Z\n"
         "summary: Coordinate the work.\n"
@@ -74,11 +76,11 @@ def _child(**overrides: object) -> dict[str, object]:
 
 
 def _parent_text(nodes: Path) -> str:
-    return (nodes / "active" / "TAS-001-coordinator.md").read_text(encoding="utf-8")
+    return vault_helpers.find_node(nodes, "TAS-001").read_text(encoding="utf-8")
 
 
 def test_decompose_writes_ordered_children_and_advances_parent(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], deterministic_ids: None
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
     plan = _plan(
@@ -93,11 +95,12 @@ def test_decompose_writes_ordered_children_and_advances_parent(
     )
     out = capsys.readouterr().out
     assert 'result: "decomposed"' in out
-    match = re.search(r'next: "(tas-[0-7][0-9a-hjkmnp-tv-z]{25}-alpha)"', out)
-    assert match is not None
-    first_name = match.group(1)
-    first = next((nodes / "canonical").rglob(f"{first_name}.md"))
-    second = next((nodes / "canonical").rglob("tas-*-beta.md"))
+    first_name = f"{vault_helpers.deterministic_id('TAS', 0)}-alpha"
+    assert f'next: "{first_name}"' in out
+    first = vault_helpers.find_node(nodes, vault_helpers.deterministic_id("TAS", 0))
+    second = vault_helpers.find_node(nodes, vault_helpers.deterministic_id("TAS", 1))
+    assert first.name == f"{first_name}.md"
+    assert second.name.endswith("-beta.md")
     assert first.is_file() and second.is_file()
     assert "Parent [[TAS-001-coordinator]]." in first.read_text(encoding="utf-8")
     parent = _parent_text(nodes)
@@ -132,7 +135,8 @@ def test_decompose_dry_run_writes_and_reserves_nothing(
     out = capsys.readouterr().out
     assert 'result: "dry-run"' in out
     assert "children[1]{type,status,summary}:" in out
-    assert not list((nodes / "proposed").glob("*.md"))
+    # A dry run writes no node: only the seeded hub and parent exist.
+    assert len(vault_helpers.iter_nodes(nodes)) == 2
     assert not (nodes / "reservations").exists()
     assert _parent_text(nodes) == before
 
@@ -196,7 +200,9 @@ def test_decompose_rolls_back_written_children_on_a_write_failure(
     out = capsys.readouterr().out
     assert "node already exists" in out
     assert calls["count"] == 2
-    assert not (nodes / "proposed" / "TAS-002-alpha.md").exists()
+    # The failed second write rolled the first child back; only the seeded hub
+    # and parent remain.
+    assert len(vault_helpers.iter_nodes(nodes)) == 2
     assert _parent_text(nodes) == before
 
 
@@ -226,9 +232,11 @@ def test_advance_points_the_parent_at_a_direct_child(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
-    _write(
-        nodes / "proposed" / "TAS-002-child.md",
-        "---\ncontext_rev: 1\nupdated: 2026-09-14T00:00:00Z\n"
+    vault_helpers.write_node(
+        nodes,
+        "TAS-002",
+        "child",
+        "---\nstatus: proposed\ncontext_rev: 1\nupdated: 2026-09-14T00:00:00Z\n"
         "summary: Child work.\nnext: Do it.\n---\n\nParent [[TAS-001-coordinator]].\n",
     )
     assert (
@@ -246,9 +254,11 @@ def test_advance_refuses_a_non_child(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
-    _write(
-        nodes / "proposed" / "TAS-002-other.md",
-        "---\ncontext_rev: 1\nupdated: 2026-09-14T00:00:00Z\n"
+    vault_helpers.write_node(
+        nodes,
+        "TAS-002",
+        "other",
+        "---\nstatus: proposed\ncontext_rev: 1\nupdated: 2026-09-14T00:00:00Z\n"
         "summary: Other work.\nnext: Do it.\n---\n\nParent [[TAS-099-someone-else]].\n",
     )
     assert (

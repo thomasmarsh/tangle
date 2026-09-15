@@ -67,6 +67,17 @@ mtime() {
   stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"
 }
 
+# The one spelling of the stationary canonical layout. A storage change edits
+# this helper, not the assertions that consume it: the shard is the identity's
+# last two characters, and the immutable id is prefixed to the slug.
+canonical_file() {
+  _vault=$1
+  _node_id=$2
+  _slug=$3
+  printf '%s/.tangle/canonical/%s/%s-%s.md\n' \
+    "$_vault" "${_node_id#"${_node_id%??}"}" "$_node_id" "$_slug"
+}
+
 # Every install writes the single `tangle` command to <root>/.local/bin; it
 # runs the shared program and exposes the same revision as that program.
 check_launcher() {
@@ -113,14 +124,21 @@ run_installed_help() {
 run_installed_feedback_record() {
   program=$1
   vault=$(mktemp -d "$test_root/feedback.XXXXXX")
-  mkdir -p "$vault/.tangle/resolved"
+  # A deterministic id and slug make the written path predictable through the
+  # shared canonical_file helper instead of a shard-glob assumption.
+  record_id=fbk-00000000000000000000000001
+  record_slug=installed-command
+  mkdir -p "$vault/.tangle"
   cat >"$vault/.tangle/index-map.md" <<'EOF'
 # Root hubs
 
 - Indexes [[IDX-001-root]]
 EOF
-  cat >"$vault/.tangle/resolved/IDX-001-root.md" <<'EOF'
+  hub=$(canonical_file "$vault" IDX-001 root)
+  mkdir -p "$(dirname -- "$hub")"
+  cat >"$hub" <<'EOF'
 ---
+status: resolved
 context_rev: 1
 updated: 2026-09-12T00:00:00Z
 summary: Root hub.
@@ -128,11 +146,14 @@ summary: Root hub.
 EOF
   uv run --project "$program" --frozen --quiet tangle feedback record \
     --nodes "$vault/.tangle" \
+    --id "$record_id" \
+    --slug "$record_slug" \
     --attempted 'Ran the installed command.' \
     --friction 'The installed recording path was untested.' \
     --improvement 'Exercise it in the install test.' >/dev/null
   uv run --project "$program" --frozen --quiet tangle check "$vault/.tangle" >/dev/null
-  grep -q "tangle_revision: $expected_record" "$vault"/.tangle/canonical/*/fbk-*.md
+  grep -q "tangle_revision: $expected_record" \
+    "$(canonical_file "$vault" "$record_id" "$record_slug")"
   rm -rf "$vault"
 }
 

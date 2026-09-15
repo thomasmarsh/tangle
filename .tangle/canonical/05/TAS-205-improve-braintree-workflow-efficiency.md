@@ -1,9 +1,9 @@
 ---
 status: proposed
 context_rev: 1
-updated: 2026-09-14T23:40:13Z
+updated: 2026-09-15T01:24:44Z
 summary: Improve Tangle workflow efficiency.
-next: "[[tas-3wz1s70j6kstpz3eekkryf0dr0-storage-agnostic-test-fixtures]]"
+next: "[[tas-63f67g38b01dka9cb6a58w144m-frontier-execution-manifests]]"
 ---
 
 Area [[IDX-001-execution-graph]].

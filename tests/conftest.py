@@ -14,6 +14,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+import vault_helpers
 
 _TANGLE_COMMAND = (sys.executable, "-m", "tangle")
 
@@ -37,6 +38,12 @@ def _command() -> list[str]:
 def bt_command() -> Callable[[], list[str]]:
     """Return a factory for the argv prefix that runs the Python ``tangle``."""
     return _command
+
+
+@pytest.fixture
+def deterministic_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make in-process identity generation deterministic and unique per call."""
+    vault_helpers.fixed_identity(monkeypatch)
 
 
 @pytest.fixture

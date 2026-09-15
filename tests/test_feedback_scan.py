@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import vault_helpers
 
 from tangle import feedback_scan
 
@@ -84,31 +85,38 @@ def test_scan_accepts_a_nodes_directory(
     assert "feedback[1]{" in capsys.readouterr().out
 
 
-_CANONICAL_FBK = "fbk-01k5v6m3x8f2q7c9d4hn8w2pza-allocation-friction"
+_CANONICAL_FBK = "fbk-01k5v6m3x8f2q7c9d4hn8w2pza"
+_CANONICAL_SLUG = "allocation-friction"
+_CANONICAL_BASENAME = f"{_CANONICAL_FBK}-{_CANONICAL_SLUG}"
 
 
 def _stationary_vault(root: Path) -> Path:
     """Seed a stationary canonical vault with one lowercase fbk node."""
     nodes = root / ".tangle"
-    directory = nodes / "canonical" / _CANONICAL_FBK[-2:]
-    directory.mkdir(parents=True, exist_ok=True)
-    _write(
-        directory / f"{_CANONICAL_FBK}.md",
-        "---",
-        "status: proposed",
-        "context_rev: 1",
-        "updated: 2026-09-12T00:00:00Z",
-        "summary: Canonical feedback node.",
-        "tangle_revision: 0.4.0+g1b58d57",
-        "---",
-        "",
-        "Area [[IDX-001-root]].",
-        "",
-        "# Feedback",
-        "",
-        "Attempted: A canonical capture.",
-        "Friction: Discovery missed lowercase ids.",
-        "Improvement: Match both spellings.",
+    vault_helpers.write_node(
+        nodes,
+        _CANONICAL_FBK,
+        _CANONICAL_SLUG,
+        "\n".join(
+            [
+                "---",
+                "status: proposed",
+                "context_rev: 1",
+                "updated: 2026-09-12T00:00:00Z",
+                "summary: Canonical feedback node.",
+                "tangle_revision: 0.4.0+g1b58d57",
+                "---",
+                "",
+                "Area [[IDX-001-root]].",
+                "",
+                "# Feedback",
+                "",
+                "Attempted: A canonical capture.",
+                "Friction: Discovery missed lowercase ids.",
+                "Improvement: Match both spellings.",
+            ]
+        )
+        + "\n",
     )
     return root
 
@@ -120,7 +128,7 @@ def test_scan_reads_canonical_lowercase_feedback(
     assert feedback_scan.main([str(vault)]) == 0
     out = capsys.readouterr().out
     assert "feedback[1]{vault,id,status,revision,summary}:" in out
-    assert _CANONICAL_FBK in out
+    assert _CANONICAL_BASENAME in out
     assert "proposed" in out
     assert "Canonical feedback node." in out
 
@@ -146,7 +154,7 @@ def test_scan_reads_mixed_legacy_and_canonical_feedback(
     out = capsys.readouterr().out
     assert "feedback[2]{" in out
     assert "FBK-001-one" in out
-    assert _CANONICAL_FBK in out
+    assert _CANONICAL_BASENAME in out
 
 
 def test_scan_collects_multiple_vaults(
