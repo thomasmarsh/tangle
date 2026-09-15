@@ -73,6 +73,17 @@ states its outcome and `# Done when`; its `next` is one concrete frontier action
 or one wikilinked direct child, never a child list. Roll up from evidence, not
 child counts.
 
+A cross-cutting compatibility migration — one whose old and new readers and
+writers must work simultaneously — exposes an ordered set of milestones: reader
+compatibility, writer, dry-run planning, apply/recovery, and benchmark
+evidence. Each milestone is independently acceptable: it has its own
+acceptance/verification, leaves the prior surface green, and can be accepted,
+blocked, resumed, or consumed on its own. This distinguishes it from an
+ordinary implementation step, which has no independent acceptance and is a
+slice inside a milestone. A broad migration task must name these milestones so
+its `next` never leaves the first implementation slice ambiguous; roll up the
+parent's `# Done when` from milestone evidence, not counts.
+
 When the decomposition is deliberate, author it in one transactional step
 instead of one capture per child. `tangle node decompose --parent PARENT
 --plan FILE` validates the whole plan before it mutates anything, generates each

@@ -48,6 +48,11 @@ One node owns one durable outcome or decision, not an estimated session, commit,
 
 A frontier node whose `# Done when` cannot be met in one session is advanced by the smallest coherent slice, not held back and not overrun: record the completed slice, the remaining scope, and its evidence in the body, set `next` to the first remaining action, and leave the node `proposed` or `active`. Unblocking is not completing: clearing a blocker returns the node to `proposed` with its first remaining action as `next`, never to `resolved`. A slice is a unit of execution, not a split trigger or a sizing ritual.
 
+A cross-cutting compatibility migration exposes an ordered set of milestones —
+reader, writer, dry-run, apply/recovery, and benchmark — each independently
+acceptable with its own acceptance/verification; a broad migration task must
+name them so its `next` never leaves the first implementation slice ambiguous.
+
 ## Reachability and the frontier
 
 `index-map.md` routes to durable `IDX` root hubs via `Indexes`; a hub has no `Parent`/`Area` and does not list members. Every other node has exactly one primary, unpinned `Parent` or `Area` link that must reach a hub. An unfinished node that cannot reach a hub or a deliberate `# Focus` pointer is an orphan and a graph-integrity failure. Derive hub membership with an exact `Parent`/`Area` backlink search; never copy it into a hub or the index.

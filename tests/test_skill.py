@@ -605,6 +605,29 @@ _PRE_DISPATCH_BOUNDARY_PROBE = (
     "reality arrives."
 )
 
+# A cross-cutting compatibility migration (old and new readers and writers must
+# work simultaneously) exposes an ordered set of milestones that are each
+# independently acceptable, unlike an ordinary implementation step: a broad
+# migration task must name them so its `next` never leaves the first
+# implementation slice ambiguous, and the parent's `# Done when` rolls up from
+# milestone evidence rather than counts.
+_MIGRATION_MILESTONE_RULE = (
+    "exposes an ordered set of milestones",
+    "independently acceptable",
+    "its own acceptance/verification",
+    "never leaves the first implementation slice ambiguous",
+)
+
+# Falsification probe for the milestone rule: slice-only prose records what
+# changed and what remains but names no ordered independent milestones, so the
+# guard must reject it. The probe fails when the guard stops detecting the rule
+# rather than when the prose merely reflows.
+_MIGRATION_MILESTONE_PROBE = (
+    "A compatibility migration is advanced one implementation slice at a time: "
+    "each slice records what changed and what remains, and the parent's "
+    "`# Done when` is checked only once every slice is done."
+)
+
 # Opt-in reconnaissance references are non-pinned: they record shared context a
 # reader may want without becoming a dependency, so readiness, staleness,
 # primary routing, ownership, and automatic context loading are all unchanged,
@@ -1390,6 +1413,17 @@ def test_pre_dispatch_boundary_guard_rejects_just_in_time_only_text() -> None:
     """Falsification probe: the guard must reject the pre-change JIT-only text."""
     with pytest.raises(AssertionError):
         _assert_contains(_PRE_DISPATCH_BOUNDARY_PROBE, _PRE_DISPATCH_BOUNDARY_RULE)
+
+
+def test_migration_milestone_rule_is_stated() -> None:
+    _assert_contains(_reference("authoring"), _MIGRATION_MILESTONE_RULE)
+    _assert_contains(_read(_SKILL), _MIGRATION_MILESTONE_RULE)
+
+
+def test_migration_milestone_guard_rejects_slice_only_text() -> None:
+    """Falsification probe: the guard must reject slice-only prose with no milestones."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_MIGRATION_MILESTONE_PROBE, _MIGRATION_MILESTONE_RULE)
 
 
 def test_opt_in_reconnaissance_reference_is_stated() -> None:
