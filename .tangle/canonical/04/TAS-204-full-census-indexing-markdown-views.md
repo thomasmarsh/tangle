@@ -1,10 +1,10 @@
 ---
-status: proposed
+status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T00:25:54Z
+updated: 2026-09-15T02:30:25Z
 summary: Implement full-census indexing and generated Markdown views.
-next: Reconcile the canonical-store hash census before command dispatch and report it on the diagnostic surface.
+next: Replace the per-command full reindex in the sidecar query verbs with the reconciled census snapshot.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -69,3 +69,63 @@ that reconciled snapshot; implement the registry writer and unresolved external
 references; add the fault tests (preserved mtime, add/delete, case change,
 corrupt sidecar and views, interrupted publication, startup race) and the
 scaling benchmark; and land the project-scoped publication lease.
+
+## Slice: pre-dispatch hash census and its diagnostic surface
+
+Implemented the pre-dispatch canonical-store hash census. Every project-scoped
+interaction that maintains derived state now enumerates the complete canonical
+store and reconciles the derived index before its body runs: `src/tangle/main.py`
+calls the new `src/tangle/census.reconcile()` before `_dispatch`, ahead of the
+unchanged post-dispatch `_maintain_index`, so a mutating command still publishes
+its own delta and views before returning. Discovery is the authority-bearing
+`store.iter_node_paths` set, so `views/`, `proposals/`, `acceptances/`,
+`receipts/`, and non-`.md` temporary files are excluded. The reconciliation is
+`index.refresh`, which hashes every node's exact bytes, writes only the changed
+node, edge, and full-text rows, deletes vanished rows, and rebuilds from
+Markdown on sidecar loss; mtime, size, inode, watchers, and Git never substitute
+for the digest. The four commands that own their own state (`init`, `index`,
+`migrate`, `check`) are excluded from the pre-dispatch census, matching the
+post-dispatch upkeep set, so `check` still writes no state and a fresh vault
+with no sidecar creates none.
+
+The new `tangle census` verb (`src/tangle/census.py`, dispatched from `main.py`
+because `cli.py` and `sidecar.py` are frozen observables) is the dedicated
+diagnostic surface. It reports `census` (reconciled/uninitialized/unavailable/
+busy/failed), `root`, `changes` (canonical node files new or changed), `edges`,
+`removed` (vanished node rows), and `views` (`current (N)`, `updated N`,
+`failed: ...`, or `unavailable`); it republishes only the disposable views and
+never writes canonical Markdown or creates local state. A routine read-only
+interaction stays silent on a successful no-op.
+
+Evidence: `tests/test_census.py` (7 cases) pins a direct edit observed before
+the diagnostic answers, zero-change vs N-change reporting, the view
+current->updated->current transition, a preserved-mtime same-size byte change
+detected by hash alone, a removed node counted, a proposal/receipt/temporary
+file excluded, and a fresh vault reported without creating a sidecar or view.
+`make test` passed (848 passed, 3 skipped, 80 deselected); `uv run pytest -q
+tests/test_memory_authority.py` passed (22 passed), proving the seven frozen
+observable files are unchanged; `./scripts/tangle check` passed (251 nodes).
+
+Remaining, in order: replace the per-command full reindex in the sidecar query
+verbs with the reconciled census snapshot; implement the registry writer and
+unresolved external references; add the fault tests (preserved mtime,
+add/delete, case change, corrupt sidecar and views, interrupted publication,
+startup race) and the scaling benchmark; and land the project-scoped
+publication lease.
+
+# Frozen blocker
+
+The remaining `next` action and every other remaining bullet that touches
+`tangle status` or the sidecar query verbs requires editing the frozen
+`src/tangle/cli.py`. The sidecar query verbs still call the whole-rebuild
+`index.reindex` at `cli.py:400` (`_search`), `cli.py:490` (`_backlinks`), and
+`cli.py:531` (`_stale`), and `_run_reindex` at `cli.py:224` serves `index`.
+`cli.py` is one of the seven prompt-observable files pinned by
+`benchmark/memory-authority-result.json`, so a byte change there owes a faithful
+LIVE authority re-record —
+[[TAS-188-remove-uv-from-quality-benchmark-reproduction]] is the blocked owner
+of that gate — which this session is not authorized to run. That slice is
+therefore blocked on an authorized re-record unless a non-frozen route is
+designed, the established pattern that reaches a verb's answer through a new
+module as `tangle.allocate` and `tangle.census` do. This slice deliberately did
+not edit any frozen file.

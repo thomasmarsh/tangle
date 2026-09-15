@@ -615,6 +615,26 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_AUTHORING_TOPIC,
     ),
+    "census": _verb(
+        "Report the last canonical-store hash census and the generated-view state.",
+        usage="tangle census",
+        outputs=(
+            ("census", "reconciled, uninitialized, unavailable, busy, or failed"),
+            ("root", "absolute vault directory the census read"),
+            ("changes", "canonical node files the census found new or changed"),
+            ("edges", "edge rows the reconciliation rewrote"),
+            ("removed", "vanished node rows the reconciliation deleted"),
+            ("views", "generated page state: current, updated N, failed, or unavailable"),
+        ),
+        hazards=(
+            "A vault with no local state is reported without creating any.",
+            "Hashes every canonical file's exact bytes, so a preserved-mtime "
+            "edit is still detected; mtime and size are never a substitute.",
+            "Republishes the disposable views from the reconciled snapshot; "
+            "canonical Markdown is never written.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
     "semantic": _verb(
         "Run the optional semantic provider commands.",
         usage="tangle semantic embed [--model NAME]",

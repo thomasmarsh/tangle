@@ -17,6 +17,7 @@ from collections.abc import Callable, Sequence
 from . import (
     allocation,
     behavioral_benchmark,
+    census,
     cli,
     decompose,
     embedding_benchmark,
@@ -122,6 +123,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ),
     ("check [OPTIONS] [NODES]", "validate a vault without writing state"),
     (
+        "census",
+        "report the last canonical-store hash census and generated-view state",
+    ),
+    (
         "semantic embed [--model NAME]",
         "embed JSON texts as JSON vectors for TANGLE_SEMANTIC_PROVIDER",
     ),
@@ -171,7 +176,9 @@ _DIRECT_ANSWER_COMMANDS = frozenset({"frontier", "next", "orient", "packet", "st
 # The interactions that must not trigger derived-index upkeep: ``init`` creates
 # the local coordination state, ``index`` is its explicit repair or rebuild,
 # ``migrate`` changes the vault path the upkeep would read, and ``check``
-# validates without writing any state at all.
+# validates without writing any state at all. The pre-dispatch hash census
+# shares this set: the same four interactions own their own state, so census
+# would duplicate or contradict them (``check`` in particular may not write).
 _INDEX_UPKEEP_EXCLUDED = frozenset({"init", "index", "migrate", "check"})
 
 
@@ -369,6 +376,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     # every public verb gets bounded help with no vault and no sidecar.
     if help.wants_help(args):
         return help.render_verb(help.verb_key(args))
+    # The pre-dispatch hash census enumerates and reconciles the canonical store
+    # before the body reads any derived answer, so a direct Markdown edit is
+    # observed before the next command answers. It is silent and creates no
+    # state; the four interactions that own their own state are excluded, the
+    # same set the post-dispatch upkeep excludes.
+    if command not in _INDEX_UPKEEP_EXCLUDED:
+        census.reconcile()
     # Upkeep runs after the body, so a mutating interaction's own change is
     # already in Markdown when the index is brought up to date.
     code = _dispatch(command, args)
@@ -382,6 +396,11 @@ def _dispatch(command: str, args: list[str]) -> int:
         _warn_orphans()
     if command == "check":
         return graph_check.main(args[1:])
+    # ``census`` is the dedicated diagnostic surface for the pre-dispatch hash
+    # census; ``cli.py`` and ``sidecar.py`` are frozen observable prompt files,
+    # so the verb lives in ``tangle.census``.
+    if command == "census":
+        return census.main(args)
     if command == "packet":
         return packet.main(args)
     if command == "manifest":
