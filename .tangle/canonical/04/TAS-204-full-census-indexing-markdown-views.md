@@ -2,7 +2,7 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T19:15:21Z
+updated: 2026-09-15T19:22:12Z
 summary: Implement full-census indexing and generated Markdown views.
 next: Implement the registry writer and unresolved external references.
 ---
@@ -106,8 +106,9 @@ tests/test_memory_authority.py` passed (22 passed), proving the seven frozen
 observable files are unchanged; `./scripts/tangle check` passed (251 nodes).
 
 Remaining, in order: implement the registry writer and unresolved external
-references; add the fault tests (preserved mtime, add/delete, case change,
-corrupt sidecar and views, interrupted publication, startup race) and the
+references; harden `tangle index` repair for identity-preserving sidecar
+corruption and add the fault tests (preserved mtime, add/delete, case change,
+corrupt sidecar and views, interrupted publication, startup race) plus the
 scaling benchmark; and land the project-scoped publication lease.
 
 ## Slice: reconciled reindex for the sidecar query verbs
@@ -117,13 +118,21 @@ Made the derived-index repair entry point reconcile incrementally. The body of
 `index.refresh` and then returns the stored totals from `SELECT COUNT(*) FROM
 nodes` and `SELECT COUNT(*) FROM edges`, keeping the `(nodes, edges, root)`
 signature. `refresh` writes only the rows the Markdown changed, opens no write
-transaction on an unchanged vault, and rebuilds every row from the same
-snapshot when the index is lost, partial, or foreign, so `tangle index` stays
-repair-capable and its `nodes: N` / `edges: M` stdout is unchanged. Because the
-pre-dispatch `census.reconcile()` already reconciles before dispatch, the
-in-verb `index.reindex` calls at `cli.py:400` (`_search`), `cli.py:490`
-(`_backlinks`), and `cli.py:531` (`_stale`) now pay a snapshot read instead of a
-whole-index rebuild, and `cli.py` stays byte-identical at HEAD.
+transaction on an unchanged vault, and writes every row from the same snapshot
+when the stored identity set is empty or differs from Markdown, so `tangle
+index` reports unchanged `nodes: N` / `edges: M` totals and rebuilds a lost or
+foreign index. Because the pre-dispatch `census.reconcile()` already reconciles
+before dispatch, the in-verb `index.reindex` calls at `cli.py:400` (`_search`),
+`cli.py:490` (`_backlinks`), and `cli.py:531` (`_stale`) now pay a snapshot read
+instead of a whole-index rebuild, and `cli.py` stays byte-identical at HEAD.
+
+Review follow-up (P1, non-blocking): because reconciliation compares only
+`(path, content_hash)`, a sidecar whose identity rows survive but whose derived
+`nodes_fts` rows were deleted, or whose `id_sequences` reservations were lost,
+is not repaired while `tangle index` still exits 0. Closing that gap -- a
+completeness check on the uncovered derived rows before `refresh` returns
+early, or a forced row rewrite on the `tangle index` path -- is folded into the
+corrupt-sidecar fault-test bullet in the remaining list above.
 
 Evidence: `tests/test_tangle_index.py` adds
 `test_reindex_reconciles_incrementally_on_a_settled_vault`, which seeds the
