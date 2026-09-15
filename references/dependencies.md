@@ -24,10 +24,9 @@ An unresolved target has no consumable context. Record it as a gate instead of a
 context edge: put `Gated on [[DEF-auth-protocol]].` in `# Context`, leave the
 consumer `proposed`, and never pin the gate. Replace it with a pinned
 `Depends on` edge only after the target resolves. Resolution and other status or
-`next` changes do not bump `context_rev`; readiness comes from the status
-directory. Clearing a blocker is the same status move with a `next` change, and
-its gate clears when the target resolves, not when the node returns to
-`proposed`.
+`next` changes do not bump `context_rev`; readiness comes from the authoritative `status` field. Clearing a
+blocker is the same status change with a `next` change, and its gate clears when
+the target resolves, not when the node returns to `proposed`.
 
 Use line-anchored searches so the reference's command text does not self-match:
 

@@ -2,13 +2,13 @@
 
 This is the generic capture path behind ``braintree node record``. It supplies
 the id, route, timestamp, and required frontmatter a caller would otherwise
-hand-author: it reserves the next id atomically and discovers the primary
-route to the vault's root hub the way ``braintree feedback record`` does for
-``FBK``. The Markdown-node writer primitives it holds are the single spelling
-of allocation, route discovery, summary fitting, and non-clobbering writes
-shared with that command. It depends only on the standard library and opens the sidecar solely
-to reserve an id when that sidecar exists and owns the target vault; it never
-touches the network.
+hand-author: it generates a lowercase 128-bit id from cryptographic entropy and
+discovers the primary route to the vault's root hub the way
+``braintree feedback record`` does for ``FBK``. The Markdown-node writer
+primitives it holds are the single spelling of identity generation, route
+discovery, summary fitting, and non-clobbering writes shared with that command.
+It depends only on the standard library; legacy numeric allocation helpers
+remain for the compatibility window. It never touches the network.
 """
 
 from __future__ import annotations
@@ -51,8 +51,8 @@ _USAGE = (
     "usage: braintree node record --type TYPE --summary TEXT --body TEXT "
     "[--status proposed|active|blocked|resolved] [--next TEXT] [--nodes DIR] "
     "[--route ROUTE] [--id ID] [--slug SLUG]\n"
-    "Write one routed, stamped node of the named type, reserving its id "
-    "atomically and falling back to a vault-local reservation without a sidecar."
+    "Write one routed, stamped node of the named type, generating a lowercase "
+    "128-bit id and writing the stationary canonical file."
 )
 
 

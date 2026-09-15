@@ -1,11 +1,11 @@
-"""Read-only cross-vault scan for Braintree ``FBK`` feedback nodes.
+"""Read-only cross-vault scan for Braintree feedback nodes.
 
-The scan reads only the filename, status directory, and frontmatter of
-``FBK-*.md`` files under each vault's ``.braintree/`` tree, or the legacy
-``nodes/`` tree, without migrating either. It never opens the sidecar, never
-touches the network, and never writes to the scanned vault, so a maintainer can
-collect feedback from a read-only checkout into a compact list ready for
-triage in this graph.
+The scan reads only the filename, authoritative status, and frontmatter of
+feedback files -- canonical lowercase ``fbk-*`` or legacy ``FBK-*`` -- under
+each vault's ``.braintree/`` tree, or the legacy ``nodes/`` tree, without
+migrating either. It never opens the sidecar, never touches the network, and
+never writes to the scanned vault, so a maintainer can collect feedback from a
+read-only checkout into a compact list ready for triage in this graph.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ _USAGE = (
     "Scan external vaults for FBK feedback nodes without writing state."
 )
 
-_FEEDBACK_GLOB = "FBK-*.md"
+_FEEDBACK_PREFIX = "fbk-"
 _POSITIVE_INTEGER = re.compile(r"[0-9]+\Z")
 
 
@@ -69,7 +69,7 @@ def _scan_vault(vault: str, nodes_dir: str) -> list[tuple[str, str, str, str, st
     rows: list[tuple[str, str, str, str, str]] = []
     for entry in store.iter_node_paths(nodes_dir):
         path, status = entry.path, entry.status
-        if not os.path.basename(path).startswith("FBK-"):
+        if not os.path.basename(path).lower().startswith(_FEEDBACK_PREFIX):
             continue
         name = os.path.basename(path)[:-3]
         with open(path, encoding="utf-8") as handle:

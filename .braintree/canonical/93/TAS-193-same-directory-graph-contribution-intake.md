@@ -2,9 +2,9 @@
 status: proposed
 context_rev: 3
 priority: P0
-updated: 2026-09-14T23:40:13Z
+updated: 2026-09-15T00:10:47Z
 summary: Deliver same-directory graph contribution intake.
-next: "[[TAS-203-stable-lowercase-node-project-identity]]"
+next: "[[TAS-204-full-census-indexing-markdown-views]]"
 ---
 
 Parent [[TAS-192-deliver-opt-in-parallel-graph-mutation-and]].

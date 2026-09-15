@@ -84,6 +84,71 @@ def test_scan_accepts_a_nodes_directory(
     assert "feedback[1]{" in capsys.readouterr().out
 
 
+_CANONICAL_FBK = "fbk-01k5v6m3x8f2q7c9d4hn8w2pza-allocation-friction"
+
+
+def _stationary_vault(root: Path) -> Path:
+    """Seed a stationary canonical vault with one lowercase fbk node."""
+    nodes = root / ".braintree"
+    directory = nodes / "canonical" / _CANONICAL_FBK[-2:]
+    directory.mkdir(parents=True, exist_ok=True)
+    _write(
+        directory / f"{_CANONICAL_FBK}.md",
+        "---",
+        "status: proposed",
+        "context_rev: 1",
+        "updated: 2026-09-12T00:00:00Z",
+        "summary: Canonical feedback node.",
+        "braintree_revision: 0.4.0+g1b58d57",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+        "",
+        "# Feedback",
+        "",
+        "Attempted: A canonical capture.",
+        "Friction: Discovery missed lowercase ids.",
+        "Improvement: Match both spellings.",
+    )
+    return root
+
+
+def test_scan_reads_canonical_lowercase_feedback(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    vault = _stationary_vault(tmp_path / "canonical")
+    assert feedback_scan.main([str(vault)]) == 0
+    out = capsys.readouterr().out
+    assert "feedback[1]{vault,id,status,revision,summary}:" in out
+    assert _CANONICAL_FBK in out
+    assert "proposed" in out
+    assert "Canonical feedback node." in out
+
+
+def test_scan_reads_mixed_legacy_and_canonical_feedback(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    vault = _stationary_vault(tmp_path / "mixed")
+    legacy = vault / ".braintree" / "proposed"
+    legacy.mkdir(parents=True, exist_ok=True)
+    _write(
+        legacy / "FBK-001-one.md",
+        "---",
+        "context_rev: 1",
+        "updated: 2026-09-12T00:00:00Z",
+        "summary: Legacy feedback node.",
+        "braintree_revision: 0.4.0+g1b58d57",
+        "---",
+        "",
+        "Area [[IDX-001-root]].",
+    )
+    assert feedback_scan.main([str(vault)]) == 0
+    out = capsys.readouterr().out
+    assert "feedback[2]{" in out
+    assert "FBK-001-one" in out
+    assert _CANONICAL_FBK in out
+
+
 def test_scan_collects_multiple_vaults(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

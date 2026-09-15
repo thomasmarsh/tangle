@@ -1,13 +1,13 @@
 """Record a routed Braintree ``FBK`` feedback node in a consuming project.
 
 This is the writing half of the feedback mechanism. It stamps the installed
-Braintree revision, reserves the next ``FBK`` id atomically, discovers a
-primary route to the vault's root hub, and writes a valid feedback node in one
-step. The id reservation, route discovery, and non-clobbering write are the
-shared capture primitives of :mod:`braintree.node_record`, so both capture
-paths cannot disagree. It depends only on the standard library, opening the
-sidecar solely through that shared reservation, and reads the installed
-revision record through :func:`braintree.revision.feedback_revision`.
+Braintree revision, generates a lowercase 128-bit ``fbk`` id from cryptographic
+entropy, discovers a primary route to the vault's root hub, and writes a valid
+feedback node in one step. Identity generation, route discovery, and
+non-clobbering write are the shared capture primitives of
+:mod:`braintree.node_record`, so both capture paths cannot disagree. It depends
+only on the standard library and reads the installed revision record through
+:func:`braintree.revision.feedback_revision`.
 """
 
 from __future__ import annotations
@@ -34,11 +34,11 @@ from .toon import field
 __all__ = ["main"]
 
 _USAGE = (
-    "usage: braintree feedback record [--nodes DIR] [--route ROUTE] [--id FBK-NNN] "
+    "usage: braintree feedback record [--nodes DIR] [--route ROUTE] [--id fbk-...] "
     "[--summary TEXT] [--slug SLUG] --attempted TEXT --friction TEXT "
     "--improvement TEXT\n"
-    "Write one routed, revision-stamped FBK feedback node, reserving its id "
-    "atomically and falling back to a vault-local reservation without a sidecar."
+    "Write one routed, revision-stamped FBK feedback node, generating a "
+    "lowercase 128-bit id and writing the stationary canonical file."
 )
 
 _FEEDBACK_TYPE = "FBK"

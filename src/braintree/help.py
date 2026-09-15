@@ -132,7 +132,8 @@ VERBS: dict[str, Verb] = {
         "Show the stable project identity and state path.",
         usage="braintree location",
         outputs=(
-            ("project_id", "identity derived from the Git common directory"),
+            ("project_uid", "committed clone-stable project identity"),
+            ("project_id", "local coordination key derived from the Git common directory"),
             ("sidecar", "absolute path of the local coordination state"),
         ),
         topic=_COORDINATION_TOPIC,
@@ -202,6 +203,7 @@ VERBS: dict[str, Verb] = {
         ),
         hazards=(
             "A reservation is not a node; a local find is collision detection only.",
+            "New canonical ids come from entropy and need no reservation.",
             "A discarded allocation is burned permanently and never reused.",
         ),
         topic=_COORDINATION_TOPIC,
@@ -380,18 +382,18 @@ VERBS: dict[str, Verb] = {
             ("--type", "THO, DEF, DEC, or TAS"),
             ("--summary", "frontmatter summary; one line of at most 96 characters"),
             ("--body", "node body text"),
-            ("--status", "status directory; defaults to proposed"),
+            ("--status", "authoritative status field; defaults to proposed"),
             ("--next", "required for an unfinished TAS; omitted when resolved"),
             ("--route/--id/--slug/--nodes", "route and id overrides"),
         ),
         outputs=(
-            ("path", "the written node file"),
-            ("id", "the allocated identity"),
+            ("path", "the written stationary node file"),
+            ("id", "the generated lowercase identity"),
             ("warning", "present when an over-long summary was shortened"),
         ),
         hazards=(
             "Creates the node you already decided to admit; it does not judge admission.",
-            "Reserves the automatically chosen id before writing the file.",
+            "Generates the id from cryptographic entropy before writing the file.",
             "An over-long --summary is cut on a word boundary with a trailing "
             "... and warned about, never stored mid-phrase.",
         ),
@@ -411,9 +413,9 @@ VERBS: dict[str, Verb] = {
             ("children", "id,status,filename rows for the children written"),
         ),
         hazards=(
-            "Validates every child before reserving an id or writing a file.",
+            "Validates every child before generating an id or writing a file.",
             "A write failure removes the children already written and leaves the "
-            "parent unchanged; ids reserved before the failure stay burned.",
+            "parent unchanged.",
             "The parent's # Done when and body are never rewritten; only its "
             "next and updated change.",
         ),
@@ -647,8 +649,8 @@ VERBS: dict[str, Verb] = {
             ("--route/--id/--summary/--slug", "route and identity overrides"),
         ),
         outputs=(
-            ("path", "the written .braintree/proposed/FBK-n-slug.md file"),
-            ("id", "the allocated identity"),
+            ("path", "the written stationary fbk-<id>-slug.md file"),
+            ("id", "the generated lowercase identity"),
             ("warning", "present when the derived summary hit the 96-character limit"),
         ),
         hazards=(

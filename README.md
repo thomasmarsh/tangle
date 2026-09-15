@@ -34,14 +34,18 @@ Each concern is a small node in `.braintree/`:
 ```text
 .braintree/
   index-map.md
-  proposed/
-  active/
-  blocked/
-  resolved/
+  project-id
+  canonical/
+    <suffix>/<id>-<slug>.md
 ```
 
-The directory supplies status, the filename supplies stable identity and type, and
-wikilinks supply graph relationships. Every non-root node has one primary `Parent`
+The filename supplies stable identity and type, the node's authoritative `status`
+field supplies status, and wikilinks supply graph relationships. New ids are
+lowercase 128-bit Crockford Base32 identities, and their canonical path is
+derived from the id, so a status change edits the node in place instead of moving
+it. Legacy uppercase numeric nodes in `proposed/`, `active/`, `blocked/`, and
+`resolved/` stay readable during a versioned compatibility window and are retired
+by `braintree stationarize`. Every non-root node has one primary `Parent`
 or `Area` link that reaches a root hub. Relationships are stored in one direction;
 backlinks and inverse views are derived by search.
 

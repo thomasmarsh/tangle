@@ -66,10 +66,10 @@ child counts.
 
 When the decomposition is deliberate, author it in one transactional step
 instead of one capture per child. `braintree node decompose --parent PARENT
---plan FILE` validates the whole plan before it mutates anything, reserves every
-child id, writes each child with the canonical `Parent [[PARENT]]` route and its
-executable `next`, and advances the parent's `next` to the first child. The plan
-is one JSON document:
+--plan FILE` validates the whole plan before it mutates anything, generates each
+child's id, writes each child with the canonical `Parent [[PARENT]]` route and
+its executable `next`, and advances the parent's `next` to the first child. The
+plan is one JSON document:
 
 ```json
 {"children": [
@@ -82,10 +82,9 @@ is one JSON document:
 `type` is a capture type, `summary` and `body` are required, `next` is required
 for an unfinished `TAS`, and `status` (default `proposed`) and `slug` are
 optional; an unknown key is rejected rather than ignored. `--dry-run` validates
-and prints the ordered plan without reserving or writing. A rejected plan burns
-no id and writes nothing; a write failure removes the children already written
-and leaves the parent unchanged, while ids reserved before the failure stay
-burned. The command never writes a reciprocal child list, never rewrites the
+and prints the ordered plan without writing. A rejected plan writes nothing; a
+write failure removes the children already written and leaves the parent
+unchanged. The command never writes a reciprocal child list, never rewrites the
 parent's `# Done when` or body, and never infers a semantic boundary the plan did
 not declare: it only routes and stamps. `braintree node advance PARENT CHILD` is
 the parent-advance-only shorthand for a case where only that one line needs to
@@ -147,14 +146,13 @@ braintree node record --type THO \
 
 `braintree node record` accepts `THO`, `DEF`, `DEC`, or `TAS`; use
 `braintree feedback record` for `FBK`, and declare root `IDX` hubs in
-`index-map.md`. It allocates the next id from Markdown, discovers a route to the
-root hub, stamps `context_rev` and `updated`, and reserves the ID before writing.
-
-When project-local coordination exists and the target vault is in the project
-worktree, capture shares the atomic counter used by `braintree allocate`.
-Otherwise it uses an exclusive vault-local marker: safe for callers sharing the
-vault, but not across worktrees. Before coordination state exists, parallel
-worktrees must preallocate with `braintree allocate PREFIX` and pass `--id`.
+`index-map.md`. It generates a lowercase 128-bit id from cryptographic entropy,
+writes one stationary file under `canonical/<suffix>/`, discovers a route to the
+root hub, and stamps `context_rev` and `updated`. Because ids come from entropy,
+parallel writers never collide and need no shared sequence or preallocation.
+`--id` accepts only a canonical lowercase identity for a caller that must
+reproduce one; `braintree allocate` and `braintree reservations` remain only for
+a legacy numeric prefix during the compatibility window.
 
 The caller supplies body fields required by the selected type and status. An
 unfinished `TAS` requires one `--next`; a resolved node omits it; a blocked node
@@ -175,10 +173,10 @@ basename you want to reproduce in wikilinks. As with `--summary`, an explicit
 
 ## Feedback nodes
 
-A consuming project records Braintree friction as an `FBK` node. The `FBK` type
-is the one feedback marker, so `find .braintree -name 'FBK-*.md'` discovers
-feedback from Markdown alone, with no network access and no write to the scanned
-vault.
+A consuming project records Braintree friction as an `FBK`/`fbk` node. The
+feedback type is the one feedback marker, so
+`find .braintree -iname 'fbk-*.md'` discovers feedback from Markdown alone, with
+no network access and no write to the scanned vault.
 
 One session records one session `FBK` node, and the coordinator owns it: a
 worker that hits friction reports it in its run report — the attempted action,
@@ -208,8 +206,8 @@ summary obeys the same 96-character limit and warning behavior. See its
 `--help` for routing and naming overrides.
 
 Collect feedback read-only with `braintree feedback scan /path/to/vault`. It
-reads only `FBK-*.md` frontmatter, prints compact TOON fields for each result,
-prints `feedback: 0 nodes` for none, and works without local state or network in
-a read-only checkout. Triage each result into this graph: admit it only when it
+reads only the feedback nodes' frontmatter (canonical `fbk-*` and legacy
+`FBK-*`), prints compact TOON fields for each result, prints `feedback: 0 nodes`
+for none, and works without local state or network in a read-only checkout. Triage each result into this graph: admit it only when it
 is likely to change a future decision or action, cite its ID and revision, and
 explicitly dispose the rest.

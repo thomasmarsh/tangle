@@ -51,13 +51,16 @@ _CORE_ROUTING = (
 _CORE_INVARIANTS = (
     "Markdown is the durable, human-visible authority",
     "Obsidian-compatible",
-    "Each node lives in exactly one fixed status directory",
+    "A canonical node is one Markdown file under `.braintree/canonical/<suffix>/`",
+    "its frontmatter `status` field is authoritative",
+    "Legacy uppercase numeric ids and `.braintree/proposed/`",
+    "status-directory nodes stay readable during a versioned compatibility window",
     "Admit a node only when its conclusion or executable state is likely to change",
     "Braintree is durable execution memory, not a worklog",
     "work planned to be committed and finished within one session needs no node",
     "Independent resumability is necessary but not sufficient",
     "A fresh worker may continue the same graph node; agents and nodes are not one-to-one",
-    "Change status by moving the unchanged filename between those directories",
+    "Change status by editing the authoritative `status` field in place",
     "the only accepted forms are a plain action sentence, `Do X.`, or a single "
     "`[[direct-child]]` link",
     "Every other node has exactly one primary, unpinned `Parent` or `Area` link",
@@ -511,15 +514,14 @@ _LOCALIZED_RED_RECOVERY_RULE = (
     "revert it and re-scope the remaining slice against the reverted base",
 )
 
-# A status move and the node's body edit belong in one commit: `git mv` can
-# stage the pre-edit blob, so the destination is `git add`-ed after the move,
-# and the move is the last step before committing that node.
-_STATUS_MOVE_STAGING_RULE = (
-    "Stage that move and the node's `# Result`/`# Resolution` body edit in the "
+# A status change edits the node's authoritative `status` field in place rather
+# than moving a file, so wikilinks and Git history stay stable; the field edit
+# and the node's `# Result`/`# Resolution` body change land in one commit.
+_STATUS_IN_PLACE_RULE = (
+    "Change status by editing the authoritative `status` field in place",
+    "so wikilinks and history stay stable",
+    "land that edit and the node's `# Result`/`# Resolution` body change in the "
     "same commit",
-    "`git mv` can stage the pre-edit blob",
-    "`git add` the destination after the move",
-    "make the move the last step before committing that node",
 )
 
 # A frontier node whose `# Done when` cannot be met in one session is advanced by
@@ -643,12 +645,12 @@ _BRIEF_ACCEPTANCE_AND_SEAM_PROBE = (
 _TRANSACTIONAL_DECOMPOSITION_RULE = (
     "`braintree node decompose --parent PARENT --plan FILE` validates the whole "
     "plan before it mutates anything",
-    "reserves every child id, writes each child with the canonical `Parent "
+    "generates each child's id, writes each child with the canonical `Parent "
     "[[PARENT]]` route and its executable `next`, and advances the parent's "
     "`next` to the first child",
-    "A rejected plan burns no id and writes nothing",
+    "A rejected plan writes nothing",
     "a write failure removes the children already written and leaves the parent "
-    "unchanged, while ids reserved before the failure stay burned",
+    "unchanged",
     "never writes a reciprocal child list, never rewrites the parent's "
     "`# Done when` or body, and never infers a semantic boundary",
     "`braintree node advance PARENT CHILD` is the parent-advance-only shorthand",
@@ -667,11 +669,11 @@ _TRANSACTIONAL_DECOMPOSITION_PROBE = (
 # gated consumer's gate clears when the target resolves, not when the node
 # unblocks. A semantic change made in the same edit still bumps the revision.
 _BLOCKER_CLEARANCE_REVISION_RULE = (
-    "Clearing a blocker is exactly that status move with a `next` change, so it "
+    "Clearing a blocker is exactly that status change with a `next` change, so it "
     "never bumps `context_rev`",
-    "a consumer detects readiness from the status directory",
+    "a consumer detects readiness from the authoritative `status` field",
     "a semantic change made in the same edit still bumps it",
-    "Clearing a blocker is the same status move with a `next` change",
+    "Clearing a blocker is the same status change with a `next` change",
     "its gate clears when the target resolves, not when the node returns to "
     "`proposed`",
 )
@@ -821,9 +823,13 @@ _ANCHORED_DEPENDENCY_SEARCH_PROBE = (
 )
 
 # Literal grammar the graph checker and clients genuinely depend on. Each token
-# is emitted or parsed, not narrative: status directories, canonical edges, the
-# pin and gate forms, frontmatter keys, and the ``Refs:`` footer convention.
+# is emitted or parsed, not narrative: the stationary canonical path and project
+# UID, the readable legacy status directories, canonical edges, the pin and gate
+# forms, frontmatter keys, and the ``Refs:`` footer convention.
 _REQUIRED_GRAMMAR = (
+    ".braintree/canonical/",
+    ".braintree/project-id",
+    "prj-",
     ".braintree/proposed/",
     ".braintree/active/",
     ".braintree/blocked/",
@@ -878,9 +884,9 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
     ),
     "authoring": (
         "braintree node record",
-        "allocates the next id from Markdown",
+        "generates a lowercase 128-bit id from cryptographic entropy",
         "`--summary` is one line of at most 96 characters",
-        "The `FBK` type is the one feedback marker",
+        "The feedback type is the one feedback marker",
         "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
         "`.braintree/index-map.md` holds intent and routing, not state",
         "Decompose just in time",
@@ -1285,8 +1291,8 @@ def test_pending_advance_guard_rejects_the_pre_change_stale_route_paragraph() ->
         )
 
 
-def test_status_move_is_staged_with_its_body_edit() -> None:
-    _assert_contains(_read(_SKILL), _STATUS_MOVE_STAGING_RULE)
+def test_status_field_edit_is_staged_with_its_body_edit() -> None:
+    _assert_contains(_read(_SKILL), _STATUS_IN_PLACE_RULE)
 
 
 def test_session_slice_rule_is_stated() -> None:

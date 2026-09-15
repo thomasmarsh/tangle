@@ -1,10 +1,9 @@
 ---
-status: active
+status: resolved
 context_rev: 3
 priority: P0
-updated: 2026-09-15T00:01:37Z
+updated: 2026-09-15T00:10:47Z
 summary: Implement stable lowercase node and project identity.
-next: Reconcile the skill contract text and references with the stationary canonical store and compatibility window.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -118,3 +117,19 @@ benchmark storage --verify`, `ruff`, `mypy`, and `braintree check` (251 nodes)
 pass; `make test` passes 815 with the same pre-existing `test_memory_authority`
 frozen-artifact failure. Remaining: reconcile the skill contract text and
 references, which still present status directories as the only layout.
+
+Reconciled the installed contract with the stationary canonical store. `SKILL.md`
+now names the sharded `.braintree/canonical/<suffix>/` path, the authoritative
+frontmatter `status` field, the lowercase 128-bit Crockford id grammar, the
+committed `.braintree/project-id`, and the versioned legacy compatibility window,
+and it changes status in place instead of moving a file. The authoring,
+dependencies, and coordination references and the README model now match,
+including entropy-generated capture and decompose ids, legacy-only `braintree
+allocate`/`reservations`, and canonical `fbk-` feedback discovery. Corrected the
+user-visible `node record`, `feedback record`, `node decompose`, `location`, and
+`allocate` help text, and made `feedback_scan` discover canonical lowercase
+`fbk-` nodes beside legacy `FBK-` with mixed-layout coverage. Reconciled the
+`tests/test_skill.py` contract guards. `braintree check` passes at 251 nodes;
+`ruff`, `mypy`, `tests/install.sh`, `tests/worktree-parallel.sh`, and `uv run
+pytest` (817 passed, 3 skipped) pass, with the pre-existing `test_memory_authority`
+frozen-artifact derivation failure unchanged.

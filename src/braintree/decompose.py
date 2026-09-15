@@ -1,19 +1,18 @@
 """Transactional decomposition authoring: ordered children plus the parent advance.
 
 ``braintree node decompose`` validates a whole ordered-child plan before it
-mutates Markdown, reserves every child id, writes each child with its canonical
-``Parent`` route and its executable ``next``, and advances the parent's ``next``
-to the first child in one all-or-nothing operation. ``braintree node advance``
-is the parent-advance-only shorthand. Both live here because
-``src/braintree/cli.py`` is frozen observable prompt content in
+mutates Markdown, generates each child's lowercase 128-bit id, writes each child
+with its canonical ``Parent`` route and its executable ``next``, and advances the
+parent's ``next`` to the first child in one all-or-nothing operation.
+``braintree node advance`` is the parent-advance-only shorthand. Both live here
+because ``src/braintree/cli.py`` is frozen observable prompt content in
 ``benchmark/memory-authority-cases.json``; a byte change there would invalidate
 the committed measurement.
 
 The plan is a small JSON document, ``{"children": [...]}``, so every child is
-validated before any id is reserved: a rejected plan burns nothing, and a write
+validated before any id is generated: a rejected plan writes nothing, and a write
 failure removes the children already written and leaves the parent unchanged.
-The ids reserved before such a failure stay burned, exactly as the discard rule
-for ``braintree allocate`` states.
+Discarded entropy ids are simply unused; no reservation is involved.
 """
 
 from __future__ import annotations
@@ -34,7 +33,7 @@ __all__ = ["advance_main", "main"]
 _DECOMPOSE_USAGE = (
     "usage: braintree node decompose --parent PARENT --plan FILE "
     "[--nodes DIR] [--dry-run]\n"
-    "Validate an ordered-child plan, allocate its ids, write every child with "
+    "Validate an ordered-child plan, generate its ids, write every child with "
     "its canonical Parent route and executable next, and advance the parent to "
     "the first child atomically."
 )
@@ -337,7 +336,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(
             field(
                 "help",
-                "No child or parent edit was kept; any reserved id remains burned.",
+                "No child or parent edit was kept; discarded ids are unused.",
             )
         )
         return 1
@@ -347,7 +346,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(
         _recorded_table(allocated)
     )
-    for _number, child in allocated:
+    for _node_id, child in allocated:
         if child.truncated:
             print(field("warning", node_record.summary_warning(child.summary)))
     return 0

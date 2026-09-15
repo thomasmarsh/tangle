@@ -20,8 +20,8 @@ one repository.
   Markdown after loss or damage.
 - Local state coordinates concurrent processes on one host and local
   filesystem. Across hosts, coordinate through the shared Markdown vault.
-- Status directories and Markdown pointers remain authoritative, not local-state
-  fields.
+- The node's authoritative `status` field and Markdown pointers remain
+  authoritative, not local-state fields.
 
 ## Hash, claim, and lease
 
@@ -34,7 +34,7 @@ as the opaque claim key, so use the same spelling throughout one handoff.
 Pass that bare 64-character value as `--base-hash` to `claim` and `release`;
 do not reimplement the hash or pass the output block. A worker hashes and claims
 before editing. The starting hash covers the handed-off node before its frontier
-status move or `# Context` edit, which belong to the claimed work.
+status change or `# Context` edit, which belong to the claimed work.
 
 `braintree claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or
 renews an exclusive lease. A lease lasts 900 seconds by default; repeating the
@@ -61,7 +61,7 @@ prefers `path (Symbol)` — the owning call-site function — over a bare
 `file:line`, because the same helper can be invoked from a different compilation
 stage than the field it must read.
 
-- One agent writes a node and status path at a time. Shared parents,
+- One agent writes a node and its status field at a time. Shared parents,
   `index-map.md`, definitions, and root hubs are coordinator-owned unless their
   writes are explicitly serialized.
 - A worker may author the minimal primitive or seam required by its gate or
@@ -104,20 +104,23 @@ stage than the field it must read.
   neither the compiler nor a touched test mechanically forces it.
 - A worktree is a snapshot, not global truth; unseen work and IDs may be
   claimed. A worktree slice is not a node boundary, and a fresh worker may
-  continue the same node. Keep its content update and status move coherent.
+  continue the same node. Keep its content update and status change coherent.
 - The coordinator integrates child evidence and alone resolves a coordinating
   parent after all required work is integrated.
 - Verification needs falsifiable evidence from an actor that ran the gates or a
   coordinator-run gate transcript. A read-only reviewer cannot be the sole
   sign-off.
-- For parallel creation, reserve an ID, or a batch of `COUNT` consecutive ids in
-  one call in a single transaction, with `braintree allocate PREFIX [COUNT]`, or
-  use coordinator-preallocated, explicitly disjoint ranges offline. `find` only
-  detects collisions. An allocated id is burned permanently: an allocation the
-  caller discards is never returned and never reused. `braintree reservations`
-  lists each prefix's burned ids — reserved with no node on disk — so a gap in
-  the vault is a discarded allocation, not a missing node. There is no release
-  or reclaim because an in-flight worktree may already contain the ID.
+- New canonical ids come from cryptographic entropy at admission, so parallel
+  creation needs no reservation, shared sequence, or preallocated range. For a
+  legacy numeric prefix during the compatibility window only, reserve an ID, or a
+  batch of `COUNT` consecutive ids in one call in a single transaction, with
+  `braintree allocate PREFIX [COUNT]`, or use coordinator-preallocated,
+  explicitly disjoint ranges offline. `find` only detects collisions. An
+  allocated id is burned permanently: an allocation the caller discards is
+  never returned and never reused. `braintree reservations` lists each prefix's
+  burned ids — reserved with no node on disk — so a gap in the vault is a
+  discarded allocation, not a missing node. There is no release or reclaim
+  because an in-flight worktree may already contain the ID.
 
 ## Worker handoff
 
