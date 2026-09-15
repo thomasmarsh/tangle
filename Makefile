@@ -1,25 +1,30 @@
-.PHONY: test test-benchmarks verify FORCE benchmark diagnostic-benchmark \
-	storage-comparison verb-benchmark
+.PHONY: test test-install test-benchmarks verify FORCE benchmark \
+	diagnostic-benchmark storage-comparison verb-benchmark
 
-# The fast Python suite and the remaining end-to-end shell screens are
+# The fast Python suite and the remaining end-to-end shell screen are
 # independent and process-spawn bound, so run them concurrently, and the
 # Python suite itself runs under pytest-xdist (`-n auto`) because its tests are
 # dominated by per-test tangle subprocess spawns. Benchmark verification is
-# excluded here and runs with `make test-benchmarks`, which stays serial. Every
-# job is waited on and any failure fails the target.
+# excluded here and runs with `make test-benchmarks`, which stays serial. The
+# installer end-to-end screen spawns many real installs and is opt-in, so it
+# runs with `make test-install`. Every job is waited on and any failure fails
+# the target.
 test:
 	@set -eu; \
 	uv run ruff check; \
 	uv run mypy; \
 	pids=""; \
 	uv run pytest -q -n auto & pids="$$pids $$!"; \
-	for suite in install worktree-parallel; do \
-		sh "tests/$$suite.sh" & pids="$$pids $$!"; \
-	done; \
+	sh tests/worktree-parallel.sh & pids="$$pids $$!"; \
 	status=0; \
 	for pid in $$pids; do wait "$$pid" || status=1; done; \
 	git diff --check; \
 	exit $$status
+
+# The installer screen installs into throwaway roots many times, so it is
+# opt-in rather than part of the per-change gate.
+test-install:
+	sh tests/install.sh
 
 test-benchmarks:
 	uv run pytest -q -m benchmark

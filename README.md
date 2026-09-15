@@ -200,6 +200,13 @@ Benchmark verification is opt-in:
 make test-benchmarks
 ```
 
+The installer end-to-end screen installs into throwaway roots many times, so it
+is opt-in as well:
+
+```sh
+make test-install
+```
+
 [`BENCHMARK.md`](BENCHMARK.md) documents the worktree checks, graph-size comparisons,
 token experiments, and their limits. The [`research/`](research/) directory contains
 the memory-evaluation designs and reports.
