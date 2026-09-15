@@ -120,7 +120,7 @@ def test_manifest_ready_prints_authored_and_derived(
     assert "problems[" not in result.stdout
 
 
-def test_manifest_accepts_a_backticked_value(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_manifest_accepts_a_backticked_value(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
     _write(
@@ -133,12 +133,12 @@ def test_manifest_accepts_a_backticked_value(tmp_path: Path, run_tangle: RunTang
         ),
     )
 
-    result = run_tangle("manifest", "TAS-100", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("manifest", "TAS-100", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert _toon_rows(result.stdout, "authored") == [["source", "src/tangle/manifest.py"]]
 
 
-def test_manifest_absent_is_empty(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_manifest_absent_is_empty(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
     _write(
@@ -151,7 +151,7 @@ def test_manifest_absent_is_empty(tmp_path: Path, run_tangle: RunTangle) -> None
         ),
     )
 
-    result = run_tangle("manifest", "TAS-100", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("manifest", "TAS-100", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'result: "empty"' in result.stdout
     assert "authored: 0 entries" in result.stdout
@@ -159,7 +159,7 @@ def test_manifest_absent_is_empty(tmp_path: Path, run_tangle: RunTangle) -> None
 
 
 def test_manifest_invalid_reports_missing_and_malformed_entries(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -180,7 +180,7 @@ def test_manifest_invalid_reports_missing_and_malformed_entries(
         ),
     )
 
-    result = run_tangle("manifest", "TAS-100", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("manifest", "TAS-100", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "invalid"' in result.stdout
     codes = [row[0] for row in _toon_rows(result.stdout, "problems")]
@@ -194,32 +194,32 @@ def test_manifest_invalid_reports_missing_and_malformed_entries(
     assert _toon_rows(result.stdout, "authored") == [["source", "src/a.py"]]
 
 
-def test_manifest_unknown_node_exits_one(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_manifest_unknown_node_exits_one(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
-    result = run_tangle("manifest", "TAS-404-absent", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("manifest", "TAS-404-absent", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: TAS-404-absent"' in result.stdout
 
 
-def test_manifest_rejects_arguments(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_manifest_rejects_arguments(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
-    assert run_tangle("manifest", env=_env(tmp_path, vault)).returncode == 2
-    result = run_tangle("manifest", "TAS-100", "extra", env=_env(tmp_path, vault))
+    assert run_tangle_inproc("manifest", env=_env(tmp_path, vault)).returncode == 2
+    result = run_tangle_inproc("manifest", "TAS-100", "extra", env=_env(tmp_path, vault))
     assert result.returncode == 2
     assert 'error: "manifest takes one NODE: extra"' in result.stdout
 
 
 def test_manifest_requires_an_existing_nodes_directory(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
-    result = run_tangle("manifest", "TAS-100", env=_env(tmp_path, tmp_path / "missing"))
+    result = run_tangle_inproc("manifest", "TAS-100", env=_env(tmp_path, tmp_path / "missing"))
     assert result.returncode == 1
     assert "nodes directory does not exist" in result.stdout
 
 
-def test_check_rejects_a_malformed_manifest(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_check_rejects_a_malformed_manifest(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
     _write(
@@ -232,7 +232,7 @@ def test_check_rejects_a_malformed_manifest(tmp_path: Path, run_tangle: RunTangl
         ),
     )
 
-    result = run_tangle(
+    result = run_tangle_inproc(
         "check", "--format", "toon", str(vault), env=_env(tmp_path, vault)
     )
     assert result.returncode == 1

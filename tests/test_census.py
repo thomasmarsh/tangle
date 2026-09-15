@@ -137,19 +137,19 @@ def test_census_reports_zero_then_a_direct_edit(
 
 
 def test_a_direct_edit_is_observed_before_the_diagnostic_answers(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """The pre-dispatch census reconciles a hand edit the diagnostic reports."""
     vault = tmp_path / "nodes"
     paths = _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
     revised = _consumer_text("A revised summary.")
     paths["consumer"].write_text(revised, encoding="utf-8")
 
-    observed = run_tangle("census", env=env)
+    observed = run_tangle_inproc("census", env=env)
     assert observed.returncode == 0, observed.stdout + observed.stderr
     assert 'changes: "1"' in observed.stdout
     stored = _stored_nodes(_database(tmp_path))
@@ -157,14 +157,14 @@ def test_a_direct_edit_is_observed_before_the_diagnostic_answers(
 
 
 def test_a_preserved_mtime_byte_change_is_still_detected(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """Identical size and mtime do not hide a byte change; the hash is the signal."""
     vault = tmp_path / "nodes"
     paths = _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
     before = paths["consumer"].stat()
     # Same length as "Consume the root." and the same restored mtime, so only a
@@ -176,23 +176,23 @@ def test_a_preserved_mtime_byte_change_is_still_detected(
     assert after.st_mtime_ns == before.st_mtime_ns
     assert after.st_size == before.st_size
 
-    detected = run_tangle("census", env=env)
+    detected = run_tangle_inproc("census", env=env)
     assert detected.returncode == 0
     assert 'changes: "1"' in detected.stdout
     stored = _stored_nodes(_database(tmp_path))
     assert stored[_CONSUMER][1] == hashlib.sha256(revised.encode("utf-8")).hexdigest()
 
 
-def test_census_counts_a_removed_node(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_census_counts_a_removed_node(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """A vanished node file is a change the census records and reconciles."""
     vault = tmp_path / "nodes"
     paths = _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
     paths["consumer"].unlink()
-    deleted = run_tangle("census", env=env)
+    deleted = run_tangle_inproc("census", env=env)
     assert deleted.returncode == 0
     assert 'changes: "0"' in deleted.stdout
     assert 'removed: "1"' in deleted.stdout
@@ -200,13 +200,13 @@ def test_census_counts_a_removed_node(tmp_path: Path, run_tangle: RunTangle) -> 
 
 
 def test_census_without_local_state_creates_none(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A fresh vault is reported without creating a sidecar or any view page."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    result = run_tangle("census", env=env)
+    result = run_tangle_inproc("census", env=env)
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'census: "uninitialized"' in result.stdout
     assert 'views: "unavailable"' in result.stdout
@@ -215,14 +215,14 @@ def test_census_without_local_state_creates_none(
 
 
 def test_census_excludes_views_and_local_non_nodes(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A proposal, a receipt, and a temporary file are never counted as nodes."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
     (vault / "proposals").mkdir()
     (vault / "proposals" / f"{_CONSUMER}-draft.md").write_text(
@@ -236,23 +236,23 @@ def test_census_excludes_views_and_local_non_nodes(
     shard = vault / "canonical" / _CONSUMER[-2:]
     (shard / f"{_CONSUMER}-consumer.md.4242.tmp").write_text("staging", encoding="utf-8")
 
-    settled = run_tangle("census", env=env)
+    settled = run_tangle_inproc("census", env=env)
     assert settled.returncode == 0
     assert 'changes: "0"' in settled.stdout
     assert 'removed: "0"' in settled.stdout
 
 
 def test_routine_interaction_stays_silent_on_a_noop_census(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A settled read-only interaction reports no census; only `census` speaks."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
-    quiet = run_tangle("frontier", env=env)
+    quiet = run_tangle_inproc("frontier", env=env)
     assert quiet.returncode == 0
     assert quiet.stderr == ""
     assert "census" not in quiet.stdout

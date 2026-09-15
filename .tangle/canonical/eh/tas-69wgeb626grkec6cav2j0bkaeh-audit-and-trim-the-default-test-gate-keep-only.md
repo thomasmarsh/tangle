@@ -1,10 +1,9 @@
 ---
 context_rev: 1
-status: proposed
+status: resolved
 priority: P2
-updated: 2026-09-15T16:29:39Z
+updated: 2026-09-15T17:29:11Z
 summary: Audit and trim the default test gate; keep only distinct load-bearing tests, then parallelize.
-next: "[[tas-1tn95z62bqewgvjm94fx9k8nbe-cheapen-subprocess-bound-default-gate-tests-to]]"
 ---
 
 Area [[IDX-001-execution-graph]].
@@ -33,3 +32,9 @@ reduction rather than masking it.
   equivalent assertion.
 - The audit cut list is executed.
 - make test stays green and its wall time is materially reduced.
+
+# Result
+
+All eight execution children are resolved: tas-6c870q (classify each default-suite test), tas-1cbytx85 (retire duplicates and the wall-clock sleep), tas-4ysvfgk (collapse the test_skill prose-lock apparatus), tas-1tawqxsr (drop committed-data QA), tas-667ytnp (make non-hermetic tests hermetic), tas-098efjf (enable pytest-xdist), tas-1h6q9v1g (trim and opt-in the installer suite), and tas-1tn95z (in-process subprocess-bound tests).
+The default gate now runs only tests that each protect a distinct product guarantee; intentional concurrency, provider, and semantic process-boundary tests are retained, and each cheapened file cites the guarantee it preserves. make test is green (794 passed, 3 skipped) and materially faster than this node recorded 134.8s baseline: the gate is roughly 20s wall and the two heaviest files fell from 37.25s to 4.52s serial after the in-process conversion.
+Evidence: tangle check passed; no src/ or frozen-observable file changed, so the blocked TAS-188-remove-uv-from-quality-benchmark-reproduction live re-record is untouched.

@@ -136,6 +136,7 @@ def _database(tmp_path: Path) -> Path:
 
 
 def test_reindex_counts_and_queries(tmp_path: Path, run_tangle: RunTangle) -> None:
+    """The file's real-process entry-point smoke: index, search, backlinks, stale."""
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
@@ -160,7 +161,7 @@ def test_reindex_counts_and_queries(tmp_path: Path, run_tangle: RunTangle) -> No
     ) in stale.stdout
 
 
-def test_stale_reports_missing_pinned_target(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_stale_reports_missing_pinned_target(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """A pin whose target is absent is reported with the missing-target verdict."""
     vault = tmp_path / "vault" / "nodes"
     (vault / "resolved").mkdir(parents=True)
@@ -176,7 +177,7 @@ def test_stale_reports_missing_pinned_target(tmp_path: Path, run_tangle: RunTang
         "summary: Consume a missing contract.\nnext: Locate the contract.\n---\n\n"
         "# Context\n\nRequires [[DEF-404-missing]] at context_rev 1.\n",
     )
-    stale = run_tangle("stale", env=_env(tmp_path, vault))
+    stale = run_tangle_inproc("stale", env=_env(tmp_path, vault))
     assert stale.returncode == 0
     assert (
         '"TAS-001","active","DEF-404-missing","1","","Requires","missing target"'
@@ -185,7 +186,7 @@ def test_stale_reports_missing_pinned_target(tmp_path: Path, run_tangle: RunTang
 
 
 def test_explicit_nodes_argument_overrides_environment(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
@@ -193,27 +194,27 @@ def test_explicit_nodes_argument_overrides_environment(
         "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
         "TANGLE_PROJECT_ID": "index-arg-test",
     }
-    output = run_tangle("index", str(vault), env=env)
+    output = run_tangle_inproc("index", str(vault), env=env)
     assert output.stdout.splitlines()[:2] == ["nodes: 4", "edges: 5"]
 
 
-def test_search_requires_query(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_search_requires_query(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
-    result = run_tangle("search", "--limit", "1", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("search", "--limit", "1", env=_env(tmp_path, vault))
     assert result.returncode == 2
     assert 'error: "search requires QUERY"' in result.stdout
 
 
 def test_backlinks_resolve_full_name_and_reject_unknown(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
 
-    bare = run_tangle("backlinks", "DEF-001", env=env)
-    named = run_tangle("backlinks", "DEF-001-contract", env=env)
+    bare = run_tangle_inproc("backlinks", "DEF-001", env=env)
+    named = run_tangle_inproc("backlinks", "DEF-001-contract", env=env)
     assert bare.returncode == 0 and named.returncode == 0
     assert bare.stdout == named.stdout
     assert '"TAS-001","active","Depends on","2"' in named.stdout
@@ -223,44 +224,44 @@ def test_backlinks_resolve_full_name_and_reject_unknown(
         "summary: Leaf definition.\n---\n\n# Context\n\nArea [[IDX-001-root]].\n",
         encoding="utf-8",
     )
-    zero = run_tangle("backlinks", "DEF-002-leaf", env=env)
+    zero = run_tangle_inproc("backlinks", "DEF-002-leaf", env=env)
     assert zero.returncode == 0
     assert zero.stdout.strip() == "backlinks: 0 matching edges"
 
-    unknown = run_tangle("backlinks", "DEF-999", env=env)
+    unknown = run_tangle_inproc("backlinks", "DEF-999", env=env)
     assert unknown.returncode == 1
     assert 'error: "unknown node: DEF-999"' in unknown.stdout
 
 
-def test_hash_matches_raw_sha256_algorithm(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_hash_matches_raw_sha256_algorithm(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
     node_file = vault / "active" / "TAS-001-consumer.md"
     expected = hashlib.sha256(node_file.read_bytes()).hexdigest()
 
-    bare = run_tangle("hash", "TAS-001", env=env)
+    bare = run_tangle_inproc("hash", "TAS-001", env=env)
     assert bare.returncode == 0
     assert f'content_hash: "{expected}"' in bare.stdout
 
-    named = run_tangle("hash", "TAS-001-consumer", env=env)
+    named = run_tangle_inproc("hash", "TAS-001-consumer", env=env)
     assert named.returncode == 0
     assert f'content_hash: "{expected}"' in named.stdout
 
-    unknown = run_tangle("hash", "TAS-999", env=env)
+    unknown = run_tangle_inproc("hash", "TAS-999", env=env)
     assert unknown.returncode == 1
     assert 'error: "unknown node: TAS-999"' in unknown.stdout
 
 
 def test_hash_rejects_a_path_and_names_the_accepted_forms(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
     node_path = "nodes/active/TAS-001-consumer.md"
 
-    path_shaped = run_tangle("hash", node_path, env=env)
+    path_shaped = run_tangle_inproc("hash", node_path, env=env)
     assert path_shaped.returncode == 1
     assert f'error: "unknown node: {node_path}"' in path_shaped.stdout
     assert "'TAS-001'" in path_shaped.stdout
@@ -268,33 +269,33 @@ def test_hash_rejects_a_path_and_names_the_accepted_forms(
     assert "not a path" in path_shaped.stdout
 
     # The suggested forms are exactly what the command accepts.
-    assert run_tangle("hash", "TAS-001", env=env).returncode == 0
-    assert run_tangle("hash", "TAS-001-consumer", env=env).returncode == 0
+    assert run_tangle_inproc("hash", "TAS-001", env=env).returncode == 0
+    assert run_tangle_inproc("hash", "TAS-001-consumer", env=env).returncode == 0
 
 
 def test_hash_content_hash_is_the_claim_and_release_operand(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
 
-    hashed = run_tangle("hash", "TAS-001", env=env)
+    hashed = run_tangle_inproc("hash", "TAS-001", env=env)
     assert hashed.returncode == 0
     match = re.search(r'^content_hash: "([0-9a-f]{64})"$', hashed.stdout, re.MULTILINE)
     assert match is not None, hashed.stdout
     digest = match.group(1)
 
-    claimed = run_tangle("claim", "TAS-001", "worker", "--base-hash", digest, env=env)
+    claimed = run_tangle_inproc("claim", "TAS-001", "worker", "--base-hash", digest, env=env)
     assert claimed.returncode == 0
     assert f'base_hash: "{digest}"' in claimed.stdout
 
-    released = run_tangle("release", "TAS-001", "worker", "--base-hash", digest, env=env)
+    released = run_tangle_inproc("release", "TAS-001", "worker", "--base-hash", digest, env=env)
     assert released.returncode == 0
     assert 'result: "released"' in released.stdout
 
 
-def test_stale_without_stale_pins_names_them(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_stale_without_stale_pins_names_them(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     (vault / "resolved").mkdir(parents=True)
     (vault / "active").mkdir()
@@ -309,14 +310,14 @@ def test_stale_without_stale_pins_names_them(tmp_path: Path, run_tangle: RunTang
         "# Context\n\nDepends on [[DEF-001-contract]] at context_rev 1.\n",
         encoding="utf-8",
     )
-    result = run_tangle("stale", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("stale", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stdout.strip() == "stale: 0 stale dependency pins"
 
 
 @pytest.mark.parametrize("relation", CONTEXT_RELATIONS)
 def test_stale_reports_each_context_relation(
-    tmp_path: Path, run_tangle: RunTangle, relation: str
+    tmp_path: Path, run_tangle_inproc: RunTangle, relation: str
 ) -> None:
     """A pin on every canonical context relation is reconciled, not just `Depends on`."""
     vault = tmp_path / "vault" / "nodes"
@@ -333,7 +334,7 @@ def test_stale_reports_each_context_relation(
         "summary: Consume the contract.\nnext: Reconcile the contract.\n---\n\n"
         f"# Context\n\n{relation} [[DEF-001-contract]] at context_rev 2.\n",
     )
-    result = run_tangle("stale", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("stale", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert (
         '"TAS-001","active","DEF-001","2","3",'
@@ -342,7 +343,7 @@ def test_stale_reports_each_context_relation(
 
 
 def test_stale_and_check_agree_on_unresolved_pin(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """`stale` reports a pin whose target is not resolved, as `check` does."""
     vault = tmp_path / "vault" / "nodes"
@@ -372,14 +373,14 @@ def test_stale_and_check_agree_on_unresolved_pin(
         "Implements [[DEF-001-contract]] at context_rev 2.\n",
     )
 
-    checked = run_tangle("check", str(vault))
+    checked = run_tangle_inproc("check", str(vault))
     assert checked.returncode == 1
     assert (
         "pinned dependency [[DEF-001-contract]] is proposed, not resolved"
         in checked.stderr
     )
 
-    stale = run_tangle("stale", env=_env(tmp_path, vault))
+    stale = run_tangle_inproc("stale", env=_env(tmp_path, vault))
     assert stale.returncode == 0
     assert (
         '"TAS-001","active","DEF-001","2","2","Implements",'
@@ -433,24 +434,26 @@ def _seed_views(vault: Path) -> None:
     )
 
 
-def test_frontier_matches_markdown_on_fixture(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_frontier_matches_markdown_on_fixture(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """The frontier verb returns exactly the nodes the Markdown recipe derives."""
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
     assert _markdown_frontier_ids(vault) == {"TAS-001", "TAS-003", "THO-010"}
 
-    result = run_tangle("frontier", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("frontier", env=_env(tmp_path, vault))
     assert result.returncode == 0
     rows = _toon_rows(result.stdout, "frontier")
     assert [row[0] for row in rows] == ["TAS-001", "TAS-003", "THO-010"]
     assert {row[0] for row in rows} == _markdown_frontier_ids(vault)
 
 
-def test_frontier_reports_fields_and_stale_flag(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_frontier_reports_fields_and_stale_flag(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """Frontier rows carry identity, status, priority, summary, next, and staleness."""
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
-    rows = _toon_rows(run_tangle("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
+    rows = _toon_rows(run_tangle_inproc("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
     by_id = {row[0]: row for row in rows}
     assert by_id["TAS-001"][1:] == [
         "active",
@@ -469,10 +472,12 @@ def test_frontier_reports_fields_and_stale_flag(tmp_path: Path, run_tangle: RunT
     assert by_id["THO-010"][1:] == ["proposed", "", "A theory to answer.", "", "false"]
 
 
-def test_frontier_excludes_resolved_and_child_routes(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_frontier_excludes_resolved_and_child_routes(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
-    rows = _toon_rows(run_tangle("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
+    rows = _toon_rows(run_tangle_inproc("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
     ids = {row[0] for row in rows}
     assert "TAS-002" not in ids  # next is a [[child]] route
     assert "TAS-004" not in ids  # resolved
@@ -508,25 +513,25 @@ def _seed_upfront_plan(vault: Path) -> None:
 
 
 def test_frontier_reports_sequenced_siblings_as_candidates(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """An up-front plan puts every action-``next`` child in the candidate list."""
     vault = tmp_path / "vault" / "nodes"
     _seed_upfront_plan(vault)
     assert _markdown_frontier_ids(vault) == {"TAS-101", "TAS-102", "TAS-103"}
 
-    rows = _toon_rows(run_tangle("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
+    rows = _toon_rows(run_tangle_inproc("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
     assert [row[0] for row in rows] == ["TAS-101", "TAS-102", "TAS-103"]
     assert "TAS-100" not in {row[0] for row in rows}  # next is a [[child]] route
 
 
 def test_frontier_candidates_resolve_through_the_coordinator(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """The contract narrows the candidates to the coordinator's ``next`` target."""
     vault = tmp_path / "vault" / "nodes"
     _seed_upfront_plan(vault)
-    rows = _toon_rows(run_tangle("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
+    rows = _toon_rows(run_tangle_inproc("frontier", env=_env(tmp_path, vault)).stdout, "frontier")
     candidates = {row[0] for row in rows}
     assert candidates == {"TAS-101", "TAS-102", "TAS-103"}
     assert _named_frontier_targets(vault) == {"TAS-101"}
@@ -534,7 +539,7 @@ def test_frontier_candidates_resolve_through_the_coordinator(
 
 
 def test_next_and_orient_report_the_same_frontier_candidates(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """``next --rank`` and ``orient`` share the frontier verb's candidate list."""
     vault = tmp_path / "vault" / "nodes"
@@ -542,10 +547,10 @@ def test_next_and_orient_report_the_same_frontier_candidates(
     env = _env(tmp_path, vault)
     expected = {"TAS-101", "TAS-102", "TAS-103"}
 
-    frontier = _toon_rows(run_tangle("frontier", env=env).stdout, "frontier")
-    ranked = _toon_rows(run_tangle("next", "--rank", "--limit", "3", env=env).stdout, "next")
+    frontier = _toon_rows(run_tangle_inproc("frontier", env=env).stdout, "frontier")
+    ranked = _toon_rows(run_tangle_inproc("next", "--rank", "--limit", "3", env=env).stdout, "next")
     oriented = _toon_rows(
-        run_tangle("orient", "--section", "frontier", env=env).stdout, "frontier"
+        run_tangle_inproc("orient", "--section", "frontier", env=env).stdout, "frontier"
     )
     assert {row[0] for row in frontier} == expected
     assert {row[1] for row in ranked} == expected
@@ -554,7 +559,7 @@ def test_next_and_orient_report_the_same_frontier_candidates(
 
 
 def test_frontier_matches_markdown_on_live_vault(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """The frontier verb agrees with the Markdown recipe on the shipped vault."""
     nodes = _ROOT / ".tangle"
@@ -562,7 +567,7 @@ def test_frontier_matches_markdown_on_live_vault(
     # machine's real database or republishing the shipped vault's views.
     env = _env(tmp_path, nodes)
     expected = _markdown_frontier_ids(nodes)
-    result = run_tangle("frontier", cwd=_ROOT, env=env)
+    result = run_tangle_inproc("frontier", cwd=_ROOT, env=env)
     assert result.returncode == 0
     if not expected:
         # A vault whose every node is resolved has no frontier, and the verb
@@ -574,7 +579,7 @@ def test_frontier_matches_markdown_on_live_vault(
     assert {row[0] for row in rows} == expected
 
 
-def test_frontier_reports_zero_nodes(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_frontier_reports_zero_nodes(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     (vault / "resolved").mkdir(parents=True)
     _write(
@@ -582,36 +587,36 @@ def test_frontier_reports_zero_nodes(tmp_path: Path, run_tangle: RunTangle) -> N
         "---\ncontext_rev: 1\nupdated: 2026-09-11T00:00:00Z\n"
         "summary: Root hub.\n---\n",
     )
-    result = run_tangle("frontier", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("frontier", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stdout.strip() == "frontier: 0 frontier nodes"
 
 
 def test_frontier_requires_an_existing_nodes_directory(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
-    result = run_tangle("frontier", env=_env(tmp_path, tmp_path / "missing"))
+    result = run_tangle_inproc("frontier", env=_env(tmp_path, tmp_path / "missing"))
     assert result.returncode == 1
     assert "nodes directory does not exist" in result.stdout
 
 
-def test_node_resolves_bare_id_and_full_name(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_node_resolves_bare_id_and_full_name(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
     env = _env(tmp_path, vault)
-    bare = run_tangle("node", "TAS-001", env=env)
-    named = run_tangle("node", "TAS-001-consumer", env=env)
+    bare = run_tangle_inproc("node", "TAS-001", env=env)
+    named = run_tangle_inproc("node", "TAS-001-consumer", env=env)
     assert bare.returncode == 0 and named.returncode == 0
     assert bare.stdout == named.stdout
 
 
 def test_node_reports_frontmatter_route_edges_and_backlinks(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """The node view ties its frontmatter, route, edge verdict, and backlinks to Markdown."""
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
-    result = run_tangle("node", "TAS-001", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("node", "TAS-001", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'node: "TAS-001"' in result.stdout
     assert 'name: "TAS-001-consumer"' in result.stdout
@@ -629,20 +634,20 @@ def test_node_reports_frontmatter_route_edges_and_backlinks(
     assert result.stdout.strip().endswith("backlinks: 0 backlinks")
 
 
-def test_node_backlinks_follow_markdown_edges(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_node_backlinks_follow_markdown_edges(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
     rows = _toon_rows(
-        run_tangle("node", "TAS-002-coordinator", env=_env(tmp_path, vault)).stdout,
+        run_tangle_inproc("node", "TAS-002-coordinator", env=_env(tmp_path, vault)).stdout,
         "backlinks",
     )
     assert ["TAS-003", "proposed", "Parent", ""] in rows
 
 
-def test_node_unknown_node_is_an_error(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_node_unknown_node_is_an_error(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_views(vault)
-    result = run_tangle("node", "TAS-999", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("node", "TAS-999", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: TAS-999"' in result.stdout
 
@@ -670,12 +675,12 @@ def _seed_impact_chain(vault: Path) -> None:
 
 
 def test_impact_chain_is_transitive_and_dependency_ordered(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A chain reports the direct consumer before the transitive one, with pins."""
     vault = tmp_path / "vault" / "nodes"
     _seed_impact_chain(vault)
-    result = run_tangle("impact", "DEF-001", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("impact", "DEF-001", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'target: "DEF-001"' in result.stdout
     assert 'target_context_rev: "3"' in result.stdout
@@ -693,7 +698,7 @@ def test_impact_chain_is_transitive_and_dependency_ordered(
         ["TAS-002", "active", "2", "Depends on", "TAS-001", "1", "1", ""],
     ]
 
-    named = run_tangle("impact", "DEF-001-contract", env=_env(tmp_path, vault))
+    named = run_tangle_inproc("impact", "DEF-001-contract", env=_env(tmp_path, vault))
     assert named.returncode == 0
     assert named.stdout == result.stdout
 
@@ -725,12 +730,12 @@ def _seed_impact_diamond(vault: Path) -> None:
     )
 
 
-def test_impact_diamond_names_every_edge_once(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_impact_diamond_names_every_edge_once(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """A diamond reports both paths to the joining dependent, each edge once."""
     vault = tmp_path / "vault" / "nodes"
     _seed_impact_diamond(vault)
     rows = _toon_rows(
-        run_tangle("impact", "DEF-001", env=_env(tmp_path, vault)).stdout, "impact"
+        run_tangle_inproc("impact", "DEF-001", env=_env(tmp_path, vault)).stdout, "impact"
     )
     assert [row[0] for row in rows] == ["TAS-001", "TAS-002", "TAS-003", "TAS-003"]
     assert [row[2] for row in rows] == ["1", "1", "2", "2"]
@@ -758,12 +763,12 @@ def _seed_impact_cycle(vault: Path) -> None:
 
 
 def test_impact_cycle_terminates_without_self_listing(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A dependency cycle terminates and never lists the target as its own dependent."""
     vault = tmp_path / "vault" / "nodes"
     _seed_impact_cycle(vault)
-    result = run_tangle("impact", "TAS-001", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("impact", "TAS-001", env=_env(tmp_path, vault))
     assert result.returncode == 0
     rows = _toon_rows(result.stdout, "impact")
     assert [row[0] for row in rows] == ["TAS-003", "TAS-002"]
@@ -772,7 +777,7 @@ def test_impact_cycle_terminates_without_self_listing(
 
 
 def test_impact_ignores_navigation_edges_and_reports_zero(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """Only canonical context edges create impact; navigation edges do not."""
     vault = tmp_path / "vault" / "nodes"
@@ -788,16 +793,16 @@ def test_impact_ignores_navigation_edges_and_reports_zero(
         "summary: Contract with only a route back.\n---\n\n# Context\n\n"
         "Area [[IDX-001-root]].\n",
     )
-    result = run_tangle("impact", "DEF-001", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("impact", "DEF-001", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'target_context_rev: "1"' in result.stdout
     assert result.stdout.strip().endswith("impact: 0 dependents")
 
 
-def test_impact_unknown_node_is_an_error(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_impact_unknown_node_is_an_error(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_impact_chain(vault)
-    result = run_tangle("impact", "TAS-999", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("impact", "TAS-999", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: TAS-999"' in result.stdout
 
@@ -863,11 +868,11 @@ def _seed_orientation(vault: Path) -> None:
     )
 
 
-def test_orient_populates_every_section(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_orient_populates_every_section(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """One call answers focus, frontier, blockers, stale, recent, and conflicts."""
     vault = tmp_path / "vault" / "nodes"
     _seed_orientation(vault)
-    result = run_tangle("orient", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("orient", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert _section_totals(result.stdout) == {
         "focus": 1,
@@ -897,15 +902,15 @@ def test_orient_populates_every_section(tmp_path: Path, run_tangle: RunTangle) -
     ]
 
 
-def test_orient_conflicts_match_check(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_orient_conflicts_match_check(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """The conflicts section is exactly the findings ``tangle check`` reports."""
     vault = tmp_path / "vault" / "nodes"
     _seed_orientation(vault)
     conflicts = _toon_rows(
-        run_tangle("orient", "--section", "conflicts", env=_env(tmp_path, vault)).stdout,
+        run_tangle_inproc("orient", "--section", "conflicts", env=_env(tmp_path, vault)).stdout,
         "conflicts",
     )
-    checked = run_tangle("check", "--format", "toon", str(vault))
+    checked = run_tangle_inproc("check", "--format", "toon", str(vault))
     assert checked.returncode == 1
     assert {row[0] for row in conflicts} == {
         "node-broken-link",
@@ -934,25 +939,25 @@ def _seed_recent_corpus(vault: Path, count: int) -> None:
 
 
 def test_orient_sections_are_selectable_and_bounded(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A selected section is bounded by the limit while its total stays unbounded."""
     vault = tmp_path / "vault" / "nodes"
     _seed_recent_corpus(vault, 12)
     env = _env(tmp_path, vault)
-    selected = run_tangle("orient", "--section", "recent", "--limit", "3", env=env)
+    selected = run_tangle_inproc("orient", "--section", "recent", "--limit", "3", env=env)
     assert selected.returncode == 0
     assert "frontier[" not in selected.stdout
     assert _section_totals(selected.stdout) == {"recent": 13}
     assert len(_toon_rows(selected.stdout, "recent")) == 3
-    default = run_tangle("orient", "--section", "recent", env=env)
+    default = run_tangle_inproc("orient", "--section", "recent", env=env)
     assert len(_toon_rows(default.stdout, "recent")) == 10
 
 
-def test_orient_keeps_canonical_section_order(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_orient_keeps_canonical_section_order(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_recent_corpus(vault, 2)
-    result = run_tangle(
+    result = run_tangle_inproc(
         "orient", "--section", "recent", "--section", "blockers", env=_env(tmp_path, vault)
     )
     assert re.findall(r'section: "([^"]+)"', result.stdout) == ["blockers", "recent"]
@@ -971,10 +976,10 @@ def _seed_single_node(vault: Path) -> None:
     )
 
 
-def test_orient_on_single_node_vault(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_orient_on_single_node_vault(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_single_node(vault)
-    result = run_tangle("orient", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("orient", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert _section_totals(result.stdout) == {
         "focus": 0,
@@ -990,11 +995,11 @@ def test_orient_on_single_node_vault(tmp_path: Path, run_tangle: RunTangle) -> N
     assert result.stdout.count("conflicts: 0 findings") == 1
 
 
-def test_orient_on_empty_vault(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_orient_on_empty_vault(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """An empty vault yields empty sections and the checker's own finding."""
     vault = tmp_path / "vault" / "nodes"
     vault.mkdir(parents=True)
-    result = run_tangle("orient", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("orient", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stdout.count("focus: 0 focus pointers") == 1
     assert result.stdout.count("frontier: 0 frontier nodes") == 1
@@ -1005,9 +1010,9 @@ def test_orient_on_empty_vault(tmp_path: Path, run_tangle: RunTangle) -> None:
 
 
 def test_orient_requires_an_existing_nodes_directory(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
-    result = run_tangle("orient", env=_env(tmp_path, tmp_path / "missing"))
+    result = run_tangle_inproc("orient", env=_env(tmp_path, tmp_path / "missing"))
     assert result.returncode == 1
     assert "nodes directory does not exist" in result.stdout
 
@@ -1051,75 +1056,83 @@ def _search_ids(output: str) -> list[str]:
 
 
 def test_search_filters_by_status_type_and_priority(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A structured filter narrows the ranked matches on its Markdown field."""
     vault = tmp_path / "vault" / "nodes"
     _seed_search_filters(vault)
     env = _env(tmp_path, vault)
-    assert _search_ids(run_tangle("search", "token", "--status", "active", env=env).stdout) == [
-        "TAS-001"
-    ]
-    assert _search_ids(run_tangle("search", "token", "--type", "THO", env=env).stdout) == [
-        "THO-010"
-    ]
-    assert _search_ids(run_tangle("search", "token", "--priority", "P2", env=env).stdout) == [
-        "TAS-002"
-    ]
+    assert _search_ids(
+        run_tangle_inproc("search", "token", "--status", "active", env=env).stdout
+    ) == ["TAS-001"]
+    assert _search_ids(
+        run_tangle_inproc("search", "token", "--type", "THO", env=env).stdout
+    ) == ["THO-010"]
+    assert _search_ids(
+        run_tangle_inproc("search", "token", "--priority", "P2", env=env).stdout
+    ) == ["TAS-002"]
 
 
-def test_search_filters_by_parent_and_dependency(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_search_filters_by_parent_and_dependency(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """Parent resolves a bare ID or full name; dependency follows context edges."""
     vault = tmp_path / "vault" / "nodes"
     _seed_search_filters(vault)
     env = _env(tmp_path, vault)
-    assert _search_ids(run_tangle("search", "token", "--parent", "IDX-001", env=env).stdout) == [
-        "TAS-001"
-    ]
     assert _search_ids(
-        run_tangle("search", "token", "--parent", "IDX-001-root", env=env).stdout
+        run_tangle_inproc("search", "token", "--parent", "IDX-001", env=env).stdout
     ) == ["TAS-001"]
     assert _search_ids(
-        run_tangle("search", "token", "--parent", "TAS-001", env=env).stdout
+        run_tangle_inproc("search", "token", "--parent", "IDX-001-root", env=env).stdout
+    ) == ["TAS-001"]
+    assert _search_ids(
+        run_tangle_inproc("search", "token", "--parent", "TAS-001", env=env).stdout
     ) == ["TAS-002"]
     assert _search_ids(
-        run_tangle("search", "token", "--dependency", "DEF-001", env=env).stdout
+        run_tangle_inproc("search", "token", "--dependency", "DEF-001", env=env).stdout
     ) == ["TAS-001"]
 
 
-def test_search_combines_filters_and_reports_zero(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_search_combines_filters_and_reports_zero(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """Filters AND together, and an unmatched filter states zero explicitly."""
     vault = tmp_path / "vault" / "nodes"
     _seed_search_filters(vault)
     env = _env(tmp_path, vault)
-    combined = run_tangle("search", "token", "--status", "active", "--parent", "IDX-001", env=env)
+    combined = run_tangle_inproc(
+        "search", "token", "--status", "active", "--parent", "IDX-001", env=env
+    )
     assert _search_ids(combined.stdout) == ["TAS-001"]
-    unfiltered = run_tangle("search", "token", env=env)
+    unfiltered = run_tangle_inproc("search", "token", env=env)
     assert set(_search_ids(unfiltered.stdout)) == {
         "DEF-001",
         "TAS-001",
         "TAS-002",
         "THO-010",
     }
-    zero = run_tangle("search", "token", "--status", "resolved", "--type", "TAS", env=env)
+    zero = run_tangle_inproc("search", "token", "--status", "resolved", "--type", "TAS", env=env)
     assert zero.returncode == 0
     assert zero.stdout.strip() == "nodes: 0 matching nodes"
 
 
-def test_search_rejects_invalid_filters(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_search_rejects_invalid_filters(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_search_filters(vault)
     env = _env(tmp_path, vault)
-    bad_status = run_tangle("search", "token", "--status", "bogus", env=env)
+    bad_status = run_tangle_inproc("search", "token", "--status", "bogus", env=env)
     assert bad_status.returncode == 2
     assert 'error: "--status must be one of' in bad_status.stdout
-    bad_priority = run_tangle("search", "token", "--priority", "P9", env=env)
+    bad_priority = run_tangle_inproc("search", "token", "--priority", "P9", env=env)
     assert bad_priority.returncode == 2
     assert 'error: "--priority must be one of' in bad_priority.stdout
-    duplicate = run_tangle("search", "token", "--status", "active", "--status", "active", env=env)
+    duplicate = run_tangle_inproc(
+        "search", "token", "--status", "active", "--status", "active", env=env
+    )
     assert duplicate.returncode == 2
     assert 'error: "duplicate --status"' in duplicate.stdout
-    missing_value = run_tangle("search", "token", "--parent", env=env)
+    missing_value = run_tangle_inproc("search", "token", "--parent", env=env)
     assert missing_value.returncode == 2
     assert 'error: "--parent requires a value"' in missing_value.stdout
 
@@ -1148,11 +1161,13 @@ def _seed_similar(vault: Path) -> None:
     )
 
 
-def test_similar_ranks_the_near_duplicate_pair(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_similar_ranks_the_near_duplicate_pair(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """The nearest existing nodes to a draft summary are its near-duplicates."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
-    result = run_tangle(
+    result = run_tangle_inproc(
         "similar", "Reject expired authentication grants", env=_env(tmp_path, vault)
     )
     assert result.returncode == 0
@@ -1164,48 +1179,48 @@ def test_similar_ranks_the_near_duplicate_pair(tmp_path: Path, run_tangle: RunTa
     assert {row[1] for row in rows} == {"resolved", "proposed"}
 
 
-def test_similar_is_bounded_and_reports_zero(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_similar_is_bounded_and_reports_zero(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     env = _env(tmp_path, vault)
-    bounded = run_tangle(
+    bounded = run_tangle_inproc(
         "similar", "Reject expired authentication grants", "--limit", "1", env=env
     )
     rows = _toon_rows(bounded.stdout, "similar")
     assert len(rows) == 1
     assert rows[0][0] == "TAS-001"
-    zero = run_tangle("similar", "unrelated zebra migration", env=env)
+    zero = run_tangle_inproc("similar", "unrelated zebra migration", env=env)
     assert zero.returncode == 0
     assert zero.stdout.strip() == "similar: 0 matching nodes"
 
 
 def test_similar_reads_the_candidate_text_from_a_file(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     draft = tmp_path / "draft.md"
     _write(draft, "Reject expired authentication grants")
     env = _env(tmp_path, vault)
-    inline = run_tangle("similar", "Reject expired authentication grants", env=env)
-    from_file = run_tangle("similar", "--file", str(draft), env=env)
+    inline = run_tangle_inproc("similar", "Reject expired authentication grants", env=env)
+    from_file = run_tangle_inproc("similar", "--file", str(draft), env=env)
     assert from_file.returncode == 0
     assert from_file.stdout == inline.stdout
 
 
 def test_similar_rejects_conflicting_or_missing_input(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     env = _env(tmp_path, vault)
-    missing = run_tangle("similar", env=env)
+    missing = run_tangle_inproc("similar", env=env)
     assert missing.returncode == 2
     assert 'error: "similar requires TEXT or --file PATH"' in missing.stdout
-    both = run_tangle("similar", "text", "--file", "path", env=env)
+    both = run_tangle_inproc("similar", "text", "--file", "path", env=env)
     assert both.returncode == 2
     assert 'error: "similar accepts TEXT or --file PATH, not both"' in both.stdout
-    unreadable = run_tangle("similar", "--file", str(tmp_path / "absent.md"), env=env)
+    unreadable = run_tangle_inproc("similar", "--file", str(tmp_path / "absent.md"), env=env)
     assert unreadable.returncode == 1
     assert 'error: "cannot read file:' in unreadable.stdout
 
@@ -1247,12 +1262,12 @@ def _seed_ranking(vault: Path) -> None:
 
 
 def test_next_rank_orders_by_priority_blocking_and_recency(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """Priority leads, then blocking power, then recency, then the id."""
     vault = tmp_path / "vault" / "nodes"
     _seed_ranking(vault)
-    result = run_tangle("next", "--rank", "--limit", "6", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("next", "--rank", "--limit", "6", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'ranking: "priority P0-P3 asc; transitive blocking desc; updated desc; id asc"' in (
         result.stdout
@@ -1274,21 +1289,21 @@ def test_next_rank_orders_by_priority_blocking_and_recency(
 
 
 def test_next_rank_defaults_to_rank_mode_and_a_bounded_shortlist(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """Bare ``next`` ranks like ``--rank`` and truncates while keeping the total."""
     vault = tmp_path / "vault" / "nodes"
     _seed_ranking(vault)
     env = _env(tmp_path, vault)
-    ranked = run_tangle("next", "--rank", env=env)
-    default = run_tangle("next", env=env)
+    ranked = run_tangle_inproc("next", "--rank", env=env)
+    default = run_tangle_inproc("next", env=env)
     assert default.returncode == 0
     assert default.stdout == ranked.stdout
     assert 'total: "6"' in default.stdout
     assert len(_toon_rows(default.stdout, "next")) == 5
 
 
-def test_next_rank_reports_zero(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_next_rank_reports_zero(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "vault" / "nodes"
     (vault / "resolved").mkdir(parents=True)
     _write(
@@ -1296,7 +1311,7 @@ def test_next_rank_reports_zero(tmp_path: Path, run_tangle: RunTangle) -> None:
         "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
         "summary: Root hub.\n---\n",
     )
-    result = run_tangle("next", "--rank", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("next", "--rank", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'total: "0"' in result.stdout
     assert result.stdout.strip().endswith("next: 0 ranked candidates")
@@ -1331,12 +1346,12 @@ def _seed_workstreams(vault: Path) -> None:
 
 
 def test_frontier_group_splits_shared_routes_into_workstreams(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """One group per shared parent or area, members in ranked order."""
     vault = tmp_path / "vault" / "nodes"
     _seed_workstreams(vault)
-    result = run_tangle("frontier", "--group", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("frontier", "--group", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'advisory: "groups are advisory and are not work claims"' in result.stdout
     assert 'groups: "2"' in result.stdout
@@ -1378,12 +1393,12 @@ def _seed_dependency_merge(vault: Path) -> None:
 
 
 def test_frontier_group_merges_dependency_connected_candidates(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A dependency edge joins two otherwise separate routes into one group."""
     vault = tmp_path / "vault" / "nodes"
     _seed_dependency_merge(vault)
-    result = run_tangle("frontier", "--group", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("frontier", "--group", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'groups: "1"' in result.stdout
     rows = _toon_rows(result.stdout, "frontier_groups")
@@ -1392,12 +1407,12 @@ def test_frontier_group_merges_dependency_connected_candidates(
 
 
 def test_frontier_group_bounds_rows_and_reports_zero(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """The group rows are bounded, and an empty frontier reports zero groups."""
     vault = tmp_path / "vault" / "nodes"
     _seed_workstreams(vault)
-    bounded = run_tangle("frontier", "--group", "--limit", "1", env=_env(tmp_path, vault))
+    bounded = run_tangle_inproc("frontier", "--group", "--limit", "1", env=_env(tmp_path, vault))
     assert bounded.returncode == 0
     assert 'groups: "2"' in bounded.stdout
     assert len(_toon_rows(bounded.stdout, "frontier_groups")) == 1
@@ -1409,7 +1424,7 @@ def test_frontier_group_bounds_rows_and_reports_zero(
         "---\ncontext_rev: 1\nupdated: 2026-09-01T00:00:00Z\n"
         "summary: Root hub.\n---\n",
     )
-    zero = run_tangle("frontier", "--group", env=_env(tmp_path, empty))
+    zero = run_tangle_inproc("frontier", "--group", env=_env(tmp_path, empty))
     assert zero.returncode == 0
     assert 'groups: "0"' in zero.stdout
     assert zero.stdout.strip().endswith("frontier_groups: 0 groups")

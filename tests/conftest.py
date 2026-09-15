@@ -86,3 +86,47 @@ def run_tangle() -> Callable[..., subprocess.CompletedProcess[str]]:
         return result
 
     return run
+
+
+@pytest.fixture
+def run_tangle_inproc(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> Callable[..., subprocess.CompletedProcess[str]]:
+    """Run the Python ``tangle`` in-process through ``main.main`` and capture it.
+
+    This exercises the same entry point and dispatch as a spawned
+    ``python -m tangle`` -- ``__main__`` is a one-line ``main.main`` -- without
+    paying a process spawn per assertion. Each call applies its ``env``
+    overrides with ``monkeypatch`` (a ``None`` value removes the variable) and
+    moves the process to ``cwd`` for the rest of the test. The autouse
+    ``hermetic_sidecar`` pin still keeps derived state in ``tmp_path``. The real
+    process boundary stays covered by ``tests/test_launchers.py`` and the
+    intentional concurrency tests.
+
+    The return value is a real :class:`subprocess.CompletedProcess` carrying the
+    in-process ``returncode``, ``stdout``, and ``stderr``, so a converted test
+    asserts exactly what the spawned process reported.
+    """
+
+    def run(
+        *args: str,
+        cwd: str | Path | None = None,
+        env: dict[str, str | None] | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        from tangle import main
+
+        for key, value in (env or {}).items():
+            if value is None:
+                monkeypatch.delenv(key, raising=False)
+            else:
+                monkeypatch.setenv(key, value)
+        if cwd is not None:
+            monkeypatch.chdir(cwd)
+        returncode = main.main(list(args))
+        captured = capsys.readouterr()
+        return subprocess.CompletedProcess(
+            list(args), returncode, captured.out, captured.err
+        )
+
+    return run

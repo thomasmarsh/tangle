@@ -6,14 +6,18 @@ base-hash conflicts, release idempotence, expiry, and argument validation.
 
 from __future__ import annotations
 
+import io
 import os
 import re
 import sqlite3
 import subprocess
 from collections.abc import Callable
+from contextlib import redirect_stdout
 from pathlib import Path
 
-from tangle import __version__
+import pytest
+
+from tangle import __version__, main
 
 RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
@@ -75,7 +79,23 @@ def _remaining(stdout: str) -> int:
     return int(match.group(1))
 
 
+@pytest.fixture(scope="module")
+def global_help() -> str:
+    """The global command index, rendered once in-process for the whole module.
+
+    The global help is environment-independent and vault-free, so one render
+    serves every assertion that the index lists a verb. The spawned ``--help``
+    path stays covered by the real entry-point tests.
+    """
+    buffer = io.StringIO()
+    with redirect_stdout(buffer):
+        code = main.main(["--help"])
+    assert code == 0
+    return buffer.getvalue()
+
+
 def test_version_status_and_init(tmp_path: Path, run_tangle: RunTangle) -> None:
+    """The file's real-process entry-point smoke: version, status, and init."""
     env = _env(tmp_path)
     version = run_tangle("--version", env=env)
     assert version.stdout.strip() == __version__
@@ -93,51 +113,51 @@ def test_version_status_and_init(tmp_path: Path, run_tangle: RunTangle) -> None:
     assert mode is not None and mode[0] == "wal"
 
 
-def test_allocate_is_atomic_and_per_prefix(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_allocate_is_atomic_and_per_prefix(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     env = _env(tmp_path)
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-001"'
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-002"'
-    assert run_tangle("allocate", "DEF", env=env).stdout.strip() == 'id: "DEF-001"'
+    assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-001"'
+    assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-002"'
+    assert run_tangle_inproc("allocate", "DEF", env=env).stdout.strip() == 'id: "DEF-001"'
 
 
 def test_reservations_takes_no_arguments_and_reports_none_when_uninitialized(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
-    empty = run_tangle("reservations", env=env)
+    empty = run_tangle_inproc("reservations", env=env)
     assert empty.returncode == 0
     assert empty.stdout.strip() == "reservations: 0 prefixes"
 
-    unknown = run_tangle("reservations", "extra", env=env)
+    unknown = run_tangle_inproc("reservations", "extra", env=env)
     assert unknown.returncode == 2
     assert 'error: "reservations takes no arguments: extra"' in unknown.stdout
 
 
 def test_reservations_lists_burned_ids_apart_from_missing_nodes(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
     vault = tmp_path / "vault" / "nodes"
-    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
     # Three allocations the caller discards and never writes as nodes: the
     # counter still advances past them, so they are burned, not missing.
     for expected in ("TAS-001", "TAS-002", "TAS-003"):
-        assert run_tangle("allocate", "TAS", env=env).stdout.strip() == f'id: "{expected}"'
+        assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == f'id: "{expected}"'
     # The fourth allocation is written, so only 001-003 stay burned.
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-004"'
+    assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-004"'
     (vault / "active").mkdir(parents=True)
     (vault / "active" / "TAS-004-written.md").write_text(_FRONTMATTER, encoding="utf-8")
 
-    listed = run_tangle("reservations", env=env)
+    listed = run_tangle_inproc("reservations", env=env)
     assert listed.returncode == 0
     assert "prefix,next,burned" in listed.stdout
     # TAS-001 through TAS-003 are burned; TAS-004 is a node; the next id is 005.
     assert '"TAS","5","1-3"' in listed.stdout
 
 
-def test_claim_renew_conflict_and_release(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_claim_renew_conflict_and_release(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     env = _env(tmp_path)
-    first = run_tangle(
+    first = run_tangle_inproc(
         "claim",
         "TAS-001",
         "agent-a",
@@ -148,7 +168,7 @@ def test_claim_renew_conflict_and_release(tmp_path: Path, run_tangle: RunTangle)
         env=env,
     )
     assert 'result: "claimed"' in first.stdout
-    renewed = run_tangle(
+    renewed = run_tangle_inproc(
         "claim",
         "TAS-001",
         "agent-a",
@@ -160,35 +180,47 @@ def test_claim_renew_conflict_and_release(tmp_path: Path, run_tangle: RunTangle)
     )
     assert 'result: "claimed"' in renewed.stdout
 
-    other_agent = run_tangle("claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env)
+    other_agent = run_tangle_inproc(
+        "claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert other_agent.returncode == 1
     assert (
         'error: "node is claimed by agent-a with a different base hash"' in other_agent.stdout
     )
-    other_hash = run_tangle("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_B, env=env)
+    other_hash = run_tangle_inproc(
+        "claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_B, env=env
+    )
     assert other_hash.returncode == 1
     assert 'error: "node is claimed by agent-a with a different base hash"' in other_hash.stdout
 
-    wrong_hash = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_B, env=env)
+    wrong_hash = run_tangle_inproc(
+        "release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_B, env=env
+    )
     assert wrong_hash.returncode == 1
     assert (
         'error: "base hash does not match the recorded claim for TAS-001; release refused"'
         in wrong_hash.stdout
     )
-    wrong_owner = run_tangle("release", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env)
+    wrong_owner = run_tangle_inproc(
+        "release", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert wrong_owner.returncode == 1
     assert 'error: "node is claimed by agent-a; release refused"' in wrong_owner.stdout
-    still_held = run_tangle("claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env)
+    still_held = run_tangle_inproc(
+        "claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert still_held.returncode == 1
 
-    released = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    released = run_tangle_inproc(
+        "release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert 'result: "released"' in released.stdout
-    again = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    again = run_tangle_inproc("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert 'result: "no-op"' in again.stdout
 
 
 def test_claim_and_release_reject_a_non_digest_base_hash(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
     labelled_block = f'node: "TAS-001"\ncontent_hash: "{_BASE_HASH_A}"'
@@ -198,12 +230,14 @@ def test_claim_and_release_reject_a_non_digest_base_hash(
         "an uppercase digest": _BASE_HASH_A.upper(),
     }
     for label, operand in malformed.items():
-        claim = run_tangle("claim", "TAS-001", "agent-a", "--base-hash", operand, env=env)
+        claim = run_tangle_inproc("claim", "TAS-001", "agent-a", "--base-hash", operand, env=env)
         assert claim.returncode == 2, label
         assert (
             "--base-hash must be a bare 64-character lowercase hex digest" in claim.stdout
         ), label
-        release = run_tangle("release", "TAS-001", "agent-a", "--base-hash", operand, env=env)
+        release = run_tangle_inproc(
+            "release", "TAS-001", "agent-a", "--base-hash", operand, env=env
+        )
         assert release.returncode == 2, label
         assert (
             "--base-hash must be a bare 64-character lowercase hex digest" in release.stdout
@@ -213,19 +247,23 @@ def test_claim_and_release_reject_a_non_digest_base_hash(
     assert not _database(tmp_path).is_file()
 
 
-def test_claim_and_release_accept_a_bare_digest(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_claim_and_release_accept_a_bare_digest(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     env = _env(tmp_path)
-    claimed = run_tangle("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    claimed = run_tangle_inproc("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert claimed.returncode == 0
     assert f'base_hash: "{_BASE_HASH_A}"' in claimed.stdout
-    released = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    released = run_tangle_inproc(
+        "release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert released.returncode == 0
     assert 'result: "released"' in released.stdout
 
 
-def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     env = _env(tmp_path)
-    run_tangle(
+    run_tangle_inproc(
         "claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_B, "--lease-seconds", "1", env=env
     )
     database = _database(tmp_path)
@@ -235,7 +273,7 @@ def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_tangle: RunTangle) -
         connection.commit()
     finally:
         connection.close()
-    reclaimed = run_tangle(
+    reclaimed = run_tangle_inproc(
         "claim",
         "TAS-001",
         "agent-a",
@@ -248,18 +286,20 @@ def test_expired_lease_can_be_reclaimed(tmp_path: Path, run_tangle: RunTangle) -
     assert 'result: "claimed"' in reclaimed.stdout
 
 
-def test_claim_states_the_default_lease_duration(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_claim_states_the_default_lease_duration(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     env = _env(tmp_path)
-    claimed = run_tangle("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    claimed = run_tangle_inproc("claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
     assert 'result: "claimed"' in claimed.stdout
     assert _remaining(claimed.stdout) == 900
 
 
 def test_reclaim_with_the_same_agent_and_hash_renews_the_lease(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
-    first = run_tangle(
+    first = run_tangle_inproc(
         "claim",
         "TAS-001",
         "agent-a",
@@ -270,7 +310,7 @@ def test_reclaim_with_the_same_agent_and_hash_renews_the_lease(
         env=env,
     )
     assert _remaining(first.stdout) == 60
-    renewed = run_tangle(
+    renewed = run_tangle_inproc(
         "claim",
         "TAS-001",
         "agent-a",
@@ -282,19 +322,25 @@ def test_reclaim_with_the_same_agent_and_hash_renews_the_lease(
     )
     assert 'result: "claimed"' in renewed.stdout
     assert _remaining(renewed.stdout) == 300
-    released = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    released = run_tangle_inproc(
+        "release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert 'result: "released"' in released.stdout
     assert 1 <= _remaining(released.stdout) <= 300
 
 
-def test_release_separates_expired_from_never_held(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_release_separates_expired_from_never_held(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     env = _env(tmp_path)
-    never_held = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    never_held = run_tangle_inproc(
+        "release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert never_held.returncode == 0
     assert 'result: "no-op"' in never_held.stdout
     assert _remaining(never_held.stdout) == 0
 
-    run_tangle(
+    run_tangle_inproc(
         "claim", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, "--lease-seconds", "1", env=env
     )
     database = _database(tmp_path)
@@ -305,39 +351,47 @@ def test_release_separates_expired_from_never_held(tmp_path: Path, run_tangle: R
     finally:
         connection.close()
 
-    lapsed = run_tangle("release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env)
+    lapsed = run_tangle_inproc(
+        "release", "TAS-001", "agent-a", "--base-hash", _BASE_HASH_A, env=env
+    )
     assert lapsed.returncode == 0
     assert 'result: "expired"' in lapsed.stdout
     assert _remaining(lapsed.stdout) == 0
 
     # The lapsed claim is cleared, so the node is free for the next writer.
-    reclaimed = run_tangle("claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_B, env=env)
+    reclaimed = run_tangle_inproc(
+        "claim", "TAS-001", "agent-b", "--base-hash", _BASE_HASH_B, env=env
+    )
     assert 'result: "claimed"' in reclaimed.stdout
 
 
-def test_unknown_claim_argument_is_a_usage_error(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_unknown_claim_argument_is_a_usage_error(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     env = _env(tmp_path)
-    result = run_tangle("claim", "TAS-002", "agent-a", "--bogus", "x", env=env)
+    result = run_tangle_inproc("claim", "TAS-002", "agent-a", "--bogus", "x", env=env)
     assert result.returncode == 2
     assert 'error: "unknown argument for claim: --bogus"' in result.stdout
 
 
-def test_init_seeds_reservations_from_markdown(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_init_seeds_reservations_from_markdown(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_allocations(vault)
     env = _env(tmp_path)
     env["TANGLE_NODES_DIR"] = str(vault)
 
-    assert run_tangle("init", env=env).returncode == 0
-    status = run_tangle("status", env=env)
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    status = run_tangle_inproc("status", env=env)
     assert '"TAS","8"' in status.stdout
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-008"'
-    assert run_tangle("allocate", "IDX", env=env).stdout.strip() == 'id: "IDX-002"'
-    assert run_tangle("allocate", "THO", env=env).stdout.strip() == 'id: "THO-004"'
+    assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-008"'
+    assert run_tangle_inproc("allocate", "IDX", env=env).stdout.strip() == 'id: "IDX-002"'
+    assert run_tangle_inproc("allocate", "THO", env=env).stdout.strip() == 'id: "THO-004"'
 
 
 def test_allocate_skips_on_disk_identity_with_empty_sidecar(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     _seed_allocations(vault)
@@ -346,16 +400,16 @@ def test_allocate_skips_on_disk_identity_with_empty_sidecar(
 
     # No init or reindex: the counter is empty, but allocation must still not
     # return an identity that already exists on disk.
-    result = run_tangle("allocate", "TAS", env=env)
+    result = run_tangle_inproc("allocate", "TAS", env=env)
     assert result.returncode == 0
     assert result.stdout.strip() == 'id: "TAS-008"'
 
 
 def test_allocate_reserves_a_count_of_consecutive_ids(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
-    batch = run_tangle("allocate", "TAS", "3", env=env)
+    batch = run_tangle_inproc("allocate", "TAS", "3", env=env)
     assert batch.returncode == 0
     # One call reserves the whole batch in a stable, parseable table.
     assert batch.stdout.strip().splitlines() == [
@@ -365,23 +419,23 @@ def test_allocate_reserves_a_count_of_consecutive_ids(
         '  "TAS-003"',
     ]
     # The counter advanced past the batch, so the next call continues it.
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-004"'
+    assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-004"'
 
 
 def test_allocate_count_of_one_keeps_the_single_id_output(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
-    default = run_tangle("allocate", "TAS", env=env)
+    default = run_tangle_inproc("allocate", "TAS", env=env)
     assert default.returncode == 0
     assert default.stdout.strip() == 'id: "TAS-001"'
-    explicit = run_tangle("allocate", "TAS", "1", env=env)
+    explicit = run_tangle_inproc("allocate", "TAS", "1", env=env)
     assert explicit.returncode == 0
     assert explicit.stdout.strip() == 'id: "TAS-002"'
 
 
 def test_allocate_count_skips_on_disk_identities_and_stays_consecutive(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     vault = tmp_path / "vault" / "nodes"
     (vault / "active").mkdir(parents=True)
@@ -389,7 +443,7 @@ def test_allocate_count_skips_on_disk_identities_and_stays_consecutive(
     env = _env(tmp_path)
     env["TANGLE_NODES_DIR"] = str(vault)
 
-    batch = run_tangle("allocate", "TAS", "2", env=env)
+    batch = run_tangle_inproc("allocate", "TAS", "2", env=env)
     assert batch.returncode == 0
     # TAS-002 is on disk, so the batch skips it and still returns two ids.
     assert batch.stdout.strip().splitlines() == [
@@ -400,19 +454,19 @@ def test_allocate_count_skips_on_disk_identities_and_stays_consecutive(
 
 
 def test_allocate_batch_burns_the_reserved_ids_it_never_wrote(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("allocate", "TAS", "3", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("allocate", "TAS", "3", env=env).returncode == 0
 
-    listed = run_tangle("reservations", env=env)
+    listed = run_tangle_inproc("reservations", env=env)
     assert listed.returncode == 0
     assert '"TAS","4","1-3"' in listed.stdout
 
 
 def test_allocate_rejects_a_bad_count_or_extra_operand_without_reserving(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     env = _env(tmp_path)
     for arguments, expected in (
@@ -424,119 +478,115 @@ def test_allocate_rejects_a_bad_count_or_extra_operand_without_reserving(
             'error: "allocate accepts at most PREFIX and COUNT"',
         ),
     ):
-        rejected = run_tangle("allocate", *arguments, env=env)
+        rejected = run_tangle_inproc("allocate", *arguments, env=env)
         assert rejected.returncode == 2, arguments
         assert expected in rejected.stdout, arguments
     # Every rejection happened before any sidecar write, so the first id is
     # still free.
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-001"'
+    assert run_tangle_inproc("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-001"'
 
 
 def test_allocate_help_and_command_index_name_the_count_operand(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
 ) -> None:
     env = _env(tmp_path)
-    verb = run_tangle("allocate", "--help", env=env)
+    verb = run_tangle_inproc("allocate", "--help", env=env)
     assert verb.returncode == 0
     assert 'usage: "tangle allocate PREFIX [COUNT]"' in verb.stdout
     assert '"COUNT"' in verb.stdout
     assert '"positive number of consecutive ids; default 1, no upper bound"' in verb.stdout
 
-    index = run_tangle("--help", env=env)
-    assert index.returncode == 0
-    assert '"allocate PREFIX [COUNT]"' in index.stdout
+    assert '"allocate PREFIX [COUNT]"' in global_help
 
 
-def test_frontier_and_node_verbs_are_dispatched(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_frontier_and_node_verbs_are_dispatched(
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
+) -> None:
     env = _env(tmp_path)
-    help_output = run_tangle("--help", env=env)
-    assert help_output.returncode == 0
-    assert "frontier" in help_output.stdout
-    assert "node NODE" in help_output.stdout
+    assert "frontier" in global_help
+    assert "node NODE" in global_help
 
-    missing = run_tangle("node", env=env)
+    missing = run_tangle_inproc("node", env=env)
     assert missing.returncode == 2
     assert 'error: "node requires NODE"' in missing.stdout
 
-    extra = run_tangle("frontier", "extra", env=env)
+    extra = run_tangle_inproc("frontier", "extra", env=env)
     assert extra.returncode == 2
     assert 'error: "frontier accepts no arguments"' in extra.stdout
 
 
-def test_impact_verb_is_dispatched(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_impact_verb_is_dispatched(
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
+) -> None:
     env = _env(tmp_path)
-    help_output = run_tangle("--help", env=env)
-    assert help_output.returncode == 0
-    assert "impact NODE" in help_output.stdout
+    assert "impact NODE" in global_help
 
-    missing = run_tangle("impact", env=env)
+    missing = run_tangle_inproc("impact", env=env)
     assert missing.returncode == 2
     assert 'error: "impact requires NODE"' in missing.stdout
 
 
-def test_orient_verb_is_dispatched(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_orient_verb_is_dispatched(
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
+) -> None:
     env = _env(tmp_path)
-    help_output = run_tangle("--help", env=env)
-    assert help_output.returncode == 0
-    assert "orient [--section NAME]" in help_output.stdout
+    assert "orient [--section NAME]" in global_help
 
-    unknown = run_tangle("orient", "--section", "nope", env=env)
+    unknown = run_tangle_inproc("orient", "--section", "nope", env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown section: nope' in unknown.stdout
 
-    bad_limit = run_tangle("orient", "--limit", "0", env=env)
+    bad_limit = run_tangle_inproc("orient", "--limit", "0", env=env)
     assert bad_limit.returncode == 2
     assert 'error: "--limit must be a positive integer"' in bad_limit.stdout
 
-    missing_value = run_tangle("orient", "--section", env=env)
+    missing_value = run_tangle_inproc("orient", "--section", env=env)
     assert missing_value.returncode == 2
     assert 'error: "--section requires a section name"' in missing_value.stdout
 
 
-def test_search_filters_and_similar_are_dispatched(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_search_filters_and_similar_are_dispatched(
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
+) -> None:
     env = _env(tmp_path)
-    help_output = run_tangle("--help", env=env)
-    assert help_output.returncode == 0
-    assert "similar TEXT" in help_output.stdout
-    assert "--status" in help_output.stdout
-    missing = run_tangle("similar", env=env)
+    assert "similar TEXT" in global_help
+    assert "--status" in global_help
+    missing = run_tangle_inproc("similar", env=env)
     assert missing.returncode == 2
     assert 'error: "similar requires TEXT or --file PATH"' in missing.stdout
 
-    unknown = run_tangle("search", "q", "--bogus", env=env)
+    unknown = run_tangle_inproc("search", "q", "--bogus", env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown argument for search: --bogus"' in unknown.stdout
 
 
 def test_next_and_frontier_group_verbs_are_dispatched(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
 ) -> None:
     env = _env(tmp_path)
-    help_output = run_tangle("--help", env=env)
-    assert help_output.returncode == 0
-    assert "next [--rank]" in help_output.stdout
-    assert "frontier [--group]" in help_output.stdout
+    assert "next [--rank]" in global_help
+    assert "frontier [--group]" in global_help
 
-    unknown = run_tangle("next", "--bogus", env=env)
+    unknown = run_tangle_inproc("next", "--bogus", env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown argument for next: --bogus"' in unknown.stdout
 
-    bad_limit = run_tangle("next", "--rank", "--limit", "0", env=env)
+    bad_limit = run_tangle_inproc("next", "--rank", "--limit", "0", env=env)
     assert bad_limit.returncode == 2
     assert 'error: "--limit must be a positive integer"' in bad_limit.stdout
 
-    limit_without_group = run_tangle("frontier", "--limit", "2", env=env)
+    limit_without_group = run_tangle_inproc("frontier", "--limit", "2", env=env)
     assert limit_without_group.returncode == 2
     assert 'error: "frontier --limit requires --group"' in limit_without_group.stdout
 
 
-def test_reconcile_verb_is_dispatched(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_reconcile_verb_is_dispatched(
+    tmp_path: Path, run_tangle_inproc: RunTangle, global_help: str
+) -> None:
     env = _env(tmp_path)
-    help_output = run_tangle("--help", env=env)
-    assert help_output.returncode == 0
-    assert "reconcile [--base REF] [--head REF ...] [NODES]" in help_output.stdout
+    assert "reconcile [--base REF] [--head REF ...] [NODES]" in global_help
 
-    unknown = run_tangle("reconcile", "--bogus", env=env)
+    unknown = run_tangle_inproc("reconcile", "--bogus", env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown argument for reconcile: --bogus"' in unknown.stdout
 
@@ -549,16 +599,16 @@ _RECORD_BODY = "# Outcome\n\nReserve the id atomically."
 
 
 def test_allocate_batch_and_node_record_share_one_counter(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """The batch allocator and the capture path number one vault identically."""
     repo = tmp_path / "repo"
     _write_vault(repo / ".tangle")
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     env = _record_env(tmp_path, "allocate-record-shared")
-    assert run_tangle("init", cwd=repo, env=env).returncode == 0
+    assert run_tangle_inproc("init", cwd=repo, env=env).returncode == 0
 
-    batch = run_tangle("allocate", "TAS", "2", cwd=repo, env=env)
+    batch = run_tangle_inproc("allocate", "TAS", "2", cwd=repo, env=env)
     assert batch.returncode == 0, batch.stdout
     assert batch.stdout.strip().splitlines() == [
         "ids[2]{id}:",
@@ -566,7 +616,7 @@ def test_allocate_batch_and_node_record_share_one_counter(
         '  "TAS-002"',
     ]
 
-    recorded = run_tangle(
+    recorded = run_tangle_inproc(
         "node",
         "record",
         "--type",
@@ -585,15 +635,15 @@ def test_allocate_batch_and_node_record_share_one_counter(
 
 
 def test_record_reserves_through_the_project_sidecar(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     repo = tmp_path / "repo"
     nodes = _write_vault(repo / ".tangle")
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     env = _record_env(tmp_path, "record-sidecar")
-    assert run_tangle("init", cwd=repo, env=env).returncode == 0
+    assert run_tangle_inproc("init", cwd=repo, env=env).returncode == 0
 
-    recorded = run_tangle(
+    recorded = run_tangle_inproc(
         "node",
         "record",
         "--type",
@@ -618,22 +668,22 @@ def test_record_reserves_through_the_project_sidecar(
     assert written.is_file()
     # Cryptographic node identity neither advances nor needs numeric reservations.
     assert not (nodes / "reservations").exists()
-    assert '"TAS"' not in run_tangle("status", cwd=repo, env=env).stdout
+    assert '"TAS"' not in run_tangle_inproc("status", cwd=repo, env=env).stdout
 
 
 def test_record_falls_back_for_a_vault_outside_the_project(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     repo = tmp_path / "repo"
     _write_vault(repo / ".tangle")
     external = _write_vault(tmp_path / "external" / ".tangle")
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
     env = _record_env(tmp_path, "record-external")
-    assert run_tangle("init", cwd=repo, env=env).returncode == 0
+    assert run_tangle_inproc("init", cwd=repo, env=env).returncode == 0
     # The project sidecar counter is ahead; it must not number another vault.
-    assert run_tangle("allocate", "TAS", cwd=repo, env=env).stdout.strip() == 'id: "TAS-001"'
+    assert run_tangle_inproc("allocate", "TAS", cwd=repo, env=env).stdout.strip() == 'id: "TAS-001"'
 
-    recorded = run_tangle(
+    recorded = run_tangle_inproc(
         "node",
         "record",
         "--type",

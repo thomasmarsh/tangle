@@ -185,22 +185,22 @@ def test_clusters_absent_path_is_one_advisory_line(
 
 
 def test_clusters_present_path_is_bounded_and_advisory(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A malformed provider still degrades to the advisory capability-absent line."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
     env = _env(tmp_path, vault)
     env["TANGLE_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
-    result = run_tangle("clusters", env=env)
+    result = run_tangle_inproc("clusters", env=env)
     assert result.returncode == 0
     assert 'clusters: "capability absent"' in result.stdout
 
 
-def test_clusters_rejects_an_unknown_argument(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_clusters_rejects_an_unknown_argument(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_tangle("clusters", "--bogus", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("clusters", "--bogus", env=_env(tmp_path, vault))
     assert result.returncode == 2
     assert 'error: "unknown argument for clusters: --bogus"' in result.stdout
 
@@ -276,11 +276,13 @@ def test_clusters_present_path_answers_with_bounded_toon(
     assert 'outliers_total: "1"' in stdout
 
 
-def test_digest_lists_unresolved_members_by_priority(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_digest_lists_unresolved_members_by_priority(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """The digest is bounded, ordered, and excludes resolved members."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_tangle("digest", "IDX-001-engine", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("digest", "IDX-001-engine", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stderr == ""
     assert 'target: "IDX-001"' in result.stdout
@@ -295,16 +297,20 @@ def test_digest_lists_unresolved_members_by_priority(tmp_path: Path, run_tangle:
     ]
     assert "TAS-005" not in result.stdout
 
-    bounded = run_tangle("digest", "IDX-001-engine", "--limit", "2", env=_env(tmp_path, vault))
+    bounded = run_tangle_inproc(
+        "digest", "IDX-001-engine", "--limit", "2", env=_env(tmp_path, vault)
+    )
     assert 'total: "4"' in bounded.stdout
     rows = [line for line in bounded.stdout.splitlines() if line.startswith("  ")]
     assert len(rows) == 2
 
 
-def test_digest_unknown_node_is_an_error(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_digest_unknown_node_is_an_error(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_tangle("digest", "IDX-999", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("digest", "IDX-999", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: IDX-999"' in result.stdout
 
@@ -379,15 +385,15 @@ def test_answer_refuses_a_non_positive_limit(tmp_path: Path) -> None:
 
 
 def test_similar_absent_path_is_byte_identical_to_the_lexical_baseline(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """An absent or failed provider leaves the default ``similar`` answer untouched."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
     env = _env(tmp_path, vault)
-    lexical = run_tangle("similar", "alpha beta priority", env=env)
+    lexical = run_tangle_inproc("similar", "alpha beta priority", env=env)
     env["TANGLE_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
-    degraded = run_tangle("similar", "alpha beta priority", env=env)
+    degraded = run_tangle_inproc("similar", "alpha beta priority", env=env)
     assert degraded.returncode == 0
     assert degraded.stdout == lexical.stdout
 
@@ -419,7 +425,9 @@ def _require_extra() -> None:
         pytest.importorskip(module)
 
 
-def test_real_runtime_clusters_the_live_style_vault(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_real_runtime_clusters_the_live_style_vault(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """The shipped runtime wires the embedding, reduction, and clustering layers."""
     _require_extra()
     vault = tmp_path / "nodes"
@@ -430,7 +438,7 @@ def test_real_runtime_clusters_the_live_style_vault(tmp_path: Path, run_tangle: 
     env = _env(tmp_path, vault)
     env["TANGLE_SEMANTIC_PROVIDER"] = shlex.join([sys.executable, str(script)])
 
-    result = run_tangle("clusters", "--limit", "2", env=env)
+    result = run_tangle_inproc("clusters", "--limit", "2", env=env)
     assert result.returncode == 0
     assert result.stderr == ""
     lines = result.stdout.splitlines()

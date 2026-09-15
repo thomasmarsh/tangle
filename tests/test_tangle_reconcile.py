@@ -153,7 +153,9 @@ def test_reconcile_duplicate_identity_across_snapshots(
     assert all("duplicate node identity: TAS-100" in row[6] for row in rows)
 
 
-def test_reconcile_same_node_rename_versus_edit(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_reconcile_same_node_rename_versus_edit(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """One head renames a basename while another edits it: divergence, not merge."""
     repo = _init_repo(tmp_path)
     _write(
@@ -189,7 +191,7 @@ def test_reconcile_same_node_rename_versus_edit(tmp_path: Path, run_tangle: RunT
     )
     _commit(repo, "edit")
 
-    result = run_tangle(
+    result = run_tangle_inproc(
         "reconcile",
         "--base",
         base,
@@ -209,7 +211,7 @@ def test_reconcile_same_node_rename_versus_edit(tmp_path: Path, run_tangle: RunT
 
 
 def test_reconcile_orders_consumers_after_their_target(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A bumped dependency is reread before the consumer that pins its old revision."""
     repo = _init_repo(tmp_path)
@@ -241,7 +243,7 @@ def test_reconcile_orders_consumers_after_their_target(
     )
     _commit(repo, "dependency bump")
 
-    result = run_tangle(
+    result = run_tangle_inproc(
         "reconcile", "--base", base, "--head", "dependency", cwd=repo, env=_env(tmp_path)
     )
     assert result.returncode == 0
@@ -253,9 +255,9 @@ def test_reconcile_orders_consumers_after_their_target(
     assert rows[1][6] == "context_rev mismatch"
 
 
-def test_reconcile_reports_empty_plan(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_reconcile_reports_empty_plan(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     repo = _init_repo(tmp_path)
-    result = run_tangle(
+    result = run_tangle_inproc(
         "reconcile", "--base", "HEAD", "--head", "HEAD", cwd=repo, env=_env(tmp_path)
     )
     assert result.returncode == 0
@@ -263,16 +265,16 @@ def test_reconcile_reports_empty_plan(tmp_path: Path, run_tangle: RunTangle) -> 
     assert result.stdout.strip().endswith("reconcile: 0 steps")
 
 
-def test_reconcile_unknown_ref_is_an_error(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_reconcile_unknown_ref_is_an_error(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     repo = _init_repo(tmp_path)
-    result = run_tangle(
+    result = run_tangle_inproc(
         "reconcile", "--base", "does-not-exist", cwd=repo, env=_env(tmp_path)
     )
     assert result.returncode == 1
     assert 'error: "unknown Git ref: does-not-exist"' in result.stdout
 
 
-def test_reconcile_outside_a_git_work_tree(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_reconcile_outside_a_git_work_tree(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     repo = _init_repo(tmp_path)
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -283,7 +285,7 @@ def test_reconcile_outside_a_git_work_tree(tmp_path: Path, run_tangle: RunTangle
     )
     if probe.returncode == 0:
         pytest.skip("temporary directory is inside a Git work tree")
-    result = run_tangle(
+    result = run_tangle_inproc(
         "reconcile", str(repo / ".tangle"), cwd=outside, env=_env(tmp_path)
     )
     assert result.returncode == 1
@@ -291,25 +293,25 @@ def test_reconcile_outside_a_git_work_tree(tmp_path: Path, run_tangle: RunTangle
     assert repo.is_dir()
 
 
-def test_reconcile_argument_errors(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_reconcile_argument_errors(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     repo = _init_repo(tmp_path)
     env = _env(tmp_path)
-    missing_base = run_tangle("reconcile", "--base", cwd=repo, env=env)
+    missing_base = run_tangle_inproc("reconcile", "--base", cwd=repo, env=env)
     assert missing_base.returncode == 2
     assert 'error: "--base requires REF"' in missing_base.stdout
 
-    missing_head = run_tangle("reconcile", "--head", cwd=repo, env=env)
+    missing_head = run_tangle_inproc("reconcile", "--head", cwd=repo, env=env)
     assert missing_head.returncode == 2
     assert 'error: "--head requires REF"' in missing_head.stdout
 
-    unknown = run_tangle("reconcile", "--bogus", cwd=repo, env=env)
+    unknown = run_tangle_inproc("reconcile", "--bogus", cwd=repo, env=env)
     assert unknown.returncode == 2
     assert 'error: "unknown argument for reconcile: --bogus"' in unknown.stdout
 
-    extra = run_tangle("reconcile", "nodes", "other", cwd=repo, env=env)
+    extra = run_tangle_inproc("reconcile", "nodes", "other", cwd=repo, env=env)
     assert extra.returncode == 2
     assert 'error: "reconcile accepts at most one NODES directory"' in extra.stdout
 
-    missing_dir = run_tangle("reconcile", "absent", cwd=repo, env=env)
+    missing_dir = run_tangle_inproc("reconcile", "absent", cwd=repo, env=env)
     assert missing_dir.returncode == 1
     assert 'error: "nodes directory does not exist:' in missing_dir.stdout

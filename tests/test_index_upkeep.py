@@ -102,18 +102,18 @@ def _snapshot(database: Path) -> tuple[dict[str, tuple[str, str]], set[tuple[str
 
 
 def test_a_read_only_interaction_maintains_the_index(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """`frontier` leaves a hand-authored node indexed with no client step."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
 
     added = _add_node(vault, "TAS-002-edited-by-hand", "Edit the vault directly.")
     expected = hashlib.sha256(added.read_bytes()).hexdigest()
 
-    answered = run_tangle("frontier", env=env)
+    answered = run_tangle_inproc("frontier", env=env)
     assert answered.returncode == 0
     assert answered.stderr == ""
     nodes, edges = _snapshot(_database(tmp_path))
@@ -126,15 +126,15 @@ def test_a_read_only_interaction_maintains_the_index(
 
 
 def test_a_mutating_interaction_maintains_the_index(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A capture leaves the node it just wrote indexed with no client step."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
 
-    recorded = run_tangle(
+    recorded = run_tangle_inproc(
         "node",
         "record",
         "--type",
@@ -160,49 +160,49 @@ def test_a_mutating_interaction_maintains_the_index(
     )
 
 
-def test_upkeep_agrees_with_a_full_rebuild(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_upkeep_agrees_with_a_full_rebuild(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:
     """The incremental upkeep writes exactly the rows a full rebuild would."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
     _add_node(vault, "TAS-002-edited-by-hand", "Edit the vault directly.")
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
     incremental = _snapshot(_database(tmp_path))
 
-    assert run_tangle("index", env=env).returncode == 0
+    assert run_tangle_inproc("index", env=env).returncode == 0
     assert _snapshot(_database(tmp_path)) == incremental
 
 
 def test_upkeep_removes_a_deleted_node_and_its_edges(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A deleted node file takes its rows and edges out of the index."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
     (vault / "active" / "TAS-001-consumer.md").unlink()
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
     nodes, edges = _snapshot(_database(tmp_path))
     assert set(nodes) == {"IDX-001"}
     assert edges == set()
 
-    assert run_tangle("index", env=env).returncode == 0
+    assert run_tangle_inproc("index", env=env).returncode == 0
     assert _snapshot(_database(tmp_path)) == (nodes, edges)
 
 
 def test_a_lost_index_is_restored_from_markdown_alone(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """Emptied derived rows come back from Markdown with no `index` call."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
     expected = _snapshot(_database(tmp_path))
 
     connection = sqlite3.connect(_database(tmp_path))
@@ -215,32 +215,34 @@ def test_a_lost_index_is_restored_from_markdown_alone(
         connection.close()
     assert _snapshot(_database(tmp_path)) == ({}, set())
 
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
     assert _snapshot(_database(tmp_path)) == expected
 
 
-def test_a_lost_state_file_is_rebuilt_from_markdown(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_a_lost_state_file_is_rebuilt_from_markdown(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """`tangle index` rebuilds the whole state from Markdown after its loss."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
     _database(tmp_path).unlink()
 
-    rebuilt = run_tangle("index", env=env)
+    rebuilt = run_tangle_inproc("index", env=env)
     assert rebuilt.returncode == 0
     assert rebuilt.stdout.splitlines()[:2] == ["nodes: 2", "edges: 1"]
-    assert '"TAS-001","active"' in run_tangle("search", "Consume", env=env).stdout
+    assert '"TAS-001","active"' in run_tangle_inproc("search", "Consume", env=env).stdout
 
 
 def test_a_read_only_interaction_creates_no_local_state(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """An answer that needs no local state does not create any."""
     vault = tmp_path / "nodes"
     _seed(vault)
-    result = run_tangle("frontier", env=_env(tmp_path, vault))
+    result = run_tangle_inproc("frontier", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stderr == ""
     assert not (tmp_path / "sidecar").exists()
@@ -278,7 +280,7 @@ def test_concurrent_interactions_converge_on_one_index(
 
 
 def test_an_unreadable_derived_input_warns_without_failing(
-    tmp_path: Path, run_tangle: RunTangle
+    tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:
     """A node the index cannot read is a warning, not a failed interaction."""
     vault = tmp_path / "nodes"
@@ -287,22 +289,24 @@ def test_an_unreadable_derived_input_warns_without_failing(
         b"---\nsummary: \xff\xfe undecodable\n---\n"
     )
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
 
-    allocated = run_tangle("allocate", "CON", env=env)
+    allocated = run_tangle_inproc("allocate", "CON", env=env)
     assert allocated.returncode == 0
     assert 'id: "CON-001"' in allocated.stdout
     assert "warning: unable to maintain the derived index" in allocated.stderr
     assert "warning:" not in allocated.stdout
 
 
-def test_a_broken_index_warns_and_still_answers(tmp_path: Path, run_tangle: RunTangle) -> None:
+def test_a_broken_index_warns_and_still_answers(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
     """Falsification probe: upkeep failure is one warning, never a failed answer."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("frontier", env=env).returncode == 0
 
     connection = sqlite3.connect(_database(tmp_path))
     try:
@@ -312,7 +316,7 @@ def test_a_broken_index_warns_and_still_answers(tmp_path: Path, run_tangle: RunT
     finally:
         connection.close()
 
-    answered = run_tangle("frontier", env=env)
+    answered = run_tangle_inproc("frontier", env=env)
     assert answered.returncode == 0
     assert '"TAS-001"' in answered.stdout
     assert "warning:" in answered.stderr
