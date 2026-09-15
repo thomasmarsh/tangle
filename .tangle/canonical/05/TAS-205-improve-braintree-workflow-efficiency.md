@@ -1,9 +1,9 @@
 ---
 status: proposed
 context_rev: 1
-updated: 2026-09-15T01:24:44Z
+updated: 2026-09-15T01:33:51Z
 summary: Improve Tangle workflow efficiency.
-next: "[[tas-63f67g38b01dka9cb6a58w144m-frontier-execution-manifests]]"
+next: "[[tas-0ses1vnewy66nxcm57w1f88wn4-scoped-verification-targets]]"
 ---
 
 Area [[IDX-001-execution-graph]].

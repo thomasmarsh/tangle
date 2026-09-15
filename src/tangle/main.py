@@ -25,6 +25,7 @@ from . import (
     graph_check,
     help,
     index,
+    manifest,
     memory_authority,
     memory_causal,
     memory_corpus,
@@ -108,6 +109,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("impact NODE", "list direct and transitive dependents of a node"),
     ("orient [--section NAME] [--limit N]", "print a bounded orientation packet"),
     ("packet", "print the one executable frontier node and its route evidence"),
+    ("manifest NODE", "print one node's authored execution surfaces and their resolution"),
     ("next [--rank] [--limit N]", "rank frontier candidates for the next actor"),
     (
         "clusters [--limit N]",
@@ -152,6 +154,7 @@ _COORDINATION_COMMANDS = frozenset(
         "impact",
         "orient",
         "packet",
+        "manifest",
         "next",
         "clusters",
         "digest",
@@ -381,6 +384,8 @@ def _dispatch(command: str, args: list[str]) -> int:
         return graph_check.main(args[1:])
     if command == "packet":
         return packet.main(args)
+    if command == "manifest":
+        return manifest.main(args)
     if command == "reservations":
         return reservations.main(args[1:])
     # ``allocate`` is served by its own module because ``cli.py`` and

@@ -33,6 +33,8 @@ Finding codes by class:
 - Routes and frontier: ``route-root-hub-unrouted``, ``route-primary-missing``,
   ``route-cycle``, ``route-orphan``, ``next-multiple-frontiers``,
   ``next-action-wikilink``, ``next-not-direct-child``, ``next-resolved-node``.
+- Manifest: ``manifest-entry-malformed``, ``manifest-kind-unknown``,
+  ``manifest-entry-duplicate``.
 """
 
 from __future__ import annotations
@@ -55,6 +57,9 @@ __all__ = [
     "FINDING_CODES",
     "GATED_RELATION",
     "Finding",
+    "MANIFEST_KINDS",
+    "ManifestEntry",
+    "ManifestParse",
     "PROBLEM_MISMATCH",
     "PROBLEM_MISSING",
     "PROBLEM_UNPINNED",
@@ -65,6 +70,7 @@ __all__ = [
     "context_pin_problem",
     "findings",
     "main",
+    "parse_manifest",
     "reference_targets",
     "stale_reason",
 ]
@@ -187,6 +193,9 @@ FINDING_CODES: dict[str, str] = {
     "next-action-wikilink": "action-sentence next contains a wikilink",
     "next-not-direct-child": "next frontier is not a direct child",
     "next-resolved-node": "next frontier is already resolved",
+    "manifest-entry-malformed": "manifest entry is missing a kind or a value",
+    "manifest-kind-unknown": "manifest entry kind is not source, test, verify, or compat",
+    "manifest-entry-duplicate": "manifest repeats the same kind and value",
 }
 
 _FORBIDDEN_FIELDS = ("id", "type", "status", "seq", "mtime", "rev")
@@ -224,6 +233,18 @@ _FEEDBACK_LINE = re.compile(
 _TANGLE_REVISION = re.compile(r"\d+\.\d+\.\d+(?:[+\-][0-9A-Za-z.\-]+)?\Z")
 _UNKNOWN_REVISION = "unknown"
 _NUMBER = re.compile(r"-?\d+")
+
+# The authored execution surface of a node: the source files a task expects to
+# touch, the focused tests that cover it, the final gates that accept it, and the
+# compatibility constraints it must preserve. The section holds only schema
+# entries, one Markdown list item each, so the grammar stays strict: a bullet that
+# is not ``- kind: value`` is malformed rather than prose. The entries are
+# authored intent; ``tangle manifest`` derives existence and recognition from them
+# and never writes a resolution back into the node.
+MANIFEST_KINDS: tuple[str, ...] = ("source", "test", "verify", "compat")
+_MANIFEST_SECTION = re.compile(r"^# Manifest\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
+_MANIFEST_BULLET = re.compile(r"^[ \t]*[-*][ \t]+(\S.*?)[ \t]*$", re.MULTILINE)
+_MANIFEST_ITEM = re.compile(r"^([A-Za-z][A-Za-z-]*)[ \t]*:[ \t]*(.*)$")
 
 # Markdown code is quoted text, not graph syntax: a wikilink-shaped token inside
 # an inline code span or a fenced code block documents the grammar, so link
@@ -298,6 +319,22 @@ class Finding:
     code: str
     node: str
     detail: str
+
+
+@dataclass(frozen=True)
+class ManifestEntry:
+    """One well-formed authored ``# Manifest`` entry."""
+
+    kind: str
+    value: str
+
+
+@dataclass(frozen=True)
+class ManifestParse:
+    """The authored manifest entries and their ``(code, detail)`` problems."""
+
+    entries: tuple[ManifestEntry, ...]
+    problems: tuple[tuple[str, str], ...]
 
 
 class _MappingError(Exception):
@@ -421,6 +458,60 @@ def reference_targets(text: str) -> list[str]:
     return [
         match.group(1) for match in REFERENCE_LINE.finditer(_mask_code(text))
     ]
+
+
+def parse_manifest(text: str) -> ManifestParse:
+    """Parse the authored ``# Manifest`` section of one node body.
+
+    Return every well-formed entry plus one ``(code, detail)`` pair for each
+    malformed, unknown-kind, or duplicate list item. A node without a
+    ``# Manifest`` section has no entries and no problems, which the read
+    surface treats as an absent manifest rather than a failure. An optional
+    single surrounding backtick pair is stripped from a value so a path may be
+    authored as code.
+    """
+    section = _MANIFEST_SECTION.search(text)
+    if section is None:
+        return ManifestParse((), ())
+    entries: list[ManifestEntry] = []
+    problems: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for bullet in _MANIFEST_BULLET.finditer(section.group(1)):
+        body = bullet.group(1).strip()
+        item = _MANIFEST_ITEM.match(body)
+        if item is None:
+            problems.append(("manifest-entry-malformed", body))
+            continue
+        kind = item.group(1).lower()
+        value = item.group(2).strip()
+        if len(value) >= 2 and value[0] == value[-1] == "`":
+            value = value[1:-1].strip()
+        if kind not in MANIFEST_KINDS:
+            problems.append(("manifest-kind-unknown", body))
+            continue
+        if value == "":
+            problems.append(("manifest-entry-malformed", body))
+            continue
+        key = (kind, value)
+        if key in seen:
+            problems.append(("manifest-entry-duplicate", body))
+            continue
+        seen.add(key)
+        entries.append(ManifestEntry(kind=kind, value=value))
+    return ManifestParse(tuple(entries), tuple(problems))
+
+
+def _check_manifest(path: str, text: str, errors: list[Finding]) -> None:
+    """Validate the authored ``# Manifest`` grammar when a node declares one."""
+    parsed = parse_manifest(text)
+    messages = {
+        "manifest-entry-malformed": "manifest entry must be '- kind: value'",
+        "manifest-kind-unknown": "unknown manifest kind; use "
+        "source, test, verify, or compat",
+        "manifest-entry-duplicate": "duplicate manifest entry",
+    }
+    for code, detail in parsed.problems:
+        errors.append(Finding(code, path, f"{path}: {messages[code]}: {detail}"))
 
 
 def _check_feedback(
@@ -566,6 +657,7 @@ def _collect_nodes(nodes_dir: str, errors: list[Finding]) -> list[_Node]:
                 )
         if node_type == _FEEDBACK_TYPE:
             _check_feedback(path, text, metadata, errors)
+        _check_manifest(path, text, errors)
         if status == "blocked":
             blocked_match = _BLOCKED_BLOCK.search(text)
             blocked_section = blocked_match.group(1) if blocked_match else ""

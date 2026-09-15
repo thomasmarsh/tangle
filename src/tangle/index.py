@@ -35,6 +35,7 @@ from .graph_check import (
     CONTEXT_RELATIONS,
     context_pin_problem,
     findings,
+    parse_manifest,
     reference_targets,
     stale_reason,
 )
@@ -52,6 +53,9 @@ __all__ = [
     "Impact",
     "ImpactEdge",
     "IndexedNode",
+    "ManifestEntry",
+    "ManifestProblem",
+    "ManifestView",
     "NextRanking",
     "NodeView",
     "ORIENT_SECTIONS",
@@ -81,6 +85,7 @@ __all__ = [
     "frontier",
     "frontier_groups",
     "impact",
+    "manifest",
     "next_ranked",
     "node_hash",
     "node_view",
@@ -909,6 +914,60 @@ class WorkPacket:
     problems: tuple[PacketProblem, ...]
 
 
+# The final verification gates a manifest may name. A focused test belongs in a
+# ``test`` path, so ``verify`` is reserved for the commands that accept the
+# change as a whole; the two required gates match ``PACKET_VERIFICATION`` and
+# the benchmark gate is the opt-in companion.
+MANIFEST_VERIFICATION_GATES: tuple[str, ...] = (
+    "tangle check",
+    "make test",
+    "make test-benchmarks",
+)
+
+
+@dataclass(frozen=True)
+class ManifestEntry:
+    """One manifest entry beside the derived resolution of its authored value."""
+
+    kind: str
+    value: str
+    state: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class ManifestProblem:
+    """One malformed, unknown-kind, or duplicate manifest entry."""
+
+    code: str
+    node: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class ManifestView:
+    """The ``tangle manifest`` answer for one node.
+
+    ``entries`` carries the authored intent with its derived state, and
+    ``problems`` carries the grammar failures; both are empty for a node that
+    declares no ``# Manifest`` section, which is an absent manifest rather than
+    a failure.
+    """
+
+    node: IndexedNode
+    entries: tuple[ManifestEntry, ...]
+    problems: tuple[ManifestProblem, ...]
+
+    @property
+    def result(self) -> str:
+        """Return ``invalid`` on any problem, ``empty`` without entries, else ``ready``."""
+        if self.problems:
+            return "invalid"
+        if not self.entries:
+            return "empty"
+        return "ready"
+
+
 class ReconcileError(Exception):
     """A reconcile input the planner cannot read, such as an unknown Git ref."""
 
@@ -1268,6 +1327,61 @@ def packet(root: str) -> WorkPacket:
         candidates=(),
         terminals=tuple(terminals),
         problems=(),
+    )
+
+
+def _manifest_entry(value: str, kind: str, project_root: str) -> ManifestEntry:
+    """Derive one manifest entry's state from its authored value.
+
+    A ``source`` or ``test`` value is a repository-relative path resolved
+    against the project root, and its state records whether the path currently
+    exists, so a still-to-be-created file is ``absent`` intent rather than a
+    failure. A ``verify`` value must name a known final gate. A ``compat`` value
+    is free text and is reported as recorded.
+    """
+    if kind in {"source", "test"}:
+        resolved = os.path.normpath(os.path.join(project_root, value))
+        state = "present" if os.path.exists(resolved) else "absent"
+        return ManifestEntry(
+            kind=kind,
+            value=value,
+            state=state,
+            detail=os.path.relpath(resolved, project_root),
+        )
+    if kind == "verify":
+        state = "known" if value in MANIFEST_VERIFICATION_GATES else "unknown"
+        return ManifestEntry(kind=kind, value=value, state=state, detail="")
+    return ManifestEntry(kind=kind, value=value, state="recorded", detail="")
+
+
+def manifest(root: str, node: str) -> ManifestView | None:
+    """Resolve one node's authored ``# Manifest`` and derive its resolution.
+
+    The authored entries are the node's declared source, test, verification,
+    and compatibility surfaces; the derived columns resolve each against the
+    project root (the vault's parent directory) or the known final gates. A
+    malformed or unknown entry is a problem the caller reports; a node without
+    a ``# Manifest`` section is an empty view, and an unknown node is ``None``.
+    """
+    nodes = _read_nodes(root)
+    target = next(
+        (candidate for candidate in nodes if node in {candidate.id, candidate.name}),
+        None,
+    )
+    if target is None:
+        return None
+    parsed = parse_manifest(target.body)
+    project_root = os.path.dirname(os.path.abspath(root))
+    return ManifestView(
+        node=target,
+        entries=tuple(
+            _manifest_entry(entry.value, entry.kind, project_root)
+            for entry in parsed.entries
+        ),
+        problems=tuple(
+            ManifestProblem(code=code, node=target.id, detail=detail)
+            for code, detail in parsed.problems
+        ),
     )
 
 

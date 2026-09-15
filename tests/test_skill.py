@@ -614,6 +614,31 @@ _RECONNAISSANCE_REFERENCE_PROBE = (
     "`tangle node` reports the relation."
 )
 
+# A task's execution surface is authored once in a strict `# Manifest` section
+# and resolved read-only: the entries are intent and the derived columns are
+# never written back, so a still-to-be-created file stays absent intent rather
+# than a failure.
+_MANIFEST_SCHEMA_RULE = (
+    "A task may declare its execution surface in a `# Manifest` section",
+    "the grammar is strict: a bullet that is not `- kind: value` is a defect",
+    "`source` — a repository-relative file the change touches",
+    "`test` — a repository-relative focused test file",
+    "`verify` — a final acceptance gate command",
+    "`compat` — a free-text compatibility constraint",
+    "`tangle manifest NODE` derives the resolution",
+    "and never writes it back",
+    "reports a malformed, unknown-kind, or duplicate entry as a `problems` row",
+    "treats a node without a `# Manifest` section as `empty` with exit 0",
+)
+
+# Falsification probe for the manifest rule: a topic-level mention of declared
+# files and the read command records none of the strict grammar or the
+# authored-versus-derived split, so the guard must reject it.
+_MANIFEST_SCHEMA_PROBE = (
+    "A node can list affected files, tests, and verification commands, and "
+    "`tangle manifest NODE` prints them."
+)
+
 # A resolving worker whose parent is outside its write set cannot run the plain
 # gate; the acceptance line names the exact sanctioned command, and the report
 # surfaces the pending advance. A seam citation in a large module names the
@@ -968,6 +993,7 @@ _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("impact",),
     ("orient",),
     ("packet",),
+    ("manifest",),
     ("next",),
     ("clusters",),
     ("digest",),
@@ -1327,6 +1353,16 @@ def test_reconnaissance_reference_guard_rejects_a_prose_mention() -> None:
         _assert_contains(
             _RECONNAISSANCE_REFERENCE_PROBE, _RECONNAISSANCE_REFERENCE_RULE
         )
+
+
+def test_manifest_schema_is_stated() -> None:
+    _assert_contains(_reference("authoring"), _MANIFEST_SCHEMA_RULE)
+
+
+def test_manifest_schema_guard_rejects_a_prose_mention() -> None:
+    """Falsification probe: a topic mention records no authored/derived split."""
+    with pytest.raises(AssertionError):
+        _assert_contains(_MANIFEST_SCHEMA_PROBE, _MANIFEST_SCHEMA_RULE)
 
 
 def test_brief_names_the_pending_advance_acceptance_and_symbol_seams() -> None:

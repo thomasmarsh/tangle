@@ -1422,6 +1422,26 @@ def _mut_next_resolved_node(nodes: Path) -> None:
     _resolve_child(nodes)
 
 
+def _append_manifest(nodes: Path, entry: str) -> None:
+    _replace(
+        nodes / "active" / "TAS-002-child.md",
+        "Parent [[TAS-001-parent]].\n",
+        f"Parent [[TAS-001-parent]].\n\n# Manifest\n\n{entry}\n",
+    )
+
+
+def _mut_manifest_entry_malformed(nodes: Path) -> None:
+    _append_manifest(nodes, "- source")
+
+
+def _mut_manifest_kind_unknown(nodes: Path) -> None:
+    _append_manifest(nodes, "- browser: tests/test_graph_check.py")
+
+
+def _mut_manifest_entry_duplicate(nodes: Path) -> None:
+    _append_manifest(nodes, "- source: src/a.py\n- source: src/a.py")
+
+
 # Every error class the validator can raise, with one mutation that triggers it.
 _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
     "vault-no-nodes": (_mut_vault_no_nodes, "vault-no-nodes"),
@@ -1505,6 +1525,18 @@ _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
     "next-action-wikilink": (_mut_next_action_wikilink, "next-action-wikilink"),
     "next-not-direct-child": (_mut_next_not_direct_child, "next-not-direct-child"),
     "next-resolved-node": (_mut_next_resolved_node, "next-resolved-node"),
+    "manifest-entry-malformed": (
+        _mut_manifest_entry_malformed,
+        "manifest-entry-malformed",
+    ),
+    "manifest-kind-unknown": (
+        _mut_manifest_kind_unknown,
+        "manifest-kind-unknown",
+    ),
+    "manifest-entry-duplicate": (
+        _mut_manifest_entry_duplicate,
+        "manifest-entry-duplicate",
+    ),
 }
 
 

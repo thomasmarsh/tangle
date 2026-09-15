@@ -506,6 +506,24 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_COORDINATION_TOPIC,
     ),
+    "manifest": _verb(
+        "Print one node's authored execution surfaces and their resolution.",
+        usage="tangle manifest NODE",
+        operands=(("NODE", "bare ID or full node name"),),
+        outputs=(
+            ("result", "ready, empty, or invalid"),
+            ("id/name/status", "the resolved node"),
+            ("authored", "kind,value rows: source, test, verify, or compat"),
+            ("derived", "kind,value,state,detail rows resolving each entry"),
+            ("problems", "code,node,detail rows when an entry is malformed"),
+        ),
+        hazards=(
+            "Read-only; a declared source or test path that does not exist is "
+            "intent, reported as absent rather than as a failure.",
+            "A node with no # Manifest section is empty, not invalid.",
+        ),
+        topic=_AUTHORING_TOPIC,
+    ),
     "next": _verb(
         "Rank frontier candidates for the next actor.",
         usage="tangle next [--rank] [--limit N]",

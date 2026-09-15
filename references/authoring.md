@@ -171,6 +171,43 @@ entirely, which is the escape hatch when even a whole-word cut is not the
 basename you want to reproduce in wikilinks. As with `--summary`, an explicit
 `--slug` is taken as given and is not word-boundary processed.
 
+## Execution manifests
+
+A task may declare its execution surface in a `# Manifest` section so a fresh
+worker can orient without a broad repository search. The section holds only
+schema entries, one Markdown list item each, and the grammar is strict: a bullet
+that is not `- kind: value` is a defect, not prose. The four kinds are:
+
+- `source` — a repository-relative file the change touches, usually to create
+  or edit. It may not exist yet; the entry is authored intent.
+- `test` — a repository-relative focused test file that covers the change.
+- `verify` — a final acceptance gate command, such as `tangle check` or
+  `make test`. Focused tests belong in `test`, so `verify` names whole-change
+  gates only.
+- `compat` — a free-text compatibility constraint the change must preserve,
+  such as a legacy layout that must stay readable.
+
+```markdown
+# Manifest
+
+- source: src/tangle/manifest.py
+- test: tests/test_manifest.py
+- verify: tangle check
+- verify: make test
+- compat: legacy nodes/ status directories stay readable
+```
+
+The authored entries are intent; `tangle manifest NODE` derives the resolution
+and never writes it back. It resolves a `source` or `test` value against the
+project root (the vault's parent directory) and reports whether the path exists,
+so a still-to-be-created file is `absent` rather than a failure, and it checks a
+`verify` value against the known final gates. It reports a malformed,
+unknown-kind, or duplicate entry as a `problems` row and exits 1, and it treats
+a node without a `# Manifest` section as `empty` with exit 0. A single
+surrounding backtick pair on a value is stripped, so a path may be authored as
+code. `tangle check` rejects the same spelling mistakes so a malformed entry
+cannot land.
+
 ## Feedback nodes
 
 A consuming project records Tangle friction as an `FBK`/`fbk` node. The
