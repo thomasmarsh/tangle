@@ -2,9 +2,9 @@
 context_rev: 1
 status: proposed
 priority: P2
-updated: 2026-09-15T15:51:52Z
+updated: 2026-09-15T16:01:05Z
 summary: Audit and trim the default test gate; keep only distinct load-bearing tests, then parallelize.
-next: "[[tas-098efjf0v8gerphqnvtc6rd7xp-enable-pytest-xdist-in-the-default-gate]]"
+next: "[[tas-1tn95z62bqewgvjm94fx9k8nbe-cheapen-subprocess-bound-default-gate-tests-to]]"
 ---
 
 Area [[IDX-001-execution-graph]].

@@ -2,15 +2,17 @@
 	storage-comparison verb-benchmark
 
 # The fast Python suite and the remaining end-to-end shell screens are
-# independent and process-spawn bound, so run them concurrently. Benchmark
-# verification is excluded here and runs with `make test-benchmarks`. Every job
-# is waited on and any failure fails the target.
+# independent and process-spawn bound, so run them concurrently, and the
+# Python suite itself runs under pytest-xdist (`-n auto`) because its tests are
+# dominated by per-test tangle subprocess spawns. Benchmark verification is
+# excluded here and runs with `make test-benchmarks`, which stays serial. Every
+# job is waited on and any failure fails the target.
 test:
 	@set -eu; \
 	uv run ruff check; \
 	uv run mypy; \
 	pids=""; \
-	uv run pytest -q & pids="$$pids $$!"; \
+	uv run pytest -q -n auto & pids="$$pids $$!"; \
 	for suite in install worktree-parallel; do \
 		sh "tests/$$suite.sh" & pids="$$pids $$!"; \
 	done; \
