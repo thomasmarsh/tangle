@@ -25,7 +25,6 @@ from tangle import (
 )
 
 _ROOT = Path(__file__).resolve().parents[1]
-_DOCUMENT = _ROOT / "research" / "agent-memory-confirmatory-preregistration.md"
 _MANIFEST = _ROOT / "benchmark" / "memory-corpus" / "manifest.json"
 
 
@@ -235,24 +234,3 @@ def test_cli_held_out_split(capsys: Any) -> None:
     assert "confirmatory" in dry
     assert memory_causal.main(["plan", "--split", "bogus"]) == 1
     assert memory_causal.main(["plan", "extra"]) == 1
-
-
-def test_document_preregisters_confirmatory_protocol() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert memory_causal.CAUSAL_CONFIRMATORY_PROTOCOL in text
-    assert memory_causal.CAUSAL_CONFIRMATORY_SPLIT in text
-    assert memory_contract.AUTHORIZATION in text
-    for arm in memory_causal.CAUSAL_ARMS:
-        assert arm in text, arm
-    for model in memory_causal.CAUSAL_MODELS:
-        assert model in text, model
-    for token in (
-        "held_out_cases",
-        "--split held-out",
-        "memory-causal-confirmatory-result.json",
-        "scripts/memory_causal_run.py",
-        "1,080",
-        "18",
-        "keep-existing-evidence",
-    ):
-        assert token in text, token

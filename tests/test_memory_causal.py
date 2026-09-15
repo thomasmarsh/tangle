@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections import Counter
 from datetime import datetime, timedelta
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -25,8 +24,6 @@ from tangle import (
     memory_pilot,
     memory_scenario,
 )
-
-_ROOT = Path(__file__).resolve().parents[1]
 
 
 @lru_cache(maxsize=1)
@@ -396,24 +393,3 @@ def test_paired_effects_ignore_incomplete_samples() -> None:
     assert contrast["n_strata"] == plan["case_count"] * len(plan["models"])
     assert contrast["mean_effect"] == len(_required_cases()) / plan["case_count"]
     assert memory_causal.paired_effects([], "tangle", "repository-only")["n_pairs"] == 0
-
-
-# --------------------------------------------------------------------------- #
-# Preregistration document
-# --------------------------------------------------------------------------- #
-
-
-def test_document_preregisters_protocol_arms_models_and_gate() -> None:
-    document = _ROOT / "research" / "agent-memory-causal-preregistration.md"
-    text = document.read_text(encoding="utf-8")
-    assert memory_causal.CAUSAL_PROTOCOL in text
-    assert memory_contract.AUTHORIZATION in text
-    for arm in memory_causal.CAUSAL_ARMS:
-        assert arm in text, arm
-    for model in memory_causal.CAUSAL_MODELS:
-        assert model in text, model
-    assert "tangle benchmark causal" in text
-    assert "scripts/memory_causal_run.py" in text
-    assert ".pi/agents/memory-pilot-child.md" in text
-    assert "pilot_subset" in text
-    assert "resumption-after-decision-shared-install-001" in text

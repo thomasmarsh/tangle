@@ -15,12 +15,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tangle import memory_corpus
 from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CORPUS = _ROOT / "benchmark" / "memory-corpus" / "admission.json"
-_DOCUMENT = _ROOT / "research" / "agent-memory-admission-cases.md"
 
 _CORPUS_VERSION = "memory-admission-corpus-v1"
 _LABELS = ("retain", "update-existing", "discard")
@@ -83,20 +81,6 @@ def test_envelope_is_versioned_and_admission_only() -> None:
     assert len(envelope["cases"]) == 15
 
 
-def test_every_case_parses_and_agrees_with_the_envelope() -> None:
-    envelope = _envelope()
-    for scenario in _scenarios():
-        assert scenario.family == "admission"
-        assert scenario.split in schema.SPLITS
-        assert scenario.severity in schema.SEVERITIES
-        assert scenario.source_revision == envelope["source_revision"]
-
-
-def test_case_ids_are_unique() -> None:
-    ids = [scenario.case_id for scenario in _scenarios()]
-    assert len(ids) == len(set(ids))
-
-
 def test_labels_are_balanced() -> None:
     counts = {label: 0 for label in _LABELS}
     for scenario in _scenarios():
@@ -118,26 +102,6 @@ def test_required_input_kinds_are_covered() -> None:
     assert set(_CASE_INPUT) == {scenario.case_id for scenario in _scenarios()}
 
 
-def test_every_cited_path_exists_in_the_repository() -> None:
-    paths: set[str] = set()
-    for scenario in _scenarios():
-        paths.update(scenario.query.observable_paths)
-        for episode in scenario.construction.episodes:
-            paths.update(episode.evidence)
-    missing = sorted(path for path in paths if not memory_corpus.path_exists(_ROOT, path))
-    assert missing == []
-
-
-def test_task_prompts_are_arm_neutral() -> None:
-    for scenario in _scenarios():
-        assert scenario.grading.expected_outcome not in scenario.query.task
-        for action in scenario.query.allowed_actions:
-            assert action not in scenario.query.task
-        episode_statements = {episode.statement for episode in scenario.construction.episodes}
-        gold_statements = {evidence.statement for evidence in scenario.grading.gold_evidence}
-        assert episode_statements.isdisjoint(gold_statements)
-
-
 def test_each_case_grades_only_its_declared_actions() -> None:
     for scenario in _scenarios():
         expected = schema.grade(scenario, scenario.grading.expected_outcome)
@@ -145,21 +109,3 @@ def test_each_case_grades_only_its_declared_actions() -> None:
         for action in scenario.query.allowed_actions:
             grade = schema.grade(scenario, action)
             assert grade.correct == (action in scenario.grading.acceptable_actions)
-
-
-def test_each_case_names_gold_evidence_with_a_later_decision_or_no_value() -> None:
-    for scenario in _scenarios():
-        assert scenario.grading.gold_evidence
-        for evidence in scenario.grading.gold_evidence:
-            assert evidence.statement.strip()
-            assert evidence.source_episodes
-
-
-def test_document_agrees_with_the_corpus() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert _CORPUS_VERSION in text
-    assert schema.SCENARIO_SCHEMA_VERSION in text
-    for scenario in _scenarios():
-        assert scenario.case_id in text, scenario.case_id
-    for kind in _INPUT_KINDS:
-        assert kind in text, kind

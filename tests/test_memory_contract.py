@@ -10,15 +10,11 @@ with the module. Everything here is offline and imports no model runtime.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
 from tangle import memory_contract as harness
 from tangle import token_benchmark
-
-_ROOT = Path(__file__).resolve().parents[1]
-_DOCUMENT = _ROOT / "research" / "agent-memory-evaluation-contract.md"
 
 
 def test_protocol_is_literal() -> None:
@@ -120,15 +116,3 @@ def test_verify_detects_a_family_partition_gap(monkeypatch: pytest.MonkeyPatch) 
     )
     problems = harness.verify()
     assert any("partition" in problem for problem in problems)
-
-
-def test_document_records_the_protocol_literals() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert harness.PROTOCOL in text
-    assert harness.PRIMARY_TARGET in text
-    for arm in harness.CANONICAL_ARM_IDS:
-        assert arm in text, arm
-    for family in harness.SCENARIO_FAMILIES:
-        assert family in text, family
-    for label in harness.DIAGNOSTIC_LABELS:
-        assert label in text, label

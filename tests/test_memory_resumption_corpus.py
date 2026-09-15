@@ -18,12 +18,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-from tangle import memory_corpus
 from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CORPUS_DIR = _ROOT / "benchmark" / "memory-corpus"
-_DOCUMENT = _ROOT / "research" / "agent-memory-resumption-cases.md"
 
 # family -> (filename, corpus_version, expected case count).
 _CORPORA = {
@@ -194,20 +192,6 @@ def test_envelopes_are_versioned_and_family_only() -> None:
         assert len(envelope["cases"]) == count
 
 
-def test_every_case_parses_and_agrees_with_its_envelope() -> None:
-    for family, scenario in _scenarios():
-        envelope = _envelope(family)
-        assert scenario.family == family
-        assert scenario.split in schema.SPLITS
-        assert scenario.severity in schema.SEVERITIES
-        assert scenario.source_revision == envelope["source_revision"]
-
-
-def test_case_ids_are_unique() -> None:
-    ids = [scenario.case_id for scenario in _all_scenarios()]
-    assert len(ids) == len(set(ids))
-
-
 def test_interruption_kinds_are_covered() -> None:
     assert set(_REQUIRED_KINDS) <= set(_CASE_KIND.values())
     assert set(_CASE_KIND.values()) <= set(_KINDS)
@@ -247,18 +231,6 @@ def test_every_case_carries_a_distractor_episode() -> None:
         assert unreferenced, scenario.case_id
 
 
-def test_splits_are_populated_for_every_family() -> None:
-    for family in _CORPORA:
-        splits = {
-            scenario.split
-            for scenario in _all_scenarios()
-            if scenario.family == family
-        }
-        assert splits == set(schema.SPLITS), family
-    for scenario in _all_scenarios():
-        assert scenario.severity in schema.SEVERITIES
-
-
 def test_controls_are_memory_irrelevant_and_required_cases_are_not() -> None:
     for scenario in _all_scenarios():
         gold_paths = _gold_paths(scenario)
@@ -269,26 +241,6 @@ def test_controls_are_memory_irrelevant_and_required_cases_are_not() -> None:
             assert gold_paths - observable, scenario.case_id
 
 
-def test_every_cited_path_exists_in_the_repository() -> None:
-    paths: set[str] = set()
-    for scenario in _all_scenarios():
-        paths.update(scenario.query.observable_paths)
-        for episode in scenario.construction.episodes:
-            paths.update(episode.evidence)
-    missing = sorted(path for path in paths if not memory_corpus.path_exists(_ROOT, path))
-    assert missing == []
-
-
-def test_task_prompts_are_arm_neutral() -> None:
-    for scenario in _all_scenarios():
-        assert scenario.grading.expected_outcome not in scenario.query.task
-        for action in scenario.query.allowed_actions:
-            assert action not in scenario.query.task
-        episode_statements = {episode.statement for episode in scenario.construction.episodes}
-        gold_statements = {item.statement for item in scenario.grading.gold_evidence}
-        assert episode_statements.isdisjoint(gold_statements)
-
-
 def test_each_case_grades_only_its_declared_actions() -> None:
     for scenario in _all_scenarios():
         expected = schema.grade(scenario, scenario.grading.expected_outcome)
@@ -296,23 +248,3 @@ def test_each_case_grades_only_its_declared_actions() -> None:
         for action in scenario.query.allowed_actions:
             grade = schema.grade(scenario, action)
             assert grade.correct == (action in scenario.grading.acceptable_actions)
-
-
-def test_each_case_names_gold_evidence_with_a_later_decision() -> None:
-    for scenario in _all_scenarios():
-        assert scenario.grading.gold_evidence
-        for item in scenario.grading.gold_evidence:
-            assert item.statement.strip()
-            assert item.source_episodes
-
-
-def test_document_agrees_with_the_corpora() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert schema.SCENARIO_SCHEMA_VERSION in text
-    for family, (_, version, _) in _CORPORA.items():
-        assert version in text, version
-        assert family in text, family
-    for scenario in _all_scenarios():
-        assert scenario.case_id in text, scenario.case_id
-    for kind in _REQUIRED_KINDS:
-        assert kind in text, kind

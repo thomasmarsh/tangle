@@ -2,9 +2,9 @@
 context_rev: 1
 status: proposed
 priority: P2
-updated: 2026-09-15T15:25:52Z
+updated: 2026-09-15T15:34:50Z
 summary: Audit and trim the default test gate; keep only distinct load-bearing tests, then parallelize.
-next: "[[tas-1tawqxsrvyby2qwv7gzsbqvb11-drop-committed-data-qa-and-prose-agreement]]"
+next: "[[tas-1tn95z62bqewgvjm94fx9k8nbe-cheapen-subprocess-bound-default-gate-tests-to]]"
 ---
 
 Area [[IDX-001-execution-graph]].

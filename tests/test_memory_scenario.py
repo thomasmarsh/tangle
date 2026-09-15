@@ -12,16 +12,12 @@ from __future__ import annotations
 
 import copy
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
 
 from tangle import memory_contract
 from tangle import memory_scenario as schema
-
-_ROOT = Path(__file__).resolve().parents[1]
-_DOCUMENT = _ROOT / "research" / "agent-memory-scenario-schema.md"
 
 
 def _document() -> dict[str, Any]:
@@ -227,17 +223,3 @@ def test_verify_detects_family_partition_gap(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(schema, "CURATION_GROUPS", (("admission", ("admission",)),))
     problems = schema.verify()
     assert any("partition" in problem for problem in problems)
-
-
-def test_document_records_the_schema_literals() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert schema.SCENARIO_SCHEMA_VERSION in text
-    assert schema.PRIMARY_ENDPOINT in text
-    for family in schema.SCENARIO_FAMILIES:
-        assert family in text, family
-    for arm in schema.ARM_IDS:
-        assert arm in text, arm
-    for severity in schema.SEVERITIES:
-        assert severity in text, severity
-    for grader in schema.GRADER_IDS:
-        assert grader in text, grader

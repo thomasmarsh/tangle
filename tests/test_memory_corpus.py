@@ -21,7 +21,6 @@ from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _MANIFEST = _ROOT / corpus.CORPUS_DIR_RELATIVE / corpus.MANIFEST_NAME
-_DOCUMENT = _ROOT / "research" / "agent-memory-corpus-validation.md"
 
 
 def _documents() -> dict[str, dict[str, Any]]:
@@ -157,19 +156,6 @@ def test_family_digests_are_distinct_and_stable() -> None:
     digests = [corpus.family_digest(envelope) for envelope in corpus.load_corpus()]
     assert len(digests) == len(set(digests))
     assert digests == [corpus.family_digest(envelope) for envelope in corpus.load_corpus()]
-
-
-def test_prose_authority_agrees_with_the_corpus() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert corpus.PROTOCOL in text
-    assert corpus.CORPUS_DIR_RELATIVE in text
-    assert "tangle benchmark corpus verify" in text
-    assert "tangle benchmark corpus freeze" in text
-    assert "observable_paths" in text
-    for family in schema.SCENARIO_FAMILIES:
-        assert family in text, family
-    for growth in corpus.GROWTH_CLASSES:
-        assert growth in text, growth
 
 
 def test_manifest_problems_reports_each_drift() -> None:

@@ -39,7 +39,6 @@ def _scenario(**overrides: Any) -> memory_scenario.Scenario:
     return memory_scenario.parse_scenario(document)
 
 
-_DOCUMENT = _ROOT / "research" / "agent-memory-pipeline-diagnostics.md"
 
 
 def test_diagnostic_labels_match_the_contract() -> None:
@@ -214,20 +213,6 @@ def test_committed_artifact_re_derives() -> None:
         (_ROOT / memory_diagnostics.DIAGNOSTIC_ARTIFACT).read_text(encoding="utf-8")
     )
     assert committed == memory_diagnostics.diagnose(_ROOT)
-
-
-def test_document_matches_the_module() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert memory_diagnostics.DIAGNOSTIC_PROTOCOL in text
-    for label in memory_diagnostics.DIAGNOSTIC_LABELS:
-        assert label in text
-    for workstream in (
-        "TAS-124",
-        "TAS-125",
-        "TAS-126",
-        "TAS-127",
-    ):
-        assert workstream in text
 
 
 def test_cli_record_and_verify(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:

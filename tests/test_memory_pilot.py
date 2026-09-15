@@ -8,22 +8,13 @@ with the module. Everything here makes zero live model calls.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from tangle import memory_contract, memory_corpus, memory_scenario
 
-_ROOT = Path(__file__).resolve().parents[1]
-_DOCUMENT = _ROOT / "research" / "agent-memory-pilot-preregistration.md"
-
 
 def _subset() -> tuple[memory_scenario.Scenario, ...]:
     return memory_corpus.pilot_subset(memory_corpus.load_corpus())
-
-
-def _all_case_ids() -> set[str]:
-    return {case.case_id for envelope in memory_corpus.load_corpus() for case in envelope.cases}
 
 
 def _never_control(case: memory_scenario.Scenario) -> bool:
@@ -81,24 +72,3 @@ def test_pilot_problems_detect_an_out_of_range_subset(
     monkeypatch.setattr(memory_corpus, "MIN_PILOT_CASES", 99)
     problems = memory_corpus.pilot_problems(memory_corpus.load_corpus())
     assert any("outside" in problem for problem in problems)
-
-
-def test_document_preregisters_exactly_the_selected_cases() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    selected = {case.case_id for case in _subset()}
-    listed = {case_id for case_id in _all_case_ids() if case_id in text}
-    assert listed == selected
-
-
-def test_document_records_protocol_arms_and_verdicts() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert memory_corpus.PILOT_PROTOCOL in text
-    for arm in memory_corpus.PILOT_ARMS:
-        assert arm in text, arm
-    for verdict in memory_corpus.PILOT_VERDICTS:
-        assert verdict in text, verdict
-
-
-def test_document_records_the_authorization_gate() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert memory_contract.AUTHORIZATION in text

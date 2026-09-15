@@ -12,13 +12,9 @@ import json
 from pathlib import Path
 
 from tangle import memory_authority as ma
-from tangle import memory_contract, memory_corpus
+from tangle import memory_contract
 
 _ROOT = Path(__file__).resolve().parents[1]
-_DOCUMENT = _ROOT / "research" / "agent-memory-uncertainty-authority-cases.md"
-_FROZEN_CORPUS_DIGEST = (
-    "sha256:43199538957715dc5abde49982e8b2bfe82f0ffa224a29e6a9f9c0bdf1de3d01"
-)
 
 
 def _cases() -> tuple[ma.AuthorityCase, ...]:
@@ -233,10 +229,6 @@ def test_decision_requires_a_positive_held_out_correctness_interval() -> None:
     assert ma._decision("incomplete", positive)[0] == "untested"
 
 
-def test_frozen_gold_corpus_is_untouched() -> None:
-    assert memory_corpus.corpus_digest(memory_corpus.load_corpus(_ROOT)) == _FROZEN_CORPUS_DIGEST
-
-
 def test_verify_reports_missing_artifact_or_passes() -> None:
     problems = ma.verify(_ROOT)
     artifact = _ROOT / ma.AUTHORITY_ARTIFACT
@@ -251,15 +243,6 @@ def test_cli_plan_dry_run_and_verify() -> None:
     assert ma.main(["dry-run"]) == 0
     assert ma.main([]) == 2
     assert ma.main(["bogus"]) == 2
-
-
-def test_document_matches_the_case_set() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert ma.AUTHORITY_PROTOCOL in text
-    for case in _cases():
-        assert case.case_id in text, case.case_id
-    for name in (*ma.SOURCE_CLASSES, *ma.BEHAVIORS, *ma.INJECTION_FORMS):
-        assert name in text, name
 
 
 def test_mutating_a_case_changes_the_digest(tmp_path: Path) -> None:

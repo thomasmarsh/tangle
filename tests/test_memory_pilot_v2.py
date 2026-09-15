@@ -18,7 +18,6 @@ import pytest
 from tangle import memory_contract, memory_corpus, memory_pilot, memory_scenario
 
 _ROOT = Path(__file__).resolve().parents[1]
-_DOCUMENT = _ROOT / "research" / "agent-memory-pilot-v2-preregistration.md"
 _PROFILE = _ROOT / ".pi" / "agents" / "memory-pilot-child.md"
 
 
@@ -459,23 +458,3 @@ def test_dry_run_passes_without_a_live_call() -> None:
     assert result["status"] == "complete"
     assert result["verdict"] == "proceed"
     assert result["sample_count"] == 72
-
-
-# --------------------------------------------------------------------------- #
-# Preregistration document
-# --------------------------------------------------------------------------- #
-
-
-def test_document_preregisters_protocol_subset_and_pins() -> None:
-    text = _DOCUMENT.read_text(encoding="utf-8")
-    assert memory_pilot.PILOT_V2_PROTOCOL in text
-    assert memory_pilot.PILOT_V2_MODEL in text
-    assert memory_pilot.PILOT_V2_REASONING_EFFORT in text
-    assert ".pi/agents/memory-pilot-child.md" in text
-    assert memory_contract.AUTHORIZATION in text
-    for arm in memory_pilot.PILOT_V2_ARMS:
-        assert arm in text, arm
-    selected = {case.case_id for case in memory_corpus.pilot_subset(_corpus())}
-    all_ids = {case.case_id for envelope in _corpus() for case in envelope.cases}
-    listed = {case_id for case_id in all_ids if case_id in text}
-    assert listed == selected
