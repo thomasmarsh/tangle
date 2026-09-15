@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 status: proposed
-updated: 2026-09-15T20:38:27Z
+updated: 2026-09-15T20:43:02Z
 summary: Separate research and benchmark evidence from the ordinary runtime.
-next: Freeze the benchmark corpus's live production-source inputs under research fixtures with provenance and a reproduction check.
+next: "[[tas-28fnsga4q31j77sk9xbvvzwwr3-freeze-the-memory-evaluation-corpus-s-live]]"
 ---
 
 Parent [[tas-10sn2b04x59bkd80j8h5hqp4tk-sequence-the-arch-md-section-7-replacement-in]].
@@ -39,6 +39,10 @@ so later slice refactoring no longer depends on the current source layout.
 
 # Scoping
 
-Needs finer-grained scoping: yes. Split into (a) reconciling with the existing
-dispatch-isolation owner and (b) freezing each fixture family with provenance
-and a reproduction check; each is independently acceptable.
+Decomposed into three direct children, one per independently acceptable
+outcome: reconcile the runtime-dispatch half with its existing owner, freeze the
+memory-evaluation corpus's live observable inputs, and freeze the token
+benchmark's installed-skill fixture inputs. Each fixture child owns its own
+provenance manifest and reproduction check, and the reconciliation child stays
+gated on
+[[tas-3h6n5kky4qzdryvkwe1rxg1hx6-isolate-benchmark-and-memory-evaluation]].
