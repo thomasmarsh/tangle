@@ -97,6 +97,11 @@ a lot of empirical feedback.
 - Rather than explaining everything to the agent up front, the
   agent should instead receive feedback from the tool as it works.
 
+- Hand-off is a pain point that tangle could help solve. Scouting
+  paths and file locations, design explorations, other aggregate
+  information could be added to the tangle vault and now we have
+  an indelible artifact that has a short id as a pointer.
+
 ## Annoyances
 
 - The tests run in parallel but are too expensive and hinder
