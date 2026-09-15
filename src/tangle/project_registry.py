@@ -138,6 +138,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     alias = operands[0]
     uid = operands[1]
     path = ""
+    path_supplied = False
     rest = operands[2:]
     position = 0
     while position < len(rest):
@@ -146,9 +147,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if position + 1 >= len(rest):
                 return _usage_error("--path requires a value")
             path = rest[position + 1]
+            path_supplied = True
             position += 2
         elif token.startswith(_PATH_FLAG + "="):
             path = token[len(_PATH_FLAG) + 1 :]
+            path_supplied = True
             position += 1
         else:
             return _usage_error(f"unexpected argument: {token}")
@@ -176,13 +179,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _conflict_error(alias, recorded, uid)
         entry = dict(existing)
     entry["uid"] = uid
-    entry["path"] = path
+    if path_supplied:
+        entry["path"] = path
+    else:
+        # An omitted ``--path`` keeps the stored location; only an explicit value
+        # (including an explicitly empty one) rewrites it.
+        entry.setdefault("path", "")
     projects[alias] = entry
     code = _write_projects(registry, projects)
     if code != 0:
         return code
+    recorded_path = entry["path"]
     print(field("alias", alias))
     print(field("project", uid))
-    print(field("path", path))
+    print(field("path", recorded_path))
     print(field("registry", os.path.abspath(registry)))
     return 0

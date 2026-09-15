@@ -2,7 +2,7 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T19:44:02Z
+updated: 2026-09-15T19:52:14Z
 summary: Implement full-census indexing and generated Markdown views.
 next: Implement durable cross-project external references and their unresolved state.
 ---
@@ -205,6 +205,17 @@ unavailable, unrelated aliases and unknown entry keys preserved, the top-level
 alias map normalized, `--path=PATH`, and extra operands or a valueless `--path`
 as usage errors. `tests/test_skill.py` adds `project` and `project register` to
 `_PUBLIC_VERBS`, so both verbs keep bounded help. No frozen file changed.
+
+Hardening follow-up: `.gitignore` now lists `.tangle/projects.json` beside the
+other local coordination state, so the registry really is excluded from Git as
+the verb help claims. An omitted `--path` on a re-registration preserves the
+stored location instead of clearing it, while an explicit empty value
+(`--path ""` or `--path=`) still clears it, and the success line reports the
+recorded path rather than the raw flag. `tests/test_project_registry.py` adds
+`test_re_register_without_path_preserves_the_stored_path`,
+`test_explicit_empty_path_clears_the_stored_path`,
+`test_a_non_dict_entry_exits_one_and_is_never_clobbered`, and
+`test_register_creates_an_absent_vault_directory`.
 
 # Frozen blocker
 

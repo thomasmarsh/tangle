@@ -103,6 +103,21 @@ def test_missing_registry_is_created(tmp_path: Path, run_tangle: RunTangle) -> N
     assert _registry(vault) == {"projects": {"hekate": {"uid": _PROJECT_UID, "path": ""}}}
 
 
+def test_register_creates_an_absent_vault_directory(
+    tmp_path: Path, run_tangle: RunTangle
+) -> None:
+    """A registration publishes the registry even when the vault has no directory yet."""
+    vault = tmp_path / "nodes"
+    assert not vault.exists()
+
+    result = run_tangle(
+        "project", "register", "hekate", _PROJECT_UID, env=_env(tmp_path, vault)
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (vault / "projects.json").is_file()
+    assert _registry(vault) == {"projects": {"hekate": {"uid": _PROJECT_UID, "path": ""}}}
+
+
 def test_same_alias_and_uid_updates_the_path(tmp_path: Path, run_tangle: RunTangle) -> None:
     """Re-registering a bound alias with the same UID rewrites only its path."""
     vault = tmp_path / "nodes"
@@ -119,6 +134,49 @@ def test_same_alias_and_uid_updates_the_path(tmp_path: Path, run_tangle: RunTang
     )
     assert updated.returncode == 0, updated.stdout + updated.stderr
     assert _registry(vault) == {"projects": {"hekate": {"uid": _PROJECT_UID, "path": "new"}}}
+
+
+def test_re_register_without_path_preserves_the_stored_path(
+    tmp_path: Path, run_tangle: RunTangle
+) -> None:
+    """An omitted ``--path`` keeps the stored location instead of clearing it."""
+    vault = tmp_path / "nodes"
+    vault.mkdir()
+    env = _env(tmp_path, vault)
+    assert (
+        run_tangle(
+            "project", "register", "hekate", _PROJECT_UID, "--path", "somewhere", env=env
+        ).returncode
+        == 0
+    )
+
+    result = run_tangle("project", "register", "hekate", _PROJECT_UID, env=env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'path: "somewhere"' in result.stdout
+    assert _registry(vault) == {
+        "projects": {"hekate": {"uid": _PROJECT_UID, "path": "somewhere"}}
+    }
+
+
+def test_explicit_empty_path_clears_the_stored_path(
+    tmp_path: Path, run_tangle: RunTangle
+) -> None:
+    """An explicitly empty ``--path`` still clears the stored location."""
+    vault = tmp_path / "nodes"
+    vault.mkdir()
+    env = _env(tmp_path, vault)
+    assert (
+        run_tangle(
+            "project", "register", "hekate", _PROJECT_UID, "--path", "somewhere", env=env
+        ).returncode
+        == 0
+    )
+
+    result = run_tangle(
+        "project", "register", "hekate", _PROJECT_UID, "--path", "", env=env
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _registry(vault) == {"projects": {"hekate": {"uid": _PROJECT_UID, "path": ""}}}
 
 
 def test_same_alias_different_uid_conflicts_and_leaves_the_file(
@@ -157,6 +215,24 @@ def test_malformed_registry_exits_one_and_is_never_clobbered(
         "project", "register", "hekate", _PROJECT_UID, env=_env(tmp_path, vault)
     )
     assert result.returncode == 1, result.stdout + result.stderr
+    assert target.read_bytes() == before
+
+
+def test_a_non_dict_entry_exits_one_and_is_never_clobbered(
+    tmp_path: Path, run_tangle: RunTangle
+) -> None:
+    """A malformed entry for the alias being registered is never overwritten."""
+    vault = tmp_path / "nodes"
+    vault.mkdir()
+    target = vault / "projects.json"
+    _write_registry(vault, {"projects": {"hekate": "not-an-object"}})
+    before = target.read_bytes()
+
+    result = run_tangle(
+        "project", "register", "hekate", _PROJECT_UID, env=_env(tmp_path, vault)
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "hekate" in result.stdout
     assert target.read_bytes() == before
 
 

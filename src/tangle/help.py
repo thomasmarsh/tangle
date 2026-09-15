@@ -668,7 +668,7 @@ VERBS: dict[str, Verb] = {
         operands=(
             ("ALIAS", "lowercase letters, digits, or hyphens; starts with a letter"),
             ("UID", "the external project's immutable prj- UID"),
-            ("--path", "local vault location; default empty, so the view renders unavailable"),
+            ("--path", "local vault location; omitted keeps a stored path, empty clears it"),
         ),
         outputs=(
             ("alias", "the registered alias"),

@@ -1,7 +1,9 @@
-# The vault's portable id-reservation markers, generated navigation views, and
-# Obsidian workspace are local coordination state, not authoritative Markdown.
+# The vault's portable id-reservation markers, generated navigation views, the
+# external-project registry, and the Obsidian workspace are local coordination
+# state, not authoritative Markdown.
 .tangle/reservations/
 .tangle/views/
+.tangle/projects.json
 .tangle/.obsidian/
 .lavish/
 graph.sqlite3
