@@ -451,36 +451,53 @@ change handoff.
 ## Status-storage comparison
 
 `braintree benchmark storage` creates four disposable 100-node Git fixtures:
-the adopted status directories, stationary prefix-sharded files with an
+the legacy status directories, stationary prefix-sharded files with an
 authoritative `status` field, stationary files with symlink status views, and
 stationary files with one copied status index. `make storage-comparison` checks
-the deterministic baseline below; it measures the initial active query, a
-staged Git transition, concurrent transitions of two different nodes, and a
-deliberately removed view entry.
+the deterministic baseline below.
 
-| representation | staged transition / paths | active-query body reads | different-node merge conflicts | stale/broken view after injected omission | stable canonical editor path |
-|---|---|---:|---:|---:|---:|
-| directory authority | `R100` / 2 | 0 | 0 | 0 | no |
-| stationary metadata | `M` / 1 | 100 | 0 | 0 | yes |
-| symlink status view | `R100` / 2 | 0 | 0 | 1 | yes |
-| copied status index | `M` / 1 | 1 | 1 | 1 | yes |
+The rerun under the derived-index architecture adds the layout facts the
+earlier, pre-index comparison did not measure: whether a direct in-place point
+edit preserves identity, whether status authority survives loss of derived
+state, whether a basename wikilink still resolves after a status transition,
+whether a case-only rename is staged safely, and whether a symlink view is a
+second authority. A stable path and a `M` point edit are the same in every
+layout, so they confirm identity is layout-independent; the differentiators are
+the status transition, derived-state loss, and the symlink view.
 
-The stationary metadata layout buys a stable editor path, but moves status
-authority into every node and turns the bounded directory query into a scan of
-all canonical files. Symlinks preserve the fast view but add a second,
-independently breakable representation; the local test confirms Git recognizes
-the link move, not that the old view path remains valid. Symlink creation and
-checkout semantics also vary by filesystem and Git configuration, which is an
-unnecessary portability constraint for this file-only skill. The copied index
-is fast only by adding a mandatory cache; its one-line concurrent updates
-conflict in the fixture and an omitted entry silently hides a node.
+| representation | status transition / paths | point edit / paths | active-query body reads | different-node merge conflicts | stale/broken view after omission | stable path | status authority after derived-state loss | basename wikilink survives | case-only rename | symlink view |
+|---|---|---:|---:|---:|---:|---|---|---|---|---|
+| directory authority | `R100` / 2 | `M` / 1 | 0 | 0 | 0 | no | yes | yes | yes | no |
+| stationary metadata | `M` / 1 | `M` / 1 | 100 | 0 | 0 | yes | yes | yes | yes | no |
+| symlink status view | `R100` / 2 | `M` / 1 | 0 | 0 | 1 | yes | no | yes | yes | yes |
+| copied status index | `M` / 1 | `M` / 1 | 1 | 1 | 1 | yes | no | yes | yes | no |
 
-Keep authoritative status directories. Git reports a clean rename for an
-unchanged status transition, unrelated node transitions merge cleanly, status
-queries inspect directory entries without reading bodies, and there is no
-derived view to regenerate or validate. The known tradeoff is that an editor's
-old path changes on a status transition; basename wikilinks and Git rename
-tracking keep node identity stable.
+Select stationary canonical storage with an authoritative `status` field.
+Stationary storage keeps one editor path, turns both a status transition and a
+direct point edit into a single-path in-place edit, and leaves status authority
+in the canonical node, so it alone combines a stable path with recovery from
+derived-state loss. The 100 body reads for a status query are the pre-index
+scan: the derived index now answers those queries, and the full-census scaling
+benchmark is owned by TAS-204.
+
+Reject the alternatives. Legacy directory authority remains readable during the
+compatibility window but is not used for new nodes: a status transition is a
+path rename, so receipts and external locators churn, and only basename
+wikilinks plus Git rename tracking keep identity legible. Symlink views add a
+second, independently breakable representation; losing a link loses the active
+set even though every node's bytes survive, and link creation and checkout
+semantics vary by filesystem and Git configuration. A symlink backend may
+return only as a disposable view, never as correctness or acceptance. The
+copied index is fast only by adding a mandatory cache whose one-line concurrent
+updates conflict in the fixture and whose omitted entry silently hides a node.
+
+Rollback evidence: deleting derived state re-derives the active set from
+canonical Markdown for both the stationary and directory layouts
+(`sidecar_recover`), and `braintree stationarize` retires legacy nodes one-way
+with a collision check, a byte-for-byte rollback on a failed apply, preserved
+basenames and wikilinks, and an intermediate path for a case-only rename. The
+compatibility reader keeps the committed identity and basename unchanged, so a
+revert to the legacy layout is a Git-detectable rename rather than a rewrite.
 
 ## Remaining tradeoffs
 

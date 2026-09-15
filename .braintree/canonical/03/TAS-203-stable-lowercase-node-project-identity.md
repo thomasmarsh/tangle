@@ -2,9 +2,9 @@
 status: active
 context_rev: 3
 priority: P0
-updated: 2026-09-14T23:48:38Z
+updated: 2026-09-15T00:01:37Z
 summary: Implement stable lowercase node and project identity.
-next: Record the stationary-storage benchmark evidence for the derived-index architecture.
+next: Reconcile the skill contract text and references with the stationary canonical store and compatibility window.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -91,10 +91,30 @@ moved into `canonical/<suffix>/` with an authoritative `status` field, and
 storage-layout assumptions, so added `store.find_by_name` and routed the
 memory-harness observable resolver, the corpus citation check, and the
 authority path check through it, and made the live-vault skill tests and the
-`index-map.md` recipes derive from the authoritative status field instead of a
+`indexmap.md` recipes derive from the authoritative status field instead of a
 status-directory glob. `ruff`, `mypy`, the install and worktree shell suites,
 and `uv run pytest` pass except the same pre-existing `test_memory_authority`
 frozen-artifact failure. Remaining: record the stationary-storage benchmark
 evidence, and reconcile the skill contract text, which still describes status
 directories as the only layout now that writers and this vault use the
 stationary store.
+
+Recorded the derived-index storage comparison: `storage_comparison.py` now also
+measures a direct in-place point edit, status-authority survival after
+derived-state loss, basename-wikilink stability across a status transition,
+case-only rename staging, and whether a symlink view is a second authority,
+alongside the existing transition, query, conflict, stale-view, and stable-path
+columns. The rerun shows a stable path and an `M`/1 point edit in every layout
+(identity is layout-independent); stationary is the only layout that combines a
+stable path with status authority that survives derived-state loss, directory
+authority pays a rename for every status transition, and the symlink and copied
+index layouts lose the active set when their derived view or cache is removed.
+Updated `benchmark/storage-comparison-baseline.txt`, rewrote the BENCHMARK.md
+section to select stationary canonical storage and reject the directory,
+symlink-view, and copied-index alternatives with derived-state-loss recovery,
+one-way collision-checked migration, and byte-for-byte apply rollback as the
+rollback evidence, and added the case-only-rename contract test. `braintree
+benchmark storage --verify`, `ruff`, `mypy`, and `braintree check` (251 nodes)
+pass; `make test` passes 815 with the same pre-existing `test_memory_authority`
+frozen-artifact failure. Remaining: reconcile the skill contract text and
+references, which still present status directories as the only layout.
