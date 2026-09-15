@@ -13,6 +13,7 @@ from __future__ import annotations
 import io
 import re
 import subprocess
+from collections.abc import Callable
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -1148,21 +1149,140 @@ _PRIVATE_STATE_PROBE = (
     "untracked external database; run `tangle init` before coordinated work."
 )
 
-# Falsification probe for the private-state guard: a surface that still names
-# the database engine, the internal component, or the manual init step must be
-# rejected, so this guard is not vacuously true.
+# Falsification probes: each guard is re-run against the pre-change prose it
+# must reject, so a guard that silently stops detecting its tokens fails here
+# instead of passing vacuously. One case per guard keeps its failure named.
+_FALSIFICATION_PROBES: dict[
+    str, tuple[Callable[[str, tuple[str, ...]], None], str, tuple[str, ...]]
+] = {
+    "_PRIVATE_STATE_ABSENT": (_assert_absent, _PRIVATE_STATE_PROBE, _PRIVATE_STATE_ABSENT),
+    "_ALLOCATION_BURN_RULE": (
+        _assert_contains,
+        _ALLOCATION_BURN_SIGNAL_ONLY,
+        _ALLOCATION_BURN_RULE,
+    ),
+    "_PREMISE_CORRECTION_RULE": (
+        _assert_contains,
+        _PREMISE_CORRECTION_PROBE_STEP_ONLY,
+        _PREMISE_CORRECTION_RULE,
+    ),
+    "_NEXT_ACTION_NO_WIKILINK_RULE": (
+        _assert_contains,
+        _NEXT_ACTION_NO_WIKILINK_PROBE,
+        _NEXT_ACTION_NO_WIKILINK_RULE,
+    ),
+    "_ANCHORED_DEPENDENCY_SEARCH_RULE": (
+        _assert_contains,
+        _ANCHORED_DEPENDENCY_SEARCH_PROBE,
+        _ANCHORED_DEPENDENCY_SEARCH_RULE,
+    ),
+    "_WRITE_SET_CLOSURE_RULE": (
+        _assert_contains,
+        _WRITE_SET_CLOSURE_PRE_CHANGE,
+        _WRITE_SET_CLOSURE_RULE,
+    ),
+    "_RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE": (
+        _assert_contains,
+        _WRITE_SET_CLOSURE_PRE_CHANGE,
+        _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE,
+    ),
+    "_TIMED_OUT_WORKER_RECOVERY_RULE": (
+        _assert_contains,
+        _TIMED_OUT_WORKER_RECOVERY_SIGNAL_ONLY,
+        _TIMED_OUT_WORKER_RECOVERY_RULE,
+    ),
+    "_HANDOFF_ARTIFACT_NAMING_RULE": (
+        _assert_contains,
+        _HANDOFF_ARTIFACT_NAMING_PROBE,
+        _HANDOFF_ARTIFACT_NAMING_RULE,
+    ),
+    "_PENDING_ADVANCE_REFERENCE_RULE": (
+        _assert_contains,
+        _PENDING_ADVANCE_PROBE_STALE_ROUTE_PARAGRAPH,
+        _PENDING_ADVANCE_REFERENCE_RULE,
+    ),
+    "_SESSION_SLICE_RULE": (
+        _assert_contains,
+        _SESSION_SLICE_PROBE_SESSION_SPAN_ONLY,
+        _SESSION_SLICE_RULE,
+    ),
+    "_PRE_DISPATCH_BOUNDARY_RULE": (
+        _assert_contains,
+        _PRE_DISPATCH_BOUNDARY_PROBE,
+        _PRE_DISPATCH_BOUNDARY_RULE,
+    ),
+    "_MIGRATION_MILESTONE_RULE": (
+        _assert_contains,
+        _MIGRATION_MILESTONE_PROBE,
+        _MIGRATION_MILESTONE_RULE,
+    ),
+    "_RECONNAISSANCE_REFERENCE_RULE": (
+        _assert_contains,
+        _RECONNAISSANCE_REFERENCE_PROBE,
+        _RECONNAISSANCE_REFERENCE_RULE,
+    ),
+    "_MANIFEST_SCHEMA_RULE": (
+        _assert_contains,
+        _MANIFEST_SCHEMA_PROBE,
+        _MANIFEST_SCHEMA_RULE,
+    ),
+    "_BRIEF_ACCEPTANCE_AND_SEAM_RULE": (
+        _assert_contains,
+        _BRIEF_ACCEPTANCE_AND_SEAM_PROBE,
+        _BRIEF_ACCEPTANCE_AND_SEAM_RULE,
+    ),
+    "_TRANSACTIONAL_DECOMPOSITION_RULE": (
+        _assert_contains,
+        _TRANSACTIONAL_DECOMPOSITION_PROBE,
+        _TRANSACTIONAL_DECOMPOSITION_RULE,
+    ),
+    "_BLOCKER_CLEARANCE_REVISION_RULE": (
+        _assert_contains,
+        _BLOCKER_CLEARANCE_PROBE_STATUS_MOVE_ONLY,
+        _BLOCKER_CLEARANCE_REVISION_RULE,
+    ),
+    "_DERIVED_ARTIFACT_REGENERATION_RULE": (
+        _assert_contains,
+        _DERIVED_ARTIFACT_REGENERATION_PROBE_SUPERSESSION_ONLY,
+        _DERIVED_ARTIFACT_REGENERATION_RULE,
+    ),
+    "_SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE": (
+        _assert_contains,
+        _SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY,
+        _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE,
+    ),
+    "_DEFINITION_COMPLETENESS_RULE": (
+        _assert_contains,
+        _DEFINITION_COMPLETENESS_DEFERRAL_ONLY,
+        _DEFINITION_COMPLETENESS_RULE,
+    ),
+    "_SUMMARY_LIMIT_RULE": (
+        _assert_contains,
+        _SUMMARY_LIMIT_PROBE_OVERRIDE_ONLY,
+        _SUMMARY_LIMIT_RULE,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("guard", "probe", "rule"),
+    _FALSIFICATION_PROBES.values(),
+    ids=_FALSIFICATION_PROBES.keys(),
+)
+def test_rule_guards_reject_their_pre_change_probes(
+    guard: Callable[[str, tuple[str, ...]], None],
+    probe: str,
+    rule: tuple[str, ...],
+) -> None:
+    """Every guard still rejects the pre-change prose its rule replaced."""
+    with pytest.raises(AssertionError):
+        guard(probe, rule)
 
 
 def test_local_state_is_not_a_client_concept() -> None:
     """No installed surface names the database engine or the internal component."""
     for path in (_SKILL, *sorted(_REFERENCES.glob("*.md"))):
         _assert_absent(_read(path), _PRIVATE_STATE_ABSENT)
-
-
-def test_private_state_guard_rejects_a_surface_that_names_it() -> None:
-    """Falsification probe: the guard must reject prose naming the local state."""
-    with pytest.raises(AssertionError):
-        _assert_absent(_PRIVATE_STATE_PROBE, _PRIVATE_STATE_ABSENT)
 
 
 def test_the_index_maintains_itself_and_index_is_repair_only() -> None:
@@ -1251,43 +1371,17 @@ def test_allocation_burn_and_visibility_are_stated() -> None:
     _assert_contains(_read(_SKILL), _ALLOCATION_BURN_CORE_RULE)
 
 
-def test_allocation_burn_guard_rejects_the_reservation_signal_alone() -> None:
-    """Falsification probe: the guard must reject a reservation with no burn rule."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_ALLOCATION_BURN_SIGNAL_ONLY, _ALLOCATION_BURN_RULE)
-
-
 def test_premise_correction_rule_is_stated() -> None:
     _assert_contains(_read(_SKILL), _PREMISE_CORRECTION_RULE)
-
-
-def test_premise_correction_guard_rejects_the_loop_step_alone() -> None:
-    """Falsification probe: the guard must reject a step with no correction rule."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_PREMISE_CORRECTION_PROBE_STEP_ONLY, _PREMISE_CORRECTION_RULE)
 
 
 def test_action_sentence_next_forbids_a_wikilink() -> None:
     _assert_contains(_read(_SKILL), _NEXT_ACTION_NO_WIKILINK_RULE)
 
 
-def test_no_wikilink_guard_rejects_the_pre_change_accepted_forms() -> None:
-    """Falsification probe: the guard must reject the accepted-forms sentence."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_NEXT_ACTION_NO_WIKILINK_PROBE, _NEXT_ACTION_NO_WIKILINK_RULE)
-
-
 def test_dependency_search_recipes_are_line_anchored() -> None:
     surface = _reference("dependencies") + _reference("coordination")
     _assert_contains(surface, _ANCHORED_DEPENDENCY_SEARCH_RULE)
-
-
-def test_anchored_recipe_guard_rejects_the_unanchored_command() -> None:
-    """Falsification probe: the guard must reject an unanchored `-F` recipe."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _ANCHORED_DEPENDENCY_SEARCH_PROBE, _ANCHORED_DEPENDENCY_SEARCH_RULE
-        )
 
 
 def test_updated_ahead_of_the_host_clock_is_clamped() -> None:
@@ -1310,25 +1404,10 @@ def test_write_set_is_the_change_closure() -> None:
     _assert_contains(_reference("coordination"), _WRITE_SET_CLOSURE_RULE)
 
 
-def test_write_set_closure_guard_rejects_the_pre_change_enumeration() -> None:
-    """Falsification probe: the guard must reject the pre-change closure."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_WRITE_SET_CLOSURE_PRE_CHANGE, _WRITE_SET_CLOSURE_RULE)
-
-
 def test_closure_takes_precedence_at_a_resolved_sibling_seam() -> None:
     _assert_contains(
         _reference("coordination"), _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE
     )
-
-
-def test_resolved_sibling_closure_guard_rejects_escalation_only_text() -> None:
-    """Falsification probe: the guard must reject escalation-only closure text."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _WRITE_SET_CLOSURE_PRE_CHANGE,
-            _RESOLVED_SIBLING_CLOSURE_PRECEDENCE_RULE,
-        )
 
 
 def test_completion_receipt_is_the_trusted_signal() -> None:
@@ -1337,14 +1416,6 @@ def test_completion_receipt_is_the_trusted_signal() -> None:
 
 def test_timed_out_worker_recovery_procedure_is_stated() -> None:
     _assert_contains(_reference("coordination"), _TIMED_OUT_WORKER_RECOVERY_RULE)
-
-
-def test_timed_out_worker_recovery_guard_rejects_the_timeout_signal_alone() -> None:
-    """Falsification probe: the guard must reject a timeout signal with no procedure."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _TIMED_OUT_WORKER_RECOVERY_SIGNAL_ONLY, _TIMED_OUT_WORKER_RECOVERY_RULE
-        )
 
 
 def test_localized_red_timeout_repair_is_stated() -> None:
@@ -1367,26 +1438,9 @@ def test_handoff_names_a_referenced_artifact() -> None:
     _assert_contains(_reference("coordination"), _HANDOFF_ARTIFACT_NAMING_RULE)
 
 
-def test_artifact_naming_guard_rejects_the_handoff_protocol_alone() -> None:
-    """Falsification probe: the guard must reject a handoff protocol with no rule."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _HANDOFF_ARTIFACT_NAMING_PROBE, _HANDOFF_ARTIFACT_NAMING_RULE
-        )
-
-
 def test_pending_advance_transient_is_stated() -> None:
     _assert_contains(_read(_SKILL), _PENDING_ADVANCE_RULE)
     _assert_contains(_reference("coordination"), _PENDING_ADVANCE_REFERENCE_RULE)
-
-
-def test_pending_advance_guard_rejects_the_pre_change_stale_route_paragraph() -> None:
-    """Falsification probe: the guard must reject the pre-change paragraph."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _PENDING_ADVANCE_PROBE_STALE_ROUTE_PARAGRAPH,
-            _PENDING_ADVANCE_REFERENCE_RULE,
-        )
 
 
 def test_status_field_edit_is_staged_with_its_body_edit() -> None:
@@ -1397,22 +1451,8 @@ def test_session_slice_rule_is_stated() -> None:
     _assert_contains(_read(_SKILL), _SESSION_SLICE_RULE)
 
 
-def test_session_slice_guard_rejects_the_session_span_boundary_alone() -> None:
-    """Falsification probe: the guard must reject the session-span boundary alone."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _SESSION_SLICE_PROBE_SESSION_SPAN_ONLY, _SESSION_SLICE_RULE
-        )
-
-
 def test_pre_dispatch_boundary_evidence_is_stated() -> None:
     _assert_contains(_reference("authoring"), _PRE_DISPATCH_BOUNDARY_RULE)
-
-
-def test_pre_dispatch_boundary_guard_rejects_just_in_time_only_text() -> None:
-    """Falsification probe: the guard must reject the pre-change JIT-only text."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_PRE_DISPATCH_BOUNDARY_PROBE, _PRE_DISPATCH_BOUNDARY_RULE)
 
 
 def test_migration_milestone_rule_is_stated() -> None:
@@ -1420,70 +1460,25 @@ def test_migration_milestone_rule_is_stated() -> None:
     _assert_contains(_read(_SKILL), _MIGRATION_MILESTONE_RULE)
 
 
-def test_migration_milestone_guard_rejects_slice_only_text() -> None:
-    """Falsification probe: the guard must reject slice-only prose with no milestones."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_MIGRATION_MILESTONE_PROBE, _MIGRATION_MILESTONE_RULE)
-
-
 def test_opt_in_reconnaissance_reference_is_stated() -> None:
     _assert_contains(_reference("authoring"), _RECONNAISSANCE_REFERENCE_RULE)
-
-
-def test_reconnaissance_reference_guard_rejects_a_prose_mention() -> None:
-    """Falsification probe: a topic mention records no non-pinned shape."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _RECONNAISSANCE_REFERENCE_PROBE, _RECONNAISSANCE_REFERENCE_RULE
-        )
 
 
 def test_manifest_schema_is_stated() -> None:
     _assert_contains(_reference("authoring"), _MANIFEST_SCHEMA_RULE)
 
 
-def test_manifest_schema_guard_rejects_a_prose_mention() -> None:
-    """Falsification probe: a topic mention records no authored/derived split."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_MANIFEST_SCHEMA_PROBE, _MANIFEST_SCHEMA_RULE)
-
-
 def test_brief_names_the_pending_advance_acceptance_and_symbol_seams() -> None:
     _assert_contains(_reference("coordination"), _BRIEF_ACCEPTANCE_AND_SEAM_RULE)
-
-
-def test_brief_acceptance_guard_rejects_the_protocol_alone() -> None:
-    """Falsification probe: a protocol-only paragraph records no rule."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _BRIEF_ACCEPTANCE_AND_SEAM_PROBE, _BRIEF_ACCEPTANCE_AND_SEAM_RULE
-        )
 
 
 def test_transactional_decomposition_is_stated() -> None:
     _assert_contains(_reference("authoring"), _TRANSACTIONAL_DECOMPOSITION_RULE)
 
 
-def test_decomposition_guard_rejects_a_command_mention() -> None:
-    """Falsification probe: a command mention records no transactional rule."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _TRANSACTIONAL_DECOMPOSITION_PROBE, _TRANSACTIONAL_DECOMPOSITION_RULE
-        )
-
-
 def test_clearing_a_blocker_is_not_a_context_rev_bump() -> None:
     surface = _read(_SKILL) + _reference("dependencies")
     _assert_contains(surface, _BLOCKER_CLEARANCE_REVISION_RULE)
-
-
-def test_blocker_clearance_guard_rejects_the_status_move_rule_alone() -> None:
-    """Falsification probe: the guard must reject the status-move rule alone."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _BLOCKER_CLEARANCE_PROBE_STATUS_MOVE_ONLY,
-            _BLOCKER_CLEARANCE_REVISION_RULE,
-        )
 
 
 def test_readme_keeps_the_durable_outcome_boundary() -> None:
@@ -1517,15 +1512,6 @@ def test_derived_artifact_regeneration_names_its_owner() -> None:
     _assert_contains(_reference("dependencies"), _DERIVED_ARTIFACT_REGENERATION_RULE)
 
 
-def test_derived_artifact_regeneration_guard_rejects_the_supersession_alone() -> None:
-    """Falsification probe: the guard must reject supersession with no rule."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _DERIVED_ARTIFACT_REGENERATION_PROBE_SUPERSESSION_ONLY,
-            _DERIVED_ARTIFACT_REGENERATION_RULE,
-        )
-
-
 def test_negative_assertion_names_its_probe_tokens_and_modules() -> None:
     _assert_contains(_reference("authoring"), _NEGATIVE_ASSERTION_RULE)
 
@@ -1542,35 +1528,12 @@ def test_single_session_feedback_node_is_coordinator_owned() -> None:
     _assert_contains(_reference("authoring"), _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE)
 
 
-def test_single_session_feedback_ownership_guard_rejects_the_intro_alone() -> None:
-    """Falsification probe: the guard must reject an intro with no owner."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY,
-            _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE,
-        )
-
-
 def test_definition_covers_each_consumer_visible_shape_or_names_a_successor() -> None:
     _assert_contains(_reference("authoring"), _DEFINITION_COMPLETENESS_RULE)
 
 
-def test_completeness_guard_rejects_the_settled_definition_sentence_alone() -> None:
-    """Falsification probe: the guard must reject the settled/unsettled sentence."""
-    with pytest.raises(AssertionError):
-        _assert_contains(
-            _DEFINITION_COMPLETENESS_DEFERRAL_ONLY, _DEFINITION_COMPLETENESS_RULE
-        )
-
-
 def test_capture_summary_limit_is_documented() -> None:
     _assert_contains(_reference("authoring"), _SUMMARY_LIMIT_RULE)
-
-
-def test_summary_limit_guard_rejects_the_override_only_bullets() -> None:
-    """Falsification probe: the guard must reject the override-only bullets."""
-    with pytest.raises(AssertionError):
-        _assert_contains(_SUMMARY_LIMIT_PROBE_OVERRIDE_ONLY, _SUMMARY_LIMIT_RULE)
 
 
 def test_reference_topics_are_canonical() -> None:
