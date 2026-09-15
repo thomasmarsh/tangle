@@ -1,7 +1,7 @@
 # Tangle
 
 <p align="center">
-  <img src="assets/tangle.jpg" alt="A brain growing into a tree, with branching roots and smaller brains among the leaves" width="100%">
+  <img src="docs/assets/tangle.jpg" alt="A brain growing into a tree, with branching roots and smaller brains among the leaves" width="100%">
 </p>
 
 Tangle keeps execution memory in a repository-local Markdown graph. Tasks,
@@ -50,7 +50,7 @@ or `Area` link that reaches a root hub. Relationships are stored in one directio
 backlinks and inverse views are derived by search.
 
 <p align="center">
-  <img src="assets/obsidian-graph.png" alt="This repository's .tangle vault visualized in Obsidian Graph view" width="100%">
+  <img src="docs/assets/obsidian-graph.png" alt="This repository's .tangle vault visualized in Obsidian Graph view" width="100%">
   <br>
   <em>This repository's own <code>.tangle/</code> vault visualized in Obsidian Graph view.</em>
 </p>
