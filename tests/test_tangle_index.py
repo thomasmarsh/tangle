@@ -553,14 +553,14 @@ def test_next_and_orient_report_the_same_frontier_candidates(
     assert {row[0] for row in oriented} == expected
 
 
-def test_frontier_matches_markdown_on_live_vault(run_tangle: RunTangle) -> None:
+def test_frontier_matches_markdown_on_live_vault(
+    tmp_path: Path, run_tangle: RunTangle
+) -> None:
     """The frontier verb agrees with the Markdown recipe on the shipped vault."""
     nodes = _ROOT / ".tangle"
-    env = {
-        "TANGLE_NODES_DIR": str(nodes),
-        "TANGLE_SIDECAR_DIR": None,
-        "TANGLE_PROJECT_ID": None,
-    }
+    # A temporary sidecar keeps the live-vault query from reconciling this
+    # machine's real database or republishing the shipped vault's views.
+    env = _env(tmp_path, nodes)
     expected = _markdown_frontier_ids(nodes)
     result = run_tangle("frontier", cwd=_ROOT, env=env)
     assert result.returncode == 0

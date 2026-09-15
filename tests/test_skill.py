@@ -11,6 +11,7 @@ each topic loads as its installed Markdown, every public verb answers
 from __future__ import annotations
 
 import io
+import os
 import re
 import subprocess
 from collections.abc import Callable
@@ -1577,10 +1578,20 @@ def _frontier_recipe() -> str:
     return match.group(1)
 
 
-def _run_frontier_recipe(root: Path) -> set[str]:
+def _run_frontier_recipe(root: Path, state: Path) -> set[str]:
+    """Run the index-map Frontier recipe with a temporary sidecar root.
+
+    ``state`` keeps the recipe's own upkeep off this machine's real sidecar and
+    out of the shipped vault's ``views`` directory, so the test still reads the
+    vault under ``root`` but writes no derived state.
+    """
+    env = os.environ.copy()
+    env["TANGLE_SIDECAR_DIR"] = str(state)
+    env["TANGLE_PROJECT_ID"] = "frontier-recipe-test"
     result = subprocess.run(
         ["sh", "-c", _frontier_recipe()],
         cwd=root,
+        env=env,
         capture_output=True,
         text=True,
         check=True,
@@ -1622,12 +1633,12 @@ def test_frontier_recipe_resolves_a_coordinating_next(tmp_path: Path) -> None:
         "---\ncontext_rev: 1\nupdated: 2026-01-01T00:00:00Z\nsummary: Old work.\n---\n",
     )
 
-    frontier = _run_frontier_recipe(tmp_path)
+    frontier = _run_frontier_recipe(tmp_path, tmp_path)
 
     assert frontier == {"TAS-102", "TAS-103"}
 
 
-def test_frontier_recipe_matches_the_live_vault() -> None:
+def test_frontier_recipe_matches_the_live_vault(tmp_path: Path) -> None:
     expected: set[str] = set()
     for entry in store.iter_node_paths(str(_NODES)):
         if entry.status not in {"proposed", "active", "blocked"}:
@@ -1640,7 +1651,7 @@ def test_frontier_recipe_matches_the_live_vault() -> None:
         match = _NODE_ID.match(path.name)
         assert match is not None
         expected.add(match.group(1))
-    assert _run_frontier_recipe(_ROOT) == expected
+    assert _run_frontier_recipe(_ROOT, tmp_path) == expected
 
 
 def test_decomposition_roll_up() -> None:

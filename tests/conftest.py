@@ -46,6 +46,21 @@ def deterministic_ids(monkeypatch: pytest.MonkeyPatch) -> None:
     vault_helpers.fixed_identity(monkeypatch)
 
 
+@pytest.fixture(autouse=True)
+def hermetic_sidecar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pin the derived sidecar to a per-test temporary root for every test.
+
+    The sidecar is derived, disposable coordination state. Without a pin the
+    default state root is the developer's real ``$XDG_STATE_HOME`` or
+    ``$HOME/.local/state``, so an in-process ``tangle`` call would reconcile
+    and rewrite that machine's real database and publish views for a temporary
+    vault. A test that needs an absent, explicit, or ambient sidecar overrides
+    these values with its own ``monkeypatch.setenv``.
+    """
+    monkeypatch.setenv("TANGLE_SIDECAR_DIR", str(tmp_path / "sidecar"))
+    monkeypatch.setenv("TANGLE_PROJECT_ID", "pytest-hermetic")
+
+
 @pytest.fixture
 def run_tangle() -> Callable[..., subprocess.CompletedProcess[str]]:
     """Run the Python ``tangle`` and capture its text output."""
