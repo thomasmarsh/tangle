@@ -107,12 +107,15 @@ Invoke the skill as `$tangle` in Codex, `/tangle` in Claude Code, or
 
 ## Everyday use
 
-Start or inspect a vault:
+Start or inspect a vault. `tangle packet` is the default entry point: it returns
+the one ready node with its route, dependencies, manifest files, and expected
+verification. Pass a node or initiative (`tangle packet TAS-101`) to scope the
+answer, and use `tangle frontier` when several initiatives are active and the
+global answer is ambiguous:
 
 ```sh
 tangle init
-tangle orient
-tangle frontier
+tangle packet
 tangle node TAS-101
 tangle impact DEF-auth-protocol
 ```

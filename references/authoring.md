@@ -26,6 +26,26 @@ one without, because an unversioned additive slice leaves a consumer unable to
 tell the two apart. Resolved knowledge remains current unless its sparse
 `disposition` says `deprecated` or `superseded`.
 
+A node's frontmatter carries:
+
+```yaml
+---
+context_rev: 3
+priority: P1
+updated: 2026-09-10T01:30:00Z
+summary: Reject expired authentication grants.
+next: Add the failing boundary test.
+```
+
+`priority` is optional, task-only `P0`-`P3`. `next` is required for
+proposed/active tasks, holds a blocked task's unblock action, and is omitted
+from resolved tasks. `disposition` is optional and sparse: `abandoned`,
+`deprecated`, or `superseded`, with the replacement link in the body.
+
+Resolving a frontier knowledge node (`THO`/`DEF`/`DEC`) is to answer the
+question and resolve it like any other frontier node; in the same change advance
+the coordinating parent's `next` to the next deliberate frontier child.
+
 Report graph lists in compact TOON, not JSON or narrative tables, with only the
 needed fields, for example
 `nodes{id,status,priority,context_rev}: TAS-101,active,P1,3 | DEF-auth,resolved,,7`.
@@ -41,12 +61,30 @@ directory operand or `TANGLE_NODES_DIR` overrides that. A legacy `nodes/` vault
 is renamed to `.tangle/` in place by `tangle migrate` or by the default
 resolver, leaving the Markdown bytes unchanged.
 
+A canonical basename is `<id>-<short-slug>.md`; a new `tas`/`tho`/`def`/`dec`/`idx`/`fbk` id
+is its lowercase type prefix plus 128 bits as 26 lowercase Crockford Base32
+characters, so the basename is the immutable identity. Store each relationship
+in one canonical direction — `Parent` on the child, `Area` on the assigned node,
+`Depends on` on the consumer, `Superseded by` on the obsolete node, `Indexes` on
+`index-map.md` — and derive the reverse views by search; never store reciprocal
+edges.
+
 ## Index contract
 
 `.tangle/index-map.md` holds intent and routing, not state: keep only a short
 `# Focus` list, durable `Indexes [[IDX-...]]` pointers, and tested query recipes.
 Never copy node status, priority, revision, timestamp, summary, or hub members
 into it. A focus pointer is advisory; validate its target before acting.
+
+An unfinished node that cannot reach a hub or a deliberate `# Focus` pointer is
+an orphan and a graph-integrity failure. Derive hub membership with an exact
+`Parent`/`Area` backlink search; never copy it into a hub or the index. To find
+the frontier, derive hub members and follow each coordinating node's `next`; the
+direct-answer verbs `tangle frontier`, `tangle next --rank`, and `tangle orient`
+return frontier candidates instead — every unfinished node with an action `next`
+— and a user-requested plan pre-creates its children as `proposed`, so a
+sequenced sibling carries its own action `next` and is reported beside the
+deliberate child.
 
 ## Decomposition and roll-up
 
@@ -66,7 +104,10 @@ A child states its outcome or decision, completion criterion, primary `Parent
 [[...]]` or `Area [[IDX-...]]` route, and executable `next`. Do not pre-create
 speculative trees, and never manufacture children to fit a session. A
 user-requested plan is also created up front: create its children as
-`proposed`, then resolve or dispose each as reality arrives.
+`proposed`, then resolve or dispose each as reality arrives. Agent boundaries,
+write-set boundaries, failed checks, mechanical cleanup, routine verification,
+and handoffs alone never qualify a boundary, and reassess one neither merely
+because a session ended, an agent changed, or the work size shifted.
 
 A direct child uses the current node as its primary route. A coordinating task
 states its outcome and `# Done when`; its `next` is one concrete frontier action
@@ -142,6 +183,9 @@ that is absent as `missing` rather than dropping or failing. `tangle check`
 validates only the relation's structure — the exact line form, its `# Context`
 placement, a knowledge-node target, no duplicate target, and the existing
 broken-link rule — and never judges whether the referenced context is useful.
+The on-demand commands `tangle similar --file PATH`, `tangle digest NODE`, and,
+when the optional semantic capability is installed, `tangle clusters`, are
+advisory support only, used after boundary evidence appears.
 
 ## Negative assertions
 
@@ -172,7 +216,10 @@ root hub, and stamps `context_rev` and `updated`. Because ids come from entropy,
 parallel writers never collide and need no shared sequence or preallocation.
 `--id` accepts only a canonical lowercase identity for a caller that must
 reproduce one; `tangle allocate` and `tangle reservations` remain only for
-a legacy numeric prefix during the compatibility window.
+a legacy numeric prefix during the compatibility window. A discarded
+`tangle allocate` burns its id permanently: there is no release or reclaim, and
+`tangle reservations` lists each prefix's reserved-but-unwritten ids. A local
+`find` is collision detection only.
 
 The caller supplies body fields required by the selected type and status. An
 unfinished `TAS` requires one `--next`; a resolved node omits it; a blocked node

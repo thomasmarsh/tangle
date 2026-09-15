@@ -28,6 +28,14 @@ consumer `proposed`, and never pin the gate. Replace it with a pinned
 blocker is the same status change with a `next` change, and its gate clears when
 the target resolves, not when the node returns to `proposed`.
 
+`blocked` and `proposed` are not interchangeable. Use `blocked` only for input
+or state that no node in this vault owns, including prerequisite plan text with
+no owning node, with a short `# Blocked` section and a concrete `next` when one
+exists. Use `proposed` for work that is ready to start but not yet at the
+frontier, including a child gated on a sibling decision: that decision is in the
+graph and will resolve there. Once a node owns the plan text, the same gate is a
+sibling dependency and the node is `proposed`.
+
 Use line-anchored searches so the reference's command text does not self-match:
 
 ```sh

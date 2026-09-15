@@ -2,9 +2,9 @@
 context_rev: 1
 priority: P1
 status: proposed
-updated: 2026-09-15T17:46:02Z
+updated: 2026-09-15T17:54:06Z
 summary: ASTRA.md feedback: decide and implement the confirmed gaps
-next: "[[tas-7y1wpfb0d1shhtq8qq5tfnyx7d-packet-default-entry-point-and-skill-shorten]]"
+next: "[[tho-1ykgy8r8nt3qhq07pzd6g8rhsn-does-the-one-session-admission-shortcut-need]]"
 ---
 
 Parent [[tho-52nkw2etfze2dm24j31bhg3v51-astra-md-architecture-review-recommendations-vs]].
