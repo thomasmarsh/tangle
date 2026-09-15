@@ -10,7 +10,7 @@ summary: State who advances a coordinating parent's `next` when the resolving wo
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-011` at `0.5.0+g974b178`, reproduced in
+Hekate `FBK-011` at `0.5.0+g974b178`, reproduced in
 [[THO-017-round-six-usage-feedback-analysis]]. A slice resolved its own node
 under a handoff whose write set explicitly excluded the coordinating parent, so
 after the resolution commit the parent's `next` still named the now-resolved

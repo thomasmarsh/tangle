@@ -10,8 +10,8 @@ summary: State who owns the single session FBK node so workers do not each creat
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-029` finding 3 at `0.6.0+g3bacaf5`: two workers independently created
-Tangle `FBK-027` and `FBK-028` before the coordinator recorded Tangle `FBK-029`,
+Hekate `FBK-029` finding 3 at `0.6.0+g3bacaf5`: two workers independently created
+Hekate `FBK-027` and `FBK-028` before the coordinator recorded Hekate `FBK-029`,
 so one orchestration session produced three feedback nodes against the
 consuming project's "one `FBK` node per session" rule. Neither `SKILL.md` nor
 `references/authoring.md` states who owns the session `FBK` or whether a worker
@@ -43,7 +43,7 @@ node", and the coordinator decides whether that report becomes the session `FBK`
 node, folds into one already recorded, or is disposed; "A worker creates an `FBK`
 node only when the coordinator explicitly grants it". The one-per-session rule is
 scoped explicitly to the orchestration session, not to each worker run, so the
-two workers that produced Tangle `FBK-027` and `FBK-028` before the coordinator
+two workers that produced Hekate `FBK-027` and `FBK-028` before the coordinator
 recorded `FBK-029` owe one report, not three nodes.
 
 `tests/test_skill.py` pins the rule as `_SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE`

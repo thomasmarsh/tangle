@@ -10,14 +10,14 @@ summary: Define the worker-side completion path and checker distinction for a re
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-017` and `FBK-023` finding 3 at `0.6.0+g3bacaf5`. Round six
+Hekate `FBK-017` and `FBK-023` finding 3 at `0.6.0+g3bacaf5`. Round six
 [[TAS-115-parent-next-advance-ownership]] already made `braintree check` report a
 stale route as `next-resolved-node` and stated that the coordinator owns the
 advance when the worker's write set excludes the parent. The unhandled residual
 is that the worker is left between a red gate and an out-of-write-set edit with
 no stated completion rule, the failure appears the moment the file moves (before
 any commit), and the checker cannot distinguish the normal multi-writer handoff
-transient from a genuine stale route. Tangle `FBK-023` finding 3 adds that the
+transient from a genuine stale route. Hekate `FBK-023` finding 3 adds that the
 parent-next advance should fold into the resolving worker's commit whenever the
 write set names the parent, to remove a coordinator round trip.
 
@@ -46,7 +46,7 @@ state from a genuine stale route.
 handoff section now state what a frontier-child worker commits and hands off.
 When the write set names the parent — or its `next` line — the advance folds into
 the child's resolution commit, so no committed state routes the parent to a
-resolved child and the coordinator pays no round trip for the advance (Tangle
+resolved child and the coordinator pays no round trip for the advance (Hekate
 `FBK-023` finding 3). When the write set excludes the parent, the child's
 resolution commit is the worker's completion: it names the parent and the
 resolved child, records the pending advance as its handoff action, never edits

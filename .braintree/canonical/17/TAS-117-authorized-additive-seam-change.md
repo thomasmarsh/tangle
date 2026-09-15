@@ -10,7 +10,7 @@ summary: State the bookkeeping when an assigned node's Done-when requires an add
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-014` at `0.5.0+g7b95875`, verified in
+Hekate `FBK-014` at `0.5.0+g7b95875`, verified in
 [[THO-017-round-six-usage-feedback-analysis]]. A slice whose own Done-when
 required recording a bank path and content hash in an already-landed
 `BatchManifest` that a resolved sibling node owned had no stated rule for

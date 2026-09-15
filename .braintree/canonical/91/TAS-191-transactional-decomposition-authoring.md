@@ -9,7 +9,7 @@ Parent [[TAS-189-usage-feedback-hardening-round-eleven]].
 
 # Context
 
-Tangle `FBK-032` finding 6 reports that deliberate decomposition requires one capture invocation per child followed by a second pass to advance each parent. [[TAS-165-batch-node-allocation]] removed the ID-reservation half but did not create routed children or update the parent. A failure between those writes can leave a half-built tree.
+Hekate `FBK-032` finding 6 reports that deliberate decomposition requires one capture invocation per child followed by a second pass to advance each parent. [[TAS-165-batch-node-allocation]] removed the ID-reservation half but did not create routed children or update the parent. A failure between those writes can leave a half-built tree.
 
 This node also owns the small authoring residuals from findings 2, 3, and 4 because they make the same decomposition and dispatch workflow safer but do not retain independent execution-memory value: acceptance should name `braintree check --allow-pending-advance PARENT` when the parent is outside the write set; a large-module seam should prefer `path (Symbol)`; the authoring reference should expose `--slug`; and the derived capture slug should not end in a word fragment.
 

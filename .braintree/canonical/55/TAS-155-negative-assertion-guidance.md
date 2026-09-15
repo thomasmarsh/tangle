@@ -10,7 +10,7 @@ summary: State that a checked-in source-text guard is acceptable when paired wit
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-026` finding 5 at `0.6.0+g3bacaf5`: two gates needed to prove the
+Hekate `FBK-026` finding 5 at `0.6.0+g3bacaf5`: two gates needed to prove the
 shared code gained no branch on a mode or scenario name, and the skill gives no
 guidance for proving the absence of a pattern. Both leaves used `include_str!`
 source-text guards, which are defeatable by string construction and need care to

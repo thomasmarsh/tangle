@@ -10,7 +10,7 @@ summary: State that the coordinator resolves a coordinating parent as a graph ac
 
 Parent [[TAS-099-usage-feedback-hardening-round-five]].
 
-Tangle `FBK-006` gap 1 at `0.5.0+gd1a4b82`: an orchestration harness ran a
+Hekate `FBK-006` gap 1 at `0.5.0+gd1a4b82`: an orchestration harness ran a
 worker "resolution slice" to close findings and resolve the parent, while
 `SKILL.md` says "the coordinator integrates child evidence, reconciles upstream
 change, and alone resolves a coordinating parent after all required child work

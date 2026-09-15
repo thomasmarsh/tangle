@@ -12,7 +12,7 @@ Parent [[TAS-081-usage-feedback-hardening-round-three]].
 
 N4: the checker scans raw node text, so a node that quotes the skill's own
 grammar in code font or a fenced block produces a spurious `broken link`
-finding. This is a recurrence of the round-two source `Tangle THO-008 F2`; the
+finding. This is a recurrence of the round-two source `Hekate THO-008 F2`; the
 current workaround is to never reproduce a link-shaped token in any node text.
 
 # Outcome

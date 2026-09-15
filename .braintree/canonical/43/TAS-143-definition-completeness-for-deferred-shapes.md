@@ -10,7 +10,7 @@ summary: Require a definition to cover, or name a successor for, every consumer-
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-021` at `0.6.0+g3bacaf5`: a resolved `DEF` (metric definition v2)
+Hekate `FBK-021` at `0.6.0+g3bacaf5`: a resolved `DEF` (metric definition v2)
 deliberately deferred a batch-level aggregation slice shape to the implementing
 task, so the implementing node invented two slice families, a
 zero-versus-not-observed rule, and a per-slice metric-key spelling with no
@@ -48,7 +48,7 @@ definition version — or the other signal a consumer reads — that distinguish
 consumer with the new shape from one without, because an unversioned additive
 slice leaves a consumer unable to tell the two apart. The rule rides the
 already-routed **authoring** topic on the surface an author reads before
-resolving a `DEF`, so the batch-level aggregation slice shape the Tangle had to
+resolving a `DEF`, so the batch-level aggregation slice shape the Hekate had to
 invent is either defined, routed to a named successor, or rejected at
 resolution, and the additive metric-key slice carries the version signal the
 `FBK-021` consumer needed.

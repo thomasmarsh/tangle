@@ -10,7 +10,7 @@ summary: A mismatched bt release fails loudly with a named cause and non-zero st
 
 Parent [[TAS-058-usage-feedback-hardening-round-two]].
 
-Feedback finding R4 from Tangle `THO-005-braintree-friction-kitty-spike` F2: releasing
+Feedback finding R4 from Hekate `THO-005-braintree-friction-kitty-spike` F2: releasing
 with the post-edit hash prints `result: "no-op"` and exits 0 while the lease
 stays held, so a worker can hand off with the claim still blocking others.
 

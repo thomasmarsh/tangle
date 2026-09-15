@@ -2,14 +2,14 @@
 status: resolved
 context_rev: 1
 updated: 2026-09-14T23:40:13Z
-summary: Round-four Tangle feedback disposes FBK-001 and FBK-002 as fixed and admits FBK-003 and FBK-004 plus one portfolio gap in one-command node capture.
+summary: Round-four Hekate feedback disposes FBK-001 and FBK-002 as fixed and admits FBK-003 and FBK-004 plus one portfolio gap in one-command node capture.
 ---
 
 # Question
 
 Area [[IDX-001-execution-graph]].
 
-`braintree feedback scan /Users/thomasmarsh/git/tangle` reports four proposed
+`braintree feedback scan /Users/thomasmarsh/git/hekate` reports four proposed
 feedback nodes after the round analyzed in
 [[THO-011-round-three-usage-feedback-analysis]]: `FBK-001` through `FBK-004`.
 `FBK-001` and `FBK-002` are the round-three findings N8 and N5, still open in

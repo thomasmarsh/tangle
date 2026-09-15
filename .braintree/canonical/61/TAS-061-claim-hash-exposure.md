@@ -10,7 +10,7 @@ summary: bt hash NODE prints the claim base hash, the SHA-256 of the node's raw 
 
 Parent [[TAS-058-usage-feedback-hardening-round-two]].
 
-Feedback finding R3 from Tangle `THO-005-braintree-friction-kitty-spike` F1:
+Feedback finding R3 from Hekate `THO-005-braintree-friction-kitty-spike` F1:
 `SKILL.md` requires hashing the starting node for `bt claim`, but names no
 algorithm, and no `bt` read command exposes a content hash, so a worker must
 read the Python or guess.

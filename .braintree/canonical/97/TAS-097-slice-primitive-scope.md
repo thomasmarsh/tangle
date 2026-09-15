@@ -10,7 +10,7 @@ summary: State whether a worker may author the minimal primitive or seam a slice
 
 Parent [[TAS-095-usage-feedback-hardening-round-four]].
 
-Tangle `FBK-003` at `0.5.0+g64359e6`: an assigned slice whose gate required an
+Hekate `FBK-003` at `0.5.0+g64359e6`: an assigned slice whose gate required an
 authored stop line and a spawn admission the compiled model did not provide,
 while the write set covered only two packages. Neither `SKILL.md` nor the node
 said whether a gate's needed primitive is in-scope authoring, a new node, or an

@@ -10,7 +10,7 @@ summary: State that a coordinator stamps the host clock at handoff so it does no
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-026` finding 4 at `0.6.0+g3bacaf5`: a coordinator stamped a parent
+Hekate `FBK-026` finding 4 at `0.6.0+g3bacaf5`: a coordinator stamped a parent
 `updated` ahead of the host clock on an early handoff; the worker clamp
 `max(now, previous updated)` preserved that future time, so every later edit in
 the session looked stale against the children's real times. `SKILL.md` stated

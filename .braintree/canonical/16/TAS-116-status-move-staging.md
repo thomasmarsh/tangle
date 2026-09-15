@@ -10,7 +10,7 @@ summary: State that a node's status move and its body edit are staged in one com
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-012` at `0.5.0+g7b95875` and its recurrence Tangle `FBK-013`, both
+Hekate `FBK-012` at `0.5.0+g7b95875` and its recurrence Hekate `FBK-013`, both
 verified in [[THO-017-round-six-usage-feedback-analysis]]. Resolving a node by
 editing the body, then `git mv`-ing it `nodes/active/` to `nodes/resolved/`,
 then committing recorded the rename with the OLD body:

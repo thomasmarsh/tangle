@@ -10,7 +10,7 @@ summary: State that a just-in-time slice under warnings-as-errors includes a liv
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-027` at `0.6.0+g3bacaf5`: a model-plus-profile-plus-card slice
+Hekate `FBK-027` at `0.6.0+g3bacaf5`: a model-plus-profile-plus-card slice
 decomposed to land before its spawn consumer fails
 `cargo clippy --workspace --all-targets -- -D warnings` on an unused trait method
 and unread profile fields, so an isolated controller with no live caller is not

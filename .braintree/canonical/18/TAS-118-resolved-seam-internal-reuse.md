@@ -10,7 +10,7 @@ summary: State the rule for internal, non-behavioral reuse of a resolved sibling
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-015` finding 1 at `0.6.0+g4c6cafb`, verified in
+Hekate `FBK-015` finding 1 at `0.6.0+g4c6cafb`, verified in
 [[THO-017-round-six-usage-feedback-analysis]]. A slice needed the metric-key
 mapping and interval arithmetic a resolved sibling owned and chose reuse by
 widening private items to `pub(crate)` rather than duplicating the seam. Every

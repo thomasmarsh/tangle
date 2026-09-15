@@ -10,7 +10,7 @@ summary: Fail or warn on an over-long summary, or truncate on a word boundary wi
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-025` finding 1 at `0.6.0+g3bacaf5`. Probe: `braintree node record`
+Hekate `FBK-025` finding 1 at `0.6.0+g3bacaf5`. Probe: `braintree node record`
 with a summary longer than 96 characters exited `0` and stored a summary cut
 mid-phrase (`...so that a truncation becomes`); `_SUMMARY_LIMIT = 96` in
 `node_record.py` applies `[:_SUMMARY_LIMIT]` silently, and `references/authoring.md`

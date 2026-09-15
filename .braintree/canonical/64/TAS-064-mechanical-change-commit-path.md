@@ -10,7 +10,7 @@ summary: Define a non-node commit path for mechanical changes so a one-line edit
 
 Parent [[TAS-058-usage-feedback-hardening-round-two]].
 
-Feedback finding R6 from Tangle `THO-007-braintree-friction-tui-session` F1: the
+Feedback finding R6 from Hekate `THO-007-braintree-friction-tui-session` F1: the
 node-admission rule rejects mechanical cleanup, while `AGENTS.md` rejects an
 untracked commit, so a one-line build-config change forces either node sprawl or
 a review-rejected commit.

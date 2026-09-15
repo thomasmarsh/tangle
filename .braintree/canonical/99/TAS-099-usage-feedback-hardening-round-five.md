@@ -3,15 +3,15 @@ status: resolved
 context_rev: 1
 priority: P2
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-five Tangle feedback findings in lease lifecycle visibility and the coordinator closeout and verification contract.
+summary: Fix or dispose the round-five Hekate feedback findings in lease lifecycle visibility and the coordinator closeout and verification contract.
 ---
 
 # Context
 
 Parent [[THO-014-round-five-usage-feedback-analysis]].
 
-Tangle `FBK-005` and `FBK-006` verified in the parent at `0.5.0`
-(`0.5.0+gd1a4b82`, re-checked at `ba362e3`). Tangle `FBK-001` through `FBK-004`
+Hekate `FBK-005` and `FBK-006` verified in the parent at `0.5.0`
+(`0.5.0+gd1a4b82`, re-checked at `ba362e3`). Hekate `FBK-001` through `FBK-004`
 are already fixed or admitted under
 [[TAS-095-usage-feedback-hardening-round-four]] and are not in scope here.
 
@@ -30,9 +30,9 @@ regression tests where behavior changes.
 
 # Children
 
-- [[TAS-100-lease-lifecycle-visibility]] — Tangle `FBK-005`.
-- [[TAS-101-resolution-ownership-clarity]] — Tangle `FBK-006` gap 1.
-- [[TAS-102-verification-evidence-contract]] — Tangle `FBK-006` gap 2.
+- [[TAS-100-lease-lifecycle-visibility]] — Hekate `FBK-005`.
+- [[TAS-101-resolution-ownership-clarity]] — Hekate `FBK-006` gap 1.
+- [[TAS-102-verification-evidence-contract]] — Hekate `FBK-006` gap 2.
 
 # Result
 

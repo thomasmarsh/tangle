@@ -3,15 +3,15 @@ status: resolved
 context_rev: 2
 priority: P2
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-ten Tangle FBK-031 findings.
+summary: Fix or dispose the round-ten Hekate FBK-031 findings.
 ---
 
 Parent [[THO-027-round-ten-usage-feedback-analysis]].
 
 # Context
 
-Tangle `FBK-031` verified in the parent at `0.6.0+g169bad5`. Findings 4, 5, and 6
-are project-local Tangle defects and are disposed. The remaining five are
+Hekate `FBK-031` verified in the parent at `0.6.0+g169bad5`. Findings 4, 5, and 6
+are project-local Hekate defects and are disposed. The remaining five are
 contract-clarity or checker-lint changes.
 
 A post-admission boundary review retains five leaves. TAS-181 governs whether a
@@ -48,11 +48,11 @@ tests wherever a documented surface changes.
 
 # Children
 
-- [[TAS-181-closure-names-resolved-sibling-seams]] - Tangle `FBK-031` finding 1.
-- [[TAS-184-brief-names-mixed-capability-case]] - Tangle `FBK-031` finding 7.
-- [[TAS-182-worker-host-clock-stamp]] - Tangle `FBK-031` finding 2.
-- [[TAS-183-localized-red-timeout-repair]] - Tangle `FBK-031` finding 3.
-- [[TAS-185-check-gate-placement]] - Tangle `FBK-031` finding 8.
+- [[TAS-181-closure-names-resolved-sibling-seams]] - Hekate `FBK-031` finding 1.
+- [[TAS-184-brief-names-mixed-capability-case]] - Hekate `FBK-031` finding 7.
+- [[TAS-182-worker-host-clock-stamp]] - Hekate `FBK-031` finding 2.
+- [[TAS-183-localized-red-timeout-repair]] - Hekate `FBK-031` finding 3.
+- [[TAS-185-check-gate-placement]] - Hekate `FBK-031` finding 8.
 
 # Result
 

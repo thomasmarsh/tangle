@@ -10,7 +10,7 @@ summary: State the default lease duration and renew-on-reclaim rule, show remain
 
 Parent [[TAS-099-usage-feedback-hardening-round-five]].
 
-Tangle `FBK-005` at `0.5.0+gd1a4b82`. Reproduced in
+Hekate `FBK-005` at `0.5.0+gd1a4b82`. Reproduced in
 [[THO-014-round-five-usage-feedback-analysis]] with the probe vault `/tmp/bt-r5`
 and an isolated sidecar:
 

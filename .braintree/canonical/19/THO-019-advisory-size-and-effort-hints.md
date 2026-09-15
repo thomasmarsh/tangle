@@ -33,7 +33,7 @@ amount of code, and [[THO-015-how-should-braintree-correct-task-granularity-wi]]
 concludes boundary reassessment is evidence-triggered rather than a per-node
 sizing ritual. A hint must not recreate that ritual.
 
-Field evidence for a sizing signal is Tangle `FBK-023`: a prescribed slice plan
+Field evidence for a sizing signal is Hekate `FBK-023`: a prescribed slice plan
 bundled several independently verifiable deliverables per letter, each ran 20-48
 minutes, and the user flagged the slices as excessively large, so the coordinator
 had to split them by hand. The delegation direction has no feedback yet, only the
@@ -80,7 +80,7 @@ bullet count is not a size proxy in either direction: across this vault,
 coordinating nodes with comparable child counts range from 0 to 11 Done-when
 bullets (TAS-121, 9 children / 5 bullets; TAS-037, 5 children / 0 bullets;
 TAS-111, 8 children / 10 bullets), and a leaf task such as this node carries no
-`# Done when` at all. The motivating case is decisive: in Tangle Increment 6 the
+`# Done when` at all. The motivating case is decisive: in Hekate Increment 6 the
 two children the user flagged as excessively large (TAS-048 and TAS-049 under
 TAS-045) carried 7 and 5 Done-when bullets while the accepted slices carried 7,
 6, and 4 — the count did not separate them. Done-when measures acceptance
@@ -111,7 +111,7 @@ the task's real difficulty changes during execution, and a wrong coarse token is
 worse than the full node body (Outcome, Done when, Context, dependencies) the
 coordinator already reads.
 
-**Why the cited field evidence does not adopt the hint.** Tangle `FBK-023`
+**Why the cited field evidence does not adopt the hint.** Hekate `FBK-023`
 finding 1 records prescribed *slice nodes* (TAS-046 through TAS-050 under TAS-045)
 that bundled several independently verifiable deliverables each. But the
 coordinator that prescribed each slice authored both its deliverable/`# Done
@@ -140,7 +140,7 @@ context.
 
 Rejected — no advisory `size:` or capability/effort field is admitted, and no
 implementation follow-on node is warranted: the decision produces no independent
-outcome to resume, and the routed evidence (Tangle `FBK-023` finding 1) is already
+outcome to resume, and the routed evidence (Hekate `FBK-023` finding 1) is already
 governed by the landed durable-outcome boundary. This answers the routing in
 [[THO-021-round-seven-usage-feedback-analysis]] as "no hardening leaf." The node
 resolves to `resolved` with `context_rev` unchanged; it has no pinned consumer.

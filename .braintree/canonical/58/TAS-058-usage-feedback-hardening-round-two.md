@@ -3,7 +3,7 @@ status: resolved
 context_rev: 1
 priority: P1
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the six confirmed round-two Tangle usage-feedback findings across the skill contract, graph-check, and bt.
+summary: Fix or dispose the six confirmed round-two Hekate usage-feedback findings across the skill contract, graph-check, and bt.
 ---
 
 # Context

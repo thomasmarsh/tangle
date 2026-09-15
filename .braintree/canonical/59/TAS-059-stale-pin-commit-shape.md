@@ -10,7 +10,7 @@ summary: A context_rev bump commits the bumped node alone under the documented s
 
 Parent [[TAS-058-usage-feedback-hardening-round-two]].
 
-Feedback finding R1 from Tangle `THO-004-terminal-survey-braintree-friction` F1: a
+Feedback finding R1 from Hekate `THO-004-terminal-survey-braintree-friction` F1: a
 semantic `context_rev` bump makes pinned consumers stale, but `graph-check nodes`
 treats any mismatch as a hard error, and the repo mandates a green checker
 before commit and handoff.

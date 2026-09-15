@@ -3,7 +3,7 @@ status: resolved
 context_rev: 1
 priority: P2
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-four Tangle feedback findings and close the one admitted portfolio gap in the node-capture path.
+summary: Fix or dispose the round-four Hekate feedback findings and close the one admitted portfolio gap in the node-capture path.
 ---
 
 # Context

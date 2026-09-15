@@ -10,7 +10,7 @@ summary: Run the installed braintree command from the shared program's prepared 
 
 Parent [[THO-025-round-nine-usage-feedback-analysis]].
 
-Tangle `FBK-030` at `0.6.0+g169bad5`: the generated `<root>/.local/bin/braintree`
+Hekate `FBK-030` at `0.6.0+g169bad5`: the generated `<root>/.local/bin/braintree`
 shim runs `uv run --project <program> --frozen braintree`, and `uv run`
 initializes a writable cache before dispatching. In a sandbox that denies
 `~/.cache/uv`, even `braintree help authoring` fails before rendering, so a

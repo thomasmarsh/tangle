@@ -10,7 +10,7 @@ summary: Make a worker's completion signal explicit, so a report-time timeout is
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-010` at `0.5.0+g974b178`, verified in
+Hekate `FBK-010` at `0.5.0+g974b178`, verified in
 [[THO-017-round-six-usage-feedback-analysis]]. A slice worker ran the full
 1800000 ms budget and the run was reported failed with "Subagent timed out
 after 1800000ms", but the worker had already committed its slice, refreshed the

@@ -10,7 +10,7 @@ Parent [[TAS-180-usage-feedback-hardening-round-ten]].
 
 # Context
 
-Tangle `FBK-031` finding 2 at `0.6.0+g169bad5`, a recurrence of Tangle `FBK-026`
+Hekate `FBK-031` finding 2 at `0.6.0+g169bad5`, a recurrence of Hekate `FBK-026`
 finding 4 and the third session to record it. Round eight
 [[TAS-154-coordinator-clock-stamping]] repinned `SKILL.md` to "A coordinator
 stamps the host clock at handoff — the real host clock time, not a rounded or

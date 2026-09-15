@@ -10,7 +10,7 @@ summary: graph-check reports a pinned dependency that is not resolved, and the s
 
 Parent [[TAS-058-usage-feedback-hardening-round-two]].
 
-Feedback finding R5 from Tangle `THO-006-braintree-friction-shared-render-layer` F1:
+Feedback finding R5 from Hekate `THO-006-braintree-friction-shared-render-layer` F1:
 the loop says to confirm a pinned dependency is resolved, but
 `graph-check` and `bt stale` both pass a pin whose target is still `proposed`,
 and the skill never states when a `DEF`/`DEC` becomes resolved.

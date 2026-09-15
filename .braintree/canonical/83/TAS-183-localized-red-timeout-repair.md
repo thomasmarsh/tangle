@@ -10,7 +10,7 @@ Parent [[TAS-180-usage-feedback-hardening-round-ten]].
 
 # Context
 
-Tangle `FBK-031` finding 3 at `0.6.0+g169bad5`. Round eight
+Hekate `FBK-031` finding 3 at `0.6.0+g169bad5`. Round eight
 [[TAS-159-timed-out-worker-recovery]] added `## Timed-out worker recovery`, which
 the session used: a green partial may be finished by a narrow run or accepted on
 the same node, and a non-green partial is reverted and re-scoped. A partial that

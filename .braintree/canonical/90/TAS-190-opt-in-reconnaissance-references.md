@@ -9,9 +9,9 @@ Parent [[TAS-189-usage-feedback-hardening-round-eleven]].
 
 # Context
 
-Tangle `FBK-032` finding 5 identifies two separate concerns. The load-band and size-command concern remains owned by [[THO-024-whether-node-files-need-a-bounded-load-band-with]]. This node owns only the missing capability for a work node to cite reusable `THO` reconnaissance without turning that context into a pinned dependency or copying it into every task.
+Hekate `FBK-032` finding 5 identifies two separate concerns. The load-band and size-command concern remains owned by [[THO-024-whether-node-files-need-a-bounded-load-band-with]]. This node owns only the missing capability for a work node to cite reusable `THO` reconnaissance without turning that context into a pinned dependency or copying it into every task.
 
-Tangle `THO-014`, `THO-015`, and `THO-016` demonstrate the desired producer shape: durable reconnaissance routed to the Tangle hub and consumed selectively by later work. The Braintree contract currently defines primary routes, pinned `Depends on`, unresolved `Gated on`, and supersession, but no canonical non-pinned context-reference edge or read expansion for it.
+Hekate `THO-014`, `THO-015`, and `THO-016` demonstrate the desired producer shape: durable reconnaissance routed to the Hekate hub and consumed selectively by later work. The Braintree contract currently defines primary routes, pinned `Depends on`, unresolved `Gated on`, and supersession, but no canonical non-pinned context-reference edge or read expansion for it.
 
 # Outcome
 

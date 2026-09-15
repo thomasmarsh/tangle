@@ -10,7 +10,7 @@ summary: State the session-slice rule and whether clearing a blocker is a semant
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-024` at `0.6.0+g3bacaf5`: a frontier node's `# Done when` spanned
+Hekate `FBK-024` at `0.6.0+g3bacaf5`: a frontier node's `# Done when` spanned
 several sessions, and `SKILL.md` says one node may span sessions but never sizes a
 session to a coherent slice, so read literally the rules push either toward no
 progress or toward silently attempting every deliverable. Separately, `SKILL.md`
@@ -61,7 +61,7 @@ the status directory, and its gate clears when the target resolves, not when the
 node returns to `proposed`." The reported round-seven bump to `3` was therefore
 not owed by the unblock; a blocked target is not `resolved`, so its consumer
 keeps its gate and no pinned consumer reads a revision, and only a semantic
-change made in the same edit bumps it. This closes Tangle `FBK-024`.
+change made in the same edit bumps it. This closes Hekate `FBK-024`.
 
 `tests/test_skill.py` pins both with `_SESSION_SLICE_RULE` (the smallest-coherent-
 slice advance, the body evidence, the first-remaining-action `next`, the

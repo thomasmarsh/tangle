@@ -10,7 +10,7 @@ summary: Reject a claim or release base hash that is not a bare lowercase 64-cha
 
 Parent [[TAS-095-usage-feedback-hardening-round-four]].
 
-Tangle `FBK-004` at `0.5.0+g64359e6`. Reproduced in
+Hekate `FBK-004` at `0.5.0+g64359e6`. Reproduced in
 [[THO-013-round-four-usage-feedback-and-portfolio-analysis]] with an isolated
 sidecar and the probe vault `/tmp/bt-r4`:
 

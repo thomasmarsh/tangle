@@ -10,7 +10,7 @@ summary: Add the timed-out-worker recovery procedure to the coordination referen
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-026` finding 2 and Tangle `FBK-029` finding 2 at `0.6.0+g3bacaf5`,
+Hekate `FBK-026` finding 2 and Hekate `FBK-029` finding 2 at `0.6.0+g3bacaf5`,
 recorded in two separate sessions. A worker exceeded the run window after a
 compiling, behavior-preserving refactor but before adding tests or resolving the
 node; recovery was entirely manual inspect-diff, run the touched tests, then
@@ -55,8 +55,8 @@ resolving edit. A non-green partial — not compiling, or failing a touched test
 is reverted and the remaining slice re-scoped against the reverted base. A run
 that timed out after resolving its node and splitting the remainder "needs only
 coordinator verification": the resolved node, its recorded evidence, and its
-advanced `next` route are the finished slice. This closes Tangle `FBK-026`
-finding 2 and its duplicate Tangle `FBK-029` finding 2, where recovery was
+advanced `next` route are the finished slice. This closes Hekate `FBK-026`
+finding 2 and its duplicate Hekate `FBK-029` finding 2, where recovery was
 manual inspect-diff, touched tests, then accept-or-revert with no stated
 resume-versus-revert-versus-re-dispatch procedure.
 

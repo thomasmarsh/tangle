@@ -10,7 +10,7 @@ summary: State how a worker treats an assigned node's `updated` when it is ahead
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-007` at `0.5.0+gba362e3`, reproduced in
+Hekate `FBK-007` at `0.5.0+gba362e3`, reproduced in
 [[THO-017-round-six-usage-feedback-analysis]]: an assigned node arrived with
 `updated: 2026-09-13T00:00:00Z`, a day-boundary placeholder, while the host
 clock at handoff read about `2026-09-12T21:33Z`, roughly two and a half hours

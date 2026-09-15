@@ -10,7 +10,7 @@ Parent [[TAS-180-usage-feedback-hardening-round-ten]].
 
 # Context
 
-Tangle `FBK-031` finding 7 at `0.6.0+g169bad5`. A leaf changed a shared stage's
+Hekate `FBK-031` finding 7 at `0.6.0+g169bad5`. A leaf changed a shared stage's
 maneuver resolution so every route-state agent was assumed to carry a target
 clearance; a v2 scenario mixing a lateral mode with a lateral-incapable mode on
 one facility panicked, and the existing tests never exercised the mix. No brief

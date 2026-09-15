@@ -10,7 +10,7 @@ summary: State how a worker corrects a claimed node whose recorded premise is fa
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-016` at `0.6.0+g3bacaf5`: a claimed node's `# Outcome` asserted that
+Hekate `FBK-016` at `0.6.0+g3bacaf5`: a claimed node's `# Outcome` asserted that
 a time-of-impact query was not on the tick path, and validating it against the
 code showed it was reached every tick. `SKILL.md` covers summary/next/status
 edits, `context_rev` semantics, and escalation of a landed seam another node owns,

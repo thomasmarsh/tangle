@@ -10,10 +10,10 @@ summary: Name workspace manifests, lockfiles, and generated artifacts in the com
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-026` finding 3 at `0.6.0+g3bacaf5`: adding a `glam` dependency to
-`apps/tangle-cli` required editing the workspace `Cargo.lock` at the repository
-root, outside the declared `apps/tangle-cli/**` write set, so the worker had to
-exceed its set or stop. Tangle `FBK-029` finding 1 at the same revision: a leaf
+Hekate `FBK-026` finding 3 at `0.6.0+g3bacaf5`: adding a `glam` dependency to
+`apps/hekate-cli` required editing the workspace `Cargo.lock` at the repository
+root, outside the declared `apps/hekate-cli/**` write set, so the worker had to
+exceed its set or stop. Hekate `FBK-029` finding 1 at the same revision: a leaf
 write set omitted the generated `schemas/scenario-source.schema.json` that the
 approved source-shape change necessarily regenerates. `references/coordination.md`
 states the closure as "every golden and baseline the change can invalidate
@@ -45,8 +45,8 @@ dependency" and "the generated artifacts a source shape change invalidates
 (JSON schemas, snapshots, pinned-hash fixtures)". It states why: a necessary
 dependency or regenerated artifact is in the set even though the change edits
 no source file in it, so a worker never leaves its set or stops for a closure
-file. This closes Tangle `FBK-026` finding 3 (the workspace root `Cargo.lock`
-outside `apps/tangle-cli/**`) and Tangle `FBK-029` finding 1 (the regenerated
+file. This closes Hekate `FBK-026` finding 3 (the workspace root `Cargo.lock`
+outside `apps/hekate-cli/**`) and Hekate `FBK-029` finding 1 (the regenerated
 `schemas/scenario-source.schema.json`).
 
 `tests/test_skill.py` pins the enumeration: `_WRITE_SET_CLOSURE_RULE` now

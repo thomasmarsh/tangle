@@ -23,7 +23,7 @@ authority for work state and decisions. Today the two meet only at a thin seam:
 `AGENTS.md` mandates using the skill, project conventions, and the
 `braintree check` / `make test` gates, while the reasoning behind a rule usually
 lives only in a `DEC`/`DEF`/`THO` node. Round-three feedback already showed the
-split: Tangle's `AGENTS.md` had to mandate the conventional-commit convention
+split: Hekate's `AGENTS.md` had to mandate the conventional-commit convention
 separately, and [[TAS-064-mechanical-change-commit-path]] had to restate the same
 contract in both `SKILL.md` and `AGENTS.md`.
 

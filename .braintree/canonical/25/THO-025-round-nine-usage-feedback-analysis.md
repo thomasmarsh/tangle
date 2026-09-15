@@ -2,22 +2,22 @@
 status: resolved
 context_rev: 1
 updated: 2026-09-14T23:40:13Z
-summary: Round-nine Tangle feedback confirms one independently resumable packaging defect: the installed launcher needs a writable user-home uv cache even for read-only commands.
+summary: Round-nine Hekate feedback confirms one independently resumable packaging defect: the installed launcher needs a writable user-home uv cache even for read-only commands.
 ---
 
 Area [[IDX-001-execution-graph]].
 
 # Question
 
-`braintree feedback scan /Users/thomasmarsh/git/tangle` reports one proposed
+`braintree feedback scan /Users/thomasmarsh/git/hekate` reports one proposed
 feedback node recorded after the round analyzed in
-[[THO-022-round-eight-usage-feedback-analysis]]: Tangle `FBK-030`, recorded at
+[[THO-022-round-eight-usage-feedback-analysis]]: Hekate `FBK-030`, recorded at
 `0.6.0+g169bad5`. Which findings still hold against this implementation at that
 revision, and what self-improvement work do they require?
 
 # Context
 
-Tangle `FBK-030` is a single finding. The consuming session ran the mandatory
+Hekate `FBK-030` is a single finding. The consuming session ran the mandatory
 `braintree help authoring` from a sandbox, and the first invocation failed before
 printing help with `Failed to initialize cache at /Users/thomasmarsh/.cache/uv`
 (`Operation not permitted`), so a read-only query required write access outside
@@ -45,7 +45,7 @@ generated launcher, not in documentation of an unavoidable dependency.
 
 | Feedback | Scan revision | Verdict | Evidence |
 |----------|---------------|---------|----------|
-| Tangle `FBK-030` | `0.6.0+g169bad5` | open, admitted | The generated launcher uses `uv run`, which initializes a writable cache for every command, including read-only `help`/`check`/query; reproduced with an unwritable `UV_CACHE_DIR` against an already-synced program, while direct execution of the program's own entry point succeeds with a read-only `HOME`. |
+| Hekate `FBK-030` | `0.6.0+g169bad5` | open, admitted | The generated launcher uses `uv run`, which initializes a writable cache for every command, including read-only `help`/`check`/query; reproduced with an unwritable `UV_CACHE_DIR` against an already-synced program, while direct execution of the program's own entry point succeeds with a read-only `HOME`. |
 
 # Decision
 

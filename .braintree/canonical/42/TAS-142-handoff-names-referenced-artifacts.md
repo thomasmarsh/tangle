@@ -10,7 +10,7 @@ summary: Require a handoff to name the concrete path of an artifact it orders re
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-020` at `0.6.0+g3bacaf5`: a handoff instructed a worker to reuse "the
+Hekate `FBK-020` at `0.6.0+g3bacaf5`: a handoff instructed a worker to reuse "the
 existing experiment-spec and seed-bank formats from Increment 5" when no
 checked-in input artifact or format existed; the seed bank was concrete but the
 only specification surface was a recorded output field, so the worker had to

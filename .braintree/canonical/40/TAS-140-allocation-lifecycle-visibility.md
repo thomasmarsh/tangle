@@ -10,7 +10,7 @@ summary: Document that allocate burns an id and expose outstanding reservations 
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-018` finding 2 and Tangle `FBK-025` finding 2 at
+Hekate `FBK-018` finding 2 and Hekate `FBK-025` finding 2 at
 `0.6.0+g3bacaf5`. Probe in `/tmp/bt-r7`: `braintree status` prints only
 `reservations[1]{prefix,next}` (`TAS,4`), so an id reserved and never written is
 invisible; a real groom reported `braintree allocate TAS` returning `TAS-057`

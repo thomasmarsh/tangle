@@ -10,7 +10,7 @@ summary: Announce a legacy-vault migration instead of relocating `nodes/` to `.b
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-015` finding 2 at `0.6.0+g4c6cafb`, re-checked at `c54728a` and
+Hekate `FBK-015` finding 2 at `0.6.0+g4c6cafb`, re-checked at `c54728a` and
 reproduced in [[THO-017-round-six-usage-feedback-analysis]]. Probe `/tmp/bt-r6`:
 from a root whose vault is the legacy `nodes/` directory (with
 `nodes/index-map.md`), `braintree feedback record --route 'Area [[IDX-002-feedback]]' ...`

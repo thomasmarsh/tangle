@@ -10,9 +10,9 @@ summary: Require a node or increment brief to name the existing test suites that
 
 Parent [[TAS-153-usage-feedback-hardening-round-eight]].
 
-Tangle `FBK-028` finding 1 at `0.6.0+g3bacaf5`: adding the first version-2
+Hekate `FBK-028` finding 1 at `0.6.0+g3bacaf5`: adding the first version-2
 scenario under `scenarios/` broke
-`apps/tangle-cli/tests/migration_regression.rs`, whose gate required every
+`apps/hekate-cli/tests/migration_regression.rs`, whose gate required every
 checked-in `*.json5` under that directory to be a version-1 source that migrates
 and reproduces the original reader's body. Neither `SKILL.md` nor the task brief
 named any test gate that enumerates the directory a new artifact lands in, so the
@@ -43,9 +43,9 @@ artifact enters" line naming the test suites that enumerate that directory,
 before the artifact path is chosen. It states why: a gate that walks a directory
 and asserts a property of every file in it can reject a correctly authored new
 file, so the enumerating suite is a path constraint the brief surfaces rather
-than a verification surprise. The Tangle collision is exactly this shape: a
+than a verification surprise. The Hekate collision is exactly this shape: a
 version-2 scenario added under `scenarios/` was rejected by
-`apps/tangle-cli/tests/migration_regression.rs`, which enumerates the directory.
+`apps/hekate-cli/tests/migration_regression.rs`, which enumerates the directory.
 
 `tests/test_skill.py` pins the rule as `_ENTERED_GATE_BRIEF_RULE` with
 `test_brief_names_the_gates_an_entered_directory_enumerates`, asserting the

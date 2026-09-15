@@ -10,7 +10,7 @@ summary: Reject a wikilink inside an action-sentence next by name and prescribe 
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-019` A and B at `0.6.0+g3bacaf5`. Probe: a `next` written as
+Hekate `FBK-019` A and B at `0.6.0+g3bacaf5`. Probe: a `next` written as
 `Move this node to resolved once [[IDX-001-scratch]] closes.` fails with
 `frontier is not a direct child` and the diagnostic names no link, so the
 offending link must be found by trial; `SKILL.md` does not say an action sentence

@@ -10,7 +10,7 @@ summary: State the falsifiable evidence independent slice verification needs, so
 
 Parent [[TAS-099-usage-feedback-hardening-round-five]].
 
-Tangle `FBK-006` gap 2 at `0.5.0+gd1a4b82`: the orchestration used a read-only
+Hekate `FBK-006` gap 2 at `0.5.0+gd1a4b82`: the orchestration used a read-only
 reviewer agent to independently verify a slice's gates, but that agent has no
 shell, so it could not run the gates and its sign-off was necessarily
 conditional on the orchestrator rerunning them; it also could not inspect

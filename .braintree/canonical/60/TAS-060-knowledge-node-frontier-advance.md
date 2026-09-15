@@ -10,7 +10,7 @@ summary: State in SKILL.md what resolving a frontier THO/DEF/DEC node implies fo
 
 Parent [[TAS-058-usage-feedback-hardening-round-two]].
 
-Feedback finding R2 from Tangle `THO-004-terminal-survey-braintree-friction` F2: the
+Feedback finding R2 from Hekate `THO-004-terminal-survey-braintree-friction` F2: the
 read/execute and decomposition rules are task-centric, so a worker resolving a
 frontier knowledge node must guess whether the coordinating parent's `next`
 advances, and the mutation rules read as forbidding the touch.

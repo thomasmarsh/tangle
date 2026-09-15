@@ -10,7 +10,7 @@ Parent [[TAS-180-usage-feedback-hardening-round-ten]].
 
 # Context
 
-Tangle `FBK-031` finding 1 at `0.6.0+g169bad5`, recorded after round eight
+Hekate `FBK-031` finding 1 at `0.6.0+g169bad5`, recorded after round eight
 [[TAS-158-write-set-closure-generators-and-manifests]] added "exhaustive matches
 and struct literals on the changed types" to the compile-and-golden closure. Four
 of eleven leaves still needed a resolved sibling's file to stay green or to make

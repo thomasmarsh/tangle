@@ -3,7 +3,7 @@ status: resolved
 context_rev: 1
 priority: P1
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-three Tangle usage-feedback findings across reversal semantics, frontier determinacy, checker link parsing, node addressing, the hash operand, and unresolved dependency representation.
+summary: Fix or dispose the round-three Hekate usage-feedback findings across reversal semantics, frontier determinacy, checker link parsing, node addressing, the hash operand, and unresolved dependency representation.
 ---
 
 # Context

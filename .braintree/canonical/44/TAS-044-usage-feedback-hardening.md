@@ -10,7 +10,7 @@ summary: All five usage-feedback hardening children resolved with regression tes
 
 Parent [[THO-008-external-usage-feedback-analysis]].
 
-The source friction is the Tangle vault's `IDX-002-braintree-feedback.md` and
+The source friction is the Hekate vault's `IDX-002-braintree-feedback.md` and
 `THO-003-braintree-usage-postmortem.md`, analyzed for this vault in the parent.
 
 # Outcome

@@ -2,14 +2,14 @@
 status: resolved
 context_rev: 1
 updated: 2026-09-14T23:40:13Z
-summary: External Tangle usage confirms three bt defects and five contract gaps in allocation, backlinks, pins, and lifecycle guidance.
+summary: External Hekate usage confirms three bt defects and five contract gaps in allocation, backlinks, pins, and lifecycle guidance.
 ---
 
 # Question
 
 Area [[IDX-001-execution-graph]].
 
-The Tangle vault recorded Braintree friction in its
+The Hekate vault recorded Braintree friction in its
 `nodes/resolved/IDX-002-braintree-feedback.md` and
 `nodes/resolved/THO-003-braintree-usage-postmortem.md` on 2026-09-12. Which
 findings hold against this typed Python implementation at `1dc6fe6`, and what

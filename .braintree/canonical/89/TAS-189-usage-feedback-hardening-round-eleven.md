@@ -10,7 +10,7 @@ Parent [[THO-028-round-eleven-usage-feedback-analysis]].
 
 # Context
 
-Tangle `FBK-032`, recorded at `0.6.0+g169bad5`, was re-verified at HEAD `6664225` in the parent. Findings 2 and 3 are covered mechanisms with brief-template residuals, finding 4 is mostly covered capture behavior with two small residuals, the size half of finding 5 remains owned by [[THO-024-whether-node-files-need-a-bounded-load-band-with]], and batch ID allocation from finding 6 is already resolved by [[TAS-165-batch-node-allocation]].
+Hekate `FBK-032`, recorded at `0.6.0+g169bad5`, was re-verified at HEAD `6664225` in the parent. Findings 2 and 3 are covered mechanisms with brief-template residuals, finding 4 is mostly covered capture behavior with two small residuals, the size half of finding 5 remains owned by [[THO-024-whether-node-files-need-a-bounded-load-band-with]], and batch ID allocation from finding 6 is already resolved by [[TAS-165-batch-node-allocation]].
 
 This round retains three independently consumable outcomes: a contract decision about evidence that justifies pre-dispatch decomposition; a canonical opt-in reconnaissance-reference capability; and a transactional decomposition-authoring workflow. The last outcome folds the small findings 2, 3, and 4 clarity edits into the workflow they make safer rather than admitting mechanical leaves.
 
@@ -30,7 +30,7 @@ Every open round-eleven Braintree finding is decided, implemented, or explicitly
 
 # Children
 
-- [[THO-029-pre-dispatch-boundary-evidence]] - Tangle `FBK-032` finding 1.
+- [[THO-029-pre-dispatch-boundary-evidence]] - Hekate `FBK-032` finding 1.
 - [[TAS-190-opt-in-reconnaissance-references]] - new reconnaissance half of finding 5.
 - [[TAS-191-transactional-decomposition-authoring]] - finding 6 plus the findings 2, 3, and 4 clarity residuals.
 

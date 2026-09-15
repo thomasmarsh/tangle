@@ -3,16 +3,16 @@ status: resolved
 context_rev: 1
 priority: P2
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-six Tangle feedback findings: incoming-future timestamps, write-set change closure, completion receipts, parent-next ownership, status-move staging, resolved-seam reuse, and legacy-vault migration announcement.
+summary: Fix or dispose the round-six Hekate feedback findings: incoming-future timestamps, write-set change closure, completion receipts, parent-next ownership, status-move staging, resolved-seam reuse, and legacy-vault migration announcement.
 ---
 
 # Context
 
 Parent [[THO-017-round-six-usage-feedback-analysis]].
 
-Tangle `FBK-007` through `FBK-015` verified in the parent at `0.5.0`
+Hekate `FBK-007` through `FBK-015` verified in the parent at `0.5.0`
 (`gba362e3`..`gd1a4b82`) and `0.6.0` (`4c6cafb`), re-checked at `c54728a`.
-Tangle `FBK-001` through `FBK-006` are handled under
+Hekate `FBK-001` through `FBK-006` are handled under
 [[TAS-095-usage-feedback-hardening-round-four]] and
 [[TAS-099-usage-feedback-hardening-round-five]] and are not in scope here.
 `FBK-009` is merged into `FBK-008` and `FBK-013` into `FBK-012`.
@@ -37,14 +37,14 @@ regression tests wherever behavior changes.
 
 # Children
 
-- [[TAS-112-timestamp-clamp-rule]] — Tangle `FBK-007`.
-- [[TAS-113-write-set-change-closure]] — Tangle `FBK-008` and `FBK-009`.
-- [[TAS-114-completion-receipt]] — Tangle `FBK-010`.
-- [[TAS-115-parent-next-advance-ownership]] — Tangle `FBK-011`.
-- [[TAS-116-status-move-staging]] — Tangle `FBK-012` and `FBK-013`.
-- [[TAS-117-authorized-additive-seam-change]] — Tangle `FBK-014`.
-- [[TAS-118-resolved-seam-internal-reuse]] — Tangle `FBK-015` finding 1.
-- [[TAS-119-announce-vault-migration]] — Tangle `FBK-015` finding 2.
+- [[TAS-112-timestamp-clamp-rule]] — Hekate `FBK-007`.
+- [[TAS-113-write-set-change-closure]] — Hekate `FBK-008` and `FBK-009`.
+- [[TAS-114-completion-receipt]] — Hekate `FBK-010`.
+- [[TAS-115-parent-next-advance-ownership]] — Hekate `FBK-011`.
+- [[TAS-116-status-move-staging]] — Hekate `FBK-012` and `FBK-013`.
+- [[TAS-117-authorized-additive-seam-change]] — Hekate `FBK-014`.
+- [[TAS-118-resolved-seam-internal-reuse]] — Hekate `FBK-015` finding 1.
+- [[TAS-119-announce-vault-migration]] — Hekate `FBK-015` finding 2.
 
 # Result
 
@@ -83,6 +83,6 @@ deselected`), `braintree check` reported `graph check: passed (145 nodes)`, and 
 scratch legacy-vault probe reproduced the migration notice on stderr with the
 reported `path` under `.braintree/proposed/`.
 
-Tangle `FBK-007` through `FBK-015` still live as source nodes in the Tangle
-vault and are Tangle's to resolve; disposing those source nodes is out of scope
+Hekate `FBK-007` through `FBK-015` still live as source nodes in the Hekate
+vault and are Hekate's to resolve; disposing those source nodes is out of scope
 for this repository.

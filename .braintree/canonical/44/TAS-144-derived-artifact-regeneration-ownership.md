@@ -10,7 +10,7 @@ summary: State who regenerates a resolved node's derived artifacts when a later 
 
 Parent [[TAS-137-usage-feedback-hardening-round-seven]].
 
-Tangle `FBK-022` at `0.6.0+g3bacaf5`: a later slice fixed behavior a resolved
+Hekate `FBK-022` at `0.6.0+g3bacaf5`: a later slice fixed behavior a resolved
 slice owned so the later node's own deliverable would hold, which invalidated
 derived artifacts the resolved slice had committed and a test it had written. The
 reversal/supersession contract covers reversing an outcome in its own node and

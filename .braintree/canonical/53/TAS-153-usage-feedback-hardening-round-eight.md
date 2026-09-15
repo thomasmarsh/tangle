@@ -3,17 +3,17 @@ status: resolved
 context_rev: 1
 priority: P2
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-eight Tangle feedback findings: timeout recovery, closure completeness, host-clock stamping, negative assertions, just-in-time slices, gate enumeration, and feedback ownership.
+summary: Fix or dispose the round-eight Hekate feedback findings: timeout recovery, closure completeness, host-clock stamping, negative assertions, just-in-time slices, gate enumeration, and feedback ownership.
 ---
 
 # Context
 
 Parent [[THO-022-round-eight-usage-feedback-analysis]].
 
-Tangle `FBK-026` through `FBK-029` verified in the parent at `0.6.0+g3bacaf5`.
+Hekate `FBK-026` through `FBK-029` verified in the parent at `0.6.0+g3bacaf5`.
 `FBK-026` finding 1 and `FBK-029` finding 5 are the resolution-ordering friction
 already owned by round seven [[TAS-139-resolved-child-completion-path]] and are
-not re-admitted. `FBK-028` finding 2 and finding 3 are project-local Tangle
+not re-admitted. `FBK-028` finding 2 and finding 3 are project-local Hekate
 defects and are disposed. `FBK-026` finding 3 and `FBK-029` finding 1 are one
 closure outcome and are merged; `FBK-029` finding 2 and finding 4 duplicate
 findings admitted here.
@@ -42,13 +42,13 @@ regression tests wherever behavior changes.
 
 # Children
 
-- [[TAS-154-coordinator-clock-stamping]] - Tangle `FBK-026` finding 4.
-- [[TAS-155-negative-assertion-guidance]] - Tangle `FBK-026` finding 5.
-- [[TAS-156-just-in-time-slice-live-consumer]] - Tangle `FBK-027`.
-- [[TAS-157-brief-names-entered-gates]] - Tangle `FBK-028` finding 1.
-- [[TAS-158-write-set-closure-generators-and-manifests]] - Tangle `FBK-026` finding 3 and `FBK-029` finding 1.
-- [[TAS-159-timed-out-worker-recovery]] - Tangle `FBK-026` finding 2 and `FBK-029` finding 2.
-- [[TAS-160-single-session-feedback-ownership]] - Tangle `FBK-029` finding 3.
+- [[TAS-154-coordinator-clock-stamping]] - Hekate `FBK-026` finding 4.
+- [[TAS-155-negative-assertion-guidance]] - Hekate `FBK-026` finding 5.
+- [[TAS-156-just-in-time-slice-live-consumer]] - Hekate `FBK-027`.
+- [[TAS-157-brief-names-entered-gates]] - Hekate `FBK-028` finding 1.
+- [[TAS-158-write-set-closure-generators-and-manifests]] - Hekate `FBK-026` finding 3 and `FBK-029` finding 1.
+- [[TAS-159-timed-out-worker-recovery]] - Hekate `FBK-026` finding 2 and `FBK-029` finding 2.
+- [[TAS-160-single-session-feedback-ownership]] - Hekate `FBK-029` finding 3.
 
 # Result
 
@@ -62,12 +62,12 @@ counts:
   accept a green slice on the same node, revert and re-scope a non-green one,
   node stays `proposed` until the finishing worker resolves it, and an
   already-resolved-and-split run needs only coordinator verification. This
-  closes Tangle `FBK-026` finding 2 and its duplicate Tangle `FBK-029` finding 2.
+  closes Hekate `FBK-026` finding 2 and its duplicate Hekate `FBK-029` finding 2.
 - Write-set closure: [[TAS-158-write-set-closure-generators-and-manifests]] named
   the workspace manifest and lockfile a dependency needs and the generated
   artifacts a source shape change invalidates (JSON schemas, snapshots,
   pinned-hash fixtures) in the compile-and-golden closure of
-  `references/coordination.md`, closing merged Tangle `FBK-026` finding 3 and
+  `references/coordination.md`, closing merged Hekate `FBK-026` finding 3 and
   `FBK-029` finding 1.
 - Host-clock stamping: [[TAS-154-coordinator-clock-stamping]] repinned `SKILL.md`
   to "A coordinator stamps the host clock at handoff — the real host clock time,
@@ -93,10 +93,10 @@ Every criterion is pinned by a contract test in `tests/test_skill.py`; the
 behavioral fixes were made wherever behavior changed, and each slice that added a
 contract literal carries a source-named test plus, where the repo convention
 applies, a falsification probe that the same guard must reject. Dispositions
-rather than admissions: Tangle `FBK-026` finding 1 and `FBK-029` finding 5 remain
-owned by round seven [[TAS-139-resolved-child-completion-path]], and Tangle
+rather than admissions: Hekate `FBK-026` finding 1 and `FBK-029` finding 5 remain
+owned by round seven [[TAS-139-resolved-child-completion-path]], and Hekate
 `FBK-028` finding 2, `FBK-028` finding 3, and `FBK-029` finding 4 are
-project-local Tangle defects recorded in
+project-local Hekate defects recorded in
 [[THO-022-round-eight-usage-feedback-analysis]] and admitted nowhere here.
 
 Evidence at roll-up: `braintree check` -> `graph check: passed (196 nodes)`;

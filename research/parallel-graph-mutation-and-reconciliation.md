@@ -229,9 +229,9 @@ clones. For example: `prj-04r8b1t7n2c6m9x3q5f0hkwdza`. This is distinct from
 the current same-host sidecar identity derived from a Git common-directory path,
 which is a local storage key and changes across clones.
 
-A lowercase project alias such as `tangle` is presentation and local registry
+A lowercase project alias such as `hekate` is presentation and local registry
 state, not durable identity. Clients may accept a convenient spelling such as
-`tangle:tas-01k5v6m3x8f2q7c9d4hn8w2pza`, with the unqualified node ID meaning
+`hekate:tas-01k5v6m3x8f2q7c9d4hn8w2pza`, with the unqualified node ID meaning
 the current project, but a sealed proposal, receipt, or canonical cross-project
 edge expands the alias to an immutable project UID. Aliases may be renamed or
 collide; the UID settles identity and the registry settles local location.

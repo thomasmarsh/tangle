@@ -10,7 +10,7 @@ Parent [[TAS-180-usage-feedback-hardening-round-ten]].
 
 # Context
 
-Tangle `FBK-031` finding 8 at `0.6.0+g169bad5`. `SKILL.md` says a gate is a
+Hekate `FBK-031` finding 8 at `0.6.0+g169bad5`. `SKILL.md` says a gate is a
 `Gated on [[...]].` line "in `# Context`", and the round-eight refresh scout had
 to hand-roll grep checks for that structure. Probe: a scratch node with a `Gated
 on` line in its `# Outcome` passes `braintree check` with zero findings, because

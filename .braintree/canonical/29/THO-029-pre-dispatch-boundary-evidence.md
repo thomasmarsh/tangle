@@ -13,7 +13,7 @@ When a task already names several outcomes with separate acceptance evidence, sh
 
 # Context
 
-Tangle `FBK-032` finding 1 reports that one `# Done when` named four substantial outcomes and two dispatches each produced green partial work but exceeded a 30-minute worker window. Its proposed remedy is pre-dispatch children for the named deliverables.
+Hekate `FBK-032` finding 1 reports that one `# Done when` named four substantial outcomes and two dispatches each produced green partial work but exceeded a 30-minute worker window. Its proposed remedy is pre-dispatch children for the named deliverables.
 
 The current contract deliberately resists that inference. `SKILL.md` says one node owns one durable outcome rather than an estimated session or amount of code, requires boundary reassessment when execution reveals new evidence, and says that a slice is a unit of execution rather than a split trigger or sizing ritual. The authoring reference permits up-front decomposition for a user-requested plan, but otherwise says to decompose just in time.
 

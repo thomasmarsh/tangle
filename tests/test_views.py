@@ -227,7 +227,7 @@ def test_a_registered_external_project_is_projected(
     vault = tmp_path / "nodes"
     _seed(vault)
     (vault / "projects.json").write_text(
-        json.dumps({"projects": {"tangle": {"uid": _PROJECT_UID, "path": "."}}}),
+        json.dumps({"projects": {"hekate": {"uid": _PROJECT_UID, "path": "."}}}),
         encoding="utf-8",
     )
     env = _env(tmp_path, vault)
@@ -235,6 +235,6 @@ def test_a_registered_external_project_is_projected(
     assert run_bt("frontier", env=env).returncode == 0
 
     projects = _page(vault, "projects.md")
-    assert "## tangle" in projects
+    assert "## hekate" in projects
     assert _PROJECT_UID in projects
     assert "- local: present" in projects

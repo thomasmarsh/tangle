@@ -10,7 +10,7 @@ summary: Make routine interaction zero-ceremony: warn on orphaned nodes, maintai
 
 Area [[IDX-001-execution-graph]].
 
-Maintainer-directed interaction-surface work, independent of the Tangle feedback
+Maintainer-directed interaction-surface work, independent of the Hekate feedback
 analyzed in [[THO-022-round-eight-usage-feedback-analysis]]. Three observed
 ceremonies: an orphaned unfinished node is reported only by `braintree check` and
 not by the direct-answer verbs a client actually calls; clients are taught to run

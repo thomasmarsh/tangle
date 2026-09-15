@@ -3,15 +3,15 @@ status: resolved
 context_rev: 1
 priority: P2
 updated: 2026-09-14T23:40:13Z
-summary: Fix or dispose the round-seven Tangle feedback findings: premise correction, resolved-child completion, allocation visibility, next/search diagnostics, handoff artifact naming, definition completeness, derived artifacts, session slices, and summary integrity.
+summary: Fix or dispose the round-seven Hekate feedback findings: premise correction, resolved-child completion, allocation visibility, next/search diagnostics, handoff artifact naming, definition completeness, derived artifacts, session slices, and summary integrity.
 ---
 
 # Context
 
 Parent [[THO-021-round-seven-usage-feedback-analysis]].
 
-Tangle `FBK-016` through `FBK-025` verified in the parent at `0.6.0+g3bacaf5`.
-Tangle `FBK-001` through `FBK-015` are handled under
+Hekate `FBK-016` through `FBK-025` verified in the parent at `0.6.0+g3bacaf5`.
+Hekate `FBK-001` through `FBK-015` are handled under
 [[TAS-095-usage-feedback-hardening-round-four]],
 [[TAS-099-usage-feedback-hardening-round-five]], and
 [[TAS-111-usage-feedback-hardening-round-six]] and are not in scope here.
@@ -48,15 +48,15 @@ regression tests wherever behavior changes.
 
 # Children
 
-- [[TAS-138-premise-correction-rule]] - Tangle `FBK-016`.
-- [[TAS-139-resolved-child-completion-path]] - Tangle `FBK-017`, `FBK-023` finding 3.
-- [[TAS-140-allocation-lifecycle-visibility]] - Tangle `FBK-018` finding 2, `FBK-025` finding 2.
-- [[TAS-141-next-and-pin-search-diagnostics]] - Tangle `FBK-019` A and B.
-- [[TAS-142-handoff-names-referenced-artifacts]] - Tangle `FBK-020`.
-- [[TAS-143-definition-completeness-for-deferred-shapes]] - Tangle `FBK-021`.
-- [[TAS-144-derived-artifact-regeneration-ownership]] - Tangle `FBK-022`.
-- [[TAS-145-session-slice-and-blocker-revision]] - Tangle `FBK-024`.
-- [[TAS-146-summary-truncation-integrity]] - Tangle `FBK-025` finding 1.
+- [[TAS-138-premise-correction-rule]] - Hekate `FBK-016`.
+- [[TAS-139-resolved-child-completion-path]] - Hekate `FBK-017`, `FBK-023` finding 3.
+- [[TAS-140-allocation-lifecycle-visibility]] - Hekate `FBK-018` finding 2, `FBK-025` finding 2.
+- [[TAS-141-next-and-pin-search-diagnostics]] - Hekate `FBK-019` A and B.
+- [[TAS-142-handoff-names-referenced-artifacts]] - Hekate `FBK-020`.
+- [[TAS-143-definition-completeness-for-deferred-shapes]] - Hekate `FBK-021`.
+- [[TAS-144-derived-artifact-regeneration-ownership]] - Hekate `FBK-022`.
+- [[TAS-145-session-slice-and-blocker-revision]] - Hekate `FBK-024`.
+- [[TAS-146-summary-truncation-integrity]] - Hekate `FBK-025` finding 1.
 
 # Result
 

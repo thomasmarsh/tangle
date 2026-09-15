@@ -10,11 +10,11 @@ summary: Define an exclusive write set as the compile-and-golden closure of its 
 
 Parent [[TAS-111-usage-feedback-hardening-round-six]].
 
-Tangle `FBK-008` at `0.5.0+gf9b330c` and its additional evidence Tangle
+Hekate `FBK-008` at `0.5.0+gf9b330c` and its additional evidence Hekate
 `FBK-009` at `0.5.0+g974b178`, verified in
 [[THO-017-round-six-usage-feedback-analysis]]. A deliberate record change
 forced edits outside the handed-off crate-local set: the record shape is
-re-declared in `apps/tangle-cli` with an exhaustive `EventRecord` match, and
+re-declared in `apps/hekate-cli` with an exhaustive `EventRecord` match, and
 the invalidated goldens and `baselines/` live outside every crate directory;
 the presentation golden is a whole-frame `Debug` dump, a closure member of any
 public-field change. `references/coordination.md` grants authoring "inside its

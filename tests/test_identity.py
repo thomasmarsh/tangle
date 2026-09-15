@@ -57,10 +57,10 @@ def test_qualified_references_expand_aliases_to_immutable_authority() -> None:
     local = "prj-0123456789abcdefghjkmnpqrs"
     remote = "prj-1123456789abcdefghjkmnpqrs"
     node = "tas-0123456789abcdefghjkmnpqrs"
-    reference = identity.parse_reference(f"tangle:{node.upper()}", local, {"tangle": remote})
+    reference = identity.parse_reference(f"hekate:{node.upper()}", local, {"hekate": remote})
     assert reference == identity.Reference(remote, node, True)
     with pytest.raises(identity.IdentityError, match="unknown project alias"):
-        identity.parse_reference(f"other:{node}", local, {"tangle": remote})
+        identity.parse_reference(f"other:{node}", local, {"hekate": remote})
 
 
 def test_abbreviations_lengthen_only_for_same_type_collisions() -> None:
