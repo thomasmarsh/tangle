@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from tangle import graph_check, main, store
+from tangle import help as command_help
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SKILL = _ROOT / "SKILL.md"
@@ -48,6 +49,23 @@ _CORE_ROUTING = (
 # The invariants an agent must have before acting, kept in the core rather than
 # a reference: authority, vault shape, admission, the durable-outcome boundary,
 # status meaning, reachability, and mutation rules.
+
+# The normal path a fresh worker executes from the core alone: admit and route a
+# node, read dependency readiness, mutate in place, and run the final gate. The
+# slimmed core stays executable only while it still carries one rule area per
+# section and every topic and verb it names resolves from the installed command,
+# so this is the routing contract for the smaller core rather than one more prose
+# lock.
+_CORE_RULE_AREAS = (
+    "## Admission and the node boundary",
+    "## Status, next, and roll-up",
+    "## Reachability and the frontier",
+    "## Dependency readiness",
+    "## Mutation rules",
+)
+_CORE_TOPIC_ROUTE = re.compile(r"`tangle help ([a-z][a-z-]+)`")
+_CORE_VERB_ROUTE = re.compile(r"`tangle ([a-z][a-z-]*)")
+_BOUNDED_HELP = ('usage: "', "exits[3]{code,meaning}:")
 _CORE_INVARIANTS = (
     "Markdown is the durable, human-visible authority",
     "Obsidian-compatible",
@@ -1179,6 +1197,26 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
     text = _read(_SKILL)
     _assert_contains(text, _DURABLE_OUTCOME_BOUNDARY)
     _assert_absent(text, _SIZING_COMMAND_ABSENT)
+
+
+def test_fresh_worker_can_execute_the_normal_path_from_the_core(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The slim core keeps each rule area and routes only to live surfaces."""
+    core = _read(_SKILL)
+    for section in _CORE_RULE_AREAS:
+        assert section in core, f"the core dropped the {section} rule area"
+    routed = set(_CORE_TOPIC_ROUTE.findall(core))
+    assert routed == set(_TOPICS), f"core topic routes changed: {sorted(routed)}"
+    verbs = sorted(set(_CORE_VERB_ROUTE.findall(core)))
+    assert verbs, "the core names no command"
+    assert "check" in verbs, "the core no longer names the graph gate"
+    for verb in verbs:
+        assert verb in command_help.VERBS, f"the core names an unknown verb: {verb}"
+        assert main.main([verb, "--help"]) == 0
+        out = capsys.readouterr().out
+        for fragment in _BOUNDED_HELP:
+            assert fragment in out, f"{verb} help is unbounded: {fragment!r} missing"
 
 
 def test_just_in_time_slice_includes_or_names_a_live_consumer() -> None:

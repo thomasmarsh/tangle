@@ -32,6 +32,15 @@ needed fields, for example
 State zero results explicitly. A completion report names the resolved node, its
 new status, and the advanced frontier.
 
+## Vault location and migration
+
+One canonical node is one Markdown file under `.tangle/canonical/<suffix>/`,
+sharded by the last two id characters, so a known node is located with a
+filename search. The vault resolves at `./.tangle` by default; an explicit
+directory operand or `TANGLE_NODES_DIR` overrides that. A legacy `nodes/` vault
+is renamed to `.tangle/` in place by `tangle migrate` or by the default
+resolver, leaving the Markdown bytes unchanged.
+
 ## Index contract
 
 `.tangle/index-map.md` holds intent and routing, not state: keep only a short

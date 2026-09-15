@@ -1,9 +1,9 @@
 ---
 status: proposed
 context_rev: 1
-updated: 2026-09-15T02:17:07Z
+updated: 2026-09-15T02:41:04Z
 summary: Improve Tangle workflow efficiency.
-next: "[[tas-5f7z20r7we8kafq7t0dws2hj2j-slim-skill-hot-path]]"
+next: "[[tas-5wwpncskt30a9xekmqbgw55p6c-explicit-migration-milestones]]"
 ---
 
 Area [[IDX-001-execution-graph]].
