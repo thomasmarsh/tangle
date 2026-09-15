@@ -219,6 +219,47 @@ def test_a_lost_index_is_restored_from_markdown_alone(
     assert _snapshot(_database(tmp_path)) == expected
 
 
+def test_identity_preserving_sidecar_corruption_is_repaired(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """Emptied full-text rows and lost reservations come back from Markdown."""
+    vault = tmp_path / "nodes"
+    _seed(vault)
+    env = _env(tmp_path, vault)
+    assert run_tangle_inproc("init", env=env).returncode == 0
+    assert run_tangle_inproc("index", env=env).returncode == 0
+    assert '"TAS-001","active"' in run_tangle_inproc("search", "Consume", env=env).stdout
+    indexed = _snapshot(_database(tmp_path))
+
+    connection = sqlite3.connect(_database(tmp_path))
+    try:
+        connection.execute("DELETE FROM nodes_fts")
+        connection.execute("DELETE FROM id_sequences")
+        connection.commit()
+    finally:
+        connection.close()
+    # The identity rows the digest comparison reads survive the corruption, so
+    # only a completeness check on the derived sidecar rows can detect it.
+    assert _snapshot(_database(tmp_path)) == indexed
+
+    repaired = run_tangle_inproc("index", env=env)
+    assert repaired.returncode == 0
+    assert repaired.stderr == ""
+    assert '"TAS-001","active"' in run_tangle_inproc("search", "Consume", env=env).stdout
+    connection = sqlite3.connect(_database(tmp_path))
+    try:
+        reservations = {
+            str(prefix): int(next_value)
+            for prefix, next_value in connection.execute(
+                "SELECT prefix, next_value FROM id_sequences"
+            )
+        }
+    finally:
+        connection.close()
+    assert reservations == {"IDX": 2, "TAS": 2}
+    assert _snapshot(_database(tmp_path)) == indexed
+
+
 def test_a_lost_state_file_is_rebuilt_from_markdown(
     tmp_path: Path, run_tangle_inproc: RunTangle
 ) -> None:

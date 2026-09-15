@@ -154,6 +154,10 @@ CREATE INDEX IF NOT EXISTS edges_target ON edges(target_id);
 CREATE INDEX IF NOT EXISTS edges_source ON edges(source_id);
 CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(id UNINDEXED, summary, body);
 CREATE TABLE IF NOT EXISTS graph_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS id_sequences (
+  prefix TEXT PRIMARY KEY,
+  next_value INTEGER NOT NULL CHECK(next_value > 0)
+);
 """
 
 
@@ -363,12 +367,17 @@ def refresh(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
 
     The upkeep path behind automatic maintenance. It reads the Markdown
     snapshot, compares it with the rows already indexed, and writes only the
-    changed node rows, the added or removed edge rows, and the deletions. An
-    unchanged vault writes nothing and opens no write transaction, so an
-    interaction that changed no Markdown pays the snapshot read and no indexing
-    cost. Markdown is the only input, so repeated calls are idempotent and a
-    lost, partial, or foreign index is rebuilt from the same snapshot the whole
-    :func:`reindex` rebuilds it from.
+    changed node rows, the added or removed edge rows, and the deletions. The
+    same pass converges the rest of the derived projection: a ``nodes_fts`` row
+    whose summary or body no longer matches the Markdown -- or that is absent
+    while its identity row survives -- is rewritten, an orphan full-text row is
+    deleted, and the ``id_sequences`` reservations are raised above every
+    Markdown maximum. An unchanged vault writes nothing and opens no write
+    transaction, so an interaction that changed no Markdown pays the snapshot
+    read and no indexing cost. Markdown is the only input, so repeated calls are
+    idempotent and a lost, partial, or foreign index is rebuilt from the same
+    snapshot the whole :func:`reindex` rebuilds it from, which makes the
+    returned index a faithful derived projection of the Markdown.
 
     The comparison runs outside the write transaction, so concurrent upkeep is
     expected: every write is a conflict-tolerant upsert of the row the shared
@@ -402,7 +411,31 @@ def refresh(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
         ).fetchall()
     }
     desired_edges = set(edges)
-    if not changed and not removed and stored_edges == desired_edges:
+    desired_fts = {node.id: (node.summary, node.body) for node in nodes}
+    stored_fts = {
+        str(node_id): (str(summary), str(body))
+        for node_id, summary, body in conn.execute(
+            "SELECT id, summary, body FROM nodes_fts"
+        ).fetchall()
+    }
+    maxima = _maxima(nodes)
+    stored_reservations = {
+        str(prefix): int(next_value)
+        for prefix, next_value in conn.execute(
+            "SELECT prefix, next_value FROM id_sequences"
+        ).fetchall()
+    }
+    reservations_current = all(
+        stored_reservations.get(prefix, 0) >= maximum + 1
+        for prefix, maximum in maxima.items()
+    )
+    if (
+        not changed
+        and not removed
+        and stored_edges == desired_edges
+        and stored_fts == desired_fts
+        and reservations_current
+    ):
         return 0, 0, root
     edge_deletions = sorted(stored_edges - desired_edges)
     edge_insertions = sorted(desired_edges - stored_edges)
@@ -428,6 +461,13 @@ def refresh(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
                 "INSERT INTO nodes_fts VALUES(?,?,?)",
                 (node.id, node.summary, node.body),
             )
+        for node_id, content in desired_fts.items():
+            if node_id in changed or stored_fts.get(node_id) == content:
+                continue
+            conn.execute("DELETE FROM nodes_fts WHERE id=?", (node_id,))
+            conn.execute("INSERT INTO nodes_fts VALUES(?,?,?)", (node_id, *content))
+        for node_id in sorted(set(stored_fts) - set(desired)):
+            conn.execute("DELETE FROM nodes_fts WHERE id=?", (node_id,))
         for source, relation, target, _pin in edge_deletions:
             conn.execute(
                 "DELETE FROM edges WHERE source_id=? AND relation=? AND target_id=?",
@@ -440,7 +480,7 @@ def refresh(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
                 "pinned_context_rev=excluded.pinned_context_rev",
                 (source, relation, target, None if pin == "" else int(pin)),
             )
-        _upsert_reservations(conn, _maxima(nodes))
+        _upsert_reservations(conn, maxima)
         conn.execute(
             "INSERT INTO graph_meta(key,value) VALUES('nodes_root',?) "
             "ON CONFLICT(key) DO UPDATE SET value=excluded.value",

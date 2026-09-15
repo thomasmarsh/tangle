@@ -2,7 +2,7 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T19:22:12Z
+updated: 2026-09-15T19:24:09Z
 summary: Implement full-census indexing and generated Markdown views.
 next: Implement the registry writer and unresolved external references.
 ---
@@ -106,8 +106,7 @@ tests/test_memory_authority.py` passed (22 passed), proving the seven frozen
 observable files are unchanged; `./scripts/tangle check` passed (251 nodes).
 
 Remaining, in order: implement the registry writer and unresolved external
-references; harden `tangle index` repair for identity-preserving sidecar
-corruption and add the fault tests (preserved mtime, add/delete, case change,
+references; add the fault tests (preserved mtime, add/delete, case change,
 corrupt sidecar and views, interrupted publication, startup race) plus the
 scaling benchmark; and land the project-scoped publication lease.
 
@@ -126,14 +125,6 @@ before dispatch, the in-verb `index.reindex` calls at `cli.py:400` (`_search`),
 `cli.py:490` (`_backlinks`), and `cli.py:531` (`_stale`) now pay a snapshot read
 instead of a whole-index rebuild, and `cli.py` stays byte-identical at HEAD.
 
-Review follow-up (P1, non-blocking): because reconciliation compares only
-`(path, content_hash)`, a sidecar whose identity rows survive but whose derived
-`nodes_fts` rows were deleted, or whose `id_sequences` reservations were lost,
-is not repaired while `tangle index` still exits 0. Closing that gap -- a
-completeness check on the uncovered derived rows before `refresh` returns
-early, or a forced row rewrite on the `tangle index` path -- is folded into the
-corrupt-sidecar fault-test bullet in the remaining list above.
-
 Evidence: `tests/test_tangle_index.py` adds
 `test_reindex_reconciles_incrementally_on_a_settled_vault`, which seeds the
 fixture vault, runs the real `index` process twice, asserts both runs report
@@ -143,6 +134,36 @@ one-second `indexed_at` boundary between the runs, so the old whole-index
 rebuild would necessarily have restamped every row and failed the assertion
 while the incremental reconciliation leaves the settled rows untouched. No
 prompt-observable file changed.
+
+## Slice: repair identity-preserving sidecar corruption
+
+Closed the P1 gap the reconciled-reindex review left open. `index.refresh` in
+`src/tangle/index.py` reconciled only the `(path, content_hash)` identity rows,
+so a sidecar whose identity rows survived while its derived `nodes_fts` content
+or its `id_sequences` reservations were lost exited 0 while leaving that state
+unrepaired. `refresh` now reads the desired full-text content, the stored
+full-text rows, and the stored reservations from the snapshot it already
+parses, so the completeness check adds no asymptotic cost. Its early-return
+guard additionally requires `nodes_fts` to match the Markdown exactly and every
+prefix reservation to be at least the Markdown maximum plus one. The write
+transaction rewrites each stale or absent full-text row for a node whose
+identity row was unchanged, deletes an orphan full-text row, and raises the
+reservations from the same `maxima` the guard compared. An unchanged vault
+still opens no write transaction, so a settled vault pays the two extra reads
+and no write, and the returned index is a faithful derived projection of
+Markdown rather than only of its identity rows.
+
+Evidence: `tests/test_index_upkeep.py` adds
+`test_identity_preserving_sidecar_corruption_is_repaired`, which builds the
+index, captures the `search` answer for the seeded term, empties `nodes_fts`
+and `id_sequences` through sqlite3 while asserting the node and edge rows are
+unchanged, then runs `tangle index` and asserts it exits 0 with no stderr, that
+the same `search` result matches again, that the `IDX` and `TAS` reservations
+are back at 2, and that the identity rows are still unchanged. The
+pre-change `refresh` fails it: a direct reproduction against the pinned sidecar
+left `nodes_fts` and `id_sequences` empty and `search` reporting zero matches,
+while the changed `refresh` restored both and left a second `index` run
+writing nothing.
 
 # Frozen blocker
 
