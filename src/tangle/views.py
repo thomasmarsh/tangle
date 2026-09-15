@@ -33,6 +33,7 @@ __all__ = [
     "build",
     "inspect_report",
     "publish",
+    "registered_projects",
 ]
 
 VIEW_DIRECTORY = "views"
@@ -169,8 +170,8 @@ def _recent(nodes: list[IndexedNode]) -> str:
     return _render("Recent", [("Most recently updated", ordered)])
 
 
-def _registered_projects(root: str) -> list[tuple[str, str, bool]]:
-    """Return ``(alias, uid, present)`` for each project in the local registry.
+def registered_projects(root: str) -> list[tuple[str, str, str]]:
+    """Return ``(alias, uid, location)`` for each local registry entry.
 
     The registry maps a lowercase alias to an immutable project UID and a local
     vault location. It is local state, not canonical Markdown, so a missing or
@@ -187,21 +188,62 @@ def _registered_projects(root: str) -> list[tuple[str, str, bool]]:
     projects = document.get("projects", document)
     if not isinstance(projects, dict):
         return []
-    entries: list[tuple[str, str, bool]] = []
+    entries: list[tuple[str, str, str]] = []
     for alias, value in projects.items():
         if not isinstance(value, dict):
             continue
-        uid = value.get("uid", "")
-        location = value.get("path", "")
-        present = bool(location) and os.path.isdir(
-            location if os.path.isabs(location) else os.path.join(root, location)
+        entries.append(
+            (str(alias), str(value.get("uid", "")), str(value.get("path", "")))
         )
-        entries.append((str(alias), str(uid), present))
     entries.sort(key=lambda entry: entry[0])
     return entries
 
 
-def _projects(root: str) -> str:
+def _location_present(root: str, location: str) -> bool:
+    """Return whether a registry path resolves to an existing directory."""
+    return bool(location) and os.path.isdir(
+        location if os.path.isabs(location) else os.path.join(root, location)
+    )
+
+
+def _registered_projects(root: str) -> list[tuple[str, str, bool]]:
+    """Return ``(alias, uid, present)`` for each project in the local registry."""
+    return [
+        (alias, uid, _location_present(root, location))
+        for alias, uid, location in registered_projects(root)
+    ]
+
+
+def _external_reference_lines(root: str, nodes: list[IndexedNode]) -> list[str]:
+    """Render the durable cross-project references found in canonical nodes.
+
+    A reference is visible with its resolution state: ``resolved`` when the
+    registered local vault carries the matching project UID, otherwise
+    ``unregistered`` or ``unavailable``. No page ever materializes the target
+    as a local node, so an external reference never becomes fake authority.
+    """
+    from . import external_reference  # local import avoids an import cycle
+
+    report = external_reference.scan(root, nodes)
+    lines = ["## External references", ""]
+    if not report.references:
+        lines.extend(["_No external references._", ""])
+        return lines
+    for reference in report.references:
+        display = _display(reference.source_summary)
+        source = (
+            f"[[{reference.source_name}|{display}]]"
+            if display
+            else f"[[{reference.source_name}]]"
+        )
+        target = identity.format_external_reference(reference.project, reference.node)
+        detail = f" ({reference.detail})" if reference.detail else ""
+        lines.append(f"- {source} -> {target}: {reference.state}{detail}")
+    lines.append("")
+    return lines
+
+
+def _projects(root: str, nodes: list[IndexedNode]) -> str:
     lines = [GENERATED_NOTICE, "", "# Registered external projects", ""]
     entries = _registered_projects(root)
     if not entries:
@@ -214,14 +256,16 @@ def _projects(root: str) -> str:
                 "",
             ]
         )
-        return "\n".join(lines)
-
-    for alias, uid, present in entries:
-        valid = identity.is_project_uid(uid)
-        lines.extend([f"## {alias}", ""])
-        lines.append(f"- project: {uid}" if valid else f"- project: {uid} (not a prj- UID)")
-        lines.append(f"- local: {'present' if present else 'unavailable'}")
-        lines.append("")
+    else:
+        for alias, uid, present in entries:
+            valid = identity.is_project_uid(uid)
+            lines.extend([f"## {alias}", ""])
+            lines.append(
+                f"- project: {uid}" if valid else f"- project: {uid} (not a prj- UID)"
+            )
+            lines.append(f"- local: {'present' if present else 'unavailable'}")
+            lines.append("")
+    lines.extend(_external_reference_lines(root, nodes))
     return "\n".join(lines).rstrip("\n") + "\n"
 
 
@@ -235,7 +279,7 @@ def build(root: str) -> dict[str, str]:
         "by-area.md": _by_area(nodes),
         "by-priority.md": _by_priority(nodes),
         "recent.md": _recent(nodes),
-        "projects.md": _projects(root),
+        "projects.md": _projects(root, nodes),
     }
 
 

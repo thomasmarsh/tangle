@@ -21,6 +21,7 @@ from . import (
     cli,
     decompose,
     embedding_benchmark,
+    external_reference,
     feedback_record,
     feedback_scan,
     graph_check,
@@ -126,6 +127,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     (
         "census",
         "report the last canonical-store hash census and generated-view state",
+    ),
+    (
+        "external [--unresolved]",
+        "list durable cross-project external references and their state",
     ),
     (
         "project register ALIAS UID [--path PATH]",
@@ -406,6 +411,11 @@ def _dispatch(command: str, args: list[str]) -> int:
     # so the verb lives in ``tangle.census``.
     if command == "census":
         return census.main(args)
+    # ``external`` is the read-only surface for durable cross-project
+    # references; like ``census`` it uses a new module because ``cli.py`` and
+    # ``sidecar.py`` are frozen observable prompt files.
+    if command == "external":
+        return external_reference.main(args)
     if command == "packet":
         return packet.main(args)
     if command == "manifest":

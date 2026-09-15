@@ -631,6 +631,32 @@ VERBS: dict[str, Verb] = {
         ),
         topic=_AUTHORING_TOPIC,
     ),
+    "external": _verb(
+        "List durable cross-project references and their resolution state.",
+        usage="tangle external [--unresolved]",
+        operands=(
+            (
+                "--unresolved",
+                "list only references whose target project cannot be resolved",
+            ),
+        ),
+        outputs=(
+            ("root", "absolute vault directory the references were read from"),
+            ("unresolved", "how many references are not resolvable locally"),
+            (
+                "references",
+                "source, project, node, alias, state, and detail rows",
+            ),
+        ),
+        hazards=(
+            "A canonical node cites an external target only as a bare "
+            "tangle://<prj-uid>/node/<node-id> URI, never an Obsidian wikilink.",
+            "An unregistered or unavailable project leaves the reference "
+            "visible and unresolved; no local node is ever created for it.",
+            "Read-only: it reports state and creates no canonical Markdown.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
     "census": _verb(
         "Report the last canonical-store hash census and the generated-view state.",
         usage="tangle census",

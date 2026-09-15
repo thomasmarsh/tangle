@@ -1188,6 +1188,15 @@ def _mut_node_broken_link(nodes: Path) -> None:
     )
 
 
+def _mut_node_external_wikilink(nodes: Path) -> None:
+    child = nodes / "active" / "TAS-002-child.md"
+    child.write_text(
+        child.read_text(encoding="utf-8")
+        + "See [[tangle://prj-04r8b1t7n2c6m9x3q5f0hkwdza/node/TAS-999]].\n",
+        encoding="utf-8",
+    )
+
+
 def _mut_feedback_revision_missing(nodes: Path) -> None:
     _write(
         nodes / "proposed" / "FBK-010-missing.md",
@@ -1461,6 +1470,10 @@ _MUTATIONS: dict[str, tuple[Callable[[Path], None], str]] = {
     "node-reciprocal-edge": (_mut_node_reciprocal_edge, "node-reciprocal-edge"),
     "node-duplicate-identity": (_mut_node_duplicate_identity, "node-duplicate-identity"),
     "node-broken-link": (_mut_node_broken_link, "node-broken-link"),
+    "node-external-wikilink": (
+        _mut_node_external_wikilink,
+        "node-external-wikilink",
+    ),
     "feedback-revision-missing": (
         _mut_feedback_revision_missing,
         "feedback-revision-missing",

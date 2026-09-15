@@ -45,7 +45,7 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from . import store, vault
+from . import identity, store, vault
 from .revision import reported_version
 from .toon import field, table
 
@@ -165,6 +165,7 @@ FINDING_CODES: dict[str, str] = {
     "node-reciprocal-edge": "node stores a reciprocal edge",
     "node-duplicate-identity": "two nodes share a node identity",
     "node-broken-link": "node links to a missing node",
+    "node-external-wikilink": "external reference is written as an Obsidian wikilink",
     "feedback-revision-missing": "feedback node omits tangle_revision",
     "feedback-revision-format": "tangle_revision is malformed",
     "feedback-section-missing": "feedback node lacks a # Feedback section",
@@ -796,6 +797,19 @@ def _check_links(
 ) -> None:
     for node in nodes:
         for target in _WIKILINK.findall(_mask_code(node.text)):
+            if identity.EXTERNAL_REFERENCE.fullmatch(target) is not None:
+                # A durable cross-project reference is a bare ``tangle://`` URI;
+                # a wikilink spelling would resolve as a local node instead, so
+                # it is a malformed reference rather than merely a broken link.
+                errors.append(
+                    Finding(
+                        "node-external-wikilink",
+                        node.path,
+                        f"{node.path}: external reference [[{target}]] must be a "
+                        "bare tangle:// URI, not a wikilink",
+                    )
+                )
+                continue
             if target not in by_name:
                 errors.append(
                     Finding(

@@ -18,18 +18,22 @@ from pathlib import Path
 
 __all__ = [
     "CANONICAL_ID",
+    "EXTERNAL_REFERENCE",
+    "EXTERNAL_REFERENCE_SCHEME",
     "PROJECT_UID",
     "PROJECT_UID_FILE",
     "IdentityError",
     "Reference",
     "abbreviate",
     "ensure_project_uid",
+    "format_external_reference",
     "generate_node_id",
     "generate_project_uid",
     "is_node_id",
     "is_project_alias",
     "is_project_uid",
     "normalize_node_id",
+    "parse_external_reference",
     "parse_reference",
     "read_project_uid",
 ]
@@ -37,11 +41,22 @@ __all__ = [
 _ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz"
 _PAYLOAD = r"[0-7][0-9a-hjkmnp-tv-z]{25}"
 _TYPES = "tas|tho|def|dec|idx|fbk"
+_NODE_ID = rf"(?:(?:{_TYPES})-{_PAYLOAD}|[A-Z][A-Z0-9_]*-\d+)"
 CANONICAL_ID = re.compile(rf"(?:{_TYPES})-{_PAYLOAD}\Z")
 PROJECT_UID = re.compile(rf"prj-{_PAYLOAD}\Z")
 _LEGACY_ID = re.compile(r"[A-Z][A-Z0-9_]*-\d+\Z")
 _ALIAS = re.compile(r"[a-z][a-z0-9-]{0,62}\Z")
 PROJECT_UID_FILE = "project-id"
+
+# A durable cross-project reference is a URI, never an Obsidian wikilink: it
+# carries the immutable ``prj-`` project UID so it survives an alias rename or
+# collision, and Tangle never materializes its target as a local node.
+# The trailing lookahead keeps a scan from accepting a node id prefix inside a
+# longer path segment; ``fullmatch`` still requires the whole value.
+EXTERNAL_REFERENCE_SCHEME = "tangle://"
+EXTERNAL_REFERENCE = re.compile(
+    rf"tangle://(?P<project>prj-{_PAYLOAD})/node/(?P<node>{_NODE_ID})(?![0-9A-Za-z_-])"
+)
 
 
 class IdentityError(ValueError):
@@ -190,6 +205,31 @@ def parse_reference(
     if not is_project_uid(project_uid):
         raise IdentityError(f"invalid project UID registered for alias: {alias}")
     return Reference(project_uid, normalize_node_id(node), True)
+
+
+def format_external_reference(project_uid: str, node_id: str) -> str:
+    """Render the durable URI for one cross-project node reference.
+
+    The URI carries the immutable project UID, so a consumer stores it rather
+    than a local alias or a wikilink that could resolve inside this vault.
+    """
+    if not is_project_uid(project_uid):
+        raise IdentityError(f"invalid project UID: {project_uid!r}")
+    return f"{EXTERNAL_REFERENCE_SCHEME}{project_uid}/node/{normalize_node_id(node_id)}"
+
+
+def parse_external_reference(value: str) -> Reference | None:
+    """Resolve a durable ``tangle://`` cross-project reference.
+
+    Return ``None`` when ``value`` is not an external reference URI, so a
+    caller can tell a local node id from an external one. A matched reference
+    always carries ``qualified=True``: it names the immutable project UID and
+    never an alias.
+    """
+    match = EXTERNAL_REFERENCE.fullmatch(value.strip())
+    if match is None:
+        return None
+    return Reference(match.group("project"), match.group("node"), True)
 
 
 def abbreviate(node_ids: list[str], *, minimum: int = 8) -> dict[str, str]:

@@ -2,9 +2,9 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T19:52:14Z
+updated: 2026-09-15T20:21:30Z
 summary: Implement full-census indexing and generated Markdown views.
-next: Implement durable cross-project external references and their unresolved state.
+next: Add the census and view fault tests for preserved mtime, add/delete, case change, corrupt sidecar and views, interrupted publication, and the startup race.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -216,6 +216,47 @@ recorded path rather than the raw flag. `tests/test_project_registry.py` adds
 `test_explicit_empty_path_clears_the_stored_path`,
 `test_a_non_dict_entry_exits_one_and_is_never_clobbered`, and
 `test_register_creates_an_absent_vault_directory`.
+
+## Slice: durable cross-project external references
+
+Implemented the durable cross-project reference grammar and its unresolved
+state. `identity.py` now owns `EXTERNAL_REFERENCE` (`tangle://<prj-uid>/node/
+<node-id>`, canonical or legacy target), `format_external_reference`, and
+`parse_external_reference`; a trailing lookahead keeps a scan from accepting a
+node-id prefix inside a longer path segment. The new
+`src/tangle/external_reference.py` scans canonical node bodies (masking quoted
+code), resolves each target against `.tangle/projects.json` as `resolved`,
+`unregistered`, `unavailable`, or `local`, and never materializes the target as
+a node. `tangle external [--unresolved]` is the read-only surface, dispatched
+from `main.py` because `cli.py` and `sidecar.py` are frozen observables; it
+prints the unresolved count and an ordered `source,project,node,alias,state,
+detail` table. The generated `views/projects.md` renders the same list under
+`## External references` from the shared `views.registered_projects`, so the
+registry keeps one reader. `graph_check` adds `node-external-wikilink` and
+reports an external URI spelled as an Obsidian wikilink instead of a plain
+broken link, so a durable target can never resolve as a local node by accident.
+
+Evidence: new `tests/test_external_reference.py` covers the grammar round trip
+and rejection, an unregistered target that stays visible with no canonical file
+created, a registered vault committing the matching UID that resolves, a missing
+path and a mismatched project UID that stay `unavailable`, a URI naming this
+vault's own UID (`local`), the `--unresolved` filter, the deterministic
+`projects.md` projection, a quoted code span that is not scanned, the checker's
+wikilink rejection, and the unknown-operand usage error.
+`tests/test_graph_check.py` adds the `node-external-wikilink` mutation so the
+documented-code coverage stays exact, and `tests/test_skill.py` adds `external`
+to its bounded-help verb list. `ruff`, `mypy`, and `make test` pass (849 passed,
+3 skipped); `tangle check` passes at 271 nodes.
+
+Remaining, in order: add the census and view fault tests (preserved mtime,
+add/delete, case change, corrupt sidecar and views, interrupted publication,
+and a direct edit raced with command startup), including a duplicate `nodes_fts`
+row for one id and a non-numeric stored `next_value` that `int()` currently
+raises through; add the scaling benchmark that records total bytes hashed,
+changed files parsed, pages rewritten, and wall time for no-change and
+point-change runs including the per-interaction cost of reading every full-text
+row; and land the project-scoped publication lease, still blocked on the frozen
+`sidecar.py` re-record. This slice changed no frozen file.
 
 # Frozen blocker
 
