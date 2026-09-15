@@ -27,6 +27,7 @@ __all__ = [
     "generate_node_id",
     "generate_project_uid",
     "is_node_id",
+    "is_project_alias",
     "is_project_uid",
     "normalize_node_id",
     "parse_reference",
@@ -88,6 +89,11 @@ def generate_node_id(node_type: str) -> str:
 def is_project_uid(value: str) -> bool:
     """Return whether ``value`` is already a canonical project UID."""
     return PROJECT_UID.fullmatch(value) is not None
+
+
+def is_project_alias(value: str) -> bool:
+    """Return whether ``value`` is a valid lowercase project alias."""
+    return _ALIAS.fullmatch(value) is not None
 
 
 def is_node_id(value: str) -> bool:

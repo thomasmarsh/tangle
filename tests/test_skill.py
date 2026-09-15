@@ -1033,6 +1033,8 @@ _PUBLIC_VERBS: tuple[tuple[str, ...], ...] = (
     ("clusters",),
     ("digest",),
     ("reconcile",),
+    ("project",),
+    ("project", "register"),
     ("check",),
     ("semantic",),
     ("semantic", "embed"),

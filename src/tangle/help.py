@@ -57,7 +57,7 @@ TOPIC_PURPOSES: dict[str, str] = {
 _HELP_FLAGS = frozenset({"-h", "--help"})
 
 # Commands whose second token names a subcommand with its own help entry.
-_GROUP_COMMANDS = frozenset({"node", "feedback", "semantic", "benchmark"})
+_GROUP_COMMANDS = frozenset({"node", "feedback", "semantic", "benchmark", "project"})
 
 
 @dataclass(frozen=True)
@@ -648,6 +648,38 @@ VERBS: dict[str, Verb] = {
             "edit is still detected; mtime and size are never a substitute.",
             "Republishes the disposable views from the reconciled snapshot; "
             "canonical Markdown is never written.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "project": _verb(
+        "Register external projects for cross-project references.",
+        usage="tangle project register ALIAS UID [--path PATH]",
+        outputs=(
+            ("registry", "the local projects.json the registration updated"),
+        ),
+        hazards=(
+            "The registry is local state, excluded from canonical Markdown and Git.",
+        ),
+        topic=_COORDINATION_TOPIC,
+    ),
+    "project register": _verb(
+        "Register a lowercase alias for an external project UID and local vault.",
+        usage="tangle project register ALIAS UID [--path PATH]",
+        operands=(
+            ("ALIAS", "lowercase letters, digits, or hyphens; starts with a letter"),
+            ("UID", "the external project's immutable prj- UID"),
+            ("--path", "local vault location; default empty, so the view renders unavailable"),
+        ),
+        outputs=(
+            ("alias", "the registered alias"),
+            ("project", "the project UID registered"),
+            ("path", "the recorded local path, or empty"),
+            ("registry", "absolute path of the projects.json updated"),
+        ),
+        hazards=(
+            "A malformed existing registry is never clobbered; the command exits non-zero.",
+            "An alias already bound to a different UID is rejected; a UID is immutable.",
+            "The registry is local state, excluded from canonical Markdown and Git.",
         ),
         topic=_COORDINATION_TOPIC,
     ),

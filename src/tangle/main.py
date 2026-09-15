@@ -36,6 +36,7 @@ from . import (
     node_record,
     node_references,
     packet,
+    project_registry,
     provider,
     quality_benchmark,
     reservations,
@@ -125,6 +126,10 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     (
         "census",
         "report the last canonical-store hash census and generated-view state",
+    ),
+    (
+        "project register ALIAS UID [--path PATH]",
+        "register a lowercase alias for an external project UID and local vault",
     ),
     (
         "semantic embed [--model NAME]",
@@ -430,6 +435,11 @@ def _dispatch(command: str, args: list[str]) -> int:
         return _feedback(args[1:])
     if command == "semantic":
         return _semantic(args[1:])
+    # ``project register`` is the registry writer for external projects; it has
+    # no coordination-engine route because ``cli.py`` and ``sidecar.py`` are
+    # frozen observable files.
+    if command == "project" and len(args) > 1 and args[1] == "register":
+        return project_registry.main(args)
     if command == "benchmark":
         return _benchmark(args[1:])
     if command == "stationarize":

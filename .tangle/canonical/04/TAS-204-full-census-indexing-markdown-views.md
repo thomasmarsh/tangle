@@ -2,9 +2,9 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T19:32:50Z
+updated: 2026-09-15T19:44:02Z
 summary: Implement full-census indexing and generated Markdown views.
-next: Implement the registry writer and unresolved external references.
+next: Implement durable cross-project external references and their unresolved state.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -171,6 +171,40 @@ pre-change `refresh` fails it: a direct reproduction against the pinned sidecar
 left `nodes_fts` and `id_sequences` empty and `search` reporting zero matches,
 while the changed `refresh` restored both and left a second `index` run
 writing nothing.
+
+## Slice: project registry writer
+
+Added the write side of the external-project registry so the durable
+`.tangle/projects.json` the generated `projects.md` view already reads can be
+created and updated without hand-editing. The new `src/tangle/project_registry.py`
+serves `tangle project register ALIAS UID [--path PATH]`, dispatched from
+`src/tangle/main.py` because `cli.py` and `sidecar.py` are frozen observable
+files. It validates the alias through the new public
+`identity.is_project_alias` (the module never duplicates the private regex) and
+the UID through `identity.is_project_uid`, and it writes
+`<vault.resolve(migrate_legacy=False)>/projects.json` through a same-directory
+process-unique temporary file and `os.replace`, creating the vault directory
+when absent. A missing file starts an empty registry; a malformed file (invalid
+JSON, non-object, or a non-object `projects`) exits 1 and is never clobbered. A
+new alias is added, an alias already bound to the same UID has its `path`
+updated with every other key on the entry preserved, and an alias bound to a
+different UID exits 1 with a clear message and no write. The reader's top-level
+alias-map form is accepted on read; the writer always normalizes to
+`{"projects": ...}`. Success prints `alias`, `project`, `path`, and the
+absolute `registry` path and exits 0; a malformed command line exits 2 and a
+malformed or conflicting registry exits 1. `help.py` gains the `project` group
+and its `project register` entry under the coordination topic.
+
+Evidence: the new `tests/test_project_registry.py` covers the normalized write
+and the published `projects.md` alias and UID, invalid alias and UID usage
+errors that write nothing, an empty registry created, a same-UID path update, a
+same-alias different-UID conflict that leaves the file byte-identical, a
+malformed registry that exits 1 byte-unchanged (invalid JSON, array, string, and
+non-object `projects`), `--path .` rendered present and a missing path rendered
+unavailable, unrelated aliases and unknown entry keys preserved, the top-level
+alias map normalized, `--path=PATH`, and extra operands or a valueless `--path`
+as usage errors. `tests/test_skill.py` adds `project` and `project register` to
+`_PUBLIC_VERBS`, so both verbs keep bounded help. No frozen file changed.
 
 # Frozen blocker
 
