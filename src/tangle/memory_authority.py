@@ -46,7 +46,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import memory_causal, memory_contract, memory_pilot, memory_scenario, store
+from . import memory_causal, memory_contract, memory_corpus, memory_pilot, memory_scenario, store
 from .toon import field, table
 
 __all__ = [
@@ -598,7 +598,7 @@ def _path_exists(base: Path, path: str) -> bool:
     parts = path.split("/")
     if len(parts) == 3 and parts[0] == ".tangle" and parts[1] in _STATUS_DIRS:
         return store.find_by_name(str(base / ".tangle"), parts[2]) is not None
-    return (base / path).exists()
+    return memory_corpus.frozen_fixture_path(base, path).exists()
 
 
 def validate(cases: Sequence[AuthorityCase], root: Path | None = None) -> list[str]:
@@ -672,7 +672,11 @@ def leakage(cases: Sequence[AuthorityCase], root: Path | None = None) -> list[st
             problems.append(f"leak {case.case_id}: the task names a node id or wikilink")
         for path in case.observable_paths:
             try:
-                text = (base / path).read_text(encoding="utf-8").lower()
+                text = (
+                    memory_corpus.frozen_fixture_path(base, path)
+                    .read_text(encoding="utf-8")
+                    .lower()
+                )
             except (OSError, UnicodeDecodeError):
                 problems.append(f"leak {case.case_id}: unreadable observable {path}")
                 continue

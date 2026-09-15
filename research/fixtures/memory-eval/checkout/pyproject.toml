@@ -53,9 +53,6 @@ files = ["src", "tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-# The frozen research fixtures are byte copies of measured source; linting them
-# would re-impose the live-source coupling this fixture removes.
-extend-exclude = ["research/fixtures"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

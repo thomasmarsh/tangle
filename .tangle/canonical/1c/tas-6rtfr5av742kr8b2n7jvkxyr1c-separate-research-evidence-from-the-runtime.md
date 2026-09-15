@@ -1,9 +1,9 @@
 ---
 context_rev: 1
 status: proposed
-updated: 2026-09-15T20:43:02Z
+updated: 2026-09-15T21:14:16Z
 summary: Separate research and benchmark evidence from the ordinary runtime.
-next: "[[tas-28fnsga4q31j77sk9xbvvzwwr3-freeze-the-memory-evaluation-corpus-s-live]]"
+next: "[[tas-1vmzcb5gewppf0y9bv7w49az1j-freeze-the-token-benchmark-s-installed-skill]]"
 ---
 
 Parent [[tas-10sn2b04x59bkd80j8h5hqp4tk-sequence-the-arch-md-section-7-replacement-in]].
@@ -33,7 +33,7 @@ so later slice refactoring no longer depends on the current source layout.
 - Every live production-source input of the benchmark corpus is copied into a
   frozen fixture location with recorded provenance (source revision and hash),
   and the harness reads the frozen copy.
-- The previously recorded measurements reproduce against the frozen fixtures.
+- The committed measurements whose recording revision is recoverable re-derive from the frozen fixtures; measurements whose historical source or prompt revision is unrecoverable are retained as historical evidence and recorded with the reason.
 - Ordinary startup no longer imports research or benchmark modules, or that
   half is resolved through its existing owner and cited here.
 

@@ -22,6 +22,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from tangle import memory_corpus as corpus
 from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -363,7 +364,7 @@ def test_observable_files_do_not_state_the_deciding_rule() -> None:
     for scenario in _all_scenarios():
         terms = _OBSERVABLE_LEAK_TERMS[scenario.case_id]
         for path in scenario.query.observable_paths:
-            text = (_ROOT / path).read_text(encoding="utf-8").lower()
+            text = corpus.frozen_fixture_path(_ROOT, path).read_text(encoding="utf-8").lower()
             for term in terms:
                 assert term.lower() not in text, f"{scenario.case_id}: {path} leaks {term!r}"
 

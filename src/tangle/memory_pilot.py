@@ -204,9 +204,9 @@ def _resolve_observable(root: Path, path: str) -> ObservableFile:
         status, candidate = found
         resolved = f".tangle/{status}/{parts[2]}"
         return ObservableFile(path, resolved, Path(candidate).read_text(encoding="utf-8"))
-    checkout = root / path
+    checkout = memory_corpus.frozen_fixture_path(root, path)
     if not checkout.is_file():
-        raise PilotError(f"observable path missing from the checkout: {path}")
+        raise PilotError(f"observable path missing from the frozen fixtures: {path}")
     return ObservableFile(path, path, checkout.read_text(encoding="utf-8"))
 
 

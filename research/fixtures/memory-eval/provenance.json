@@ -1,0 +1,226 @@
+{
+  "fixture": "memory-evaluation frozen checkout",
+  "node": "tas-28fnsga4q31j77sk9xbvvzwwr3",
+  "checkout_root": "research/fixtures/memory-eval/checkout",
+  "source_revision": "ce07e35dec95",
+  "created": "2026-09-15T20:54:27Z",
+  "note": "Byte-for-byte copies of every live checkout path named by the memory authority cases and the memory-corpus envelopes as observable paths or episode evidence. The harness reads these copies instead of live production source, so later source refactoring cannot invalidate a recorded measurement. Frozen copies are never reformatted; refresh this root only when a corpus deliberately changes the measured bytes.",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "65478bcc0b7b551b8ead78562506205e5785b03d7cdeb4c5873b73953a91ab40",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "b9108208e9875e870a6ff519cab794a04f7961073c386c81605f2077f4aced3d",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "SKILL.md",
+      "sha256": "ffe2d985e59d3760a5a959b9bfa5287a797b29f130dc179792e78921b41da97c",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "benchmark/memory-corpus/admission.json",
+      "sha256": "acc93f4b4ad0ac76f97255319ebb009a98b23af5f07fa141309a6c4bbf10dd16",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "ffe26be709db3e8b6229b2c749f86d2af433096a9bcbc7392113aa272f5f401e",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "references/authoring.md",
+      "sha256": "bd42e0e4a196d293744c1743be02078fb76a19aecc233005f589b652f40b9d24",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "references/coordination.md",
+      "sha256": "098f4a8d0355f153da328366bb29c3edb896d9fc66262615f7118e6e6b1872ff",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "references/dependencies.md",
+      "sha256": "2c03363eb97e4a4e45a0b9dbc16426f9bd597290d720228657c0400f062b7136",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "research/agent-memory-admission-cases.md",
+      "sha256": "b9664c1401019fe99b66ff227a49af06758df193f537a5a1c748111e8e46a3bc",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "research/agent-memory-evaluation-contract.md",
+      "sha256": "623fc16601545898c26cd9c60fc20418124d15396c0a0c8990ee243e91531109",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "research/agent-memory-pipeline-diagnostics.md",
+      "sha256": "c67270e4356324dbbcdd4efecaa1be551b8b326fc13178f1d0b1764f2b5d24d9",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "research/agent-memory-scenario-schema.md",
+      "sha256": "5262b567a27f92b99d7b8e2400e5fe1ce28b7980135414d56765aba12f364549",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "research/agent-memory-theory-evaluation.md",
+      "sha256": "e64174d3d29cba09887fa3581ac666e64e646d77f8f5b37dd62a8957e44e4367",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "scripts/install.sh",
+      "sha256": "0430e15b38bc1e830e3b187618f0c3f0b4bf6a3902367a95761fca9e507d7635",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/behavioral_benchmark.py",
+      "sha256": "ea39d854a5f6c01f1023abeac91ac7c8895027dcc328a959c87c509af62e8332",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/cli.py",
+      "sha256": "21ed89979ce94006a337e978e387799fe498ae21657dc118f6531427f82400fc",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/clustering.py",
+      "sha256": "bb97aae59842f358f8f2b1fc1d42f5b0e839d5dacd17c23d4578d85f1c9b9c79",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/feedback_record.py",
+      "sha256": "d7623129a492565e38ace9769960e684f0fe10d675cd75f41d888f5a63cdee3f",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/graph_check.py",
+      "sha256": "1fdbc331afbcd905534784237b73f81c383c3fb11b27c573077711bfec1f413c",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/help.py",
+      "sha256": "aac4dbc656cfb0422036cbb1c95b74ee066ed5f8d02974ea2abb4e13640d4b69",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/index.py",
+      "sha256": "82fc962293aa40fdddc29f60354a767876f9036308b66704415a4816e784bf5f",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/main.py",
+      "sha256": "896e03ea37ee34781cf5232e7ed64b1b434541d77ab5a0efe79b41d6933db340",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/memory_contract.py",
+      "sha256": "44d6d0d94c2c013d3eb896d98a508717eae86bd41920496e7e0422e6e936a6f1",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/memory_scenario.py",
+      "sha256": "c1b49c300feca88d5479b27896ffe684f67e436142d5be13c0182ec5970192ce",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/quality_benchmark.py",
+      "sha256": "fd1c10654db74cdcdbf4c6452cc9354a69bbf42bf1fc374d297c79e143fcfb93",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/revision.py",
+      "sha256": "f2612def6afada0472cd44a8731519acfefbc9e15dd1d4d642c149b083bed1ec",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/sidecar.py",
+      "sha256": "15de586f6e39f8d2b379a772d16c3651d42705328b1ffbb7d4e804ff62d25da7",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/staged_benchmark.py",
+      "sha256": "d2c4474f94f9c5cdce367ed951b910f9d12dde5ab3a99ef8d6a41f189f104105",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/token_benchmark.py",
+      "sha256": "9a5791c19aaf0f522ececd228bedd9e979c62c60a61635393560908e9301ef1c",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/toon.py",
+      "sha256": "7d75fa6d030d11ec986b75b398874722c9c0968be0ddd16655a795a7662a6f8f",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "src/tangle/vault.py",
+      "sha256": "521b45c614cc808d41bc45fdd94aefc0d97d7d9c20c23976775bd8706b411239",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "tests/install.sh",
+      "sha256": "bbd5274ccb39678406aad1fa53c9ae06b22eeae5dbaf3002f155318e5ddf5595",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "tests/test_scaffold.py",
+      "sha256": "1cab99f0a39c586bb2141a4531b1dee847ba38ab393ba68381a4d180ce59bd2a",
+      "source_revision": "ce07e35dec95"
+    },
+    {
+      "path": "tests/test_tangle_index.py",
+      "sha256": "e68f97ea4ad451b9c739a418f6ab7d4ea34bdcb6cefc03cd860b685f99b22fc5",
+      "source_revision": "ce07e35dec95"
+    }
+  ],
+  "tangle_refs": {
+    "resolution": "resolved against the live vault by node name via store.find_by_name across the status directories, not frozen",
+    "names": [
+      ".tangle/blocked/TAS-080-staged-token-ab.md",
+      ".tangle/proposed/TAS-121-evaluation-foundation.md",
+      ".tangle/proposed/TAS-127-uncertainty-provenance-security.md",
+      ".tangle/proposed/TAS-135-corpus-validator-splits.md",
+      ".tangle/resolved/DEC-002-hybrid-markdown-sqlite-authority.md",
+      ".tangle/resolved/DEC-003-semantic-versioning.md",
+      ".tangle/resolved/DEC-004-compact-skill-text.md",
+      ".tangle/resolved/DEC-006-semantic-layer-capability-boundary.md",
+      ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md",
+      ".tangle/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+      ".tangle/resolved/TAS-009-semantic-revisions.md",
+      ".tangle/resolved/TAS-023-parallel-id-allocation.md",
+      ".tangle/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+      ".tangle/resolved/TAS-059-stale-pin-commit-shape.md",
+      ".tangle/resolved/TAS-069-unify-dependency-semantics.md",
+      ".tangle/resolved/TAS-072-transitive-dependency-impact.md",
+      ".tangle/resolved/TAS-077-reconciliation-planner.md",
+      ".tangle/resolved/TAS-082-reversal-semantics.md",
+      ".tangle/resolved/TAS-088-optional-embedding-extra.md",
+      ".tangle/resolved/TAS-089-embedding-model-selection.md",
+      ".tangle/resolved/TAS-097-slice-primitive-scope.md",
+      ".tangle/resolved/TAS-100-lease-lifecycle-visibility.md",
+      ".tangle/resolved/TAS-102-verification-evidence-contract.md",
+      ".tangle/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md",
+      ".tangle/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md",
+      ".tangle/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md",
+      ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md",
+      ".tangle/resolved/TAS-110-fast-default-test-suite.md",
+      ".tangle/resolved/TAS-112-timestamp-clamp-rule.md",
+      ".tangle/resolved/TAS-113-write-set-change-closure.md",
+      ".tangle/resolved/TAS-114-completion-receipt.md",
+      ".tangle/resolved/TAS-115-parent-next-advance-ownership.md",
+      ".tangle/resolved/TAS-116-status-move-staging.md",
+      ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md",
+      ".tangle/resolved/TAS-119-announce-vault-migration.md",
+      ".tangle/resolved/TAS-127-uncertainty-provenance-security.md",
+      ".tangle/resolved/TAS-131-admission-scenarios.md",
+      ".tangle/resolved/THO-004-orientation-compaction-screen.md",
+      ".tangle/resolved/THO-005-cold-resume-route-screen.md",
+      ".tangle/resolved/THO-012-embedding-clustering-retrieval-theory.md",
+      ".tangle/resolved/THO-016-has-cumulative-contract-growth-invalidated-the-c.md"
+    ]
+  }
+}

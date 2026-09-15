@@ -59,7 +59,9 @@ __all__ = [
     "control_balance",
     "corpus_digest",
     "family_digest",
+    "FROZEN_FIXTURE_DIR",
     "freeze",
+    "frozen_fixture_path",
     "leakage",
     "load_corpus",
     "load_documents",
@@ -82,6 +84,11 @@ PROTOCOL = "memory-corpus-v1"
 SCHEMA_VERSION = memory_scenario.SCENARIO_SCHEMA_VERSION
 CORPUS_DIR_RELATIVE = "benchmark/memory-corpus"
 MANIFEST_NAME = "manifest.json"
+
+# Every live checkout path the corpora observe is read from this frozen copy so
+# a later source refactor cannot change a recorded measurement. The per-file
+# hashes and source revision are in the sibling ``provenance.json``.
+FROZEN_FIXTURE_DIR = "research/fixtures/memory-eval/checkout"
 
 # The admitted corpus is a 40-60 case set; every family carries at least a
 # diagnostic minimum, because a family with fewer cases cannot separate a
@@ -149,6 +156,17 @@ def _repo_root() -> Path:
 
 def _base(root: Path | None) -> Path:
     return _repo_root() if root is None else Path(root)
+
+
+def frozen_fixture_path(base: Path, path: str) -> Path:
+    """Return the frozen fixture copy of a declared checkout path.
+
+    The memory corpora observe these files as frozen evidence, so a recorded
+    measurement no longer depends on the live source bytes. A
+    ``.tangle/<status>/<name>`` reference is not a checkout path: it resolves
+    against the live vault, because the vault is the durable memory itself.
+    """
+    return base / FROZEN_FIXTURE_DIR / path
 
 
 def expected_corpus_version(family: str) -> str:
@@ -352,18 +370,32 @@ def _shingles(statements: Iterable[str], width: int = GOLD_SHINGLE_WORDS) -> set
     return spans
 
 
+def _resolve_observable_path(base: Path, path: str) -> Path | None:
+    """Resolve a cited observable to a readable path, or ``None``.
+
+    A ``.tangle/<status>/<name>.md`` citation resolves by node name across the
+    status directories against the live vault, because the vault is the durable
+    memory itself and a node legitimately moves between directories. Every other
+    path resolves to its frozen fixture copy, so a later source refactor cannot
+    change what the audit reads.
+    """
+    parts = path.split("/")
+    if len(parts) == 3 and parts[0] == ".tangle" and parts[1] in _STATUS_DIRS:
+        found = store.find_by_name(str(base / ".tangle"), parts[2])
+        return None if found is None else Path(found[1])
+    return frozen_fixture_path(base, path)
+
+
 def path_exists(base: Path, path: str) -> bool:
     """Return whether a cited path resolves in the vault or the repository.
 
     A ``.tangle/<status>/<name>.md`` citation is checked by node name across
     every status directory, because a node legitimately moves between them and
     its stable identity is the name, not the directory it occupied when the
-    case was curated. Every other path is checked literally.
+    case was curated. Every other path is checked in the frozen fixture root.
     """
-    parts = path.split("/")
-    if len(parts) == 3 and parts[0] == ".tangle" and parts[1] in _STATUS_DIRS:
-        return store.find_by_name(str(base / ".tangle"), parts[2]) is not None
-    return (base / path).exists()
+    resolved = _resolve_observable_path(base, path)
+    return resolved is not None and resolved.exists()
 
 
 def _path_problems(case: memory_scenario.Scenario, base: Path) -> list[str]:
@@ -579,7 +611,8 @@ def leakage(corpus: Sequence[Envelope], root: Path | None = None) -> list[str]:
                 problems.append(f"leak {case.case_id}: a gold statement is copied into the task")
         answer = _normalize(case.grading.expected_outcome.replace("-", " "))
         for path in case.query.observable_paths:
-            text = _read_text(base / path)
+            resolved = _resolve_observable_path(base, path)
+            text = None if resolved is None else _read_text(resolved)
             if text is None:
                 continue
             normalized = _normalize(text)

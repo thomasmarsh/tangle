@@ -18,6 +18,7 @@ import pytest
 
 from tangle import memory_corpus as corpus
 from tangle import memory_scenario as schema
+from tangle import store
 
 _ROOT = Path(__file__).resolve().parents[1]
 _MANIFEST = _ROOT / corpus.CORPUS_DIR_RELATIVE / corpus.MANIFEST_NAME
@@ -447,7 +448,8 @@ def test_answer_and_gold_written_into_an_observable_file_is_reported(
         observable=("obs.md",),
         hidden=("obs.md",),
     )
-    observed = tmp_path / "obs.md"
+    observed = corpus.frozen_fixture_path(tmp_path, "obs.md")
+    observed.parent.mkdir(parents=True, exist_ok=True)
     observed.write_text(
         "The hidden fact decides the correct next action, so act on current evidence "
         "and act on current evidence.\n",
@@ -466,7 +468,8 @@ def test_gold_phrase_in_an_observable_file_is_reported(tmp_path: Path) -> None:
         observable=("obs.md",),
         hidden=("obs.md",),
     )
-    observed = tmp_path / "obs.md"
+    observed = corpus.frozen_fixture_path(tmp_path, "obs.md")
+    observed.parent.mkdir(parents=True, exist_ok=True)
     observed.write_text(
         "The hidden fact decides the correct next action for the caller.\n",
         encoding="utf-8",
@@ -474,6 +477,29 @@ def test_gold_phrase_in_an_observable_file_is_reported(tmp_path: Path) -> None:
     envelope = _envelope(document)
     problems = corpus.leakage((envelope,), root=tmp_path)
     assert any("a gold phrase is written in obs.md" in p for p in problems)
+
+
+def test_tangle_observable_is_audited_not_skipped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ``.tangle`` observable is read from the live vault, not skipped."""
+    node = tmp_path / "DEC-003-semantic-versioning.md"
+    node.write_text(
+        "The hidden fact decides the correct next action for the caller.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(store, "find_by_name", lambda vault, name: ("resolved", str(node)))
+    document = _scenario(
+        "admission-leak-tangle-001",
+        family="admission",
+        observable=(".tangle/resolved/DEC-003-semantic-versioning.md",),
+        hidden=(".tangle/resolved/DEC-003-semantic-versioning.md",),
+    )
+    problems = corpus.leakage((_envelope(document),), root=tmp_path)
+    assert any(
+        "a gold phrase is written in .tangle/resolved/DEC-003-semantic-versioning.md" in p
+        for p in problems
+    )
 
 
 # --- helpers and CLI --------------------------------------------------------
