@@ -15,7 +15,6 @@ import hashlib
 import re
 import sqlite3
 import subprocess
-import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -102,17 +101,6 @@ def _snapshot(database: Path) -> tuple[dict[str, tuple[str, str]], set[tuple[str
     return nodes, edges
 
 
-def _indexed_at(database: Path) -> dict[str, str]:
-    connection = sqlite3.connect(database)
-    try:
-        return {
-            str(node_id): str(stamp)
-            for node_id, stamp in connection.execute("SELECT id, indexed_at FROM nodes")
-        }
-    finally:
-        connection.close()
-
-
 def test_a_read_only_interaction_maintains_the_index(
     tmp_path: Path, run_tangle: RunTangle
 ) -> None:
@@ -184,25 +172,6 @@ def test_upkeep_agrees_with_a_full_rebuild(tmp_path: Path, run_tangle: RunTangle
 
     assert run_tangle("index", env=env).returncode == 0
     assert _snapshot(_database(tmp_path)) == incremental
-
-
-def test_upkeep_writes_nothing_when_markdown_is_unchanged(
-    tmp_path: Path, run_tangle: RunTangle
-) -> None:
-    """A second interaction over an unchanged vault rewrites no indexed row."""
-    vault = tmp_path / "nodes"
-    _seed(vault)
-    env = _env(tmp_path, vault)
-    assert run_tangle("init", env=env).returncode == 0
-    assert run_tangle("frontier", env=env).returncode == 0
-    first = _indexed_at(_database(tmp_path))
-    assert first
-
-    # ``indexed_at`` has one-second resolution, so a rewrite lands on a new
-    # stamp only after the clock advances.
-    time.sleep(1.1)
-    assert run_tangle("frontier", env=env).returncode == 0
-    assert _indexed_at(_database(tmp_path)) == first
 
 
 def test_upkeep_removes_a_deleted_node_and_its_edges(

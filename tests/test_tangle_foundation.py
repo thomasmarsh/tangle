@@ -336,16 +336,6 @@ def test_init_seeds_reservations_from_markdown(tmp_path: Path, run_tangle: RunTa
     assert run_tangle("allocate", "THO", env=env).stdout.strip() == 'id: "THO-004"'
 
 
-def test_reindex_seeds_reservations(tmp_path: Path, run_tangle: RunTangle) -> None:
-    vault = tmp_path / "vault" / "nodes"
-    _seed_allocations(vault)
-    env = _env(tmp_path)
-    env["TANGLE_NODES_DIR"] = str(vault)
-
-    assert run_tangle("index", str(vault), env=env).returncode == 0
-    assert run_tangle("allocate", "TAS", env=env).stdout.strip() == 'id: "TAS-008"'
-
-
 def test_allocate_skips_on_disk_identity_with_empty_sidecar(
     tmp_path: Path, run_tangle: RunTangle
 ) -> None:

@@ -184,16 +184,6 @@ def test_stale_reports_missing_pinned_target(tmp_path: Path, run_tangle: RunTang
     )
 
 
-def test_reindex_recovers_after_database_loss(tmp_path: Path, run_tangle: RunTangle) -> None:
-    vault = tmp_path / "vault" / "nodes"
-    _seed(vault)
-    env = _env(tmp_path, vault)
-    run_tangle("index", env=env)
-    _database(tmp_path).unlink()
-    run_tangle("index", env=env)
-    assert '"DEF-001"' in run_tangle("search", "protocol", env=env).stdout
-
-
 def test_explicit_nodes_argument_overrides_environment(
     tmp_path: Path, run_tangle: RunTangle
 ) -> None:

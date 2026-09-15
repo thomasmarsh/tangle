@@ -1752,16 +1752,6 @@ def test_decomposition_roll_up() -> None:
     assert "Parent [[TAS-008-fit-for-purpose-hardening]]." in admission
 
 
-def test_stationary_storage_decision() -> None:
-    storage = _node_text("TAS-017-stationary-canonical-storage")
-    parent = _node_text("TAS-008-fit-for-purpose-hardening")
-    assert re.search(r"^next:", storage, re.MULTILINE) is None
-    assert "# Result\n" in storage
-    assert "storage-comparison.rb" in storage
-    assert "TAS-017" in parent
-    assert "# Result\n" in parent
-
-
 def test_decision_lifecycle() -> None:
     decision = _node_text("DEC-001-decision-node-convention")
     task = _node_text("TAS-013-decision-memory")

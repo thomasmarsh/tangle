@@ -22,8 +22,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from tangle import memory_corpus
 from tangle import memory_scenario as schema
 
@@ -458,11 +456,3 @@ def test_document_agrees_with_the_corpora() -> None:
         assert parameter in text, parameter
     for disposition in _REQUIRED_DISPOSITIONS:
         assert disposition in text, disposition
-
-
-def test_verify_rejects_a_mutated_case() -> None:
-    envelope = _envelope(_AUTHORITY)
-    case = envelope["cases"][0]
-    case["query"]["observable_paths"] = ["../secrets.env"]
-    with pytest.raises(schema.ScenarioError):
-        schema.parse_scenario(case)

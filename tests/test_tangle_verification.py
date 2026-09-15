@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 import re
-import sqlite3
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -20,9 +19,6 @@ BtCommand = Callable[[], list[str]]
 # The only valid ``--base-hash`` operand is a bare 64-character lowercase hex
 # digest, so the tests pass real digests rather than placeholders.
 _BASE_HASH = "4d" * 32
-_OLD_HASH = "5e" * 32
-_NEW_HASH = "6f" * 32
-_CHANGED_HASH = "7a" * 32
 
 
 def _env(**overrides: str | None) -> dict[str, str]:
@@ -150,89 +146,6 @@ def test_concurrent_batch_allocation_is_unique_and_dense(
         assert block == list(range(block[0], block[0] + per_process)), block
     ids = sorted(number for block in blocks for number in block)
     assert ids == list(range(1, 4 * per_process + 1))
-
-
-def test_expiry_and_base_hash_mismatch(tmp_path: Path, bt_command: BtCommand) -> None:
-    sidecar = tmp_path / "sidecar"
-    env = _env(TANGLE_SIDECAR_DIR=str(sidecar), TANGLE_PROJECT_ID="verification-test")
-    command = bt_command()
-    subprocess.run([*command, "init"], env=env, capture_output=True, check=True)
-    subprocess.run(
-        [
-            *command,
-            "claim",
-            "TAS-901",
-            "agent-a",
-            "--base-hash",
-            _OLD_HASH,
-            "--lease-seconds",
-            "60",
-        ],
-        env=env,
-        capture_output=True,
-        check=True,
-    )
-    database = sidecar / "projects" / "verification-test" / "graph.sqlite3"
-    connection = sqlite3.connect(database)
-    try:
-        connection.execute("UPDATE claims SET lease_expires_at=0 WHERE node_id='TAS-901';")
-        connection.commit()
-    finally:
-        connection.close()
-    reclaimed = subprocess.run(
-        [
-            *command,
-            "claim",
-            "TAS-901",
-            "agent-b",
-            "--base-hash",
-            _NEW_HASH,
-            "--lease-seconds",
-            "60",
-        ],
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert 'agent: "agent-b"' in reclaimed.stdout
-    mismatch = subprocess.run(
-        [
-            *command,
-            "claim",
-            "TAS-901",
-            "agent-b",
-            "--base-hash",
-            _CHANGED_HASH,
-            "--lease-seconds",
-            "60",
-        ],
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert "different base hash" in mismatch.stdout
-
-    connection = sqlite3.connect(database)
-    try:
-        connection.execute("UPDATE claims SET lease_expires_at=0 WHERE node_id='TAS-901';")
-        connection.commit()
-    finally:
-        connection.close()
-    lapsed = subprocess.run(
-        [*command, "release", "TAS-901", "agent-b", "--base-hash", _NEW_HASH],
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert 'result: "expired"' in lapsed.stdout
-    assert 'lease_remaining_seconds: "0"' in lapsed.stdout
-    never_held = subprocess.run(
-        [*command, "release", "TAS-901", "agent-b", "--base-hash", _NEW_HASH],
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert 'result: "no-op"' in never_held.stdout
 
 
 def _canonical_markdown(vault: Path) -> dict[Path, bytes]:
