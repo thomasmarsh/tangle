@@ -10,7 +10,9 @@ from __future__ import annotations
 import csv
 import hashlib
 import re
+import sqlite3
 import subprocess
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -135,6 +137,16 @@ def _database(tmp_path: Path) -> Path:
     return tmp_path / "sidecar" / "projects" / "index-test" / "graph.sqlite3"
 
 
+def _indexed_at(database: Path) -> dict[str, str]:
+    """Read the stored ``indexed_at`` stamp per node id from the sqlite sidecar."""
+    conn = sqlite3.connect(database)
+    try:
+        rows = conn.execute("SELECT id, indexed_at FROM nodes").fetchall()
+    finally:
+        conn.close()
+    return {str(node_id): str(stamp) for node_id, stamp in rows}
+
+
 def test_reindex_counts_and_queries(tmp_path: Path, run_tangle: RunTangle) -> None:
     """The file's real-process entry-point smoke: index, search, backlinks, stale."""
     vault = tmp_path / "vault" / "nodes"
@@ -159,6 +171,27 @@ def test_reindex_counts_and_queries(tmp_path: Path, run_tangle: RunTangle) -> No
         '"TAS-002","active","DEF-404-missing","","","Depends on",'
         '"missing context_rev pin"'
     ) in stale.stdout
+
+
+def test_reindex_reconciles_incrementally_on_a_settled_vault(
+    tmp_path: Path, run_tangle: RunTangle
+) -> None:
+    """A second ``index`` reconciles a settled vault without restamping its rows."""
+    vault = tmp_path / "vault" / "nodes"
+    _seed(vault)
+    env = _env(tmp_path, vault)
+
+    first = run_tangle("index", env=env)
+    assert first.stdout.splitlines()[:2] == ["nodes: 4", "edges: 5"]
+    before = _indexed_at(_database(tmp_path))
+    assert len(before) == 4
+
+    # ``indexed_at`` has one-second resolution, so cross a second boundary: a
+    # whole-index rebuild would reinsert every row with a fresh stamp here.
+    time.sleep(1.1)
+    second = run_tangle("index", env=env)
+    assert second.stdout.splitlines()[:2] == ["nodes: 4", "edges: 5"]
+    assert _indexed_at(_database(tmp_path)) == before
 
 
 def test_stale_reports_missing_pinned_target(tmp_path: Path, run_tangle_inproc: RunTangle) -> None:

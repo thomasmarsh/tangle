@@ -2,9 +2,9 @@
 status: active
 context_rev: 2
 priority: P0
-updated: 2026-09-15T02:30:25Z
+updated: 2026-09-15T19:15:21Z
 summary: Implement full-census indexing and generated Markdown views.
-next: Replace the per-command full reindex in the sidecar query verbs with the reconciled census snapshot.
+next: Implement the registry writer and unresolved external references.
 ---
 
 Parent [[TAS-193-same-directory-graph-contribution-intake]].
@@ -64,8 +64,7 @@ frozen-artifact derivation failure, and `tangle check` passes at 251 nodes.
 
 Remaining, in order: reconcile the complete canonical-store hash census before
 command dispatch and report zero-or-N changes and view state on the diagnostic
-surface; replace the per-command full reindex in the sidecar query verbs with
-that reconciled snapshot; implement the registry writer and unresolved external
+surface; implement the registry writer and unresolved external
 references; add the fault tests (preserved mtime, add/delete, case change,
 corrupt sidecar and views, interrupted publication, startup race) and the
 scaling benchmark; and land the project-scoped publication lease.
@@ -106,26 +105,53 @@ file excluded, and a fresh vault reported without creating a sidecar or view.
 tests/test_memory_authority.py` passed (22 passed), proving the seven frozen
 observable files are unchanged; `./scripts/tangle check` passed (251 nodes).
 
-Remaining, in order: replace the per-command full reindex in the sidecar query
-verbs with the reconciled census snapshot; implement the registry writer and
-unresolved external references; add the fault tests (preserved mtime,
-add/delete, case change, corrupt sidecar and views, interrupted publication,
-startup race) and the scaling benchmark; and land the project-scoped
-publication lease.
+Remaining, in order: implement the registry writer and unresolved external
+references; add the fault tests (preserved mtime, add/delete, case change,
+corrupt sidecar and views, interrupted publication, startup race) and the
+scaling benchmark; and land the project-scoped publication lease.
+
+## Slice: reconciled reindex for the sidecar query verbs
+
+Made the derived-index repair entry point reconcile incrementally. The body of
+`index.reindex` in `src/tangle/index.py` now defers to the existing
+`index.refresh` and then returns the stored totals from `SELECT COUNT(*) FROM
+nodes` and `SELECT COUNT(*) FROM edges`, keeping the `(nodes, edges, root)`
+signature. `refresh` writes only the rows the Markdown changed, opens no write
+transaction on an unchanged vault, and rebuilds every row from the same
+snapshot when the index is lost, partial, or foreign, so `tangle index` stays
+repair-capable and its `nodes: N` / `edges: M` stdout is unchanged. Because the
+pre-dispatch `census.reconcile()` already reconciles before dispatch, the
+in-verb `index.reindex` calls at `cli.py:400` (`_search`), `cli.py:490`
+(`_backlinks`), and `cli.py:531` (`_stale`) now pay a snapshot read instead of a
+whole-index rebuild, and `cli.py` stays byte-identical at HEAD.
+
+Evidence: `tests/test_tangle_index.py` adds
+`test_reindex_reconciles_incrementally_on_a_settled_vault`, which seeds the
+fixture vault, runs the real `index` process twice, asserts both runs report
+`nodes: 4` and `edges: 5`, and asserts the per-node `indexed_at` stamps read
+back from the sqlite sidecar are identical across the two runs. It crosses a
+one-second `indexed_at` boundary between the runs, so the old whole-index
+rebuild would necessarily have restamped every row and failed the assertion
+while the incremental reconciliation leaves the settled rows untouched. No
+prompt-observable file changed.
 
 # Frozen blocker
 
-The remaining `next` action and every other remaining bullet that touches
-`tangle status` or the sidecar query verbs requires editing the frozen
-`src/tangle/cli.py`. The sidecar query verbs still call the whole-rebuild
-`index.reindex` at `cli.py:400` (`_search`), `cli.py:490` (`_backlinks`), and
-`cli.py:531` (`_stale`), and `_run_reindex` at `cli.py:224` serves `index`.
-`cli.py` is one of the seven prompt-observable files pinned by
-`benchmark/memory-authority-result.json`, so a byte change there owes a faithful
-LIVE authority re-record —
+The sidecar query verbs no longer need a `cli.py` edit: the non-frozen
+`src/tangle/index.py` route landed, so `index.reindex` — which `cli.py:400`
+(`_search`), `cli.py:490` (`_backlinks`), `cli.py:531` (`_stale`), and
+`_run_reindex` at `cli.py:224` all call — reconciles incrementally through
+`index.refresh` instead of rebuilding the whole index per call, and the
+pre-dispatch census already reconciles before dispatch. `cli.py` stays
+byte-identical at HEAD.
+
+The only remaining frozen dependency is the project-scoped publication lease,
+which needs `src/tangle/sidecar.py`. That file is one of the prompt-observable
+files pinned by `benchmark/memory-authority-result.json`, so a byte change there
+owes a faithful LIVE authority re-record —
 [[TAS-188-remove-uv-from-quality-benchmark-reproduction]] is the blocked owner
-of that gate — which this session is not authorized to run. That slice is
-therefore blocked on an authorized re-record unless a non-frozen route is
-designed, the established pattern that reaches a verb's answer through a new
-module as `tangle.allocate` and `tangle.census` do. This slice deliberately did
-not edit any frozen file.
+of that gate — which this session is not authorized to run. That slice
+therefore remains blocked on an authorized re-record or a non-frozen route, the
+established pattern that reaches a verb's answer through a new module as
+`tangle.allocate` and `tangle.census` do. This slice deliberately did not edit
+any frozen file.

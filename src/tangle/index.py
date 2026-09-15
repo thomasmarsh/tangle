@@ -342,38 +342,20 @@ def _upsert_reservations(
 
 
 def reindex(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
-    """Rebuild derived node, edge, and FTS rows from Markdown under ``root``."""
+    """Reconcile the derived rows incrementally and report the stored totals.
+
+    The repair entry point behind ``tangle index``. It defers to
+    :func:`refresh`, which writes only the rows the Markdown under ``root``
+    changed and rebuilds every row from the same snapshot when the index is
+    lost, partial, or foreign, so repair capability is unchanged and an
+    unchanged vault writes nothing. Counts the rows now stored so the command
+    still reports the whole index. Returns ``(nodes, edges, root)``.
+    """
     root = os.path.abspath(root)
-    if not os.path.isdir(root):
-        raise SidecarError(f"nodes directory does not exist: {root}")
-    ensure_index_schema(conn)
-    nodes, edges = _read_snapshot(root)
-    stamp = _now()
-    conn.execute("BEGIN IMMEDIATE")
-    try:
-        conn.execute("DELETE FROM edges")
-        conn.execute("DELETE FROM nodes_fts")
-        conn.execute("DELETE FROM nodes")
-        conn.executemany(
-            "INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?)",
-            [node.row(stamp) for node in nodes],
-        )
-        conn.executemany(
-            "INSERT INTO nodes_fts VALUES(?,?,?)",
-            [(node.id, node.summary, node.body) for node in nodes],
-        )
-        conn.executemany("INSERT INTO edges VALUES(?,?,?,?)", edges)
-        _upsert_reservations(conn, _maxima(nodes))
-        conn.execute(
-            "INSERT INTO graph_meta(key,value) VALUES('nodes_root',?) "
-            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-            (root,),
-        )
-        conn.execute("COMMIT")
-    except BaseException:
-        conn.execute("ROLLBACK")
-        raise
-    return len(nodes), len(edges), root
+    refresh(conn, root)
+    nodes = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
+    edges = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
+    return int(nodes), int(edges), root
 
 
 def refresh(conn: sqlite3.Connection, root: str) -> tuple[int, int, str]:
