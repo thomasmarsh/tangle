@@ -7,6 +7,11 @@ here; the Tangle skill remains the authority for the work ledger, and
 `references/coordination.md` owns the claims, leases, write sets, worktree, and
 hand-off mechanics this file assumes.
 
+Ceremony scales to risk. A small, obvious, single-writer slice may run as one
+implementer → build → review chain with short prose hand-offs. Reserve worktree
+isolation, warmup children, and machine-consumed structured output for the work
+that actually needs them; do not run the full protocol for every edit.
+
 ## Roles
 
 | Role | Agent tier | Context | May write? | Delivers |
@@ -38,10 +43,10 @@ The slice loop is fixed:
 2. **Implementer** — edits the slice. It reports files changed and what to
    verify, and does **not** run the suite.
 3. **Build/test agent** — runs the exact commands on the working tree and
-   returns structured output (`{passed, timings, failures, summary}`). It never
-   edits. The repository acceptance gate is `make test`; a designated
-   `make verify-<surface>` may stand in for it only as an iteration gate, never
-   as acceptance.
+   returns a short summary: passed or failed, the failing commands/tests, and
+   timings. It never edits. The repository acceptance gate is `make test`; a
+   designated `make verify-<surface>` may stand in for it only as an iteration
+   gate, never as acceptance.
 4. **Fix** — on failure, resume the *same* implementer with the build report,
    then dispatch a *fresh* build agent. Repeat until green.
 5. **Reviewer** — fresh context; reads the diff and the changed files; returns
@@ -58,8 +63,10 @@ Rules that make hand-offs consistent:
   index or the untracked coordination state. Run `tangle check` before every
   graph commit and hand-off, and route all ledger reads through `tangle` rather
   than parallel raw scans that race the index.
-- **Structured output is the contract.** Give build and review children an
-  `outputSchema`; do not parse their prose.
+- **Reports scale to the work.** A single sequential build or review returns a
+  short bounded summary; reserve an `outputSchema` for multi-child fanout, where
+  the parent machine-consumes results. Never parse long child prose for control
+  flow.
 - **The build agent owns builds; the implementer owns edits; the reviewer owns
   the verdict.** Do not blur these.
 - Keep long output out of chat: the build agent writes a report file and
