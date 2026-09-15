@@ -17,10 +17,11 @@ the committed measurement.
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Sequence
 
-from . import index
+from . import graph_check, index
 from .cli import _require_nodes_directory
 from .toon import field
 
@@ -33,6 +34,18 @@ _USAGE = (
     "that node's next route instead of the whole vault. Read-only.\n"
     "Exits 0 only when result is ready; ambiguous, blocked, and invalid exit 1."
 )
+
+
+# The operation that records progress on the routed node. There is no command
+# that updates an existing node: progress is the in-place ``status`` edit plus the
+# ``# Result`` body change that lands in the same commit, and ``tangle check``
+# runs before handoff. The packet names that operation so its answer covers
+# closing the work, not only starting it.
+PACKET_RECORD = "edit status in place and add # Result; run tangle check before handoff"
+
+# Bound the completion criteria so the packet stays a bounded answer; a longer
+# section reports the overage explicitly rather than silently truncating.
+_CRITERIA_LIMIT = 20
 
 
 def _usage_error(message: str) -> int:
@@ -82,6 +95,20 @@ def _packet_compat(manifest: index.ManifestView | None) -> list[tuple[str]]:
     if manifest is None:
         return []
     return [(entry.value,) for entry in manifest.entries if entry.kind == "compat"]
+
+
+def _node_body(root: str, node: index.PacketCandidate) -> str:
+    """Read the routed node's Markdown body for its ``# Done when`` section.
+
+    The rest of the packet derives from the index's typed view; the completion
+    criteria are body prose that view does not carry, so the read surface reads
+    the routed node's own file. A vanished file yields no criteria, not an error.
+    """
+    try:
+        with open(os.path.join(os.path.abspath(root), node.path), encoding="utf-8") as handle:
+            return handle.read()
+    except OSError:
+        return ""
 
 
 def _print_ready(packet: index.WorkPacket, root: str) -> int:
@@ -139,6 +166,15 @@ def _print_ready(packet: index.WorkPacket, root: str) -> int:
             "compat", "constraint", "compat: 0 constraints", _packet_compat(manifest)
         )
     )
+    criteria = graph_check.parse_done_when(_node_body(root, node))
+    criteria_rows = [(criterion,) for criterion in criteria[:_CRITERIA_LIMIT]]
+    print(field("record", PACKET_RECORD))
+    print(
+        index.format_table("criteria", "criterion", "criteria: 0 criteria", criteria_rows)
+    )
+    omitted = len(criteria) - len(criteria_rows)
+    if omitted:
+        print(field("omitted", f"{omitted} further criteria"))
     return 0
 
 

@@ -246,6 +246,15 @@ _MANIFEST_SECTION = re.compile(r"^# Manifest\n(.*?)(?=^# |\Z)", re.MULTILINE | r
 _MANIFEST_BULLET = re.compile(r"^[ \t]*[-*][ \t]+(\S.*?)[ \t]*$", re.MULTILINE)
 _MANIFEST_ITEM = re.compile(r"^([A-Za-z][A-Za-z-]*)[ \t]*:[ \t]*(.*)$")
 
+# The authored completion criteria of a task: the ``# Done when`` section names
+# the observable conditions that accept the outcome. Unlike the manifest it is
+# prose, so one bullet is one criterion and a bullet's wrapped continuation lines
+# join it; a section written as a paragraph keeps each blank-line-separated
+# paragraph as one criterion. The section is read-only body prose, so a reader
+# preserves the authored order and never rewrites it.
+_DONE_WHEN_SECTION = re.compile(r"^# Done when\n(.*?)(?=^# |\Z)", re.MULTILINE | re.DOTALL)
+_DONE_WHEN_BULLET = re.compile(r"^[ \t]*[-*][ \t]+(.*)$")
+
 # Markdown code is quoted text, not graph syntax: a wikilink-shaped token inside
 # an inline code span or a fenced code block documents the grammar, so link
 # scanning reads a copy with those regions blanked. Masking preserves length and
@@ -499,6 +508,42 @@ def parse_manifest(text: str) -> ManifestParse:
         seen.add(key)
         entries.append(ManifestEntry(kind=kind, value=value))
     return ManifestParse(tuple(entries), tuple(problems))
+
+
+def parse_done_when(text: str) -> tuple[str, ...]:
+    """Parse the authored ``# Done when`` section into its completion criteria.
+
+    Return each criterion in authored order. A list item opens a criterion and
+    its wrapped continuation lines are joined into it; a section written as
+    prose keeps each blank-line-separated paragraph as one criterion. A node
+    without a ``# Done when`` section has no criteria, which the read surface
+    reports as zero rather than a failure.
+    """
+    section = _DONE_WHEN_SECTION.search(text)
+    if section is None:
+        return ()
+    criteria: list[str] = []
+    current: list[str] = []
+    for raw in section.group(1).splitlines():
+        line = raw.strip()
+        if not line:
+            if current:
+                criteria.append(" ".join(current))
+                current = []
+            continue
+        bullet = _DONE_WHEN_BULLET.match(raw)
+        if bullet is not None:
+            body = bullet.group(1).strip()
+            if not body:
+                continue
+            if current:
+                criteria.append(" ".join(current))
+            current = [body]
+        else:
+            current.append(line)
+    if current:
+        criteria.append(" ".join(current))
+    return tuple(criteria)
 
 
 def _check_manifest(path: str, text: str, errors: list[Finding]) -> None:

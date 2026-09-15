@@ -2,7 +2,7 @@
 context_rev: 1
 priority: P1
 status: proposed
-updated: 2026-09-15T17:54:06Z
+updated: 2026-09-15T18:51:53Z
 summary: ASTRA.md feedback: decide and implement the confirmed gaps
 next: "[[tho-1ykgy8r8nt3qhq07pzd6g8rhsn-does-the-one-session-admission-shortcut-need]]"
 ---
@@ -35,3 +35,4 @@ Every confirmed ASTRA gap is decided, implemented, or explicitly disposed, witho
 - [[tas-2erspexpncav3j3y4fezsjra7z-compose-an-initiative-view-answering-goal]] - ASTRA §3.
 - [[tas-3h6n5kky4qzdryvkwe1rxg1hx6-isolate-benchmark-and-memory-evaluation]] - ASTRA §8.
 - [[tas-7y1wpfb0d1shhtq8qq5tfnyx7d-packet-default-entry-point-and-skill-shorten]] - ASTRA section 1.
+- [[tas-4zjy10gx4xj6j5nwsgv978zshn-packet-completion-criteria-and-record-operation]] - ASTRA section 2 (packet completion criteria and record operation).

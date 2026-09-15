@@ -44,6 +44,7 @@ def _node(
     context_rev: int = 1,
     priority: str = "",
     manifest: str = "",
+    done_when: str = "",
 ) -> str:
     header = ["---", f"context_rev: {context_rev}"]
     if priority:
@@ -60,6 +61,8 @@ def _node(
         body.extend([context, ""])
     if manifest:
         body.extend([manifest, ""])
+    if done_when:
+        body.extend([done_when, ""])
     return "\n".join(header) + "\n\n" + "\n".join(body) + "\n"
 
 
@@ -535,3 +538,100 @@ def test_packet_ready_marks_an_absent_manifest_source_path(
         ["node", "proposed/TAS-101-first.md", "present"],
         ["source", "src/not_created_yet.py", "absent"],
     ]
+
+
+def test_packet_ready_reports_completion_criteria_and_the_record_operation(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A ready packet prints the node's # Done when criteria and the record operation."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+            done_when=(
+                "# Done when\n"
+                "\n"
+                "- The first condition holds.\n"
+                "- The second condition holds and its\n"
+                "  wrapped continuation joins it.\n"
+            ),
+        ),
+    )
+
+    result = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert 'result: "ready"' in result.stdout
+    assert _toon_rows(result.stdout, "criteria") == [
+        ["The first condition holds."],
+        ["The second condition holds and its wrapped continuation joins it."],
+    ]
+    assert (
+        'record: "edit status in place and add # Result; run tangle check before handoff"'
+        in result.stdout
+    )
+
+
+def test_packet_ready_without_done_when_reports_zero_criteria(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A node with no # Done when reports zero criteria rather than failing."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+        ),
+    )
+
+    result = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    assert "criteria: 0 criteria" in result.stdout
+    assert "record:" in result.stdout
+
+
+def test_packet_bounds_completion_criteria_and_reports_the_overage(
+    tmp_path: Path, run_tangle_inproc: RunTangle
+) -> None:
+    """A section beyond the bounded limit truncates explicitly, not silently."""
+    vault = tmp_path / "vault"
+    _hub(vault)
+    _write(
+        vault / "proposed" / "TAS-100-plan.md",
+        _node(status="proposed", summary="Coordinate.", next_value="[[TAS-101-first]]"),
+    )
+    criteria = "".join(f"- Criterion {number}.\n" for number in range(1, 23))
+    _write(
+        vault / "proposed" / "TAS-101-first.md",
+        _node(
+            status="proposed",
+            summary="Run the first step.",
+            next_value="Run the first step.",
+            route="Parent [[TAS-100-plan]].",
+            done_when=f"# Done when\n\n{criteria}",
+        ),
+    )
+
+    result = run_tangle_inproc("packet", env=_env(tmp_path, vault))
+    assert result.returncode == 0
+    rows = _toon_rows(result.stdout, "criteria")
+    assert len(rows) == 20
+    assert rows[0] == ["Criterion 1."]
+    assert rows[-1] == ["Criterion 20."]
+    assert 'omitted: "2 further criteria"' in result.stdout

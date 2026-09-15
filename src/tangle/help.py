@@ -502,6 +502,8 @@ VERBS: dict[str, Verb] = {
             ("files", "kind,path,state rows; the node path plus manifest source/test entries"),
             ("verification", "gate rows; the required final gates plus manifest verify entries"),
             ("compat", "constraint rows; manifest compatibility entries"),
+            ("record", "the operation that records progress on the node"),
+            ("criteria", "criterion rows; the node's # Done when completion criteria"),
             ("terminals", "node,status,reason,summary,route,path rows when blocked"),
             ("candidates", "id,status,summary,next,route rows when ambiguous"),
             ("problems", "code,node,detail rows when invalid"),
@@ -513,6 +515,8 @@ VERBS: dict[str, Verb] = {
             "problem, never a silent whole-vault answer.",
             "A manifest source or test path that does not exist yet is absent intent, "
             "not a failure; a node with no # Manifest keeps its own path as the only file.",
+            "A node with no # Done when reports zero criteria; a longer list is bounded "
+            "and reports the overage explicitly.",
             "Exits 0 only for ready; blocked, ambiguous, and invalid exit 1.",
             _ORPHAN_WARNING_HAZARD,
         ),
