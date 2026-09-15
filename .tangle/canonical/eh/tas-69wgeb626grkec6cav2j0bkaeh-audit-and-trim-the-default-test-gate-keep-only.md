@@ -2,9 +2,9 @@
 context_rev: 1
 status: proposed
 priority: P2
-updated: 2026-09-15T15:14:01Z
+updated: 2026-09-15T15:25:52Z
 summary: Audit and trim the default test gate; keep only distinct load-bearing tests, then parallelize.
-next: "[[tas-4ysvfgkb6ytqbch8f5ae6qzt3w-collapse-the-test-skill-py-prose-lock-apparatus]]"
+next: "[[tas-1tawqxsrvyby2qwv7gzsbqvb11-drop-committed-data-qa-and-prose-agreement]]"
 ---
 
 Area [[IDX-001-execution-graph]].

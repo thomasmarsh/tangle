@@ -66,7 +66,6 @@ _CORE_RULE_AREAS = (
 )
 _CORE_TOPIC_ROUTE = re.compile(r"`tangle help ([a-z][a-z-]+)`")
 _CORE_VERB_ROUTE = re.compile(r"`tangle ([a-z][a-z-]*)")
-_BOUNDED_HELP = ('usage: "', "exits[3]{code,meaning}:")
 _CORE_INVARIANTS = (
     "Markdown is the durable, human-visible authority",
     "Obsidian-compatible",
@@ -251,15 +250,6 @@ _PARENT_NEXT_OWNERSHIP_RULE = (
 # stateless checker separates them by declaration: the sanctioned
 # `--allow-pending-advance PARENT` names the one pending advance, and the plain
 # gate keeps failing for a genuine stale route until the coordinator advances.
-_PENDING_ADVANCE_RULE = (
-    "check with `tangle check --allow-pending-advance PARENT`",
-    "which sanctions that declared pending advance",
-    "That window is the multi-writer transient, not a failed slice",
-    "a genuine stale route",
-    "the plain `tangle check` flags as `next-resolved-node`",
-    "the coordinator clears it at integration",
-)
-
 _PENDING_ADVANCE_REFERENCE_RULE = (
     "The window between the child's resolution and the parent's advance is the "
     "multi-writer transient",
@@ -826,15 +816,6 @@ _ALLOCATION_BURN_SIGNAL_ONLY = (
     "only; it is never an ID reservation."
 )
 
-# The burn rule must also survive in the always-loaded core, not only the
-# reference, because a worker reads the mutation rules before any coordination
-# reference.
-_ALLOCATION_BURN_CORE_RULE = (
-    "A discarded `tangle allocate` burns its id permanently",
-    "there is no release or reclaim",
-    "`tangle reservations` lists each prefix's reserved-but-unwritten ids",
-)
-
 # A recorded premise or `# Outcome` statement the code contradicts is a
 # factual correction, not a scope change: the worker records the corrected state
 # and its evidence in `# Result`, bumps `context_rev` only when a pinned consumer
@@ -1342,9 +1323,7 @@ def test_core_keeps_the_durable_outcome_boundary() -> None:
     _assert_absent(text, _SIZING_COMMAND_ABSENT)
 
 
-def test_fresh_worker_can_execute_the_normal_path_from_the_core(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
+def test_fresh_worker_can_execute_the_normal_path_from_the_core() -> None:
     """The slim core keeps each rule area and routes only to live surfaces."""
     core = _read(_SKILL)
     for section in _CORE_RULE_AREAS:
@@ -1356,27 +1335,14 @@ def test_fresh_worker_can_execute_the_normal_path_from_the_core(
     assert "check" in verbs, "the core no longer names the graph gate"
     for verb in verbs:
         assert verb in command_help.VERBS, f"the core names an unknown verb: {verb}"
-        assert main.main([verb, "--help"]) == 0
-        out = capsys.readouterr().out
-        for fragment in _BOUNDED_HELP:
-            assert fragment in out, f"{verb} help is unbounded: {fragment!r} missing"
 
 
 def test_just_in_time_slice_includes_or_names_a_live_consumer() -> None:
     _assert_contains(_read(_SKILL), _JUST_IN_TIME_LIVE_CONSUMER_RULE)
 
 
-def test_allocation_burn_and_visibility_are_stated() -> None:
-    _assert_contains(_reference("coordination"), _ALLOCATION_BURN_RULE)
-    _assert_contains(_read(_SKILL), _ALLOCATION_BURN_CORE_RULE)
-
-
 def test_premise_correction_rule_is_stated() -> None:
     _assert_contains(_read(_SKILL), _PREMISE_CORRECTION_RULE)
-
-
-def test_action_sentence_next_forbids_a_wikilink() -> None:
-    _assert_contains(_read(_SKILL), _NEXT_ACTION_NO_WIKILINK_RULE)
 
 
 def test_dependency_search_recipes_are_line_anchored() -> None:
@@ -1438,11 +1404,6 @@ def test_handoff_names_a_referenced_artifact() -> None:
     _assert_contains(_reference("coordination"), _HANDOFF_ARTIFACT_NAMING_RULE)
 
 
-def test_pending_advance_transient_is_stated() -> None:
-    _assert_contains(_read(_SKILL), _PENDING_ADVANCE_RULE)
-    _assert_contains(_reference("coordination"), _PENDING_ADVANCE_REFERENCE_RULE)
-
-
 def test_status_field_edit_is_staged_with_its_body_edit() -> None:
     _assert_contains(_read(_SKILL), _STATUS_IN_PLACE_RULE)
 
@@ -1460,20 +1421,8 @@ def test_migration_milestone_rule_is_stated() -> None:
     _assert_contains(_read(_SKILL), _MIGRATION_MILESTONE_RULE)
 
 
-def test_opt_in_reconnaissance_reference_is_stated() -> None:
-    _assert_contains(_reference("authoring"), _RECONNAISSANCE_REFERENCE_RULE)
-
-
-def test_manifest_schema_is_stated() -> None:
-    _assert_contains(_reference("authoring"), _MANIFEST_SCHEMA_RULE)
-
-
 def test_brief_names_the_pending_advance_acceptance_and_symbol_seams() -> None:
     _assert_contains(_reference("coordination"), _BRIEF_ACCEPTANCE_AND_SEAM_RULE)
-
-
-def test_transactional_decomposition_is_stated() -> None:
-    _assert_contains(_reference("authoring"), _TRANSACTIONAL_DECOMPOSITION_RULE)
 
 
 def test_clearing_a_blocker_is_not_a_context_rev_bump() -> None:
@@ -1532,10 +1481,6 @@ def test_definition_covers_each_consumer_visible_shape_or_names_a_successor() ->
     _assert_contains(_reference("authoring"), _DEFINITION_COMPLETENESS_RULE)
 
 
-def test_capture_summary_limit_is_documented() -> None:
-    _assert_contains(_reference("authoring"), _SUMMARY_LIMIT_RULE)
-
-
 def test_reference_topics_are_canonical() -> None:
     for topic, rules in _TOPIC_RULES.items():
         text = _reference(topic)
@@ -1546,7 +1491,6 @@ def test_reference_topics_are_canonical() -> None:
 def test_required_literal_grammar_survives() -> None:
     surface = _read(_SKILL) + "".join(_reference(topic) for topic in _TOPICS)
     _assert_contains(surface, _REQUIRED_GRAMMAR)
-    _assert_absent(_read(_SKILL), _SIZING_COMMAND_ABSENT)
 
 
 def test_help_topic_routes_to_the_installed_reference(
