@@ -1,6 +1,6 @@
 #!/bin/sh
 # Install this skill into an explicitly selected Codex, Claude Code, or pi
-# location, and install the ``braintree`` command that fronts it.
+# location, and install the ``tangle`` command that fronts it.
 set -eu
 
 # The project version is declared once in ``pyproject.toml``. Read it here so
@@ -12,14 +12,14 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
-skill_name=braintree
+skill_name=tangle
 agent=
 scope=
 root=
 dry_run=false
 semantic=false
 selector=false
-presentation=${BT_INSTALL_PRESENTATION:-generic}
+presentation=${TANGLE_INSTALL_PRESENTATION:-generic}
 
 if [ "$#" -eq 1 ]; then
   case "$1" in
@@ -37,13 +37,13 @@ field() {
 
 usage() {
   if [ "$presentation" = claude ]; then
-    field description 'Install Braintree for Claude Code into an explicit project or home-root directory.'
+    field description 'Install Tangle for Claude Code into an explicit project or home-root directory.'
     field usage 'scripts/install-claude.sh [--project DIR | --home DIR] [--dry-run] [--semantic]'
     field default 'With no destination flag, installs the shared command and the Claude Code skill into $HOME.'
-    field launcher 'DIR/.local/bin/braintree, the single documented entry point'
-    field program 'DIR/.local/share/braintree, the one shared program per root the launcher runs'
+    field launcher 'DIR/.local/bin/tangle, the single documented entry point'
+    field program 'DIR/.local/share/tangle, the one shared program per root the launcher runs'
     printf 'options[7]{flag,meaning}:\n'
-    printf '  "--project DIR","install to DIR/.claude/skills/braintree"\n'
+    printf '  "--project DIR","install to DIR/.claude/skills/tangle"\n'
     printf '  "--home DIR","use an explicit home root; defaults to $HOME when omitted"\n'
     printf '  "--dry-run","report the destination without writing"\n'
     printf '  "--semantic","request the optional semantic extra in the generated launcher"\n'
@@ -58,17 +58,17 @@ usage() {
     return
   fi
 
-  field description 'Install Braintree into an explicit project or home-root directory, or select targets interactively.'
+  field description 'Install Tangle into an explicit project or home-root directory, or select targets interactively.'
   field usage 'scripts/install.sh [--codex | --claude | --pi] [--project DIR | --home DIR] [--dry-run] [--semantic] [--select]'
   field default 'With no flags, installs the shared command and every agent skill into $HOME; pass --select to choose other targets.'
-  field interactive 'With --select, discovers the enclosing project root and the home root and multi-selects their agent targets; a bare --select needs a terminal or BT_INSTALL_SELECTION.'
+  field interactive 'With --select, discovers the enclosing project root and the home root and multi-selects their agent targets; a bare --select needs a terminal or TANGLE_INSTALL_SELECTION.'
   field claude_wrapper 'scripts/install-claude.sh omits --claude and accepts the same destination flags.'
-  field launcher 'DIR/.local/bin/braintree, the single documented entry point'
-  field program 'DIR/.local/share/braintree, the one shared program per root the launcher runs'
+  field launcher 'DIR/.local/bin/tangle, the single documented entry point'
+  field program 'DIR/.local/share/tangle, the one shared program per root the launcher runs'
   printf 'options[11]{flag,meaning}:\n'
-  printf '  "--codex","install to DIR/.agents/skills/braintree"\n'
-  printf '  "--claude","install to DIR/.claude/skills/braintree"\n'
-  printf '  "--pi","install to DIR/.pi/skills/braintree (project) or DIR/.pi/agent/skills/braintree (home)"\n'
+  printf '  "--codex","install to DIR/.agents/skills/tangle"\n'
+  printf '  "--claude","install to DIR/.claude/skills/tangle"\n'
+  printf '  "--pi","install to DIR/.pi/skills/tangle (project) or DIR/.pi/agent/skills/tangle (home)"\n'
   printf '  "--project DIR","use an explicit project directory"\n'
   printf '  "--home DIR","use an explicit home root; defaults to $HOME when the scope is omitted"\n'
   printf '  "--select","choose discovered targets interactively instead of the defaults"\n'
@@ -138,7 +138,7 @@ discover_project_root() {
 
 # Install one repository file into a base directory, preserving its relative
 # path. The agent destination receives only the skill prose it discovers; the
-# program the generated ``braintree`` command runs goes to the shared location.
+# program the generated ``tangle`` command runs goes to the shared location.
 copy_file() {
   base=$1
   relative=$2
@@ -173,7 +173,7 @@ install_target() {
   # The launcher the installer writes below fronts the one shared per-root
   # program, so its target is fixed here once per target.
   launcher_dir="$target_root/.local/bin"
-  launcher="$launcher_dir/braintree"
+  launcher="$launcher_dir/tangle"
 
   if [ "$dry_run" = true ]; then
     outcome=dry-run
@@ -205,16 +205,16 @@ install_target() {
     [ -f "$reference" ] || continue
     copy_file "$program_dir" "references/$(basename -- "$reference")" 0644
   done
-  for source in "$repo_root"/src/braintree/*; do
+  for source in "$repo_root"/src/tangle/*; do
     [ -f "$source" ] || continue
-    copy_file "$program_dir" "src/braintree/$(basename -- "$source")" 0644
+    copy_file "$program_dir" "src/tangle/$(basename -- "$source")" 0644
   done
 
   # Record the release version and the source revision the shared program was
-  # copied from as generated install data. The installed ``braintree`` command
+  # copied from as generated install data. The installed ``tangle`` command
   # reads it back with `--version`, so a consuming project can name the exact
   # revision in use without network access or the original checkout. The value
-  # matches the ``braintree_revision`` convention: ``<version>+g<short-sha>`` when
+  # matches the ``tangle_revision`` convention: ``<version>+g<short-sha>`` when
   # a source revision is available, else ``<version>+unknown``. The semantic
   # version is still declared once in pyproject.toml; this record only stamps it.
   source_revision=unknown
@@ -225,7 +225,7 @@ install_target() {
     esac
   fi
   record_value="$version+$source_revision"
-  record="$program_dir/src/braintree/installed-revision"
+  record="$program_dir/src/tangle/installed-revision"
   if [ ! -f "$record" ] || [ "$(cat "$record")" != "$record_value" ]; then
     mkdir -p "$(dirname -- "$record")" 2>/dev/null || runtime_error "unable to create directory for: $record"
     printf '%s\n' "$record_value" >"$record" 2>/dev/null || runtime_error "unable to install: $record"
@@ -235,7 +235,7 @@ install_target() {
 
   # Install the single language-agnostic command that fronts the skill. It
   # points at the one shared per-root program, never at an agent destination, so
-  # reinstalling any agent cannot repoint it. A consumer runs ``braintree`` from
+  # reinstalling any agent cannot repoint it. A consumer runs ``tangle`` from
   # any project root without naming the toolchain or layout. Only an explicit
   # --semantic install requests the optional extra, so a plain install keeps the
   # launcher on the dependency-free frozen set. The parameter expansions insert
@@ -245,9 +245,9 @@ install_target() {
   launcher_provider=
   if [ "$semantic" = true ]; then
     launcher_extra="--extra semantic"
-    launcher_provider='if [ -z "${BT_SEMANTIC_PROVIDER+set}" ]; then
-  BT_SEMANTIC_PROVIDER="braintree semantic embed"
-  export BT_SEMANTIC_PROVIDER
+    launcher_provider='if [ -z "${TANGLE_SEMANTIC_PROVIDER+set}" ]; then
+  TANGLE_SEMANTIC_PROVIDER="tangle semantic embed"
+  export TANGLE_SEMANTIC_PROVIDER
 fi
 '
   fi
@@ -261,12 +261,12 @@ fi
 
   launcher_body=$(cat <<EOF
 #!/bin/sh
-# Generated by the Braintree installer: run the shared per-root program.
+# Generated by the Tangle installer: run the shared per-root program.
 set -eu
-${launcher_provider}if [ -x "$program_dir/.venv/bin/braintree" ]; then
-  exec "$program_dir/.venv/bin/braintree" "\$@"
+${launcher_provider}if [ -x "$program_dir/.venv/bin/tangle" ]; then
+  exec "$program_dir/.venv/bin/tangle" "\$@"
 fi
-exec uv run --project "$program_dir" --frozen ${launcher_extra:+$launcher_extra }braintree "\$@"
+exec uv run --project "$program_dir" --frozen ${launcher_extra:+$launcher_extra }tangle "\$@"
 EOF
 )
   if [ ! -f "$launcher" ] || [ "$(cat "$launcher")" != "$launcher_body" ]; then
@@ -322,17 +322,17 @@ install_group() {
   printf 'outcomes[%s]{agent,destination,program,launcher,result}:\n' "$group_count"
   printf '%s' "$group_rows"
   if [ "$semantic" = true ] && [ "$dry_run" != true ]; then
-    field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
+    field provider "defaults to tangle semantic embed; override with TANGLE_SEMANTIC_PROVIDER"
   fi
 }
 
 # Interactive selector: discover candidate roots, cross them with the
 # supported agents, present a numbered multi-select, and install every selected
 # target. A non-terminal stdin never prompts, so an automated run stays
-# deterministic instead of hanging. ``BT_INSTALL_SELECTION`` supplies the
+# deterministic instead of hanging. ``TANGLE_INSTALL_SELECTION`` supplies the
 # selection directly, which exercises the selector without a terminal.
 interactive_select() {
-  if [ -z "${BT_INSTALL_SELECTION+set}" ] && [ ! -t 0 ]; then
+  if [ -z "${TANGLE_INSTALL_SELECTION+set}" ] && [ ! -t 0 ]; then
     field error 'no install target: a bare --select needs a terminal; pass --codex, --claude, or --pi with --project DIR or --home DIR'
     field help 'scripts/install.sh --codex --project <directory> [--dry-run]'
     exit 2
@@ -381,8 +381,8 @@ $candidates
 CANDIDATES
   field prompt 'Select install targets by number (space or comma separated, or "all"); empty cancels'
 
-  if [ -n "${BT_INSTALL_SELECTION+set}" ]; then
-    selection=$BT_INSTALL_SELECTION
+  if [ -n "${TANGLE_INSTALL_SELECTION+set}" ]; then
+    selection=$TANGLE_INSTALL_SELECTION
   else
     IFS= read -r selection || selection=
   fi
@@ -441,7 +441,7 @@ CANDIDATES
 $candidates
 CANDIDATES
   if [ "$semantic" = true ] && [ "$dry_run" != true ]; then
-    field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
+    field provider "defaults to tangle semantic embed; override with TANGLE_SEMANTIC_PROVIDER"
   fi
 }
 
@@ -496,7 +496,7 @@ if [ -n "$agent" ]; then
   if [ "$dry_run" != true ]; then
     field launcher "$launcher"
     if [ "$semantic" = true ]; then
-      field provider "defaults to braintree semantic embed; override with BT_SEMANTIC_PROVIDER"
+      field provider "defaults to tangle semantic embed; override with TANGLE_SEMANTIC_PROVIDER"
     fi
   fi
 else

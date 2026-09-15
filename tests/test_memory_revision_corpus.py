@@ -23,8 +23,8 @@ from typing import Any
 
 import pytest
 
-from braintree import memory_corpus
-from braintree import memory_scenario as schema
+from tangle import memory_corpus
+from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CORPUS_DIR = _ROOT / "benchmark" / "memory-corpus"
@@ -117,66 +117,66 @@ _FORBIDDEN_OBSERVABLE = {
     "temporal-update-cosmetic-edit-001": {
         "SKILL.md",
         "references/dependencies.md",
-        ".braintree/resolved/TAS-009-semantic-revisions.md",
-        ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md",
+        ".tangle/resolved/TAS-009-semantic-revisions.md",
+        ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md",
     },
     "temporal-update-semantic-revision-001": {
         "references/dependencies.md",
-        ".braintree/resolved/TAS-009-semantic-revisions.md",
-        ".braintree/resolved/TAS-059-stale-pin-commit-shape.md",
-        ".braintree/resolved/TAS-069-unify-dependency-semantics.md",
+        ".tangle/resolved/TAS-009-semantic-revisions.md",
+        ".tangle/resolved/TAS-059-stale-pin-commit-shape.md",
+        ".tangle/resolved/TAS-069-unify-dependency-semantics.md",
     },
     "temporal-update-event-mutation-time-001": {
         "SKILL.md",
-        ".braintree/resolved/TAS-112-timestamp-clamp-rule.md",
-        ".braintree/resolved/TAS-113-write-set-change-closure.md",
+        ".tangle/resolved/TAS-112-timestamp-clamp-rule.md",
+        ".tangle/resolved/TAS-113-write-set-change-closure.md",
     },
     "temporal-update-changed-definition-001": {
         "pyproject.toml",
         "tests/test_scaffold.py",
-        "src/braintree/__init__.py",
-        ".braintree/resolved/DEC-003-semantic-versioning.md",
+        "src/tangle/__init__.py",
+        ".tangle/resolved/DEC-003-semantic-versioning.md",
     },
     "cascading-invalidation-transitive-stale-001": {
-        ".braintree/resolved/TAS-059-stale-pin-commit-shape.md",
-        ".braintree/resolved/TAS-069-unify-dependency-semantics.md",
-        ".braintree/resolved/TAS-072-transitive-dependency-impact.md",
-        ".braintree/resolved/TAS-077-reconciliation-planner.md",
+        ".tangle/resolved/TAS-059-stale-pin-commit-shape.md",
+        ".tangle/resolved/TAS-069-unify-dependency-semantics.md",
+        ".tangle/resolved/TAS-072-transitive-dependency-impact.md",
+        ".tangle/resolved/TAS-077-reconciliation-planner.md",
     },
     "cascading-invalidation-independent-evidence-001": {
         "references/dependencies.md",
         "research/agent-memory-theory-evaluation.md",
-        ".braintree/resolved/TAS-009-semantic-revisions.md",
-        ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md",
-        ".braintree/resolved/DEC-003-semantic-versioning.md",
+        ".tangle/resolved/TAS-009-semantic-revisions.md",
+        ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md",
+        ".tangle/resolved/DEC-003-semantic-versioning.md",
     },
     "cascading-invalidation-reversal-in-place-001": {
         "references/dependencies.md",
-        ".braintree/resolved/TAS-082-reversal-semantics.md",
+        ".tangle/resolved/TAS-082-reversal-semantics.md",
     },
     "cascading-invalidation-superseded-decision-001": {
         "references/dependencies.md",
-        ".braintree/resolved/TAS-082-reversal-semantics.md",
-        ".braintree/resolved/TAS-009-semantic-revisions.md",
+        ".tangle/resolved/TAS-082-reversal-semantics.md",
+        ".tangle/resolved/TAS-009-semantic-revisions.md",
     },
     "conflict-and-uncertainty-competing-rules-001": {
-        ".braintree/resolved/TAS-082-reversal-semantics.md",
-        ".braintree/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md",
+        ".tangle/resolved/TAS-082-reversal-semantics.md",
+        ".tangle/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md",
         "research/agent-memory-theory-evaluation.md",
-        ".braintree/proposed/TAS-127-uncertainty-provenance-security.md",
+        ".tangle/proposed/TAS-127-uncertainty-provenance-security.md",
     },
     "conflict-and-uncertainty-missing-premise-001": {
-        ".braintree/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
-        ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md",
+        ".tangle/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+        ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md",
         "research/agent-memory-theory-evaluation.md",
-        ".braintree/proposed/TAS-127-uncertainty-provenance-security.md",
+        ".tangle/proposed/TAS-127-uncertainty-provenance-security.md",
     },
     "conflict-and-uncertainty-genuine-conflict-001": {
-        ".braintree/resolved/DEC-004-compact-skill-text.md",
-        ".braintree/resolved/THO-016-has-cumulative-contract-growth-invalidated-the-c.md",
-        ".braintree/blocked/TAS-080-staged-token-ab.md",
+        ".tangle/resolved/DEC-004-compact-skill-text.md",
+        ".tangle/resolved/THO-016-has-cumulative-contract-growth-invalidated-the-c.md",
+        ".tangle/blocked/TAS-080-staged-token-ab.md",
         "research/agent-memory-theory-evaluation.md",
-        ".braintree/proposed/TAS-127-uncertainty-provenance-security.md",
+        ".tangle/proposed/TAS-127-uncertainty-provenance-security.md",
     },
 }
 

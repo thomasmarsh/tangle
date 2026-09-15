@@ -1,4 +1,4 @@
-"""Behavioral tests for the Braintree node capture paths.
+"""Behavioral tests for the Tangle node capture paths.
 
 The writers are exercised against fixture vaults so they are proven to allocate
 an id, discover a route to the root hub, stamp the required frontmatter, and
@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import __version__, feedback_record, graph_check, node_record, revision
-from braintree.main import main as braintree_main
+from tangle import __version__, feedback_record, graph_check, node_record, revision
+from tangle.main import main as tangle_main
 
 
 def _write(path: Path, *lines: str) -> None:
@@ -48,7 +48,7 @@ def _hub(root: Path) -> Path:
 
 
 _CONTENT = (
-    "Ran bt allocate after a reindex.",
+    "Ran tangle allocate after a reindex.",
     "The allocated id already existed on disk.",
     "Seed allocation from the Markdown maximum.",
 )
@@ -81,8 +81,8 @@ def test_record_writes_a_routed_revision_stamped_node(
     text = node.read_text(encoding="utf-8")
     assert "context_rev: 1" in text
     assert "Area [[IDX-001-root]]." in text
-    assert f"braintree_revision: {__version__}+unknown" in text
-    assert "Attempted: Ran bt allocate after a reindex." in text
+    assert f"tangle_revision: {__version__}+unknown" in text
+    assert "Attempted: Ran tangle allocate after a reindex." in text
     assert "Friction: The allocated id already existed on disk." in text
     assert "Improvement: Seed allocation from the Markdown maximum." in text
 
@@ -118,15 +118,15 @@ def test_capture_announces_a_legacy_vault_migration(
 
     The capture path resolves the vault itself, so writing from a root that
     still holds a legacy vault renames it. The operator must see the move, and
-    the reported ``path`` must name the resolved ``.braintree`` directory.
+    the reported ``path`` must name the resolved ``.tangle`` directory.
     """
     root = tmp_path / "consumer"
     _hub(root)
-    monkeypatch.delenv("BT_NODES_DIR", raising=False)
+    monkeypatch.delenv("TANGLE_NODES_DIR", raising=False)
     # Pin the sidecar to an absent location so the capture reserves its id
     # vault-locally instead of touching any sidecar on this machine.
-    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "absent-sidecar"))
-    monkeypatch.setenv("BT_PROJECT_ID", "legacy-vault-migration")
+    monkeypatch.setenv("TANGLE_SIDECAR_DIR", str(tmp_path / "absent-sidecar"))
+    monkeypatch.setenv("TANGLE_PROJECT_ID", "legacy-vault-migration")
     monkeypatch.chdir(root)
 
     assert (
@@ -146,9 +146,9 @@ def test_capture_announces_a_legacy_vault_migration(
     )
 
     captured = capsys.readouterr()
-    assert captured.err == "migrated vault: nodes -> .braintree\n"
+    assert captured.err == "migrated vault: nodes -> .tangle\n"
     assert not (root / "nodes").exists()
-    node = _recorded(Path.cwd() / ".braintree", "FBK", "the-allocated-id-already-existed-on-disk")
+    node = _recorded(Path.cwd() / ".tangle", "FBK", "the-allocated-id-already-existed-on-disk")
     assert f'path: "{node}"' in captured.out
     assert "/nodes/proposed" not in captured.out
 
@@ -176,7 +176,7 @@ def test_record_uses_the_installed_revision_record(
         == 0
     )
     node = _recorded(nodes, "FBK", "the-allocated-id-already-existed-on-disk")
-    assert "braintree_revision: 0.4.0+g1b58d57" in node.read_text(encoding="utf-8")
+    assert "tangle_revision: 0.4.0+g1b58d57" in node.read_text(encoding="utf-8")
 
 
 def test_record_accepts_explicit_id_route_summary_and_slug(
@@ -222,7 +222,7 @@ def test_record_allocates_the_next_id(tmp_path: Path) -> None:
         "context_rev: 1",
         "updated: 2026-09-12T00:00:00Z",
         "summary: Old note.",
-        "braintree_revision: unknown",
+        "tangle_revision: unknown",
         "---",
         "",
         "Area [[IDX-001-root]].",
@@ -354,7 +354,7 @@ def test_record_missing_nodes_directory(
 def test_record_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert feedback_record.main(["--help"]) == 0
     assert feedback_record.main(["-h"]) == 0
-    assert "usage: braintree feedback record" in capsys.readouterr().out
+    assert "usage: tangle feedback record" in capsys.readouterr().out
 
 
 def test_record_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> None:
@@ -367,7 +367,7 @@ def test_record_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> 
 
 _CAPTURE_BODY = {
     "THO": "# Question\n\nDoes a claim survive a worktree move?",
-    "DEF": "# Invariant\n\nThe vault root holds .braintree/index-map.md.",
+    "DEF": "# Invariant\n\nThe vault root holds .tangle/index-map.md.",
     "DEC": (
         "# Decision\n\nKeep the sidecar derived.\n\n"
         "# Rationale\n\nMarkdown stays authoritative.\n\n"
@@ -422,11 +422,11 @@ def test_capture_is_dispatched_as_one_documented_command(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
-    assert braintree_main(["node", "record", *_capture_args(nodes, "THO")]) == 0
+    assert tangle_main(["node", "record", *_capture_args(nodes, "THO")]) == 0
     assert _recorded(nodes, "THO", "capture-one-tho-node").is_file()
     assert graph_check.main([str(nodes)]) == 0
     capsys.readouterr()
-    assert braintree_main(["--help"]) == 0
+    assert tangle_main(["--help"]) == 0
     assert "node record [OPTIONS]" in capsys.readouterr().out
 
 
@@ -466,8 +466,8 @@ def test_concurrent_capture_with_different_slugs_never_duplicates_an_id(
     nodes = _hub(tmp_path / "consumer")
     # Pin the sidecar to an absent location so the test exercises the portable
     # vault-local reservation instead of any sidecar on the machine.
-    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "absent-sidecar"))
-    monkeypatch.setenv("BT_PROJECT_ID", "capture-concurrency")
+    monkeypatch.setenv("TANGLE_SIDECAR_DIR", str(tmp_path / "absent-sidecar"))
+    monkeypatch.setenv("TANGLE_PROJECT_ID", "capture-concurrency")
     workers = 8
     ready = threading.Barrier(workers)
     codes: list[int] = []
@@ -597,7 +597,7 @@ def test_capture_names_the_feedback_path_for_fbk(
     ]
     assert node_record.main(args) == 2
     out = capsys.readouterr().out
-    assert "braintree feedback record" in out
+    assert "tangle feedback record" in out
     assert "IDX" in out
     assert not (nodes / "proposed").exists()
 
@@ -670,7 +670,7 @@ def test_capture_missing_nodes_directory(
 def test_capture_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert node_record.main(["--help"]) == 0
     assert node_record.main(["-h"]) == 0
-    assert "usage: braintree node record" in capsys.readouterr().out
+    assert "usage: tangle node record" in capsys.readouterr().out
 
 
 def test_capture_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> None:
@@ -801,6 +801,6 @@ def test_capture_help_surfaces_the_summary_limit(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     for verb in (("node", "record"), ("feedback", "record")):
-        assert braintree_main([*verb, "--help"]) == 0
+        assert tangle_main([*verb, "--help"]) == 0
         out = capsys.readouterr().out
         assert "96 characters" in out, out

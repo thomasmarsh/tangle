@@ -22,13 +22,13 @@ test-benchmarks:
 	uv run pytest -q -m benchmark
 
 benchmark:
-	uv run braintree benchmark token --protocol
+	uv run tangle benchmark token --protocol
 
 diagnostic-benchmark:
-	uv run braintree benchmark behavioral --verify
+	uv run tangle benchmark behavioral --verify
 
 storage-comparison:
-	uv run braintree benchmark storage --verify
+	uv run tangle benchmark storage --verify
 
 verb-benchmark:
-	uv run braintree benchmark verbs --verify
+	uv run tangle benchmark verbs --verify

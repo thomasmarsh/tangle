@@ -3,7 +3,7 @@
 
 It performs the one
 expected node mutation, records the event stream the real CLI would emit, and
-honors ``BT_FAKE_MUTATION_EXTRA_EDIT`` to exercise the unrelated-edit gate.
+honors ``TANGLE_FAKE_MUTATION_EXTRA_EDIT`` to exercise the unrelated-edit gate.
 """
 
 from __future__ import annotations
@@ -45,11 +45,11 @@ def main(argv: list[str]) -> int:
     os.replace(active, resolved)
     with open(answer, "wb") as handle:
         handle.write(b"Routine mutation complete.\n")
-    if os.environ.get("BT_FAKE_MUTATION_EXTRA_EDIT"):
+    if os.environ.get("TANGLE_FAKE_MUTATION_EXTRA_EDIT"):
         with open(os.path.join(root, "unexpected.txt"), "wb") as handle:
             handle.write(b"unexpected\n")
 
-    sessions = os.environ["BT_TOKEN_BENCHMARK_SESSIONS_DIR"]
+    sessions = os.environ["TANGLE_TOKEN_BENCHMARK_SESSIONS_DIR"]
     path = os.path.join(sessions, "fake", "mutation.jsonl")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     events = [
@@ -71,7 +71,7 @@ def main(argv: list[str]) -> int:
                 "type": "custom_tool_call",
                 "name": "exec",
                 "call_id": "fake-call-1",
-                "input": "braintree node TAS-201",
+                "input": "tangle node TAS-201",
             },
         },
         {

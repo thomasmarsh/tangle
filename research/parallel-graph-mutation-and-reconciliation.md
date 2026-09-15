@@ -1,10 +1,10 @@
 # Parallel graph mutation and reconciliation
 
 Status: exploratory research. This document describes a possible foundation; it
-does not change the Braintree contract.
+does not change the Tangle contract.
 
 Any implementation of this foundation should be pay-for-what-you-use. Ordinary
-single-writer work remains direct Markdown editing under the existing Braintree
+single-writer work remains direct Markdown editing under the existing Tangle
 contract. The proposal, reconciliation, and receipt machinery is an opt-in
 coordination path for asynchronous, overlapping, or independently hosted work,
 not a new checklist imposed on every graph mutation. An implementation may use
@@ -13,7 +13,7 @@ ordinary path does not require an agent to author or reason about that machinery
 
 ## Problem
 
-Braintree deliberately makes each node a directly editable Markdown file. That
+Tangle deliberately makes each node a directly editable Markdown file. That
 removes the global-index merge hotspot, but it does not make arbitrary concurrent
 graph edits safe. Two agents can still:
 
@@ -27,7 +27,7 @@ graph edits safe. Two agents can still:
 
 The current coordination contract handles these situations by giving a
 coordinator exclusive write sets and a serial integration role. That is a good
-operating discipline, but it assumes an orchestration shape that Braintree cannot
+operating discipline, but it assumes an orchestration shape that Tangle cannot
 require. A pair-programming agent, a background worker pool, several worktrees,
 and several hosts may all need the same lower-level mechanisms.
 
@@ -65,8 +65,8 @@ rejected from the earlier result alone.
 ### Same-host identity and exclusion
 
 The external SQLite sidecar is keyed by Git's common directory, so all local
-worktrees share atomic ID sequences and node claims. `braintree allocate` burns
-IDs rather than risking reuse, and `braintree node record` reserves before using
+worktrees share atomic ID sequences and node claims. `tangle allocate` burns
+IDs rather than risking reuse, and `tangle node record` reserves before using
 exclusive file creation. Claims record an opaque agent ID, a caller-supplied base
 content hash, and a lease expiry.
 
@@ -85,7 +85,7 @@ multi-writer protocol:
 
 ### Structural validation
 
-`braintree check` validates the canonical graph after edits. It detects duplicate
+`tangle check` validates the canonical graph after edits. It detects duplicate
 identities, invalid routes, stale pins, and lifecycle errors. The
 `--allow-pending-advance` exception precisely represents one known multi-writer
 transient without weakening unrelated checks.
@@ -95,7 +95,7 @@ keep the ordinary acceptance gate strict.
 
 ### Read-only reconciliation planning
 
-`braintree reconcile --base ... --head ...` reads Git snapshots and reports:
+`tangle reconcile --base ... --head ...` reads Git snapshots and reports:
 
 - duplicate identities;
 - the same node changed by more than one head;
@@ -115,13 +115,13 @@ hypothetical merged graph.
 There are at least four layers:
 
 1. **Transport conflict:** two branches cannot be combined textually.
-2. **Identity conflict:** two paths claim the same Braintree ID.
+2. **Identity conflict:** two paths claim the same Tangle ID.
 3. **Invariant conflict:** the combined files violate routing, lifecycle,
    dependency, or frontier rules.
 4. **Meaning conflict:** two valid nodes own the same outcome, two edits express
    incompatible conclusions, or execution reveals a different node boundary.
 
-Git handles the first incompletely. `braintree check` and today's reconciler
+Git handles the first incompletely. `tangle check` and today's reconciler
 cover parts of the second and third. The fourth cannot be decided by a generic
 text merge or a similarity score.
 
@@ -152,7 +152,7 @@ and compare-and-swap the expected Git head.
 A rich orchestrator could assign semantic decisions to a coordinator. A simple
 workflow could let the current agent perform the same role. A human could review
 the plan. The invariants should be identical in all three cases. Acquiring an
-integration lease establishes exclusion among conforming clients only. Braintree
+integration lease establishes exclusion among conforming clients only. Tangle
 does not determine who may update the canonical ref or who is entitled to settle a
 semantic conflict; filesystem permissions, Git controls, an orchestrator, or human
 process may impose those rules externally. The protocol merely requires an
@@ -167,7 +167,7 @@ instead carry an optional opaque actor field appropriate to that event:
 `producer_id`, `decision_actor_id`, or `integrator_id`. A proposal may also carry
 an optional `run_id`.
 
-Braintree preserves and exposes these caller-supplied values and includes them in
+Tangle preserves and exposes these caller-supplied values and includes them in
 the sealed object's digest. It does not require them, authenticate them, require
 uniqueness or stability, infer a role or permission from them, or use them to
 accept or reject an operation. They are asserted provenance metadata for users and
@@ -237,7 +237,7 @@ edge expands the alias to an immutable project UID. Aliases may be renamed or
 collide; the UID settles identity and the registry settles local location.
 
 Ordinary wikilinks remain local-vault references. A colon-qualified external
-reference must not masquerade as an Obsidian wikilink: Braintree owns a separate
+reference must not masquerade as an Obsidian wikilink: Tangle owns a separate
 qualified reference or URI grammar and can project a registered external target
 into a local Markdown link or proxy note. If the target project is not registered,
 the durable external reference remains visible and unresolved rather than becoming
@@ -246,7 +246,7 @@ a broken local node or disappearing.
 ### Stable storage needs project-owned projections
 
 A stationary canonical store should not make each client scan files, construct
-status lists, copy summaries into aliases, or maintain symlinks. Braintree owns
+status lists, copy summaries into aliases, or maintain symlinks. Tangle owns
 those projections as an explicit side effect of its commands. One candidate
 layout is a stable, optionally sharded path derived from the immutable ID, with an
 immutable creation label for filesystem readability and authoritative `status`
@@ -257,7 +257,7 @@ Generated Markdown view pages provide portable navigation without becoming a
 second graph authority. They may group nodes by status, area, priority, recent
 activity, or registered external project and render the current canonical summary
 as link display text. They are deterministic, disposable, excluded from canonical
-node discovery, and regenerated by Braintree; clients neither edit them nor copy
+node discovery, and regenerated by Tangle; clients neither edit them nor copy
 their contents into canonical nodes. Symlink status trees may be an optional view
 backend, but correctness, discovery, and acceptance never depend on a link being
 present or portable.
@@ -287,7 +287,7 @@ metadata may accelerate hints but cannot replace the hash census. Hash state is
 derived and disposable; loss causes a full parse and view rebuild, never loss of
 knowledge.
 
-Same-directory Braintree commands serialize census, index reconciliation,
+Same-directory Tangle commands serialize census, index reconciliation,
 canonical mutation, and view publication with a project-scoped reconciliation
 lease. A direct editor does not participate in that lease, so a file that changes
 during the census causes a retry or an explicit concurrent-edit result rather than
@@ -348,7 +348,7 @@ For the escalated intake path, introduce a transport-neutral **change bundle**.
 A bundle is a non-authoritative proposal to transform one canonical graph
 snapshot into another. Its default on-disk representation could be one uniquely
 named file or directory under an explicitly non-node namespace such as
-`.braintree/proposals/`; the same logical format could also arrive from a Git
+`.tangle/proposals/`; the same logical format could also arrive from a Git
 ref, stdin, or an orchestration service. Direct canonical editing remains the
 default when one writer can safely own and finish the mutation.
 
@@ -370,7 +370,7 @@ it relies on: a Git tree or commit, or a content-addressed patch with its base a
 result tree OIDs. The integration candidate applies and tests that repository
 change together with the graph operations.
 
-The acceptance unit is therefore a repository tree, not merely the `.braintree/`
+The acceptance unit is therefore a repository tree, not merely the `.tangle/`
 subtree. Every resolving transition declares `repository_effect: none` or
 `repository_effect: bound`; the latter names the repository payload digest. Policy
 must reject `none` when the node's outcome requires code or artifact changes, and
@@ -383,7 +383,7 @@ at the accepted commit without trying to infer the distinction from prose alone.
 A minimal envelope needs:
 
 ```yaml
-format: braintree-change/v1
+format: tangle-change/v1
 proposal_id: 01j...
 producer_id: worker-7        # optional, opaque, informational
 run_id: optional-run-42      # optional, opaque, informational
@@ -398,13 +398,13 @@ repository_payload_hash: sha256:...
 The payload then contains operations, preconditions, evidence, and an optional
 human summary. The proposal ID can be a sufficiently random UUID/ULID-like value;
 the payload hash detects corruption and distinguishes proposal identity from
-bytes. `braintree-change/v1` must define one canonical byte encoding. The digest
+bytes. `tangle-change/v1` must define one canonical byte encoding. The digest
 covers the domain separator, envelope fields other than `payload_hash`, and the
 payload in that encoding; it never recursively covers its own field. A
 producer-prefixed counter is not sufficient because producer identity is not
 always stable or centrally registered. A digest is not authentication. A
 surrounding transport may add signatures, authenticated channels, or policy when
-its users need them, but Braintree neither requires nor verifies those mechanisms.
+its users need them, but Tangle neither requires nor verifies those mechanisms.
 
 Asynchronous durability also requires the declared base to remain inspectable. A
 transport either retains the base Git objects behind a durable proposal ref until
@@ -505,7 +505,7 @@ for a proposal. Conflicting receipts are a reconciliation error, never
 last-writer-wins state.
 
 The acceptance record, for example
-`.braintree/acceptances/<integration_id>.yaml`, closes the crash window between
+`.tangle/acceptances/<integration_id>.yaml`, closes the crash window between
 updating the canonical ref and publishing receipts. Every terminal disposition,
 including rejection without a graph change, passes through the same serialized
 acceptance path and appears in one of these records; a rejection may therefore
@@ -537,7 +537,7 @@ snapshot. Consult both receipts and canonical acceptance records: an
 accepted-but-unreceipted proposal is receipt-recovery work, not pending work. A
 malformed or unverifiable proposal remains separate from graph validity. Optional
 actor metadata does not affect either classification; any authentication or
-authorization check happens outside Braintree.
+authorization check happens outside Tangle.
 
 ### 2. Normalize exact equivalence
 
@@ -556,7 +556,7 @@ Connect proposals that share any of:
 - derived read/write path or graph predicate;
 - plausible existing owner or near-duplicate outcome.
 
-The first five are deterministic. Semantic similarity, `braintree similar`,
+The first five are deterministic. Semantic similarity, `tangle similar`,
 digests, and clusters may nominate the last kind, but must stay advisory. A low
 similarity score can never prove independence.
 
@@ -593,7 +593,7 @@ timestamps as typed symbolic values in the plan. To exercise the existing checke
 derive deterministic, explicitly noncanonical validation IDs from the project UID,
 proposal digest, and local symbol, and use one valid but noncanonical validation
 timestamp. Derive the index and views from that candidate Markdown, run
-`braintree check`, and run the tests required by the full repository change.
+`tangle check`, and run the tests required by the full repository change.
 Recompute stale consumers against this combined candidate, not only against each
 head independently. Acceptance rematerializes the real identity spelling and
 timestamp and reruns the gates on the exact candidate it may commit.
@@ -650,7 +650,7 @@ canonical acceptance history, not receipt arrival order, owns disposition.
 
 Same-host SQLite can implement the lease. Across hosts, a server-side lock or an
 atomic Git ref update can provide the compare-and-swap boundary. The proposal
-format should not assume either deployment. Braintree does not establish or
+format should not assume either deployment. Tangle does not establish or
 enforce who may perform the ref update or provide a semantic decision. Those
 constraints, when wanted, belong to the surrounding environment.
 
@@ -735,14 +735,14 @@ WIP.
 The names are illustrative; the data model matters more than the verbs.
 
 ```text
-braintree change submit --producer ID --base REF --file CHANGE
-braintree change pending [--ref REF ...]
-braintree change inspect PROPOSAL
-braintree reconcile --base REF --proposal ID ... --head REF ...
-braintree integrate --plan PLAN --dry-run
-braintree change decide PROPOSAL --as DISPOSITION --output DECISION
-braintree integrate --plan PLAN --decision DECISION ... --apply --expect-head OID
-braintree change receipt PROPOSAL
+tangle change submit --producer ID --base REF --file CHANGE
+tangle change pending [--ref REF ...]
+tangle change inspect PROPOSAL
+tangle reconcile --base REF --proposal ID ... --head REF ...
+tangle integrate --plan PLAN --dry-run
+tangle change decide PROPOSAL --as DISPOSITION --output DECISION
+tangle integrate --plan PLAN --decision DECISION ... --apply --expect-head OID
+tangle change receipt PROPOSAL
 ```
 
 `reconcile` should remain read-only and deterministic. `integrate --dry-run`
@@ -772,13 +772,13 @@ never claims must still be unable to bypass acceptance preconditions.
 4. Derived SQLite state and generated Markdown views can be lost without losing
    accepted knowledge or pending durable proposals.
 5. Clients never maintain indexes, status pages, summary aliases, or projection
-   symlinks; Braintree regenerates every supported projection from canonical
+   symlinks; Tangle regenerates every supported projection from canonical
    Markdown.
 6. A committed immutable project UID supplies cross-clone authority. Lowercase
    project aliases and collision-aware terminal abbreviations are mutable
    presentation and local lookup state; neither replaces a full canonical ID.
 7. Local wikilinks remain meaningful local-vault links. Cross-project references
-   use a distinct durable Braintree grammar and may gain Obsidian links only
+   use a distinct durable Tangle grammar and may gain Obsidian links only
    through a generated projection.
 8. No mutable global queue manifest is required for submission.
 9. One sealed proposal has immutable bytes and a globally unique identity.
@@ -795,9 +795,9 @@ never claims must still be unable to bypass acceptance preconditions.
     commit carries enough non-self-referential data to recover a missing receipt.
 16. Semantic redundancy and node-boundary changes are surfaced for judgment;
     advisory similarity never decides them.
-17. The plain `braintree check` and the gates required by the bound repository
+17. The plain `tangle check` and the gates required by the bound repository
     change pass at every completed integration boundary.
-18. Semantic ambiguity requires an explicit decision, but Braintree neither
+18. Semantic ambiguity requires an explicit decision, but Tangle neither
     authenticates its source nor judges who may provide it.
 19. Canonical nodes are retired with durable dispositions rather than deleted.
 
@@ -849,7 +849,7 @@ system:
    parent advances, cross-node parent cycles, and a split-versus-amend case.
 7. Build a scratch-tree validator that applies bound code and artifact changes as
    well as graph operations, reports whether the selected set passes
-   `braintree check` and its required gates, and never writes the current worktree.
+   `tangle check` and its required gates, and never writes the current worktree.
 8. Test read/write-footprint derivation and prove that a clean textual rebase with
    an uncertain semantic read remains `needs-revision`.
 9. Test stable proposal ordering, late collision-resistant ID generation, and

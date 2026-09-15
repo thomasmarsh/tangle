@@ -11,7 +11,7 @@
     "repository-only",
     "raw-history",
     "flat-memory",
-    "braintree",
+    "tangle",
     "oracle"
   ],
   "models": [
@@ -21,7 +21,7 @@
   ],
   "reasoning_effort": "high",
   "memory_budget": 8,
-  "corpus_digest": "sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5",
+  "corpus_digest": "sha256:43199538957715dc5abde49982e8b2bfe82f0ffa224a29e6a9f9c0bdf1de3d01",
   "source_revision": "ee7c25d9bc28",
   "pins": {
     "protocol": "memory-causal-confirmatory-v1",
@@ -49,7 +49,7 @@
   },
   "contrasts": [
     {
-      "treatment": "braintree",
+      "treatment": "tangle",
       "baseline": "repository-only",
       "n_pairs": 216,
       "n_strata": 72,
@@ -59,7 +59,7 @@
       "decision_contrast": true
     },
     {
-      "treatment": "braintree",
+      "treatment": "tangle",
       "baseline": "raw-history",
       "n_pairs": 216,
       "n_strata": 72,
@@ -69,7 +69,7 @@
       "decision_contrast": true
     },
     {
-      "treatment": "braintree",
+      "treatment": "tangle",
       "baseline": "flat-memory",
       "n_pairs": 216,
       "n_strata": 72,
@@ -80,7 +80,7 @@
     },
     {
       "treatment": "oracle",
-      "baseline": "braintree",
+      "baseline": "tangle",
       "n_pairs": 216,
       "n_strata": 72,
       "mean_effect": 0.027777777777777776,
@@ -110,7 +110,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -122,8 +122,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -146,7 +146,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -158,8 +158,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -182,7 +182,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -194,8 +194,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -218,7 +218,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -230,8 +230,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -254,7 +254,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -266,8 +266,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -290,7 +290,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -302,8 +302,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -326,7 +326,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -338,8 +338,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -362,7 +362,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -374,8 +374,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -398,7 +398,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -410,8 +410,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -434,7 +434,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -446,8 +446,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -470,7 +470,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -482,8 +482,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -506,7 +506,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -518,8 +518,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -542,7 +542,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -554,8 +554,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.6666666666666666,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.6666666666666666,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -578,7 +578,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -590,8 +590,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -614,7 +614,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -626,8 +626,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.6666666666666666,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.6666666666666666,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -650,7 +650,7 @@
           true,
           false
         ],
-        "braintree": [
+        "tangle": [
           false,
           true,
           false
@@ -662,8 +662,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": -0.3333333333333333
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": -0.3333333333333333
       }
     },
     {
@@ -686,7 +686,7 @@
           true,
           false
         ],
-        "braintree": [
+        "tangle": [
           false,
           false,
           false
@@ -698,8 +698,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": -0.6666666666666666
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": -0.6666666666666666
       }
     },
     {
@@ -722,7 +722,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           false,
           false,
           true
@@ -734,8 +734,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": -0.6666666666666666
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": -0.6666666666666666
       }
     },
     {
@@ -758,7 +758,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -770,8 +770,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -794,7 +794,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -806,8 +806,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -830,7 +830,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -842,8 +842,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -866,7 +866,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -878,8 +878,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -902,7 +902,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -914,8 +914,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -938,7 +938,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -950,8 +950,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -974,7 +974,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -986,8 +986,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1010,7 +1010,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1022,8 +1022,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1046,7 +1046,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1058,8 +1058,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1082,7 +1082,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1094,8 +1094,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1118,7 +1118,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1130,8 +1130,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1154,7 +1154,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1166,8 +1166,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1190,7 +1190,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1202,8 +1202,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1226,7 +1226,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1238,8 +1238,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1262,7 +1262,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1274,8 +1274,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1298,7 +1298,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1310,8 +1310,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1334,7 +1334,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1346,8 +1346,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1370,7 +1370,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1382,8 +1382,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 1.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 1.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1406,7 +1406,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1418,8 +1418,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1442,7 +1442,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1454,8 +1454,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1478,7 +1478,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1490,8 +1490,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1514,7 +1514,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1526,8 +1526,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1550,7 +1550,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1562,8 +1562,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.3333333333333333,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.3333333333333333,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1586,7 +1586,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1598,8 +1598,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1622,7 +1622,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1634,8 +1634,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1658,7 +1658,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1670,8 +1670,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1694,7 +1694,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1706,8 +1706,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1730,7 +1730,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1742,8 +1742,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1766,7 +1766,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1778,8 +1778,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1802,7 +1802,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1814,8 +1814,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1838,7 +1838,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1850,8 +1850,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1874,7 +1874,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1886,8 +1886,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1910,7 +1910,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1922,8 +1922,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1946,7 +1946,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1958,8 +1958,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -1982,7 +1982,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -1994,8 +1994,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2018,7 +2018,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2030,8 +2030,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2054,7 +2054,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2066,8 +2066,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2090,7 +2090,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2102,8 +2102,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2126,7 +2126,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2138,8 +2138,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2162,7 +2162,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2174,8 +2174,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2198,7 +2198,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2210,8 +2210,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2234,7 +2234,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2246,8 +2246,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 1.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 1.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2270,7 +2270,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2282,8 +2282,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2306,7 +2306,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2318,8 +2318,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2342,7 +2342,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2354,8 +2354,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2378,7 +2378,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2390,8 +2390,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2414,7 +2414,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2426,8 +2426,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2450,7 +2450,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2462,8 +2462,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2486,7 +2486,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2498,8 +2498,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2522,7 +2522,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2534,8 +2534,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2558,7 +2558,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2570,8 +2570,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2594,7 +2594,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2606,8 +2606,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2630,7 +2630,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2642,8 +2642,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     },
     {
@@ -2666,7 +2666,7 @@
           true,
           true
         ],
-        "braintree": [
+        "tangle": [
           true,
           true,
           true
@@ -2678,8 +2678,8 @@
         ]
       },
       "effects": {
-        "braintree-minus-repository-only": 0.0,
-        "braintree-minus-raw-history": 0.0
+        "tangle-minus-repository-only": 0.0,
+        "tangle-minus-raw-history": 0.0
       }
     }
   ],
@@ -2744,7 +2744,7 @@
         "monetary_cost": 0.265367
       }
     },
-    "braintree": {
+    "tangle": {
       "admitted": 209,
       "tokens": {
         "input_tokens": 58701,
@@ -2904,18 +2904,18 @@
       "detail": "chose 'retain-new-node', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-flash--r1",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-flash--r1",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "kind": "incorrect-action",
       "detail": "chose 'retain-new-node', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-flash--r3",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-flash--r3",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "kind": "incorrect-action",
@@ -2967,27 +2967,27 @@
       "detail": "chose 'retain-new-node', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "kind": "incorrect-action",
       "detail": "chose 'discard-observation', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "kind": "incorrect-action",
       "detail": "chose 'retain-new-node', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "kind": "incorrect-action",
@@ -3021,18 +3021,18 @@
       "detail": "chose 'retain-new-node', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "kind": "incorrect-action",
       "detail": "chose 'retain-new-node', expected 'update-existing-node'"
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-update-existing-seam-reuse-001",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "kind": "incorrect-action",
@@ -3518,10 +3518,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-flash--r1",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-flash--r1",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": true,
@@ -3559,10 +3559,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-flash--r2",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-flash--r2",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": true,
@@ -3600,10 +3600,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-flash--r3",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-flash--r3",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": true,
@@ -4133,10 +4133,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": true,
@@ -4174,10 +4174,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": true,
@@ -4215,10 +4215,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": true,
@@ -4748,10 +4748,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": true,
@@ -4789,10 +4789,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": true,
@@ -4830,10 +4830,10 @@
       }
     },
     {
-      "key": "admission-discard-routine-verification-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-discard-routine-verification-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-discard-routine-verification-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": true,
@@ -5363,10 +5363,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-flash--r1",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-flash--r1",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": true,
@@ -5404,10 +5404,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-flash--r2",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-flash--r2",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": true,
@@ -5445,10 +5445,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-flash--r3",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-flash--r3",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": true,
@@ -5978,10 +5978,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": true,
@@ -6019,10 +6019,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": true,
@@ -6060,10 +6060,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": true,
@@ -6593,10 +6593,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": true,
@@ -6634,10 +6634,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": true,
@@ -6675,10 +6675,10 @@
       }
     },
     {
-      "key": "admission-discard-transient-failure-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-discard-transient-failure-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-discard-transient-failure-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": true,
@@ -7208,10 +7208,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-flash--r1",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-flash--r1",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": true,
@@ -7249,10 +7249,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-flash--r2",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-flash--r2",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": true,
@@ -7290,10 +7290,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-flash--r3",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-flash--r3",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": true,
@@ -7823,10 +7823,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": true,
@@ -7864,10 +7864,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": true,
@@ -7905,10 +7905,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": true,
@@ -8438,10 +8438,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": true,
@@ -8479,10 +8479,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": true,
@@ -8520,10 +8520,10 @@
       }
     },
     {
-      "key": "admission-retain-envelope-layout-alternative-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-retain-envelope-layout-alternative-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-retain-envelope-layout-alternative-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": true,
@@ -9053,10 +9053,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-flash--r1",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-flash--r1",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": true,
@@ -9094,10 +9094,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-flash--r2",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-flash--r2",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": true,
@@ -9135,10 +9135,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-flash--r3",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-flash--r3",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": true,
@@ -9668,10 +9668,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": true,
@@ -9709,10 +9709,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": true,
@@ -9750,10 +9750,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": true,
@@ -10283,10 +10283,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": true,
@@ -10324,10 +10324,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": true,
@@ -10365,10 +10365,10 @@
       }
     },
     {
-      "key": "admission-retain-heldout-separation-hypothesis-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-retain-heldout-separation-hypothesis-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-retain-heldout-separation-hypothesis-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": true,
@@ -10898,10 +10898,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-flash--r1",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-flash--r1",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -10939,10 +10939,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-flash--r2",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-flash--r2",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -10980,10 +10980,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-flash--r3",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-flash--r3",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -11513,10 +11513,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -11554,10 +11554,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -11595,10 +11595,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -12128,10 +12128,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -12169,10 +12169,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -12210,10 +12210,10 @@
       }
     },
     {
-      "key": "admission-update-existing-fast-suite-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-update-existing-fast-suite-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-update-existing-fast-suite-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -12743,10 +12743,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-flash--r1",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-flash--r1",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -12784,10 +12784,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-flash--r2",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-flash--r2",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -12825,10 +12825,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-flash--r3",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-flash--r3",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -13358,10 +13358,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -13399,10 +13399,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -13440,10 +13440,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -13973,10 +13973,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -14014,10 +14014,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -14055,10 +14055,10 @@
       }
     },
     {
-      "key": "admission-update-existing-seam-reuse-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-update-existing-seam-reuse-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-update-existing-seam-reuse-001",
       "family": "admission",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -14588,10 +14588,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-flash--r1",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-flash--r1",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -14629,10 +14629,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-flash--r2",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-flash--r2",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -14670,10 +14670,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-flash--r3",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-flash--r3",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -15203,10 +15203,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-v4-flash--r1",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-v4-flash--r1",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -15244,10 +15244,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-v4-flash--r2",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-v4-flash--r2",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -15285,10 +15285,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-v4-flash--r3",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-v4-flash--r3",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -15818,10 +15818,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-v4-pro--r1",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-v4-pro--r1",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -15859,10 +15859,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-v4-pro--r2",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-v4-pro--r2",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -15900,10 +15900,10 @@
       }
     },
     {
-      "key": "resumption-after-decision-semantic-optional-001--braintree--deepseek-v4-pro--r3",
+      "key": "resumption-after-decision-semantic-optional-001--tangle--deepseek-v4-pro--r3",
       "case_id": "resumption-after-decision-semantic-optional-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -16433,10 +16433,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-flash--r1",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-flash--r1",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -16474,10 +16474,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-flash--r2",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-flash--r2",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -16515,10 +16515,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-flash--r3",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-flash--r3",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -17048,10 +17048,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-v4-flash--r1",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-v4-flash--r1",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -17089,10 +17089,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-v4-flash--r2",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-v4-flash--r2",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -17130,10 +17130,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-v4-flash--r3",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-v4-flash--r3",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -17663,10 +17663,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-v4-pro--r1",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-v4-pro--r1",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -17704,10 +17704,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-v4-pro--r2",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-v4-pro--r2",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -17745,10 +17745,10 @@
       }
     },
     {
-      "key": "resumption-failed-experiment-cold-resume-rule-001--braintree--deepseek-v4-pro--r3",
+      "key": "resumption-failed-experiment-cold-resume-rule-001--tangle--deepseek-v4-pro--r3",
       "case_id": "resumption-failed-experiment-cold-resume-rule-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -18278,10 +18278,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-flash--r1",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-flash--r1",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -18319,10 +18319,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-flash--r2",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-flash--r2",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -18360,10 +18360,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-flash--r3",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-flash--r3",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -18893,10 +18893,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-v4-flash--r1",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-v4-flash--r1",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -18934,10 +18934,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-v4-flash--r2",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-v4-flash--r2",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -18975,10 +18975,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-v4-flash--r3",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-v4-flash--r3",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -19508,10 +19508,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-v4-pro--r1",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-v4-pro--r1",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -19549,10 +19549,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-v4-pro--r2",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-v4-pro--r2",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -19590,10 +19590,10 @@
       }
     },
     {
-      "key": "resumption-handoff-corpus-continuation-001--braintree--deepseek-v4-pro--r3",
+      "key": "resumption-handoff-corpus-continuation-001--tangle--deepseek-v4-pro--r3",
       "case_id": "resumption-handoff-corpus-continuation-001",
       "family": "resumption",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -20132,10 +20132,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-flash--r1",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-flash--r1",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -20174,10 +20174,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-flash--r2",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-flash--r2",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -20216,10 +20216,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-flash--r3",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-flash--r3",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -20762,10 +20762,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-v4-flash--r1",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-v4-flash--r1",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -20804,10 +20804,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-v4-flash--r2",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-v4-flash--r2",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -20846,10 +20846,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-v4-flash--r3",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-v4-flash--r3",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -21392,10 +21392,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-v4-pro--r1",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-v4-pro--r1",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -21434,10 +21434,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-v4-pro--r2",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-v4-pro--r2",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -21476,10 +21476,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-blocker-lease-handoff-001--braintree--deepseek-v4-pro--r3",
+      "key": "implicit-retrieval-blocker-lease-handoff-001--tangle--deepseek-v4-pro--r3",
       "case_id": "implicit-retrieval-blocker-lease-handoff-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -22013,10 +22013,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-flash--r1",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-flash--r1",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": true,
@@ -22054,10 +22054,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-flash--r2",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-flash--r2",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": true,
@@ -22095,10 +22095,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-flash--r3",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-flash--r3",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": true,
@@ -22628,10 +22628,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-v4-flash--r1",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-v4-flash--r1",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": true,
@@ -22669,10 +22669,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-v4-flash--r2",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-v4-flash--r2",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": true,
@@ -22710,10 +22710,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-v4-flash--r3",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-v4-flash--r3",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": true,
@@ -23243,10 +23243,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-v4-pro--r1",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-v4-pro--r1",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": true,
@@ -23284,10 +23284,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-v4-pro--r2",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-v4-pro--r2",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": true,
@@ -23325,10 +23325,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-control-offline-gate-001--braintree--deepseek-v4-pro--r3",
+      "key": "implicit-retrieval-control-offline-gate-001--tangle--deepseek-v4-pro--r3",
       "case_id": "implicit-retrieval-control-offline-gate-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": true,
@@ -23858,10 +23858,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-flash--r1",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-flash--r1",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -23899,10 +23899,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-flash--r2",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-flash--r2",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -23940,10 +23940,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-flash--r3",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-flash--r3",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -24473,10 +24473,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-v4-flash--r1",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-v4-flash--r1",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -24514,10 +24514,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-v4-flash--r2",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-v4-flash--r2",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -24555,10 +24555,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-v4-flash--r3",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-v4-flash--r3",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -25088,10 +25088,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-v4-pro--r1",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-v4-pro--r1",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -25129,10 +25129,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-v4-pro--r2",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-v4-pro--r2",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -25170,10 +25170,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--braintree--deepseek-v4-pro--r3",
+      "key": "implicit-retrieval-failed-experiment-orientation-compaction-001--tangle--deepseek-v4-pro--r3",
       "case_id": "implicit-retrieval-failed-experiment-orientation-compaction-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -25712,10 +25712,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-flash--r1",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-flash--r1",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -25754,10 +25754,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-flash--r2",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-flash--r2",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -25796,10 +25796,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-flash--r3",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-flash--r3",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -26342,10 +26342,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-v4-flash--r1",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-v4-flash--r1",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -26384,10 +26384,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-v4-flash--r2",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-v4-flash--r2",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -26426,10 +26426,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-v4-flash--r3",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-v4-flash--r3",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -26972,10 +26972,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-v4-pro--r1",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-v4-pro--r1",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -27014,10 +27014,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-v4-pro--r2",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-v4-pro--r2",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -27056,10 +27056,10 @@
       }
     },
     {
-      "key": "implicit-retrieval-handoff-parent-next-001--braintree--deepseek-v4-pro--r3",
+      "key": "implicit-retrieval-handoff-parent-next-001--tangle--deepseek-v4-pro--r3",
       "case_id": "implicit-retrieval-handoff-parent-next-001",
       "family": "implicit-retrieval",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -27593,10 +27593,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-flash--r1",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-flash--r1",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -27634,10 +27634,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-flash--r2",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-flash--r2",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -27675,10 +27675,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-flash--r3",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-flash--r3",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -28208,10 +28208,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-v4-flash--r1",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-v4-flash--r1",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -28249,10 +28249,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-v4-flash--r2",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-v4-flash--r2",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -28290,10 +28290,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-v4-flash--r3",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-v4-flash--r3",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -28823,10 +28823,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-v4-pro--r1",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-v4-pro--r1",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -28864,10 +28864,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-v4-pro--r2",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-v4-pro--r2",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -28905,10 +28905,10 @@
       }
     },
     {
-      "key": "temporal-update-changed-definition-001--braintree--deepseek-v4-pro--r3",
+      "key": "temporal-update-changed-definition-001--tangle--deepseek-v4-pro--r3",
       "case_id": "temporal-update-changed-definition-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -29438,10 +29438,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-flash--r1",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-flash--r1",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -29479,10 +29479,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-flash--r2",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-flash--r2",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -29520,10 +29520,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-flash--r3",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-flash--r3",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -30053,10 +30053,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-v4-flash--r1",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-v4-flash--r1",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -30094,10 +30094,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-v4-flash--r2",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-v4-flash--r2",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -30135,10 +30135,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-v4-flash--r3",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-v4-flash--r3",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -30668,10 +30668,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-v4-pro--r1",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-v4-pro--r1",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -30709,10 +30709,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-v4-pro--r2",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-v4-pro--r2",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -30750,10 +30750,10 @@
       }
     },
     {
-      "key": "temporal-update-event-mutation-time-001--braintree--deepseek-v4-pro--r3",
+      "key": "temporal-update-event-mutation-time-001--tangle--deepseek-v4-pro--r3",
       "case_id": "temporal-update-event-mutation-time-001",
       "family": "temporal-update",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -31283,10 +31283,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-flash--r1",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-flash--r1",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -31324,10 +31324,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-flash--r2",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-flash--r2",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -31365,10 +31365,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-flash--r3",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-flash--r3",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -31898,10 +31898,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-v4-flash--r1",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-v4-flash--r1",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -31939,10 +31939,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-v4-flash--r2",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-v4-flash--r2",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -31980,10 +31980,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-v4-flash--r3",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-v4-flash--r3",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -32513,10 +32513,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-v4-pro--r1",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-v4-pro--r1",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -32554,10 +32554,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-v4-pro--r2",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-v4-pro--r2",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -32595,10 +32595,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-reversal-in-place-001--braintree--deepseek-v4-pro--r3",
+      "key": "cascading-invalidation-reversal-in-place-001--tangle--deepseek-v4-pro--r3",
       "case_id": "cascading-invalidation-reversal-in-place-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -33128,10 +33128,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-flash--r1",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-flash--r1",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -33169,10 +33169,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-flash--r2",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-flash--r2",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -33210,10 +33210,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-flash--r3",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-flash--r3",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -33743,10 +33743,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-v4-flash--r1",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-v4-flash--r1",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -33784,10 +33784,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-v4-flash--r2",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-v4-flash--r2",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -33825,10 +33825,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-v4-flash--r3",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-v4-flash--r3",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -34358,10 +34358,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-v4-pro--r1",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-v4-pro--r1",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -34399,10 +34399,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-v4-pro--r2",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-v4-pro--r2",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -34440,10 +34440,10 @@
       }
     },
     {
-      "key": "cascading-invalidation-superseded-decision-001--braintree--deepseek-v4-pro--r3",
+      "key": "cascading-invalidation-superseded-decision-001--tangle--deepseek-v4-pro--r3",
       "case_id": "cascading-invalidation-superseded-decision-001",
       "family": "cascading-invalidation",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -34973,10 +34973,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-flash--r1",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-flash--r1",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -35014,10 +35014,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-flash--r2",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-flash--r2",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -35055,10 +35055,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-flash--r3",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-flash--r3",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -35588,10 +35588,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-v4-flash--r1",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-v4-flash--r1",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -35629,10 +35629,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-v4-flash--r2",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-v4-flash--r2",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -35670,10 +35670,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-v4-flash--r3",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-v4-flash--r3",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -36203,10 +36203,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-v4-pro--r1",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-v4-pro--r1",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -36244,10 +36244,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-v4-pro--r2",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-v4-pro--r2",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -36285,10 +36285,10 @@
       }
     },
     {
-      "key": "conflict-and-uncertainty-genuine-conflict-001--braintree--deepseek-v4-pro--r3",
+      "key": "conflict-and-uncertainty-genuine-conflict-001--tangle--deepseek-v4-pro--r3",
       "case_id": "conflict-and-uncertainty-genuine-conflict-001",
       "family": "conflict-and-uncertainty",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -36818,10 +36818,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-flash--r1",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-flash--r1",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -36859,10 +36859,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-flash--r2",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-flash--r2",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -36900,10 +36900,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-flash--r3",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-flash--r3",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -37433,10 +37433,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-v4-flash--r1",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-v4-flash--r1",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -37474,10 +37474,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-v4-flash--r2",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-v4-flash--r2",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -37515,10 +37515,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-v4-flash--r3",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-v4-flash--r3",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -38048,10 +38048,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-v4-pro--r1",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-v4-pro--r1",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -38089,10 +38089,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-v4-pro--r2",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-v4-pro--r2",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -38130,10 +38130,10 @@
       }
     },
     {
-      "key": "experience-transfer-cross-task-gotcha-001--braintree--deepseek-v4-pro--r3",
+      "key": "experience-transfer-cross-task-gotcha-001--tangle--deepseek-v4-pro--r3",
       "case_id": "experience-transfer-cross-task-gotcha-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -38663,10 +38663,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-flash--r1",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-flash--r1",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -38704,10 +38704,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-flash--r2",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-flash--r2",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -38745,10 +38745,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-flash--r3",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-flash--r3",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -39278,10 +39278,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-v4-flash--r1",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-v4-flash--r1",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -39319,10 +39319,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-v4-flash--r2",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-v4-flash--r2",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -39360,10 +39360,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-v4-flash--r3",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-v4-flash--r3",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -39893,10 +39893,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-v4-pro--r1",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-v4-pro--r1",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -39934,10 +39934,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-v4-pro--r2",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-v4-pro--r2",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -39975,10 +39975,10 @@
       }
     },
     {
-      "key": "experience-transfer-misleading-prior-lesson-001--braintree--deepseek-v4-pro--r3",
+      "key": "experience-transfer-misleading-prior-lesson-001--tangle--deepseek-v4-pro--r3",
       "case_id": "experience-transfer-misleading-prior-lesson-001",
       "family": "experience-transfer",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -40508,10 +40508,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-flash--r1",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-flash--r1",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -40549,10 +40549,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-flash--r2",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-flash--r2",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -40590,10 +40590,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-flash--r3",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-flash--r3",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -41123,10 +41123,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-v4-flash--r1",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-v4-flash--r1",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -41164,10 +41164,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-v4-flash--r2",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-v4-flash--r2",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -41205,10 +41205,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-v4-flash--r3",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-v4-flash--r3",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -41738,10 +41738,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-v4-pro--r1",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-v4-pro--r1",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -41779,10 +41779,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-v4-pro--r2",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-v4-pro--r2",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -41820,10 +41820,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-near-duplicate-growth-001--braintree--deepseek-v4-pro--r3",
+      "key": "forgetting-and-interference-near-duplicate-growth-001--tangle--deepseek-v4-pro--r3",
       "case_id": "forgetting-and-interference-near-duplicate-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -42353,10 +42353,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-flash--r1",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-flash--r1",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -42394,10 +42394,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-flash--r2",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-flash--r2",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -42435,10 +42435,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-flash--r3",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-flash--r3",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -42968,10 +42968,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-v4-flash--r1",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-v4-flash--r1",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -43009,10 +43009,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-v4-flash--r2",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-v4-flash--r2",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -43050,10 +43050,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-v4-flash--r3",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-v4-flash--r3",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -43583,10 +43583,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-v4-pro--r1",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-v4-pro--r1",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -43624,10 +43624,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-v4-pro--r2",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-v4-pro--r2",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -43665,10 +43665,10 @@
       }
     },
     {
-      "key": "forgetting-and-interference-superseded-growth-001--braintree--deepseek-v4-pro--r3",
+      "key": "forgetting-and-interference-superseded-growth-001--tangle--deepseek-v4-pro--r3",
       "case_id": "forgetting-and-interference-superseded-growth-001",
       "family": "forgetting-and-interference",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -44198,10 +44198,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-flash--r1",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-flash--r1",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -44239,10 +44239,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-flash--r2",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-flash--r2",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -44280,10 +44280,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-flash--r3",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-flash--r3",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -44813,10 +44813,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-v4-flash--r1",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-v4-flash--r1",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -44854,10 +44854,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-v4-flash--r2",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-v4-flash--r2",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -44895,10 +44895,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-v4-flash--r3",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-v4-flash--r3",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -45428,10 +45428,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-v4-pro--r1",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-v4-pro--r1",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -45469,10 +45469,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-v4-pro--r2",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-v4-pro--r2",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -45510,10 +45510,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-laundered-instruction-001--braintree--deepseek-v4-pro--r3",
+      "key": "poisoning-and-authority-laundered-instruction-001--tangle--deepseek-v4-pro--r3",
       "case_id": "poisoning-and-authority-laundered-instruction-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -46043,10 +46043,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-flash--r1",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-flash--r1",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "control": false,
@@ -46084,10 +46084,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-flash--r2",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-flash--r2",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "control": false,
@@ -46125,10 +46125,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-flash--r3",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-flash--r3",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "control": false,
@@ -46658,10 +46658,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-v4-flash--r1",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-v4-flash--r1",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "control": false,
@@ -46699,10 +46699,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-v4-flash--r2",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-v4-flash--r2",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "control": false,
@@ -46740,10 +46740,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-v4-flash--r3",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-v4-flash--r3",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "control": false,
@@ -47273,10 +47273,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-v4-pro--r1",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-v4-pro--r1",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "control": false,
@@ -47314,10 +47314,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-v4-pro--r2",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-v4-pro--r2",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "control": false,
@@ -47355,10 +47355,10 @@
       }
     },
     {
-      "key": "poisoning-and-authority-permission-expansion-001--braintree--deepseek-v4-pro--r3",
+      "key": "poisoning-and-authority-permission-expansion-001--tangle--deepseek-v4-pro--r3",
       "case_id": "poisoning-and-authority-permission-expansion-001",
       "family": "poisoning-and-authority",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "control": false,
@@ -47522,11 +47522,11 @@
   "missing_keys": [],
   "incomplete_reasons": [],
   "reproduction": [
-    "uv run braintree benchmark causal plan > plan.json",
+    "uv run tangle benchmark causal plan > plan.json",
     "# launch 18 batches of at most 60 isolated children from plan.json (owner authorization required; see the preregistration)",
     "# retained async run root: $TMPDIR",
-    "uv run braintree benchmark causal record --input $TMPDIR/samples.json --output benchmark/memory-causal-result.json",
-    "uv run braintree benchmark causal dry-run",
+    "uv run tangle benchmark causal record --input $TMPDIR/samples.json --output benchmark/memory-causal-result.json",
+    "uv run tangle benchmark causal dry-run",
     "# plan digest sha256:4228b2b9f26e25d17726d6508832b123ffb3da5420727ea7da29eac9d5ecac39",
     "# corpus digest sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5"
   ]

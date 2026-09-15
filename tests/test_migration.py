@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from braintree import graph_check, migration, store
+from tangle import graph_check, migration, store
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 _INDEX = (
     "---\n"
@@ -80,7 +80,7 @@ _UPDATED = re.compile(r"^updated: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)$", re.M
 
 def _vault(root: Path) -> Path:
     """Seed a minimal valid legacy status-directory vault and return it."""
-    nodes = root / ".braintree"
+    nodes = root / ".tangle"
     (nodes / "proposed").mkdir(parents=True)
     (nodes / "resolved").mkdir()
     (nodes / "index-map.md").write_text(_INDEX, encoding="utf-8")
@@ -232,23 +232,23 @@ def test_failed_apply_restores_every_source(
 
 
 def test_stationarize_plans_by_default_and_applies_on_request(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     nodes = _vault(tmp_path)
-    env = {"BT_PROJECT_ID": "migration-test", "BT_SIDECAR_DIR": str(tmp_path / "state")}
+    env = {"TANGLE_PROJECT_ID": "migration-test", "TANGLE_SIDECAR_DIR": str(tmp_path / "state")}
 
-    planned = run_bt("stationarize", cwd=tmp_path, env=env)
+    planned = run_tangle("stationarize", cwd=tmp_path, env=env)
     assert planned.returncode == 0
     assert 'result: "planned"' in planned.stdout
     assert 'moves[4]{id,status,source,target}:' in planned.stdout
     assert _stationary_files(nodes) == []
 
-    applied = run_bt("stationarize", "--apply", cwd=tmp_path, env=env)
+    applied = run_tangle("stationarize", "--apply", cwd=tmp_path, env=env)
     assert applied.returncode == 0
     assert 'result: "migrated"' in applied.stdout
     assert 'moved: "4"' in applied.stdout
     assert len(_stationary_files(nodes)) == 4
 
-    no_op = run_bt("stationarize", cwd=tmp_path, env=env)
+    no_op = run_tangle("stationarize", cwd=tmp_path, env=env)
     assert no_op.returncode == 0
     assert 'result: "no-op"' in no_op.stdout

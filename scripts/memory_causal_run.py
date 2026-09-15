@@ -31,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from braintree import memory_causal as mc  # noqa: E402
+from tangle import memory_causal as mc  # noqa: E402
 
 DEFAULT_RUN_DIR = Path(tempfile.gettempdir()) / "memory-causal-v1"
 _REASONING = re.compile(r'"reasoning":(\d+)')
@@ -66,7 +66,7 @@ def generate(run_dir: Path, split: str = "development") -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "prompts").mkdir(exist_ok=True)
     (run_dir / "plan.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
-    from braintree import memory_corpus
+    from tangle import memory_corpus
 
     corpus = memory_corpus.load_corpus(Path("."))
     cases = {case.case_id: case for envelope in corpus for case in envelope.cases}

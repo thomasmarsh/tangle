@@ -20,8 +20,8 @@ from typing import Any
 
 import pytest
 
-from braintree import memory_corpus
-from braintree import memory_scenario as schema
+from tangle import memory_corpus
+from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CORPUS_DIR = _ROOT / "benchmark" / "memory-corpus"
@@ -86,18 +86,18 @@ _EXPECTED_LOW_OVERLAP = frozenset(
     }
 )
 
-# Every Braintree surface that states the lexical-reference / optional-advisory
+# Every Tangle surface that states the lexical-reference / optional-advisory
 # conclusion of DEC-006 and THO-012. The two semantic cases must not observe any
 # of them.
 _SEMANTIC_DECIDING_SURFACES = frozenset(
     {
-        "src/braintree/index.py",
-        "src/braintree/semantic.py",
-        "src/braintree/clustering.py",
-        "src/braintree/provider.py",
-        "src/braintree/reduction.py",
-        "src/braintree/quality_benchmark.py",
-        "src/braintree/embedding_benchmark.py",
+        "src/tangle/index.py",
+        "src/tangle/semantic.py",
+        "src/tangle/clustering.py",
+        "src/tangle/provider.py",
+        "src/tangle/reduction.py",
+        "src/tangle/quality_benchmark.py",
+        "src/tangle/embedding_benchmark.py",
         "benchmark/embedding-corpus.json",
         "benchmark/embedding-documents.jsonl",
     }
@@ -109,26 +109,26 @@ _SEMANTIC_DECIDING_SURFACES = frozenset(
 _FORBIDDEN_OBSERVABLE = {
     "resumption-after-decision-shared-install-001": {
         "scripts/install.sh",
-        ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md",
-        ".braintree/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md",
-        "src/braintree/revision.py",
+        ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md",
+        ".tangle/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md",
+        "src/tangle/revision.py",
     },
     "resumption-after-decision-semantic-optional-001": set(_SEMANTIC_DECIDING_SURFACES),
     "resumption-partial-implementation-vault-notice-001": {
         "README.md",
-        "src/braintree/vault.py",
+        "src/tangle/vault.py",
     },
     "implicit-retrieval-failed-experiment-embedding-default-001": set(_SEMANTIC_DECIDING_SURFACES),
     "implicit-retrieval-after-decision-seam-reuse-001": {
         "references/coordination.md",
         "SKILL.md",
-        ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md",
+        ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md",
     },
     "implicit-retrieval-blocker-lease-handoff-001": {
         "references/coordination.md",
-        "src/braintree/sidecar.py",
-        "src/braintree/cli.py",
-        "src/braintree/main.py",
+        "src/tangle/sidecar.py",
+        "src/tangle/cli.py",
+        "src/tangle/main.py",
     },
 }
 

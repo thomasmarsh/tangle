@@ -1,4 +1,4 @@
-# Benchmark: Markdown-canonical hybrid Braintree
+# Benchmark: Markdown-canonical hybrid Tangle
 
 ## Benchmark objective
 
@@ -6,7 +6,7 @@ Actual model-token consumption is the optimization metric. Fixture bytes,
 filesystem reads, elapsed time, and synthetic `work_units` are not token
 proxies. A token result is valid only when the controlled task is correct.
 
-`braintree benchmark token` reads only `token_usage_record` usage maps from a
+`tangle benchmark token` reads only `token_usage_record` usage maps from a
 fresh Codex session JSONL and reports `input_tokens`, `cached_input_tokens`,
 `uncached_input_tokens`, `output_tokens`, `reasoning_output_tokens`, and
 `total_tokens`. It derives uncached input as input minus cached input and
@@ -34,7 +34,7 @@ and an absent baseline rather than silently substituting a filesystem metric.
 ## Decision
 
 Adopt V4: atomic Markdown nodes in authoritative status directories, a small
-routing-only `.braintree/index-map.md`, local semantic `context_rev` pins only on context-bearing
+routing-only `.tangle/index-map.md`, local semantic `context_rev` pins only on context-bearing
 dependencies, and an optional external SQLite sidecar. Markdown is the sole durable authority;
 SQLite rebuilds derived indexes, backlinks, stale-pin checks, and FTS, and is authoritative only
 for same-host claims, leases, and atomic ID allocation. Do not use a copied global node ledger.
@@ -174,11 +174,11 @@ not free in agent interaction cost.
 ## Recommended operating contract
 
 ```text
-.braintree/index-map.md           # short routes and tested commands only
-.braintree/proposed/ID-slug.md    # status is the directory
-.braintree/active/ID-slug.md
-.braintree/blocked/ID-slug.md
-.braintree/resolved/ID-slug.md
+.tangle/index-map.md           # short routes and tested commands only
+.tangle/proposed/ID-slug.md    # status is the directory
+.tangle/active/ID-slug.md
+.tangle/blocked/ID-slug.md
+.tangle/resolved/ID-slug.md
 ```
 
 Each node has required `context_rev`, `updated`, and `summary`; task `priority` is
@@ -228,22 +228,22 @@ explicitly disposed; child completion alone is not a roll-up.
 
 ```sh
 # Known item / unfinished / blocked / actionable P0
-find .braintree -type f -name 'TAS-101-*'
-find .braintree -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'
-find .braintree -type f -path '*/blocked/TAS-*.md'
-find .braintree -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +
+find .tangle -type f -name 'TAS-101-*'
+find .tangle -type f -name 'TAS-*.md' | rg '/(active|proposed|blocked)/'
+find .tangle -type f -path '*/blocked/TAS-*.md'
+find .tangle -type f -path '*/active/TAS-*.md' -exec rg -l '^priority: P0$' {} +
 
 # Changed definition: read DEF header for its current context_rev, then use that old pin
-rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev 7' .braintree
+rg -n -F 'Depends on [[DEF-auth-protocol]] at context_rev 7' .tangle
 
 # Lifecycle, explicit inbound references, and recent five
-rg -l '^disposition: superseded$' .braintree
-rg -l -F '[[TAS-101]]' .braintree
-rg -H '^updated:' .braintree | awk -F ': ' '{print $2 " " $1}' | sort -r | head -5
+rg -l '^disposition: superseded$' .tangle
+rg -l -F '[[TAS-101]]' .tangle
+rg -H '^updated:' .tangle | awk -F ': ' '{print $2 " " $1}' | sort -r | head -5
 
 # Root hubs and derived primary memberships
-rg -n '^\s*- Indexes \[\[IDX-' .braintree/index-map.md
-rg -n '^(Parent|Area) \[\[' .braintree
+rg -n '^\s*- Indexes \[\[IDX-' .tangle/index-map.md
+rg -n '^(Parent|Area) \[\[' .tangle
 ```
 
 The dependency search returns explicit direct edges only. Indirect impact
@@ -270,8 +270,8 @@ requires the active coordinator's execution frontier, current rather than
 superseded decision, every revision-stale dependent, and an actionable orphan.
 The prompt does not contain the answer IDs. For graph runs, the generator copies
 the repository's exact `SKILL.md` to
-`.agents/skills/braintree/SKILL.md`, records its SHA-256, and
-explicitly requires `$braintree`; zero-token generation checks
+`.agents/skills/tangle/SKILL.md`, records its SHA-256, and
+explicitly requires `$tangle`; zero-token generation checks
 that copy and runs the copied graph checker while allowing only the named
 intentional orphan and expected stale pins. The graph fixture therefore measures
 the installed project skill rather than merely Markdown-shaped files.
@@ -287,8 +287,8 @@ not a universal token ranking.
 
 Every graph fixture installs the same distributable files as the project Codex
 installer: `SKILL.md`, `agents/openai.yaml`, `pyproject.toml`, `uv.lock`,
-`.python-version`, `README.md`, and the `src/braintree/` package under
-`.agents/skills/braintree/`; the zero-call check byte-compares
+`.python-version`, `README.md`, and the `src/tangle/` package under
+`.agents/skills/tangle/`; the zero-call check byte-compares
 the copied instructions and metadata with this repository. Every live invocation uses `codex exec --json --ignore-user-config --ignore-rules
 -C GENERATED_FIXTURE` with a fresh session and read-only sandbox. Authentication
 is preserved by the CLI while unrelated user configuration/rules are excluded;
@@ -321,7 +321,7 @@ exact `next` action, while resolved history, blocked work, proposed work, and
 unselected active work are distractors. It is used only to compare one skill
 route variant at a time; baseline and candidate must use its same fixture hash,
 prompt, model, effort, CLI version, and recording configuration. Generate it
-without live calls with `braintree benchmark token --check-fixture --case cold-resume`.
+without live calls with `tangle benchmark token --check-fixture --case cold-resume`.
 
 The final two-call cold-resume route screen was rejected, not adopted. Both
 fresh sessions returned the exact gate answer, but the recorder rejected their
@@ -346,8 +346,8 @@ mode cannot mask an accidental stale pin. `make benchmark` makes zero model call
 sanitized telemetry schema without session content with:
 
 ```sh
-braintree benchmark token --check-fixture
-braintree benchmark token --inspect-session ~/.codex/sessions/...jsonl
+tangle benchmark token --check-fixture
+tangle benchmark token --inspect-session ~/.codex/sessions/...jsonl
 ```
 
 ## Historical implementation-cost accounting
@@ -359,7 +359,7 @@ task-path match:
 
 ```sh
 rg -l -F '/root/token_benchmark_realism' ~/.codex/sessions --glob '*.jsonl'
-braintree benchmark token --session ~/.codex/sessions/...jsonl --task-path /root/token_benchmark_realism
+tangle benchmark token --session ~/.codex/sessions/...jsonl --task-path /root/token_benchmark_realism
 ```
 
 The importer reads only safe session metadata (`agent_path`, CLI version,
@@ -378,20 +378,20 @@ Record a reviewable graph baseline (three model sessions) only by explicit
 opt-in; record the matched control separately (three more sessions):
 
 ```sh
-braintree benchmark token --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 3 --output benchmark/token-baseline.json
-braintree benchmark token --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 3 --output benchmark/token-plan-control.json
+tangle benchmark token --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 3 --output benchmark/token-baseline.json
+tangle benchmark token --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 3 --output benchmark/token-plan-control.json
 ```
 
 For a minimal initial baseline, use two fresh sessions per representation:
 
 ```sh
-braintree benchmark token --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 2 --output benchmark/token-graph-small-2.json
-braintree benchmark token --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 2 --output benchmark/token-plan-small-2.json
+tangle benchmark token --record --model MODEL --reasoning-effort low --representation graph --scale small --repetitions 2 --output benchmark/token-graph-small-2.json
+tangle benchmark token --record --model MODEL --reasoning-effort low --representation plan --scale small --repetitions 2 --output benchmark/token-plan-small-2.json
 ```
 
 ## Secondary filesystem diagnostic
 
-`braintree benchmark behavioral` builds disposable 100- and 1,000-node graph
+`tangle benchmark behavioral` builds disposable 100- and 1,000-node graph
 fixtures using only the Python standard library. Each contains an index route to a
 root hub, a current definition, a superseded and current routing decision,
 pinned task dependencies, an active high-priority cold-resumption record, and
@@ -414,7 +414,7 @@ the tracked baseline before using `--verify` for that scale.
 ## Direct-answer verb gate
 
 The direct-answer verbs answer graph questions in one call; a cheaper route must
-not win by answering them wrongly. `braintree benchmark verbs` generates one
+not win by answering them wrongly. `tangle benchmark verbs` generates one
 small valid vault whose only deliberate defect is a single stale pin, runs each
 new verb against it, and compares the exact stdout and exit status with the
 checked-in baseline `benchmark/verb-baseline.json`. The five cases are
@@ -423,9 +423,9 @@ checked-in baseline `benchmark/verb-baseline.json`. The five cases are
 so an omitted or recomputed row fails the comparison.
 
 The gate makes no model calls and no network calls: it runs the installed
-`braintree` verbs locally. Print the current baseline with
-`braintree benchmark verbs` and verify it with `make verb-benchmark` or
-`braintree benchmark verbs --verify`; the fixture's intentional stale pin means
+`tangle` verbs locally. Print the current baseline with
+`tangle benchmark verbs` and verify it with `make verb-benchmark` or
+`tangle benchmark verbs --verify`; the fixture's intentional stale pin means
 `check --format toon` is expected to report the one mismatch and exit `1`.
 
 ## Verification
@@ -450,7 +450,7 @@ change handoff.
 
 ## Status-storage comparison
 
-`braintree benchmark storage` creates four disposable 100-node Git fixtures:
+`tangle benchmark storage` creates four disposable 100-node Git fixtures:
 the legacy status directories, stationary prefix-sharded files with an
 authoritative `status` field, stationary files with symlink status views, and
 stationary files with one copied status index. `make storage-comparison` checks
@@ -493,7 +493,7 @@ updates conflict in the fixture and whose omitted entry silently hides a node.
 
 Rollback evidence: deleting derived state re-derives the active set from
 canonical Markdown for both the stationary and directory layouts
-(`sidecar_recover`), and `braintree stationarize` retires legacy nodes one-way
+(`sidecar_recover`), and `tangle stationarize` retires legacy nodes one-way
 with a collision check, a byte-for-byte rollback on a failed apply, preserved
 basenames and wikilinks, and an intermediate path for a case-only rename. The
 compatibility reader keeps the committed identity and basename unchanged, so a
@@ -508,7 +508,7 @@ automatic global ranking, and linear scans for cross-cutting questions. These
 are preferable here to a mutable global cache only while the scan costs and
 agent interaction remain acceptable for the real repository.
 
-An optional, read-only `braintree check` command is distributed with the skill
+An optional, read-only `tangle check` command is distributed with the skill
 for grooming and CI. It uses only the Python standard library and retains no state;
 it checks integrity but is not part of normal graph reads or mutations.
 

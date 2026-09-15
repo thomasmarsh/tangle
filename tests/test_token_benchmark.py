@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from braintree import token_benchmark
+from tangle import token_benchmark
 
 # Benchmark verification replays recorded sessions and fixtures, so it is opt-in.
 pytestmark = pytest.mark.benchmark
@@ -65,7 +65,7 @@ def test_check_fixture_reports_variants(capsys: pytest.CaptureFixture[str]) -> N
 def test_composite_fixture_has_expected_file_count(capsys: pytest.CaptureFixture[str]) -> None:
     assert token_benchmark.main(["--check-fixture"]) == 0
     out = capsys.readouterr().out
-    # SKILL.md, agents/openai.yaml, four metadata files, every src/braintree
+    # SKILL.md, agents/openai.yaml, four metadata files, every src/tangle
     # module (including help.py, vault.py, memory_pilot.py, and
     # memory_authority.py), three references, plus the generated graph.
     assert '"files":87' in out
@@ -236,8 +236,8 @@ def test_emit_record_reports_round_trip_counts(capsys: pytest.CaptureFixture[str
 def test_record_with_fake_codex_mutates_only_the_node(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("BT_TOKEN_BENCHMARK_CODEX", str(_FAKE_CODEX))
-    monkeypatch.setenv("BT_TOKEN_BENCHMARK_SESSIONS_DIR", str(tmp_path / "sessions"))
+    monkeypatch.setenv("TANGLE_TOKEN_BENCHMARK_CODEX", str(_FAKE_CODEX))
+    monkeypatch.setenv("TANGLE_TOKEN_BENCHMARK_SESSIONS_DIR", str(tmp_path / "sessions"))
     assert (
         token_benchmark.main(
             [
@@ -262,9 +262,9 @@ def test_record_with_fake_codex_mutates_only_the_node(
 def test_record_rejects_unrelated_fixture_edit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("BT_TOKEN_BENCHMARK_CODEX", str(_FAKE_CODEX))
-    monkeypatch.setenv("BT_TOKEN_BENCHMARK_SESSIONS_DIR", str(tmp_path / "sessions"))
-    monkeypatch.setenv("BT_FAKE_MUTATION_EXTRA_EDIT", "1")
+    monkeypatch.setenv("TANGLE_TOKEN_BENCHMARK_CODEX", str(_FAKE_CODEX))
+    monkeypatch.setenv("TANGLE_TOKEN_BENCHMARK_SESSIONS_DIR", str(tmp_path / "sessions"))
+    monkeypatch.setenv("TANGLE_FAKE_MUTATION_EXTRA_EDIT", "1")
     assert (
         token_benchmark.main(
             [

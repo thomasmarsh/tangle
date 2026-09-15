@@ -29,7 +29,7 @@
             "statement": "A transient failure with no measured cause should not silently become a deterministic conclusion; a single unreproduced failure has no decision-relevant support.",
             "evidence": [
               "research/agent-memory-theory-evaluation.md",
-              "src/braintree/memory_contract.py"
+              "src/tangle/memory_contract.py"
             ]
           },
           {
@@ -38,7 +38,7 @@
             "kind": "result",
             "statement": "The default test suite keeps benchmark verification opt-in.",
             "evidence": [
-              ".braintree/resolved/TAS-110-fast-default-test-suite.md"
+              ".tangle/resolved/TAS-110-fast-default-test-suite.md"
             ]
           }
         ]
@@ -46,7 +46,7 @@
       "query": {
         "task": "A retained note recorded one unreproduced timeout and reads as a warning that a helper is unreliable. Decide whether to change the action because of it.",
         "observable_paths": [
-          "src/braintree/behavioral_benchmark.py"
+          "src/tangle/behavioral_benchmark.py"
         ],
         "allowed_actions": [
           "act-on-current-evidence",
@@ -87,7 +87,7 @@
             "statement": "Parallel creation in separate worktrees uses coordinator-preallocated disjoint numeric ranges; the shared atomic reservation primitive is not used across worktrees because each has its own sidecar.",
             "evidence": [
               "references/coordination.md",
-              ".braintree/resolved/TAS-023-parallel-id-allocation.md"
+              ".tangle/resolved/TAS-023-parallel-id-allocation.md"
             ]
           },
           {
@@ -96,7 +96,7 @@
             "kind": "result",
             "statement": "A capture path that derived the next number from Markdown let two parallel callers write the same numeric id, so every capture path reserves through one primitive on a shared host.",
             "evidence": [
-              ".braintree/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md"
+              ".tangle/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md"
             ]
           },
           {
@@ -105,7 +105,7 @@
             "kind": "observation",
             "statement": "A legacy vault migration prints one notice naming both paths on stderr.",
             "evidence": [
-              ".braintree/resolved/TAS-119-announce-vault-migration.md"
+              ".tangle/resolved/TAS-119-announce-vault-migration.md"
             ]
           },
           {
@@ -123,7 +123,7 @@
             "kind": "observation",
             "statement": "The default test suite excludes benchmark verification behind a marker.",
             "evidence": [
-              ".braintree/resolved/TAS-110-fast-default-test-suite.md"
+              ".tangle/resolved/TAS-110-fast-default-test-suite.md"
             ]
           }
         ]
@@ -131,7 +131,7 @@
       "query": {
         "task": "Two workers in separate worktrees are about to create new nodes. Neither can see the other's files, and a local `find` shows no matching id. The project's capture path reserves every new numeric id through one atomic primitive on the host. Decide how each worker should choose its new id.",
         "observable_paths": [
-          "src/braintree/toon.py"
+          "src/tangle/toon.py"
         ],
         "allowed_actions": [
           "use-the-coordinator-preallocated-range",
@@ -172,7 +172,7 @@
             "kind": "decision",
             "statement": "Supersede only when the outcome moves to a different node: the obsolete node is resolved, marked superseded, and records the canonical `Superseded by` replacement link.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -191,7 +191,7 @@
             "kind": "result",
             "statement": "A constructed retained memory holds an earlier decision marked disposed with a forward replacement link, plus unrelated later decisions.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -200,7 +200,7 @@
             "kind": "observation",
             "statement": "A different outcome was reversed in place and bumped its own revision instead of moving nodes.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           }
         ]
@@ -208,7 +208,7 @@
       "query": {
         "task": "Memory holds an earlier decision marked disposed with a replacement link, plus several unrelated later decisions. Decide which decision the installer should follow.",
         "observable_paths": [
-          "src/braintree/revision.py"
+          "src/tangle/revision.py"
         ],
         "allowed_actions": [
           "follow-the-current-replacement-decision",
@@ -247,9 +247,9 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "decision",
-            "statement": "Install the Braintree program once per root at a stable location; each agent install copies only the skill prose it discovers and does not carry or build a second program.",
+            "statement": "Install the Tangle program once per root at a stable location; each agent install copies only the skill prose it discovers and does not carry or build a second program.",
             "evidence": [
-              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+              ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
             ]
           },
           {
@@ -258,7 +258,7 @@
             "kind": "observation",
             "statement": "A constructed retained paraphrase says each agent should install its own full program copy.",
             "evidence": [
-              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+              ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
             ]
           },
           {
@@ -267,7 +267,7 @@
             "kind": "observation",
             "statement": "A second constructed paraphrase says one program should be shared across all roots.",
             "evidence": [
-              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+              ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
             ]
           },
           {
@@ -276,7 +276,7 @@
             "kind": "observation",
             "statement": "The launcher target is per root and stable, so reinstalling any agent does not repoint it.",
             "evidence": [
-              ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+              ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
             ]
           }
         ]
@@ -284,7 +284,7 @@
       "query": {
         "task": "Three retained notes describe how the installer should lay out the program and skill copies, and they disagree. Decide what the installer should do.",
         "observable_paths": [
-          "src/braintree/help.py"
+          "src/tangle/help.py"
         ],
         "allowed_actions": [
           "install-one-shared-program-per-root",

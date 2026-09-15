@@ -1,9 +1,9 @@
 # Confirmatory held-out preregistration (protocol `memory-causal-confirmatory-v1`)
 
-This document freezes the confirmatory stage of the Braintree
+This document freezes the confirmatory stage of the Tangle
 memory-evaluation program. It is the prose authority for the confirmatory
 run; the machine-readable half is
-[`src/braintree/memory_causal.py`](../src/braintree/memory_causal.py) with
+[`src/tangle/memory_causal.py`](../src/tangle/memory_causal.py) with
 `split="held-out"`, and
 [`tests/test_memory_confirmatory.py`](../tests/test_memory_confirmatory.py)
 pins this document to it. The claim, observable-information boundary, causal
@@ -25,7 +25,7 @@ never inspected for tuning. The confirmatory plan's protocol is
 
 The confirmatory stage tests the contract's single causal claim, not a menu of
 new mechanisms. The mechanisms admitted to the claim are exactly those that
-survived the program's per-mechanism decisions, and the `braintree` arm
+survived the program's per-mechanism decisions, and the `tangle` arm
 represents them:
 
 - **Graph lifecycle and governance.** Typed nodes, authoritative status
@@ -70,7 +70,7 @@ selector.
 ## 3. Arms, models, repetitions, and budget
 
 The run uses the contract's five canonical arms unchanged: `repository-only`
-(floor), `raw-history`, `flat-memory`, `braintree` (system under test), and
+(floor), `raw-history`, `flat-memory`, `tangle` (system under test), and
 `oracle` (ceiling). Every arm shares one task prompt, one set of embedded
 observable-file bytes, no tools, one model list, one reasoning effort, one
 statement memory budget, one repetition count, and the `memory_scenario.grade`
@@ -96,9 +96,9 @@ a cost summary only after it passes its case grader and its telemetry
 validates, so an incorrect cheap arm never wins. It reports:
 
 - per-arm and per-`(case, model)` graded outcomes;
-- paired treatment-minus-baseline effects for `braintree` against
+- paired treatment-minus-baseline effects for `tangle` against
   `repository-only` and `raw-history` (the two decision contrasts), plus
-  `braintree` against `flat-memory` and `oracle` against `braintree` for
+  `tangle` against `flat-memory` and `oracle` against `tangle` for
   diagnosis;
 - a 95% percentile bootstrap interval over the paired effects, with one mean
   effect per `(case, model)` stratum and at least 10,000 fixed-seed resamples;
@@ -116,8 +116,8 @@ does not make the run incomplete.
 
 A complete confirmatory run is:
 
-- **confirmed** when both decision contrasts (`braintree` minus
-  `repository-only` and `braintree` minus `raw-history`) have a paired 95%
+- **confirmed** when both decision contrasts (`tangle` minus
+  `repository-only` and `tangle` minus `raw-history`) have a paired 95%
   interval whose lower bound is strictly positive, total interaction cost does
   not regress beyond the preregistered budget, and no integrity or safety
   endpoint (orphan, stale-pin, invalidation, poisoning, authority escalation)
@@ -161,8 +161,8 @@ records that grant and the exact digest-bound pins before launch.
 The offline reproduction is:
 
 ```sh
-uv run braintree benchmark causal plan --split held-out
-uv run braintree benchmark causal dry-run --split held-out
+uv run tangle benchmark causal plan --split held-out
+uv run tangle benchmark causal dry-run --split held-out
 uv run python scripts/memory_causal_run.py generate /tmp/memory-causal-confirmatory \
   --split held-out
 # launch batch1.js through batch18.js with the subagent tool, one batch per call

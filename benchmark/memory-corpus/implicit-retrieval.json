@@ -19,7 +19,7 @@
             "kind": "result",
             "statement": "The off-the-shelf similarity layer lost near-duplicate retrieval to the lexical baseline, MRR 0.4420 against 0.5856, in the frozen quality gate.",
             "evidence": [
-              ".braintree/resolved/THO-012-embedding-clustering-retrieval-theory.md"
+              ".tangle/resolved/THO-012-embedding-clustering-retrieval-theory.md"
             ]
           },
           {
@@ -28,7 +28,7 @@
             "kind": "decision",
             "statement": "The layer was kept only as an optional advisory paraphrase and digest layer; the lexical metric remains the correctness reference.",
             "evidence": [
-              ".braintree/resolved/DEC-006-semantic-layer-capability-boundary.md"
+              ".tangle/resolved/DEC-006-semantic-layer-capability-boundary.md"
             ]
           },
           {
@@ -45,7 +45,7 @@
       "query": {
         "task": "Could we let the 'sounds similar' feature become the main way we spot repeated work, so nobody has to share a keyword? Decide the next action.",
         "observable_paths": [
-          "tests/test_bt_index.py"
+          "tests/test_tangle_index.py"
         ],
         "allowed_actions": [
           "keep-lexical-search-as-the-duplicate-reference",
@@ -97,7 +97,7 @@
             "statement": "An internal, non-behavioral reuse of a resolved node's seam is authored by the assigned worker without escalation when it changes no artifact byte, public API, or behavior, and the worker records the widened item and its owner in its own result.",
             "evidence": [
               "references/coordination.md",
-              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+              ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md"
             ]
           },
           {
@@ -106,7 +106,7 @@
             "kind": "observation",
             "statement": "A non-behavioral internal reuse changed no consumer assumption and did not bump its owner's revision.",
             "evidence": [
-              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+              ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md"
             ]
           }
         ]
@@ -114,7 +114,7 @@
       "query": {
         "task": "A delegated slice needs a private helper that an already-landed sibling owns. The only way to reach it in scope is to widen its visibility inside that sibling's module; the handoff's write set excludes that module. Decide the next action.",
         "observable_paths": [
-          "src/braintree/revision.py"
+          "src/tangle/revision.py"
         ],
         "allowed_actions": [
           "widen-the-helper-and-record-the-reuse",
@@ -155,7 +155,7 @@
             "kind": "feedback",
             "statement": "A lapsed lease returned the same `no-op` as a node never held, so a second agent could claim it.",
             "evidence": [
-              ".braintree/resolved/TAS-100-lease-lifecycle-visibility.md"
+              ".tangle/resolved/TAS-100-lease-lifecycle-visibility.md"
             ]
           },
           {
@@ -165,7 +165,7 @@
             "statement": "The default lease is 900 seconds; a claim repeating the same agent and base hash renews the lease; release distinguishes `expired` from `no-op`.",
             "evidence": [
               "references/coordination.md",
-              "src/braintree/sidecar.py"
+              "src/tangle/sidecar.py"
             ]
           },
           {
@@ -174,7 +174,7 @@
             "kind": "observation",
             "statement": "`release` reports `no-op` for a different agent's lapsed claim.",
             "evidence": [
-              ".braintree/resolved/TAS-100-lease-lifecycle-visibility.md"
+              ".tangle/resolved/TAS-100-lease-lifecycle-visibility.md"
             ]
           }
         ]
@@ -224,7 +224,7 @@
             "kind": "result",
             "statement": "A compacted orientation loop was measured at 157806 total tokens against 118291 for the baseline, 39515 higher.",
             "evidence": [
-              ".braintree/resolved/THO-004-orientation-compaction-screen.md"
+              ".tangle/resolved/THO-004-orientation-compaction-screen.md"
             ]
           },
           {
@@ -233,7 +233,7 @@
             "kind": "decision",
             "statement": "The compaction was rejected; do not retry the unchanged theory or spend another orientation candidate session.",
             "evidence": [
-              ".braintree/resolved/THO-004-orientation-compaction-screen.md"
+              ".tangle/resolved/THO-004-orientation-compaction-screen.md"
             ]
           },
           {
@@ -242,7 +242,7 @@
             "kind": "observation",
             "statement": "The matched baseline and the candidate were both correctly recorded, so there was no recording-pipeline failure to fix.",
             "evidence": [
-              ".braintree/resolved/THO-004-orientation-compaction-screen.md"
+              ".tangle/resolved/THO-004-orientation-compaction-screen.md"
             ]
           }
         ]
@@ -291,7 +291,7 @@
             "kind": "feedback",
             "statement": "A slice resolved its node under a handoff whose write set excluded the coordinating parent, so the parent's `next` still named the resolved child.",
             "evidence": [
-              ".braintree/resolved/TAS-115-parent-next-advance-ownership.md"
+              ".tangle/resolved/TAS-115-parent-next-advance-ownership.md"
             ]
           },
           {
@@ -301,7 +301,7 @@
             "statement": "A handoff whose write set excludes the parent must name the parent or its `next`; otherwise the coordinator owns the advance and the worker reports the stale route as its handoff action.",
             "evidence": [
               "SKILL.md",
-              "src/braintree/graph_check.py"
+              "src/tangle/graph_check.py"
             ]
           },
           {
@@ -310,7 +310,7 @@
             "kind": "observation",
             "statement": "The checker stays silent for an action-sentence `next` and for a blocked node.",
             "evidence": [
-              ".braintree/resolved/TAS-115-parent-next-advance-ownership.md"
+              ".tangle/resolved/TAS-115-parent-next-advance-ownership.md"
             ]
           }
         ]
@@ -318,7 +318,7 @@
       "query": {
         "task": "A child task is finished, but the parent plan still points at it and the worker was told not to touch the parent. Decide what the worker should do.",
         "observable_paths": [
-          "src/braintree/graph_check.py"
+          "src/tangle/graph_check.py"
         ],
         "allowed_actions": [
           "report-the-stale-route-as-the-handoff-action",
@@ -360,7 +360,7 @@
             "kind": "feedback",
             "statement": "A worker handed off a crate-local write set, but the change also required an exhaustive match in the CLI app and updates to goldens and baselines outside every crate directory.",
             "evidence": [
-              ".braintree/resolved/TAS-113-write-set-change-closure.md"
+              ".tangle/resolved/TAS-113-write-set-change-closure.md"
             ]
           },
           {
@@ -369,7 +369,7 @@
             "kind": "decision",
             "statement": "The write set is the compile-and-golden closure of the approved change, not a crate directory.",
             "evidence": [
-              ".braintree/resolved/TAS-113-write-set-change-closure.md"
+              ".tangle/resolved/TAS-113-write-set-change-closure.md"
             ]
           },
           {
@@ -387,7 +387,7 @@
             "kind": "observation",
             "statement": "A worker may author the minimal primitive its own gate needs inside its write set.",
             "evidence": [
-              ".braintree/resolved/TAS-097-slice-primitive-scope.md"
+              ".tangle/resolved/TAS-097-slice-primitive-scope.md"
             ]
           }
         ]
@@ -395,8 +395,8 @@
       "query": {
         "task": "An assignment names one file, but finishing the change also needs a literal update in a neighboring module and a committed expected-output file. Decide the next action.",
         "observable_paths": [
-          "src/braintree/cli.py",
-          "src/braintree/main.py"
+          "src/tangle/cli.py",
+          "src/tangle/main.py"
         ],
         "allowed_actions": [
           "include-and-report-in-scope-closure-members",
@@ -437,7 +437,7 @@
             "kind": "observation",
             "statement": "The project ships one semantic version declared once in `pyproject.toml`; no artifact freezes or duplicates the number.",
             "evidence": [
-              ".braintree/resolved/DEC-003-semantic-versioning.md",
+              ".tangle/resolved/DEC-003-semantic-versioning.md",
               "pyproject.toml"
             ]
           },
@@ -447,7 +447,7 @@
             "kind": "observation",
             "statement": "Every user-visible change bumps that one declared version.",
             "evidence": [
-              ".braintree/resolved/DEC-003-semantic-versioning.md"
+              ".tangle/resolved/DEC-003-semantic-versioning.md"
             ]
           }
         ]
@@ -455,7 +455,7 @@
       "query": {
         "task": "A contributor asks where the number we bump for every user-visible change lives, and whether it must be updated anywhere else. Decide the next action.",
         "observable_paths": [
-          ".braintree/resolved/DEC-003-semantic-versioning.md",
+          ".tangle/resolved/DEC-003-semantic-versioning.md",
           "pyproject.toml"
         ],
         "allowed_actions": [
@@ -506,7 +506,7 @@
             "kind": "observation",
             "statement": "The token benchmark records cumulative per-turn telemetry so token and round-trip deltas can be compared later.",
             "evidence": [
-              "src/braintree/token_benchmark.py"
+              "src/tangle/token_benchmark.py"
             ]
           }
         ]

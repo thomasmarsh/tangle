@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from braintree import memory_contract, memory_corpus, memory_scenario
+from tangle import memory_contract, memory_corpus, memory_scenario
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DOCUMENT = _ROOT / "research" / "agent-memory-pilot-preregistration.md"

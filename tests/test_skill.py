@@ -1,4 +1,4 @@
-"""Contract tests for the Braintree skill surfaces and the live execution graph.
+"""Contract tests for the Tangle skill surfaces and the live execution graph.
 
 The skill ships one concise core (``SKILL.md``) plus canonical topical
 references under ``references/``. These tests lock the literal grammar the graph
@@ -18,18 +18,18 @@ from pathlib import Path
 
 import pytest
 
-from braintree import graph_check, main, store
+from tangle import graph_check, main, store
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SKILL = _ROOT / "SKILL.md"
 _AGENTS = _ROOT / "AGENTS.md"
 _README = _ROOT / "README.md"
 _REFERENCES = _ROOT / "references"
-_NODES = _ROOT / ".braintree"
+_NODES = _ROOT / ".tangle"
 _INDEX = _NODES / "index-map.md"
 
 # The conditional workflows the core routes to. Each name is both a
-# ``braintree help`` topic and a canonical installed Markdown file.
+# ``tangle help`` topic and a canonical installed Markdown file.
 _TOPICS = ("change-intake", "coordination", "dependencies", "authoring")
 
 # The compact baseline this refactor must approach; the pre-split file measured
@@ -40,9 +40,9 @@ _CORE_SIZE_BOUND = 16_000
 # conditional workflow needs, and read the same Markdown through the command.
 _CORE_ROUTING = (
     "Read the topical reference named below before the first conditional workflow",
-    "`braintree help TOPIC` prints the same installed Markdown",
+    "`tangle help TOPIC` prints the same installed Markdown",
     "Load only the reference the current operation requires",
-    "braintree <verb> --help",
+    "tangle <verb> --help",
 )
 
 # The invariants an agent must have before acting, kept in the core rather than
@@ -51,12 +51,12 @@ _CORE_ROUTING = (
 _CORE_INVARIANTS = (
     "Markdown is the durable, human-visible authority",
     "Obsidian-compatible",
-    "A canonical node is one Markdown file under `.braintree/canonical/<suffix>/`",
+    "A canonical node is one Markdown file under `.tangle/canonical/<suffix>/`",
     "its frontmatter `status` field is authoritative",
-    "Legacy uppercase numeric ids and `.braintree/proposed/`",
+    "Legacy uppercase numeric ids and `.tangle/proposed/`",
     "status-directory nodes stay readable during a versioned compatibility window",
     "Admit a node only when its conclusion or executable state is likely to change",
-    "Braintree is durable execution memory, not a worklog",
+    "Tangle is durable execution memory, not a worklog",
     "work planned to be committed and finished within one session needs no node",
     "Independent resumability is necessary but not sufficient",
     "A fresh worker may continue the same graph node; agents and nodes are not one-to-one",
@@ -233,11 +233,11 @@ _PARENT_NEXT_OWNERSHIP_RULE = (
 # `--allow-pending-advance PARENT` names the one pending advance, and the plain
 # gate keeps failing for a genuine stale route until the coordinator advances.
 _PENDING_ADVANCE_RULE = (
-    "check with `braintree check --allow-pending-advance PARENT`",
+    "check with `tangle check --allow-pending-advance PARENT`",
     "which sanctions that declared pending advance",
     "That window is the multi-writer transient, not a failed slice",
     "a genuine stale route",
-    "the plain `braintree check` flags as `next-resolved-node`",
+    "the plain `tangle check` flags as `next-resolved-node`",
     "the coordinator clears it at integration",
 )
 
@@ -279,8 +279,8 @@ _HANDOFF_ARTIFACT_NAMING_RULE = (
 # merely reflows.
 _HANDOFF_ARTIFACT_NAMING_PROBE = (
     "Before editing, a worker records the integration base and its assigned node "
-    "path and write set, hashes its starting Markdown node with `braintree hash`, "
-    "and claims it with `braintree claim`. `braintree hash` takes the node's bare "
+    "path and write set, hashes its starting Markdown node with `tangle hash`, "
+    "and claims it with `tangle claim`. `tangle hash` takes the node's bare "
     "ID or full node name, never the path the handoff supplies, and its "
     "`content_hash` field is the bare digest passed as `--base-hash`; `claim` and "
     "`release` treat NODE as the same opaque claim key. The base hash names the "
@@ -304,7 +304,7 @@ _PENDING_ADVANCE_PROBE_STALE_ROUTE_PARAGRAPH = (
     "coordinator owns the advance and the worker reports the stale route as its "
     "handoff action instead of editing outside its set. A stale route is an "
     "unfinished coordinating node whose `next` is a single direct-child link "
-    "naming an already-resolved child; `braintree check` reports it as "
+    "naming an already-resolved child; `tangle check` reports it as "
     "`next-resolved-node`."
 )
 
@@ -361,8 +361,8 @@ _SINGLE_SESSION_FEEDBACK_OWNERSHIP_RULE = (
 # owner, so the guard must reject it. The probe fails when the guard stops
 # detecting the ownership rule rather than when the reference merely reflows.
 _SINGLE_SESSION_FEEDBACK_OWNERSHIP_INTRO_ONLY = (
-    "A consuming project records Braintree friction as an `FBK` node. The `FBK` "
-    "type is the one feedback marker, so `find .braintree -name 'FBK-*.md'` "
+    "A consuming project records Tangle friction as an `FBK` node. The `FBK` "
+    "type is the one feedback marker, so `find .tangle -name 'FBK-*.md'` "
     "discovers feedback from Markdown alone, with no sidecar, network, or write "
     "to the scanned vault."
 )
@@ -598,7 +598,7 @@ _RECONNAISSANCE_REFERENCE_RULE = (
     "It is deliberately not a dependency: it carries no `context_rev` pin",
     "it never affects readiness, staleness, primary routing, ownership, or "
     "automatic context loading",
-    "`braintree node references NODE` is the opt-in read surface",
+    "`tangle node references NODE` is the opt-in read surface",
     "returns the node and its directly referenced reconnaissance in one "
     "deterministic hop",
     "it reports a target that is absent as `missing`",
@@ -611,7 +611,7 @@ _RECONNAISSANCE_REFERENCE_RULE = (
 # reflows.
 _RECONNAISSANCE_REFERENCE_PROBE = (
     "A work node records the reconnaissance it used in `# Context`, and "
-    "`braintree node` reports the relation."
+    "`tangle node` reports the relation."
 )
 
 # A resolving worker whose parent is outside its write set cannot run the plain
@@ -635,7 +635,7 @@ _BRIEF_ACCEPTANCE_AND_SEAM_RULE = (
 _BRIEF_ACCEPTANCE_AND_SEAM_PROBE = (
     "When a frontier child resolves, its coordinating parent's `next` must "
     "advance. Otherwise the worker cannot edit the parent and uses "
-    "`braintree check --allow-pending-advance PARENT`."
+    "`tangle check --allow-pending-advance PARENT`."
 )
 
 # Deliberate decomposition is one transactional command rather than one capture
@@ -643,7 +643,7 @@ _BRIEF_ACCEPTANCE_AND_SEAM_PROBE = (
 # validated before any mutation, a rejected plan or a write failure leaves no
 # half-built tree, and the command routes and stamps only.
 _TRANSACTIONAL_DECOMPOSITION_RULE = (
-    "`braintree node decompose --parent PARENT --plan FILE` validates the whole "
+    "`tangle node decompose --parent PARENT --plan FILE` validates the whole "
     "plan before it mutates anything",
     "generates each child's id, writes each child with the canonical `Parent "
     "[[PARENT]]` route and its executable `next`, and advances the parent's "
@@ -653,14 +653,14 @@ _TRANSACTIONAL_DECOMPOSITION_RULE = (
     "unchanged",
     "never writes a reciprocal child list, never rewrites the parent's "
     "`# Done when` or body, and never infers a semantic boundary",
-    "`braintree node advance PARENT CHILD` is the parent-advance-only shorthand",
+    "`tangle node advance PARENT CHILD` is the parent-advance-only shorthand",
 )
 
 # Falsification probe for the decomposition rule: a prose mention of the
 # command records none of its transactional guarantees, so the guard must
 # reject it.
 _TRANSACTIONAL_DECOMPOSITION_PROBE = (
-    "Create the children of a plan with `braintree node decompose`, then advance "
+    "Create the children of a plan with `tangle node decompose`, then advance "
     "the parent's `next` when convenient."
 )
 
@@ -724,14 +724,14 @@ _JUST_IN_TIME_LIVE_CONSUMER_RULE = (
     "or the node's `next` names that consumer as a mandatory companion",
 )
 
-# `braintree allocate` advances a counter that never rewinds, so an allocation
+# `tangle allocate` advances a counter that never rewinds, so an allocation
 # the caller discards is burned permanently and no contract may leave that id
-# invisible: the reference states the burn, the read-only `braintree status`
+# invisible: the reference states the burn, the read-only `tangle status`
 # listing that names the burned ids, and the no-reclaim rationale.
 _ALLOCATION_BURN_RULE = (
     "An allocated id is burned permanently",
     "an allocation the caller discards is never returned and never reused",
-    "`braintree reservations` lists each prefix's burned ids",
+    "`tangle reservations` lists each prefix's burned ids",
     "reserved with no node on disk",
     "so a gap in the vault is a discarded allocation, not a missing node",
     "There is no release or reclaim",
@@ -742,7 +742,7 @@ _ALLOCATION_BURN_RULE = (
 # guard must reject it. The probe fails when the guard stops detecting the rule
 # rather than when the allocate bullet merely reflows.
 _ALLOCATION_BURN_SIGNAL_ONLY = (
-    "For parallel creation, use `braintree allocate PREFIX` to atomically reserve "
+    "For parallel creation, use `tangle allocate PREFIX` to atomically reserve "
     "an ID; Coordinator preallocation or explicitly disjoint numeric ranges are "
     "valid offline alternatives. A local `find` checks for an existing collision "
     "only; it is never an ID reservation."
@@ -752,9 +752,9 @@ _ALLOCATION_BURN_SIGNAL_ONLY = (
 # reference, because a worker reads the mutation rules before any coordination
 # reference.
 _ALLOCATION_BURN_CORE_RULE = (
-    "A discarded `braintree allocate` burns its id permanently",
+    "A discarded `tangle allocate` burns its id permanently",
     "there is no release or reclaim",
-    "`braintree reservations` lists each prefix's reserved-but-unwritten ids",
+    "`tangle reservations` lists each prefix's reserved-but-unwritten ids",
 )
 
 # A recorded premise or `# Outcome` statement the code contradicts is a
@@ -790,7 +790,7 @@ _PREMISE_CORRECTION_PROBE_STEP_ONLY = (
 # by trial.
 _NEXT_ACTION_NO_WIKILINK_RULE = (
     "A `next` written as an action sentence must contain no wikilink",
-    "`braintree check` names the token it treated as the frontier route",
+    "`tangle check` names the token it treated as the frontier route",
 )
 
 # Falsification probe for the no-wikilink rule: the pre-change sentence named
@@ -827,13 +827,13 @@ _ANCHORED_DEPENDENCY_SEARCH_PROBE = (
 # UID, the readable legacy status directories, canonical edges, the pin and gate
 # forms, frontmatter keys, and the ``Refs:`` footer convention.
 _REQUIRED_GRAMMAR = (
-    ".braintree/canonical/",
-    ".braintree/project-id",
+    ".tangle/canonical/",
+    ".tangle/project-id",
     "prj-",
-    ".braintree/proposed/",
-    ".braintree/active/",
-    ".braintree/blocked/",
-    ".braintree/resolved/",
+    ".tangle/proposed/",
+    ".tangle/active/",
+    ".tangle/blocked/",
+    ".tangle/resolved/",
     "Depends on [[DEF-auth-protocol]] at context_rev 7.",
     "Gated on [[DEF-auth-protocol]].",
     "Parent [[",
@@ -843,14 +843,14 @@ _REQUIRED_GRAMMAR = (
     "context_rev",
     "updated",
     "summary",
-    "braintree_revision:",
+    "tangle_revision:",
 )
 
 # The boundary rule is evidence-driven, so no mandatory per-node sizing command
 # is documented on any surface.
 _SIZING_COMMAND_ABSENT = (
-    "braintree size",
-    "braintree scope",
+    "tangle size",
+    "tangle scope",
 )
 
 # Each reference must carry the working rules for its topic rather than only a
@@ -864,7 +864,7 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "the coordinator alone performs a coordinating parent's resolving edit",
         "A stale route is an unfinished coordinating node whose `next` is a single "
         "direct-child link naming an already-resolved child",
-        "`braintree check` reports it as `next-resolved-node`",
+        "`tangle check` reports it as `next-resolved-node`",
         "The window between the child's resolution and the parent's advance is the "
         "multi-writer transient",
         "The sanction never clears the advance",
@@ -877,23 +877,23 @@ _TOPIC_RULES: dict[str, tuple[str, ...]] = {
         "The pin must terminate its line",
         "Record it as a gate instead of a context edge",
         "never pin the gate",
-        "`braintree check --allow-stale`",
+        "`tangle check --allow-stale`",
         "Reconciliation is separate work owned by each consumer",
         "Supersede only when the outcome moves to a different node",
         "never rewrite, amend, or force-push the earlier commit",
     ),
     "authoring": (
-        "braintree node record",
+        "tangle node record",
         "generates a lowercase 128-bit id from cryptographic entropy",
         "`--summary` is one line of at most 96 characters",
         "The feedback type is the one feedback marker",
         "an `Attempted:`, a `Friction:`, and an `Improvement:` line",
-        "`.braintree/index-map.md` holds intent and routing, not state",
+        "`.tangle/index-map.md` holds intent and routing, not state",
         "Decompose just in time",
         "Roll up from evidence, not child counts",
-        "braintree node decompose --parent PARENT --plan FILE",
+        "tangle node decompose --parent PARENT --plan FILE",
         "Pass `--slug` to override the derived slug",
-        "`braintree node advance PARENT CHILD` is the parent-advance-only shorthand",
+        "`tangle node advance PARENT CHILD` is the parent-advance-only shorthand",
     ),
 }
 
@@ -904,7 +904,7 @@ _ABSENT_CONTRACT = (
     "increment it on every write",
 )
 
-# The unified `braintree` command must hide the implementation: no installed
+# The unified `tangle` command must hide the implementation: no installed
 # surface may name the runtime, toolchain, package layout, or internal commands.
 _IMPLEMENTATION_LEAKS = (
     "uv run",
@@ -932,12 +932,12 @@ _AGENTS_PROMOTED_INVARIANTS = (
     "Conventional Commits",
     "plan, track, and execute work through it",
     "Read [`SKILL.md`](SKILL.md) before starting",
-    "Run `braintree check` before committing or handing off graph mutations",
-    "`braintree check --allow-stale` only for a deliberately staged "
+    "Run `tangle check` before committing or handing off graph mutations",
+    "`tangle check --allow-stale` only for a deliberately staged "
     "`context_rev` bump",
     "`tests/test_skill.py`; keep those contract strings and the live vault "
     "valid",
-    "Work finished and committed in the current session needs no Braintree node",
+    "Work finished and committed in the current session needs no Tangle node",
     "start with the current frontier node's `next` action",
     "Expand orientation only when a direct dependency, a failing verification, or",
     "make test",
@@ -1029,14 +1029,14 @@ def _frontmatter(text: str) -> str:
 
 # The local coordination state is a private implementation detail: a client
 # never touches it directly, and the derived index maintains itself rather than
-# being a step a client runs. `braintree index` survives only as the explicit
+# being a step a client runs. `tangle index` survives only as the explicit
 # repair or rebuild the reference and the verb help both say it is.
 _LOCAL_STATE_PRIVACY_RULE = (
     "A client never reads or writes the local coordination state directly and "
     "never maintains a derived index by hand",
     "The local state holds only derived answers",
     "losing it loses no durable graph knowledge",
-    "`braintree index [.braintree]` exists only to repair or rebuild it from "
+    "`tangle index [.tangle]` exists only to repair or rebuild it from "
     "Markdown",
 )
 
@@ -1045,7 +1045,7 @@ _LOCAL_STATE_PRIVACY_RULE = (
 _INDEX_UPKEEP_CORE_RULE = (
     "The derived index maintains itself on every interaction",
     "so no client keeps it current by hand",
-    "`braintree index` exists only to repair or rebuild it from Markdown",
+    "`tangle index` exists only to repair or rebuild it from Markdown",
 )
 
 # The forbidden tokens name the retired client-facing concepts: the database
@@ -1059,15 +1059,15 @@ _PRIVATE_STATE_ABSENT = (
     "sqlite",
     "sidecar",
     "Sidecar",
-    "BT_SIDECAR_DIR",
-    "BT_PROJECT_ID",
+    "TANGLE_SIDECAR_DIR",
+    "TANGLE_PROJECT_ID",
     "network-mounted",
-    "braintree init",
+    "tangle init",
     "PostgreSQL",
 )
 _PRIVATE_STATE_PROBE = (
     "Do not have workers read or write SQLite directly. The sidecar is an "
-    "untracked external database; run `braintree init` before coordinated work."
+    "untracked external database; run `tangle init` before coordinated work."
 )
 
 # Falsification probe for the private-state guard: a surface that still names
@@ -1106,7 +1106,7 @@ def test_skill_core_frontmatter_and_authority() -> None:
     text = _read(_SKILL)
     assert text.startswith("---\n")
     header = _frontmatter(text)
-    assert re.search(r"^name: braintree$", header, re.MULTILINE)
+    assert re.search(r"^name: tangle$", header, re.MULTILINE)
     assert re.search(r"^description: .+", header, re.MULTILINE)
     _assert_absent(text, _ABSENT_CONTRACT)
 
@@ -1135,7 +1135,7 @@ def test_core_keeps_the_invariants_and_routes_to_references() -> None:
     _assert_contains(text, _CORE_INVARIANTS)
     for topic in _TOPICS:
         assert f"references/{topic}.md" in text
-        assert f"braintree help {topic}" in text
+        assert f"tangle help {topic}" in text
 
 
 def test_core_keeps_the_durable_outcome_boundary() -> None:
@@ -1448,15 +1448,15 @@ def test_required_literal_grammar_survives() -> None:
 def test_help_topic_routes_to_the_installed_reference(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """`braintree help TOPIC` is read-only and needs no vault or sidecar."""
+    """`tangle help TOPIC` is read-only and needs no vault or sidecar."""
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "sidecar"))
-    monkeypatch.setenv("BT_PROJECT_ID", "skill-test")
+    monkeypatch.setenv("TANGLE_SIDECAR_DIR", str(tmp_path / "sidecar"))
+    monkeypatch.setenv("TANGLE_PROJECT_ID", "skill-test")
     for topic in _TOPICS:
         assert main.main(["help", topic]) == 0
         assert capsys.readouterr().out == _reference(topic).rstrip("\n") + "\n"
     assert not (tmp_path / "sidecar").exists()
-    assert not (tmp_path / ".braintree").exists()
+    assert not (tmp_path / ".tangle").exists()
 
 
 def test_help_without_a_topic_lists_the_topics(
@@ -1558,19 +1558,19 @@ def _task(summary: str, next_line: str) -> str:
 
 def test_frontier_recipe_resolves_a_coordinating_next(tmp_path: Path) -> None:
     _write_node(
-        tmp_path / ".braintree/active/TAS-101-import-coordinator.md",
+        tmp_path / ".tangle/active/TAS-101-import-coordinator.md",
         _task("Coordinate import hardening.", '"[[TAS-102-validate-manifests]]"'),
     )
     _write_node(
-        tmp_path / ".braintree/active/TAS-102-validate-manifests.md",
+        tmp_path / ".tangle/active/TAS-102-validate-manifests.md",
         _task("Validate signed manifests.", "Run the signed-manifest validation."),
     )
     _write_node(
-        tmp_path / ".braintree/proposed/TAS-103-follow-up-cleanup.md",
+        tmp_path / ".tangle/proposed/TAS-103-follow-up-cleanup.md",
         _task("Plan post-migration cleanup.", "Draft the cleanup plan."),
     )
     _write_node(
-        tmp_path / ".braintree/resolved/TAS-100-old-work.md",
+        tmp_path / ".tangle/resolved/TAS-100-old-work.md",
         "---\ncontext_rev: 1\nupdated: 2026-01-01T00:00:00Z\nsummary: Old work.\n---\n",
     )
 

@@ -4,7 +4,7 @@ These tests protect the scenario contract the gold corpus and the later harness
 must agree on: the schema version, the field separation between memory
 construction and query-time visibility, the parser's rejections, arm-neutral
 fixtures, the deterministic grader, agreement with the frozen
-``braintree.memory_contract``, and the prose document's agreement with the
+``tangle.memory_contract``, and the prose document's agreement with the
 module. Everything here is offline and imports no model runtime.
 """
 
@@ -17,8 +17,8 @@ from typing import Any
 
 import pytest
 
-from braintree import memory_contract
-from braintree import memory_scenario as schema
+from tangle import memory_contract
+from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DOCUMENT = _ROOT / "research" / "agent-memory-scenario-schema.md"

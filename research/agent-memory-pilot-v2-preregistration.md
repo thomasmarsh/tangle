@@ -3,7 +3,7 @@
 This document preregisters the replacement separability pilot that gates the
 evaluation foundation after the protocol-v1 run failed its information boundary.
 It is the prose authority for the isolated harness. The machine-readable half is
-[`src/braintree/memory_pilot.py`](../src/braintree/memory_pilot.py)
+[`src/tangle/memory_pilot.py`](../src/tangle/memory_pilot.py)
 (:data:`PILOT_V2_PROTOCOL`, :func:`build_plan`, :func:`render_prompt`,
 :func:`parse_action`, :func:`case_verdict`, :func:`record`), and
 [`tests/test_memory_pilot_v2.py`](../tests/test_memory_pilot_v2.py) pins this
@@ -132,7 +132,7 @@ The result records every contract pin, repetition index, child run id, raw
 output reference, raw output, grade, and token/cost telemetry, with `latency_ms`
 computed from the retained `started_at` and `finished_at` timestamps rather than
 trusted from the child. `result_problems()` validates the schema, and
-`braintree benchmark pilot dry-run` builds the plan, validates the fixtures,
+`tangle benchmark pilot dry-run` builds the plan, validates the fixtures,
 keys, and prompt digests, synthetically aggregates a complete run to `proceed`,
 and validates the result schema without making a live model call.
 

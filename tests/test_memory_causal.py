@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 
-from braintree import (
+from tangle import (
     memory_causal,
     memory_contract,
     memory_corpus,
@@ -141,7 +141,7 @@ def test_protocol_literals_and_verify() -> None:
     assert memory_causal.CAUSAL_PROTOCOL == "memory-causal-v1"
     assert memory_causal.CAUSAL_ARMS == memory_contract.CANONICAL_ARM_IDS
     assert memory_causal.CAUSAL_BASELINE_ARMS == ("repository-only", "raw-history", "flat-memory")
-    assert memory_causal.CAUSAL_TREATMENT_ARM == "braintree"
+    assert memory_causal.CAUSAL_TREATMENT_ARM == "tangle"
     assert memory_causal.CAUSAL_CEILING_ARM == "oracle"
     assert memory_causal.CAUSAL_MODELS == (
         "deepseek/deepseek-flash",
@@ -155,8 +155,8 @@ def test_protocol_literals_and_verify() -> None:
 
 def test_decision_contrasts_match_the_contract_support_criterion() -> None:
     assert memory_causal.CAUSAL_DECISION_CONTRASTS == (
-        ("braintree", "repository-only"),
-        ("braintree", "raw-history"),
+        ("tangle", "repository-only"),
+        ("tangle", "raw-history"),
     )
     assert set(memory_causal.CAUSAL_CONTRASTS) >= set(memory_causal.CAUSAL_DECISION_CONTRASTS)
 
@@ -186,7 +186,7 @@ def test_repository_only_has_no_memory_and_oracle_has_the_gold() -> None:
     )
 
 
-def test_braintree_retrieves_the_deciding_chain_and_every_arm_is_bounded() -> None:
+def test_tangle_retrieves_the_deciding_chain_and_every_arm_is_bounded() -> None:
     case = _required_cases()[0]
     deciding = {
         source
@@ -196,7 +196,7 @@ def test_braintree_retrieves_the_deciding_chain_and_every_arm_is_bounded() -> No
     statements = {
         episode.statement for episode in case.construction.episodes if episode.id in deciding
     }
-    assert set(memory_causal.arm_memory(case, "braintree")) <= statements
+    assert set(memory_causal.arm_memory(case, "tangle")) <= statements
     for arm in memory_causal.CAUSAL_ARMS:
         assert len(memory_causal.arm_memory(case, arm)) <= memory_causal.CAUSAL_MEMORY_BUDGET
 
@@ -293,7 +293,7 @@ def test_correctness_before_cost_gate_excludes_incorrect_arms() -> None:
     result = memory_causal.record(plan, _samples(plan, wrong_keys=wrong))
     assert result["status"] == "complete"
     bare = result["costs"]["repository-only"]
-    treated = result["costs"]["braintree"]
+    treated = result["costs"]["tangle"]
     per_model = len(plan["models"]) * memory_causal.CAUSAL_REPETITIONS
     assert bare["admitted"] == 0
     assert sum(bare["tokens"].values()) == 0
@@ -309,7 +309,7 @@ def test_memory_required_cases_produce_a_positive_treatment_effect() -> None:
     contrast = next(
         record
         for record in result["contrasts"]
-        if record["treatment"] == "braintree" and record["baseline"] == "repository-only"
+        if record["treatment"] == "tangle" and record["baseline"] == "repository-only"
     )
     assert contrast["mean_effect"] == len(_required_cases()) / plan["case_count"]
     assert contrast["ci_low"] > 0
@@ -392,10 +392,10 @@ def test_paired_effects_ignore_incomplete_samples() -> None:
     wrong = _keys_for(_required_cases(), "repository-only")
     samples = _samples(plan, wrong_keys=wrong)
     result = memory_causal.record(plan, samples)
-    contrast = memory_causal.paired_effects(result["samples"], "braintree", "repository-only")
+    contrast = memory_causal.paired_effects(result["samples"], "tangle", "repository-only")
     assert contrast["n_strata"] == plan["case_count"] * len(plan["models"])
     assert contrast["mean_effect"] == len(_required_cases()) / plan["case_count"]
-    assert memory_causal.paired_effects([], "braintree", "repository-only")["n_pairs"] == 0
+    assert memory_causal.paired_effects([], "tangle", "repository-only")["n_pairs"] == 0
 
 
 # --------------------------------------------------------------------------- #
@@ -412,7 +412,7 @@ def test_document_preregisters_protocol_arms_models_and_gate() -> None:
         assert arm in text, arm
     for model in memory_causal.CAUSAL_MODELS:
         assert model in text, model
-    assert "braintree benchmark causal" in text
+    assert "tangle benchmark causal" in text
     assert "scripts/memory_causal_run.py" in text
     assert ".pi/agents/memory-pilot-child.md" in text
     assert "pilot_subset" in text

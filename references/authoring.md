@@ -3,7 +3,7 @@
 Load this before writing node bodies, recording feedback, capturing a node,
 decomposing or rolling up work, proving a negative assertion, or editing
 `index-map.md`. It is the canonical Markdown printed by
-`braintree help authoring` and is installed with `SKILL.md` and the command.
+`tangle help authoring` and is installed with `SKILL.md` and the command.
 
 ## Bodies, knowledge nodes, and reports
 
@@ -34,7 +34,7 @@ new status, and the advanced frontier.
 
 ## Index contract
 
-`.braintree/index-map.md` holds intent and routing, not state: keep only a short
+`.tangle/index-map.md` holds intent and routing, not state: keep only a short
 `# Focus` list, durable `Indexes [[IDX-...]]` pointers, and tested query recipes.
 Never copy node status, priority, revision, timestamp, summary, or hub members
 into it. A focus pointer is advisory; validate its target before acting.
@@ -65,7 +65,7 @@ or one wikilinked direct child, never a child list. Roll up from evidence, not
 child counts.
 
 When the decomposition is deliberate, author it in one transactional step
-instead of one capture per child. `braintree node decompose --parent PARENT
+instead of one capture per child. `tangle node decompose --parent PARENT
 --plan FILE` validates the whole plan before it mutates anything, generates each
 child's id, writes each child with the canonical `Parent [[PARENT]]` route and
 its executable `next`, and advances the parent's `next` to the first child. The
@@ -86,7 +86,7 @@ and prints the ordered plan without writing. A rejected plan writes nothing; a
 write failure removes the children already written and leaves the parent
 unchanged. The command never writes a reciprocal child list, never rewrites the
 parent's `# Done when` or body, and never infers a semantic boundary the plan did
-not declare: it only routes and stamps. `braintree node advance PARENT CHILD` is
+not declare: it only routes and stamps. `tangle node advance PARENT CHILD` is
 the parent-advance-only shorthand for a case where only that one line needs to
 change; prefer it over hand-editing the parent when no other edit is due.
 
@@ -111,14 +111,14 @@ A node records that durable reconnaissance informed it with a non-pinned
 consumer; a node may cite several targets, one line each, and must not repeat a
 target. It is deliberately not a dependency: it carries no `context_rev` pin, so
 it never affects readiness, staleness, primary routing, ownership, or automatic
-context loading, and `braintree node` never follows it.
+context loading, and `tangle node` never follows it.
 
 Use it for shared orientation that a reader may want but that must not become a
 blocking edge — reconnaissance a `THO` already owns instead of restating it in
-every task. `braintree node references NODE` is the opt-in read surface: it
+every task. `tangle node references NODE` is the opt-in read surface: it
 returns the node and its directly referenced reconnaissance in one deterministic
 hop, so a reference cycle between two nodes terminates, and it reports a target
-that is absent as `missing` rather than dropping or failing. `braintree check`
+that is absent as `missing` rather than dropping or failing. `tangle check`
 validates only the relation's structure — the exact line form, its `# Context`
 placement, a knowledge-node target, no duplicate target, and the existing
 broken-link rule — and never judges whether the referenced context is useful.
@@ -139,25 +139,25 @@ After deciding that a node meets the admission threshold, capture it in one
 step; the command does not decide admission:
 
 ```sh
-braintree node record --type THO \
+tangle node record --type THO \
   --summary 'Does a claim survive a worktree move?' \
   --body 'Question: does a claim survive a move between worktrees?'
 ```
 
-`braintree node record` accepts `THO`, `DEF`, `DEC`, or `TAS`; use
-`braintree feedback record` for `FBK`, and declare root `IDX` hubs in
+`tangle node record` accepts `THO`, `DEF`, `DEC`, or `TAS`; use
+`tangle feedback record` for `FBK`, and declare root `IDX` hubs in
 `index-map.md`. It generates a lowercase 128-bit id from cryptographic entropy,
 writes one stationary file under `canonical/<suffix>/`, discovers a route to the
 root hub, and stamps `context_rev` and `updated`. Because ids come from entropy,
 parallel writers never collide and need no shared sequence or preallocation.
 `--id` accepts only a canonical lowercase identity for a caller that must
-reproduce one; `braintree allocate` and `braintree reservations` remain only for
+reproduce one; `tangle allocate` and `tangle reservations` remain only for
 a legacy numeric prefix during the compatibility window.
 
 The caller supplies body fields required by the selected type and status. An
 unfinished `TAS` requires one `--next`; a resolved node omits it; a blocked node
 has `# Blocked`, `Blocked by`, and `Unblocks when`. See
-`braintree node record --help` for overrides.
+`tangle node record --help` for overrides.
 
 `--summary` is one line of at most 96 characters. A longer value is shortened
 at the last word boundary that leaves room for a trailing `...`, and the command
@@ -173,9 +173,9 @@ basename you want to reproduce in wikilinks. As with `--summary`, an explicit
 
 ## Feedback nodes
 
-A consuming project records Braintree friction as an `FBK`/`fbk` node. The
+A consuming project records Tangle friction as an `FBK`/`fbk` node. The
 feedback type is the one feedback marker, so
-`find .braintree -iname 'fbk-*.md'` discovers feedback from Markdown alone, with
+`find .tangle -iname 'fbk-*.md'` discovers feedback from Markdown alone, with
 no network access and no write to the scanned vault.
 
 One session records one session `FBK` node, and the coordinator owns it: a
@@ -190,22 +190,22 @@ friction in one session owe one report, not two nodes.
 Each feedback node:
 
 - has one primary `Parent [[...]]` or `Area [[IDX-...]]` route;
-- carries `braintree_revision:` from `braintree --version`, using
+- carries `tangle_revision:` from `tangle --version`, using
   `<version>+g<short-sha>`, `<version>+unknown`, or `unknown` when unavailable;
 - has one `# Feedback` section with an `Attempted:`, a `Friction:`, and an
   `Improvement:` line.
 
 The public version is the compatibility signal and the short SHA is provenance;
-never resolve that SHA against a remote. `braintree check` rejects malformed
+never resolve that SHA against a remote. `tangle check` rejects malformed
 feedback metadata or content.
 
-From the consuming vault root, `braintree feedback record --attempted '...'
+From the consuming vault root, `tangle feedback record --attempted '...'
 --friction '...' --improvement '...'` allocates, routes, stamps, and writes a
 valid proposed node through the same atomic capture contract. The derived
 summary obeys the same 96-character limit and warning behavior. See its
 `--help` for routing and naming overrides.
 
-Collect feedback read-only with `braintree feedback scan /path/to/vault`. It
+Collect feedback read-only with `tangle feedback scan /path/to/vault`. It
 reads only the feedback nodes' frontmatter (canonical `fbk-*` and legacy
 `FBK-*`), prints compact TOON fields for each result, prints `feedback: 0 nodes`
 for none, and works without local state or network in a read-only checkout. Triage each result into this graph: admit it only when it

@@ -1,10 +1,10 @@
 # Memory-evaluation contract
 
-This is the frozen contract for the Braintree memory-evaluation program. It
+This is the frozen contract for the Tangle memory-evaluation program. It
 realizes Stage 0 of the staged plan in
 [`research/agent-memory-theory-evaluation.md`](agent-memory-theory-evaluation.md)
 and answers the claim question that theory assessment left open. The
-machine-readable half is [`src/braintree/memory_contract.py`](../src/braintree/memory_contract.py);
+machine-readable half is [`src/tangle/memory_contract.py`](../src/tangle/memory_contract.py);
 that module is the single source of truth and this prose must not drift from it.
 
 Protocol version: `memory-eval-contract-v1`.
@@ -15,7 +15,7 @@ any live or paid comparison needs the authorization described below.
 
 ## 1. The claim
 
-> Selective Braintree memory improves the correctness of memory-dependent
+> Selective Tangle memory improves the correctness of memory-dependent
 > engineering actions at acceptable total interaction cost relative to
 > repository-only, raw-history, and flat-memory baselines, and stays below an
 > oracle that supplies the minimal gold memory.
@@ -23,7 +23,7 @@ any live or paid comparison needs the authorization described below.
 The **primary target** is *memory-dependent downstream action quality* under a
 total interaction budget. A case is only evidence when its action cannot be
 recovered from currently observable information; a task answerable from the
-current repository cannot support the claim, however well Braintree scores it.
+current repository cannot support the claim, however well Tangle scores it.
 
 ## 2. Observable-information boundary and reconstructibility
 
@@ -72,7 +72,7 @@ budgets, and graders. Only the available persistent history differs.
 | repository-only | current files, prompt, and tools; no episodic history | whether the case actually requires memory |
 | raw-history | prior public action/observation transcripts within the same retrieval budget | whether selective consolidation beats recency and lexical search of full history |
 | flat-memory | untyped timestamped notes with lexical retrieval and the same budget | whether graph lifecycle and governance beat mere persistence |
-| braintree | the graph, lifecycle, revisions, and bounded retrieval commands | the system under test |
+| tangle | the graph, lifecycle, revisions, and bounded retrieval commands | the system under test |
 | oracle | only the minimal gold memory the case requires, injected directly | loss attributable to construction and retrieval rather than reading and reasoning |
 
 The oracle is an **upper bound**, not a competitor. Repository-only is the
@@ -165,5 +165,5 @@ Contract tests in [`tests/test_memory_contract.py`](../tests/test_memory_contrac
 protect the literal protocol: the protocol version, the five arm ids, the
 reconstructibility categories, the token vocabulary's agreement with the
 existing token benchmark, the family partition, the statistical thresholds, and
-the document's agreement with the module. `braintree check` and `make test`
+the document's agreement with the module. `tangle check` and `make test`
 remain the gates.

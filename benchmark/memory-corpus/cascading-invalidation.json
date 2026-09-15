@@ -19,7 +19,7 @@
             "kind": "decision",
             "statement": "A semantic revision bump commits the bumped node alone and leaves pinned consumers stale on purpose, so an exact backlink search finds the reconciliation work.",
             "evidence": [
-              ".braintree/resolved/TAS-059-stale-pin-commit-shape.md"
+              ".tangle/resolved/TAS-059-stale-pin-commit-shape.md"
             ]
           },
           {
@@ -28,7 +28,7 @@
             "kind": "result",
             "statement": "The impact view lists every direct and transitive dependent of a changed node in dependency order, with each edge's pinned and current revision.",
             "evidence": [
-              ".braintree/resolved/TAS-072-transitive-dependency-impact.md"
+              ".tangle/resolved/TAS-072-transitive-dependency-impact.md"
             ]
           },
           {
@@ -37,7 +37,7 @@
             "kind": "result",
             "statement": "The integration planner orders repairs so each pinned dependency is reconciled after its target, rereading the dependency before reconciling the consumer.",
             "evidence": [
-              ".braintree/resolved/TAS-077-reconciliation-planner.md"
+              ".tangle/resolved/TAS-077-reconciliation-planner.md"
             ]
           },
           {
@@ -46,7 +46,7 @@
             "kind": "observation",
             "statement": "One shared verdict names a missing, mismatched, or unresolved pin for every context relation.",
             "evidence": [
-              ".braintree/resolved/TAS-069-unify-dependency-semantics.md"
+              ".tangle/resolved/TAS-069-unify-dependency-semantics.md"
             ]
           }
         ]
@@ -54,7 +54,7 @@
       "query": {
         "task": "A shared definition changed at a higher revision. Its direct consumer updated its assumptions and bumped its own revision, so the node pinned to that consumer also mismatches. Decide the reconciliation scope and order.",
         "observable_paths": [
-          "src/braintree/sidecar.py"
+          "src/tangle/sidecar.py"
         ],
         "allowed_actions": [
           "reconcile-upstream-to-downstream",
@@ -96,7 +96,7 @@
             "kind": "decision",
             "statement": "A revision bump on a pinned dependency makes the consumer stale and forces a reread before it can rely on the dependency again.",
             "evidence": [
-              ".braintree/resolved/TAS-009-semantic-revisions.md"
+              ".tangle/resolved/TAS-009-semantic-revisions.md"
             ]
           },
           {
@@ -105,7 +105,7 @@
             "kind": "observation",
             "statement": "The consumer's conclusion is independently supported by a separate resolved decision that the bump did not touch.",
             "evidence": [
-              ".braintree/resolved/DEC-003-semantic-versioning.md",
+              ".tangle/resolved/DEC-003-semantic-versioning.md",
               "references/dependencies.md"
             ]
           },
@@ -124,7 +124,7 @@
             "kind": "observation",
             "statement": "A non-behavioral internal reuse changed no consumer assumption and did not bump its owner's revision.",
             "evidence": [
-              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+              ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md"
             ]
           }
         ]
@@ -132,7 +132,7 @@
       "query": {
         "task": "A consumer's pinned dependency changed at a higher revision. The consumer must reconcile before it can rely on the dependency again. Decide what happens to the consumer's conclusion.",
         "observable_paths": [
-          "src/braintree/revision.py"
+          "src/tangle/revision.py"
         ],
         "allowed_actions": [
           "reset-the-pin-and-keep-the-conclusion",
@@ -174,7 +174,7 @@
             "kind": "failure",
             "statement": "A committed direction was reversed after part of it had been implemented.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -183,7 +183,7 @@
             "kind": "decision",
             "statement": "While the same node and scope still own the outcome, reversing it is an in-place update that bumps `context_rev` because a pinned consumer must reread the changed direction.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -192,7 +192,7 @@
             "kind": "result",
             "statement": "The reversal records the reversed commit's short identifier and subject in the node body with whether the change was kept, reverted, or replaced.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -201,7 +201,7 @@
             "kind": "observation",
             "statement": "A different outcome moved to a new node and was recorded as superseded rather than reversed in place.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           }
         ]
@@ -209,7 +209,7 @@
       "query": {
         "task": "A downstream consumer relied on a decision whose direction was reversed inside the same owning node after partial implementation. Decide how the consumer must respond.",
         "observable_paths": [
-          "src/braintree/sidecar.py"
+          "src/tangle/sidecar.py"
         ],
         "allowed_actions": [
           "reread-and-update-assumptions",
@@ -250,7 +250,7 @@
             "kind": "decision",
             "statement": "Supersede only when the outcome moves to a different node: the obsolete node is resolved, marked superseded, and records the replacement link.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -260,7 +260,7 @@
             "statement": "Resolution does not change `context_rev`, so completion is detected from the status directory and a matching pin can still point at disposed content.",
             "evidence": [
               "references/dependencies.md",
-              ".braintree/resolved/TAS-009-semantic-revisions.md"
+              ".tangle/resolved/TAS-009-semantic-revisions.md"
             ]
           },
           {
@@ -269,7 +269,7 @@
             "kind": "result",
             "statement": "A consumer must follow the supersession link and search remaining backlinks instead of trusting a numerically matching pin.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           },
           {
@@ -278,7 +278,7 @@
             "kind": "observation",
             "statement": "A different outcome was reversed in place, which did bump that same node's revision.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md"
             ]
           }
         ]
@@ -286,7 +286,7 @@
       "query": {
         "task": "A consumer's pinned dependency still matches the recorded revision, but the dependency now points to a replacement node and is marked disposed. Decide what the consumer must do.",
         "observable_paths": [
-          "src/braintree/sidecar.py"
+          "src/tangle/sidecar.py"
         ],
         "allowed_actions": [
           "follow-the-replacement-link",

@@ -19,7 +19,7 @@
             "kind": "decision",
             "statement": "Independent slice verification rests on falsifiable evidence: a verifying actor that can execute the gates, or a coordinator-run gate transcript attached to the handoff.",
             "evidence": [
-              ".braintree/resolved/TAS-102-verification-evidence-contract.md",
+              ".tangle/resolved/TAS-102-verification-evidence-contract.md",
               "references/coordination.md"
             ]
           },
@@ -29,7 +29,7 @@
             "kind": "failure",
             "statement": "The rule recurred across resolution rounds: a no-execution reviewer sign-off was repeatedly followed by a coordinator rerun of the gates, so the review prose was never the evidence that decided accept or reject.",
             "evidence": [
-              ".braintree/resolved/TAS-102-verification-evidence-contract.md"
+              ".tangle/resolved/TAS-102-verification-evidence-contract.md"
             ]
           },
           {
@@ -47,7 +47,7 @@
             "kind": "observation",
             "statement": "A worker records a compact completion receipt before its narrative report.",
             "evidence": [
-              ".braintree/resolved/TAS-114-completion-receipt.md"
+              ".tangle/resolved/TAS-114-completion-receipt.md"
             ]
           }
         ]
@@ -55,7 +55,7 @@
       "query": {
         "task": "A coordinating parent's children are all reported complete in a reviewer's prose, but no child gate transcript is attached. Decide what the coordinator still needs before resolving the parent.",
         "observable_paths": [
-          "src/braintree/cli.py"
+          "src/tangle/cli.py"
         ],
         "allowed_actions": [
           "obtain-an-executed-gate-transcript",
@@ -97,7 +97,7 @@
             "kind": "failure",
             "statement": "A node was committed after its body was edited and its file moved between status directories, and `git mv` staged the pre-edit blob so the commit recorded the old body.",
             "evidence": [
-              ".braintree/resolved/TAS-116-status-move-staging.md"
+              ".tangle/resolved/TAS-116-status-move-staging.md"
             ]
           },
           {
@@ -106,7 +106,7 @@
             "kind": "failure",
             "statement": "The same staging failure recurred when the status move and the body edit landed in two separate commits.",
             "evidence": [
-              ".braintree/resolved/TAS-116-status-move-staging.md"
+              ".tangle/resolved/TAS-116-status-move-staging.md"
             ]
           },
           {
@@ -124,7 +124,7 @@
             "kind": "observation",
             "statement": "A completion receipt records the base hash, release result, and commit SHAs.",
             "evidence": [
-              ".braintree/resolved/TAS-114-completion-receipt.md"
+              ".tangle/resolved/TAS-114-completion-receipt.md"
             ]
           }
         ]
@@ -132,7 +132,7 @@
       "query": {
         "task": "A worker edited a node body, moved the same file from `proposed/` to `active/`, and paused before committing. The project keeps a status move in its own commit when the body change is unrelated. Decide how to stage the work.",
         "observable_paths": [
-          "src/braintree/vault.py"
+          "src/tangle/vault.py"
         ],
         "allowed_actions": [
           "stage-the-destination-and-move-last",
@@ -174,7 +174,7 @@
             "kind": "decision",
             "statement": "fastembed needs `numpy>=2.1`, the last Intel `torch` build needs `numpy<2`, and `torch>=2.4` publishes no x86_64 macOS wheel, so torch and sentence-transformers were an evaluation baseline only and do not ship in the semantic extra.",
             "evidence": [
-              ".braintree/resolved/TAS-088-optional-embedding-extra.md"
+              ".tangle/resolved/TAS-088-optional-embedding-extra.md"
             ]
           },
           {
@@ -183,7 +183,7 @@
             "kind": "result",
             "statement": "The conflict surfaced while selecting a retrieval model, a task unrelated to the extra's first declaration, and it now constrains any later dependency added to that extra.",
             "evidence": [
-              ".braintree/resolved/TAS-089-embedding-model-selection.md"
+              ".tangle/resolved/TAS-089-embedding-model-selection.md"
             ]
           },
           {
@@ -192,7 +192,7 @@
             "kind": "observation",
             "statement": "ONNX Runtime installs without torch, and fastembed imports in 0.08 s against 2.77 s for torch.",
             "evidence": [
-              ".braintree/resolved/TAS-089-embedding-model-selection.md"
+              ".tangle/resolved/TAS-089-embedding-model-selection.md"
             ]
           }
         ]
@@ -200,7 +200,7 @@
       "query": {
         "task": "A later change proposes adding a CPU matrix library that requires `numpy<2` to the same opt-in extra. Decide how to proceed before writing the dependency.",
         "observable_paths": [
-          "src/braintree/toon.py"
+          "src/tangle/toon.py"
         ],
         "allowed_actions": [
           "reject-the-conflicting-dependency",
@@ -241,7 +241,7 @@
             "kind": "result",
             "statement": "The embedding comparison reported no candidate beating the lexical baseline on the held-out overall MRR and recall, so the lexical answer stayed the correctness reference.",
             "evidence": [
-              ".braintree/resolved/TAS-089-embedding-model-selection.md"
+              ".tangle/resolved/TAS-089-embedding-model-selection.md"
             ]
           },
           {
@@ -250,7 +250,7 @@
             "kind": "result",
             "statement": "The overall numbers were dominated by a near-duplicate family the lexical baseline already solved, while on the paraphrase family the selected ONNX model beat lexical recall@5 0.4130 to 0.3261 and became the default.",
             "evidence": [
-              ".braintree/resolved/TAS-089-embedding-model-selection.md"
+              ".tangle/resolved/TAS-089-embedding-model-selection.md"
             ]
           },
           {
@@ -259,7 +259,7 @@
             "kind": "observation",
             "statement": "The chosen runtime imports in 0.08 s against 2.77 s for torch.",
             "evidence": [
-              ".braintree/resolved/TAS-089-embedding-model-selection.md"
+              ".tangle/resolved/TAS-089-embedding-model-selection.md"
             ]
           }
         ]
@@ -267,7 +267,7 @@
       "query": {
         "task": "A new retrieval workload is mostly paraphrase recall with few near duplicates. A retained note says the semantic layer never beat lexical search, so drop it. Decide whether to install the optional semantic extra for this workload.",
         "observable_paths": [
-          "src/braintree/clustering.py"
+          "src/tangle/clustering.py"
         ],
         "allowed_actions": [
           "enable-the-extra-for-paraphrase-heavy-workloads",

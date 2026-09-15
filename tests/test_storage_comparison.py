@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from braintree import storage_comparison
+from tangle import storage_comparison
 
 # Benchmark verification rebuilds throwaway Git fixtures, so it is opt-in.
 pytestmark = pytest.mark.benchmark

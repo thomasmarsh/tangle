@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
-from braintree import memory_corpus, memory_scenario
+from tangle import memory_corpus, memory_scenario
 
 _ROOT = Path(__file__).resolve().parents[1]
 _RESULT = _ROOT / "benchmark" / "memory-pilot-result.json"

@@ -1,6 +1,6 @@
 """Parameter, fallback, and disposable-cache tests for manifold reduction.
 
-:mod:`braintree.reduction` turns cached provider embeddings into low-dimensional
+:mod:`tangle.reduction` turns cached provider embeddings into low-dimensional
 coordinates for clustering and inspection. These tests drive it with a
 deterministic injected reducer, so the default ``make test`` environment (which
 has no ``semantic`` extra) stays offline, fast, and unmoved by numba, and the
@@ -27,8 +27,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import reduction
-from braintree.reduction import Reduction, ReductionError, ReductionParams, coordinates
+from tangle import reduction
+from tangle.reduction import Reduction, ReductionError, ReductionParams, coordinates
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,7 +41,7 @@ _HEAVY_MODULES = ("numpy", "sklearn", "umap")
 # module it loaded, which must be none.
 _IMPORT_PROBE = """\
 import sys
-from braintree import main, reduction
+from tangle import main, reduction
 
 assert reduction.ReductionParams().method == "umap"
 assert main.main(["--help"]) == 0
@@ -236,7 +236,7 @@ def test_a_corrupt_cache_row_is_recomputed(tmp_path: Path) -> None:
 def test_importing_and_running_the_entry_point_loads_no_heavy_module() -> None:
     """A plain install must not import numpy, scikit-learn, or umap-learn."""
     env = os.environ.copy()
-    env.pop("BT_SEMANTIC_PROVIDER", None)
+    env.pop("TANGLE_SEMANTIC_PROVIDER", None)
     result = subprocess.run(
         [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
         cwd=str(_ROOT),

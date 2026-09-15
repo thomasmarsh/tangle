@@ -14,10 +14,10 @@ Canonical Markdown and accepted Git history remain authoritative. A change is a
 non-authoritative, immutable proposal; a pending set is not a FIFO queue and no
 proposal changes a canonical node before serialized acceptance.
 
-`braintree-change/v1` is the only initial envelope format. Its canonical bytes
+`tangle-change/v1` is the only initial envelope format. Its canonical bytes
 are UTF-8 JSON with recursively sorted object keys, no insignificant whitespace,
 LF line endings in embedded text, and a trailing LF. Its digest is
-`sha256("braintree-change/v1\\0" || canonical_bytes_without_payload_hash)`;
+`sha256("tangle-change/v1\\0" || canonical_bytes_without_payload_hash)`;
 `payload_hash` is that digest and is never recursively covered. A proposal ID is
 a globally unique 128-bit lowercase Crockford payload prefixed `chg-`; it is not
 a node ID, actor identity, or authentication claim. `producer_id` and `run_id`
@@ -34,7 +34,7 @@ Every vault commits one immutable `prj-` UID with the same payload grammar. It
 identifies the project across clones and is distinct from any same-host local
 coordination key. An unqualified ID means this project. `alias:node` is accepted only as local
 input or display shorthand and expands to the registered `prj-` UID in durable
-artifacts. Cross-project references use `braintree://prj-.../node/...`, never an
+artifacts. Cross-project references use `tangle://prj-.../node/...`, never an
 Obsidian wikilink; an unregistered target remains visible and unresolved.
 
 Terminal displays may abbreviate as a type plus at least eight payload characters
@@ -50,7 +50,7 @@ an exact-byte version and optimistic precondition, never logical identity. A
 legacy status-directory move is normalized as one identity-preserving transition
 until migrated.
 
-Before every project-scoped read or mutation, Braintree acquires its local
+Before every project-scoped read or mutation, Tangle acquires its local
 reconciliation lease, enumerates every canonical node, hashes exact bytes,
 transactionally reconciles new, changed, and vanished paths into derived state,
 then answers from that snapshot. A direct edit observed during census retries or
@@ -58,7 +58,7 @@ returns a concurrent-edit result. Mutation commands publish their known post-wri
 delta instead of performing a redundant second census. Global help, version, and
 installation commands are vault-independent.
 
-Braintree regenerates deterministic, disposable Markdown views for status, area,
+Tangle regenerates deterministic, disposable Markdown views for status, area,
 priority, recent activity, and registered external projects, using canonical
 summaries as display text. Views and optional symlinks are excluded from discovery
 and authority: missing or corrupt views are repaired on the next successful
@@ -118,7 +118,7 @@ produce a terminal disposition by itself.
 
 The candidate applies selected operations and any bound repository payload to a
 scratch tree, uses deterministic noncanonical validation IDs and timestamp,
-rebuilds derived views, runs `braintree check`, recomputes stale consumers against
+rebuilds derived views, runs `tangle check`, recomputes stale consumers against
 the combined candidate, and runs the required repository gates. Different valid
 orders that yield different candidate bytes do not commute.
 
@@ -147,7 +147,7 @@ storage policy and must not erase the only explanation of an accepted mapping.
 
 ## Command boundary and compatibility
 
-The intended commands are `braintree change submit`, `change pending`, `change
+The intended commands are `tangle change submit`, `change pending`, `change
 inspect`, `change decide`, `change receipt`, `reconcile --proposal`, and
 `integrate --dry-run|--apply --expect-head`. Each command owns exact operands,
 output fields, error codes, and hazards in its per-command help. `reconcile` and
@@ -155,7 +155,7 @@ output fields, error codes, and hazards in its per-command help. `reconcile` and
 stale plan hashes, or moved heads.
 
 Ordinary node commands retain their direct-Markdown behavior. The existing
-read-only `braintree reconcile --base/--head` view stays available as a bounded
+read-only `tangle reconcile --base/--head` view stays available as a bounded
 compatibility view while proposal reconciliation is added; selecting this protocol
 is the only trigger for its authoring burden. Unknown or downgraded envelope
 versions are rejected.

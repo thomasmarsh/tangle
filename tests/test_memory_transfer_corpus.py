@@ -24,8 +24,8 @@ from typing import Any
 
 import pytest
 
-from braintree import memory_corpus
-from braintree import memory_scenario as schema
+from tangle import memory_corpus
+from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CORPUS_DIR = _ROOT / "benchmark" / "memory-corpus"
@@ -132,70 +132,70 @@ _TRANSFER_CASES = frozenset(
 # appears among that same case's observable_paths; the guard keeps it that way.
 _FORBIDDEN_OBSERVABLE = {
     "experience-transfer-recurring-workflow-001": {
-        ".braintree/resolved/TAS-102-verification-evidence-contract.md",
+        ".tangle/resolved/TAS-102-verification-evidence-contract.md",
         "references/coordination.md",
         "SKILL.md",
     },
     "experience-transfer-recurring-failure-001": {
-        ".braintree/resolved/TAS-116-status-move-staging.md",
+        ".tangle/resolved/TAS-116-status-move-staging.md",
         "SKILL.md",
     },
     "experience-transfer-cross-task-gotcha-001": {
-        ".braintree/resolved/TAS-088-optional-embedding-extra.md",
-        ".braintree/resolved/TAS-089-embedding-model-selection.md",
+        ".tangle/resolved/TAS-088-optional-embedding-extra.md",
+        ".tangle/resolved/TAS-089-embedding-model-selection.md",
         "pyproject.toml",
         "uv.lock",
         "README.md",
     },
     "experience-transfer-misleading-prior-lesson-001": {
-        ".braintree/resolved/TAS-089-embedding-model-selection.md",
+        ".tangle/resolved/TAS-089-embedding-model-selection.md",
         "README.md",
         "benchmark/embedding-evidence.json",
     },
     "forgetting-and-interference-low-utility-001": {
         "research/agent-memory-theory-evaluation.md",
         "research/agent-memory-evaluation-contract.md",
-        "src/braintree/memory_contract.py",
+        "src/tangle/memory_contract.py",
     },
     "forgetting-and-interference-irrelevant-growth-001": {
         "references/coordination.md",
-        ".braintree/resolved/TAS-023-parallel-id-allocation.md",
-        ".braintree/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md",
+        ".tangle/resolved/TAS-023-parallel-id-allocation.md",
+        ".tangle/resolved/TAS-103-make-one-command-node-capture-preserve-atomic-id.md",
         "SKILL.md",
-        "src/braintree/cli.py",
-        "src/braintree/help.py",
-        "src/braintree/main.py",
-        "src/braintree/node_record.py",
-        "src/braintree/sidecar.py",
+        "src/tangle/cli.py",
+        "src/tangle/help.py",
+        "src/tangle/main.py",
+        "src/tangle/node_record.py",
+        "src/tangle/sidecar.py",
     },
     "forgetting-and-interference-superseded-growth-001": {
-        ".braintree/resolved/TAS-082-reversal-semantics.md",
+        ".tangle/resolved/TAS-082-reversal-semantics.md",
         "references/dependencies.md",
-        ".braintree/resolved/TAS-009-semantic-revisions.md",
+        ".tangle/resolved/TAS-009-semantic-revisions.md",
     },
     "forgetting-and-interference-near-duplicate-growth-001": {
-        ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md",
+        ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md",
         "tests/install.sh",
         "SKILL.md",
     },
     "poisoning-and-authority-old-authoritative-decision-001": {
-        ".braintree/resolved/DEC-002-hybrid-markdown-sqlite-authority.md",
+        ".tangle/resolved/DEC-002-hybrid-markdown-sqlite-authority.md",
         "references/coordination.md",
         "references/authoring.md",
         "SKILL.md",
     },
     "poisoning-and-authority-direct-injection-001": {
         "research/agent-memory-theory-evaluation.md",
-        "src/braintree/memory_contract.py",
+        "src/tangle/memory_contract.py",
     },
     "poisoning-and-authority-laundered-instruction-001": {
         "research/agent-memory-theory-evaluation.md",
-        "src/braintree/memory_contract.py",
+        "src/tangle/memory_contract.py",
         "references/dependencies.md",
     },
     "poisoning-and-authority-permission-expansion-001": {
         "research/agent-memory-evaluation-contract.md",
-        "src/braintree/memory_contract.py",
+        "src/tangle/memory_contract.py",
         "references/coordination.md",
     },
 }

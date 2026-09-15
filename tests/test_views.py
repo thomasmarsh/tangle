@@ -1,7 +1,7 @@
 """Behavioral tests for generated Markdown navigation views.
 
 Views are a disposable, deterministic projection of canonical Markdown that
-Braintree publishes itself. These tests drive the real command process: a direct
+Tangle publishes itself. These tests drive the real command process: a direct
 Markdown edit reaches the pages on the next interaction, an unchanged vault
 rewrites nothing, a generated page is never discovered as a node, and the
 ``status`` and ``index`` diagnostic surfaces report the projection state.
@@ -15,7 +15,7 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 _PROJECT = "views-test"
 _PROJECT_UID = "prj-04r8b1t7n2c6m9x3q5f0hkwdza"
@@ -23,9 +23,9 @@ _PROJECT_UID = "prj-04r8b1t7n2c6m9x3q5f0hkwdza"
 
 def _env(tmp_path: Path, vault: Path) -> dict[str, str]:
     return {
-        "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-        "BT_PROJECT_ID": _PROJECT,
-        "BT_NODES_DIR": str(vault),
+        "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+        "TANGLE_PROJECT_ID": _PROJECT,
+        "TANGLE_NODES_DIR": str(vault),
     }
 
 
@@ -77,15 +77,15 @@ def _page(vault: Path, name: str) -> str:
 
 
 def test_a_read_only_interaction_publishes_view_pages(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """`frontier` publishes the deterministic pages with no client step."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
 
-    answered = run_bt("frontier", env=env)
+    answered = run_tangle("frontier", env=env)
     assert answered.returncode == 0
 
     assert set(name.name for name in (vault / "views").iterdir()) == {
@@ -101,13 +101,13 @@ def test_a_read_only_interaction_publishes_view_pages(
     assert "## resolved (1)" in status_page
 
 
-def test_a_direct_markdown_edit_reaches_the_views(tmp_path: Path, run_bt: RunBt) -> None:
+def test_a_direct_markdown_edit_reaches_the_views(tmp_path: Path, run_tangle: RunTangle) -> None:
     """A hand edit is reflected on the next interaction without an index call."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
 
     (vault / "active" / "TAS-001-consumer.md").write_text(
         _frontmatter(
@@ -119,17 +119,17 @@ def test_a_direct_markdown_edit_reaches_the_views(tmp_path: Path, run_bt: RunBt)
         + "\nParent [[IDX-001-root]].\n",
         encoding="utf-8",
     )
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
     assert "A revised summary." in _page(vault, "by-status.md")
 
 
-def test_views_group_by_priority_and_area(tmp_path: Path, run_bt: RunBt) -> None:
+def test_views_group_by_priority_and_area(tmp_path: Path, run_tangle: RunTangle) -> None:
     """The priority and area pages group the routed node under its own values."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
 
     priority_page = _page(vault, "by-priority.md")
     assert "## P0 (1)" in priority_page
@@ -140,19 +140,19 @@ def test_views_group_by_priority_and_area(tmp_path: Path, run_bt: RunBt) -> None
     assert "## Unassigned" in area_page
 
 
-def test_an_unchanged_vault_rewrites_no_view(tmp_path: Path, run_bt: RunBt) -> None:
+def test_an_unchanged_vault_rewrites_no_view(tmp_path: Path, run_tangle: RunTangle) -> None:
     """A second interaction reproduces the pages byte for byte and writes none."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
     before = {
         path.name: (path.read_bytes(), path.stat().st_mtime_ns)
         for path in (vault / "views").iterdir()
     }
 
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
     after = {
         path.name: (path.read_bytes(), path.stat().st_mtime_ns)
         for path in (vault / "views").iterdir()
@@ -160,32 +160,32 @@ def test_an_unchanged_vault_rewrites_no_view(tmp_path: Path, run_bt: RunBt) -> N
     assert after == before
 
 
-def test_views_are_never_discovered_as_nodes(tmp_path: Path, run_bt: RunBt) -> None:
+def test_views_are_never_discovered_as_nodes(tmp_path: Path, run_tangle: RunTangle) -> None:
     """A published page is excluded from discovery and graph validation."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
     assert (vault / "views" / "by-status.md").is_file()
 
-    checked = run_bt("check", env=env)
+    checked = run_tangle("check", env=env)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert "by-status" not in checked.stdout
 
-    frontier = run_bt("frontier", env=env)
+    frontier = run_tangle("frontier", env=env)
     assert "by-status" not in frontier.stdout
 
 
-def test_status_reports_stale_then_current_views(tmp_path: Path, run_bt: RunBt) -> None:
+def test_status_reports_stale_then_current_views(tmp_path: Path, run_tangle: RunTangle) -> None:
     """`status` reports a pending projection, then current after upkeep."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
 
-    assert 'views: "current (5)"' in run_bt("status", env=env).stdout
+    assert 'views: "current (5)"' in run_tangle("status", env=env).stdout
 
     (vault / "active" / "TAS-001-consumer.md").write_text(
         _frontmatter(
@@ -199,29 +199,29 @@ def test_status_reports_stale_then_current_views(tmp_path: Path, run_bt: RunBt) 
     )
     # `status` answers before its own upkeep publishes the pending page.
     assert re.search(
-        r'views: "stale \(\d+ pending\)"', run_bt("status", env=env).stdout
+        r'views: "stale \(\d+ pending\)"', run_tangle("status", env=env).stdout
     )
-    assert 'views: "current (5)"' in run_bt("status", env=env).stdout
+    assert 'views: "current (5)"' in run_tangle("status", env=env).stdout
 
 
-def test_index_republishes_views(tmp_path: Path, run_bt: RunBt) -> None:
+def test_index_republishes_views(tmp_path: Path, run_tangle: RunTangle) -> None:
     """`index` rebuilds derived state and republishes missing pages."""
     vault = tmp_path / "nodes"
     _seed(vault)
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
 
     for page in (vault / "views").iterdir():
         page.unlink()
-    rebuilt = run_bt("index", env=env)
+    rebuilt = run_tangle("index", env=env)
     assert rebuilt.returncode == 0
     assert 'views: "updated 5"' in rebuilt.stdout
     assert (vault / "views" / "by-status.md").is_file()
 
 
 def test_a_registered_external_project_is_projected(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """A local registry entry appears on the projects page without a fake node."""
     vault = tmp_path / "nodes"
@@ -231,8 +231,8 @@ def test_a_registered_external_project_is_projected(
         encoding="utf-8",
     )
     env = _env(tmp_path, vault)
-    assert run_bt("init", env=env).returncode == 0
-    assert run_bt("frontier", env=env).returncode == 0
+    assert run_tangle("init", env=env).returncode == 0
+    assert run_tangle("frontier", env=env).returncode == 0
 
     projects = _page(vault, "projects.md")
     assert "## hekate" in projects

@@ -1,6 +1,6 @@
 """Parameter, stability, and label tests for advisory density clustering.
 
-:mod:`braintree.clustering` clusters the raw provider vectors and the reduced
+:mod:`tangle.clustering` clusters the raw provider vectors and the reduced
 UMAP coordinates, reports noise and outliers separately, and labels each cluster
 from one of its members. These tests drive it with deterministic stand-in
 clusterer and reducer functions, so the default ``make test`` environment (which
@@ -30,8 +30,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import clustering, reduction
-from braintree.clustering import (
+from tangle import clustering, reduction
+from tangle.clustering import (
     ClusterError,
     ClusterParams,
     NodeFacts,
@@ -50,7 +50,7 @@ _HEAVY_MODULES = ("numpy", "sklearn", "umap", "hdbscan")
 # module it loaded, which must be none.
 _IMPORT_PROBE = """\
 import sys
-from braintree import clustering, main
+from tangle import clustering, main
 
 assert clustering.ClusterParams().seeds == (17, 29, 43)
 assert main.main(["--help"]) == 0
@@ -420,7 +420,7 @@ def test_ragged_or_empty_vectors_are_refused(tmp_path: Path) -> None:
 def test_importing_and_running_the_entry_point_loads_no_heavy_module() -> None:
     """A plain install must not import numpy, scikit-learn, umap, or hdbscan."""
     env = os.environ.copy()
-    env.pop("BT_SEMANTIC_PROVIDER", None)
+    env.pop("TANGLE_SEMANTIC_PROVIDER", None)
     result = subprocess.run(
         [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
         cwd=str(_ROOT),

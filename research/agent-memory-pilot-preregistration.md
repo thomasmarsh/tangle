@@ -3,7 +3,7 @@
 This document preregisters the bounded separability pilot that gates the
 evaluation foundation before the five-arm causal experiment spends significant
 tokens. It is the prose authority for the pilot subset. The machine-readable
-half is [`src/braintree/memory_corpus.py`](../src/braintree/memory_corpus.py)
+half is [`src/tangle/memory_corpus.py`](../src/tangle/memory_corpus.py)
 (`pilot_subset`, `pilot_problems`, `PILOT_PROTOCOL`, `PILOT_ARMS`,
 `PILOT_VERDICTS`), and
 [`tests/test_memory_pilot.py`](../tests/test_memory_pilot.py) pins this document

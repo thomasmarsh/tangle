@@ -4,12 +4,12 @@
 
 Planning material is any project-designated source used to inform future or
 ongoing work: documents, tickets, notebooks, wikis, specifications, generated
-plans, or other media. It may predate Braintree, coexist with admitted work, or
+plans, or other media. It may predate Tangle, coexist with admitted work, or
 continue changing after related graph nodes exist.
 
 This document is a research handoff for
 `TAS-167-legacy-plan-intake-lifecycle`. It characterizes the decisions an intake
-workflow must make; it is not itself a Braintree contract, source schema,
+workflow must make; it is not itself a Tangle contract, source schema,
 coexistence policy, or promise of tool support. `SKILL.md` remains authoritative
 for graph admission, node boundaries, status, dependencies, and revisions. The
 project remains authoritative for the meaning, access rules, and permitted use
@@ -19,10 +19,10 @@ The model deliberately does not select an authority mode, bridge shape,
 analyzer, drift policy, or renderer. Those decisions belong to the downstream
 nodes that can consider project choices and pilot evidence.
 
-## Braintree-side constraints
+## Tangle-side constraints
 
-These constraints follow from the current Braintree contract and apply when
-planning material is used with Braintree:
+These constraints follow from the current Tangle contract and apply when
+planning material is used with Tangle:
 
 1. A source-native unit is not automatically a graph unit. Headings, chunks,
    checkboxes, tickets, and extracted entities are evidence for review, not node
@@ -30,7 +30,7 @@ planning material is used with Braintree:
 2. Retrieval is not admission. Tools may locate or propose source evidence, but
    a reviewer applies the durable-outcome and update-existing rules before
    Markdown becomes authoritative graph state.
-3. The vault is authoritative for Braintree graph state. That does not make it
+3. The vault is authoritative for Tangle graph state. That does not make it
    the authority for every project fact, requirement, narrative, or source.
 4. Discoverability is not authorization or authority. Being able to read,
    parse, hash, or version a source says nothing by itself about whether the
@@ -130,7 +130,7 @@ content.
 - Which project events or roles can settle ambiguity?
 - Which compatibility obligations constrain changes to existing workflows?
 
-Braintree must not redefine these meanings merely to normalize an input.
+Tangle must not redefine these meanings merely to normalize an input.
 
 ## Classifying an intake decision
 
@@ -140,7 +140,7 @@ a source property. They answer different questions:
 
 | Label | Dimension | Question answered | Consequence |
 | --- | --- | --- | --- |
-| **Braintree-fixed** (universal) | Governing rule | Does the current Braintree contract already constrain this operation? | Apply the contract; do not ask a project to override it. |
+| **Tangle-fixed** (universal) | Governing rule | Does the current Tangle contract already constrain this operation? | Apply the contract; do not ask a project to override it. |
 | **Project-declared** | Decision authority | Must an authorized project role choose the policy, meaning, or permission? | Obtain and cite that decision before relying on it. |
 | **Discoverable** | Evidence method | Can a named capability observe the fact with stated scope and fidelity? | Record the observation and its limits; do not turn evidence into policy. |
 | **Unknown** | Current knowledge | Is a relevant answer unresolved, unavailable, or not yet observed? | Decide whether it matters to the proposed operation; do not invent it. |
@@ -163,7 +163,7 @@ Before an intake operation, answer only the questions material to that
 operation:
 
 1. **Purpose:** What decision or action will the operation support?
-2. **Contract:** Which Braintree rules constrain the result?
+2. **Contract:** Which Tangle rules constrain the result?
 3. **Authority:** Who may authorize the access, handling, policy, and mutation?
 4. **Evidence:** What has actually been observed, at what scope and fidelity?
 5. **Support:** Can the selected capability perform this operation faithfully?
@@ -241,7 +241,7 @@ predetermined coexistence mode.
 | S1 | Immutable in-repository Markdown; project declares it historical | Whether it is complete or still relevant | Record observable identity and review only evidence needed for the selected outcome | Historical does not mean complete or correct |
 | S2 | Git-tracked living spec repeatedly rewritten by an LLM | Section authority, storage permission, stable anchors | Ask the project to identify governing content; test citations across a rewrite | Git history does not select hybrid mode or authority |
 | S3 | Planning material spans a wiki, tracker, and notebooks with partial access | Corpus completeness, cross-source precedence, quote permission | Inventory only permitted metadata and surface missing coverage | A reachable source is not the whole corpus |
-| S4 | The project designates no planning material | None for intake | Use ordinary Braintree planning and admission | Intake machinery is not required |
+| S4 | The project designates no planning material | None for intake | Use ordinary Tangle planning and admission | Intake machinery is not required |
 | S5 | A plan is regenerated during builds | Generator inputs, edit policy, authority of output | Observe generation behavior and ask which surface, if any, governs | Generated does not automatically mean non-authoritative |
 | S6 | A living plan contradicts its checklist and current graph state | Which assertion governs and whether the conflict itself should be admitted | Cite the conflict at verified versions and request review | Ambiguity does not require rejecting every possible node |
 | S7 | A credentialed remote source has no Git revision | Permission to read, hash, store, and revisit; provider identity guarantees | Use only provider metadata or content operations the policy allows | Non-Git does not imply that content hashing is permitted or sufficient |
@@ -260,7 +260,7 @@ choose those nodes' outcomes.
 
 - Do not infer authority from source form or observed behavior.
 - Define the granularity of any “one editable owner” rule and distinguish
-  Braintree graph state from other project facts.
+  Tangle graph state from other project facts.
 - Decide, rather than assume, the supported coexistence modes, default,
   exceptions, write-back behavior, and transition events.
 
@@ -329,7 +329,7 @@ These are pass/fail properties of the intake behavior:
 - partial or degraded reads are labeled with their scope;
 - source access, copying, transmission, and mutation stay within declared
   authorization;
-- graph mutations receive review and pass ordinary Braintree validation; and
+- graph mutations receive review and pass ordinary Tangle validation; and
 - an unsupported operation is reported without a lossy result being presented
   as faithful.
 
@@ -377,4 +377,4 @@ The following remain deliberately unsettled:
 - whether analyzer, drift, or renderer capabilities earn their complexity;
 - which reconciliation events warn, block, or require explicit disposition;
   and
-- which handling rules Braintree can enforce rather than merely document.
+- which handling rules Tangle can enforce rather than merely document.

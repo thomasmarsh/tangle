@@ -20,7 +20,7 @@
                                         "statement": "The installer places one shared program per project root that every agent skill links to, rather than a per-project copy.",
                                         "evidence": [
                                           "scripts/install.sh",
-                                          ".braintree/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
+                                          ".tangle/resolved/DEC-007-install-one-shared-per-root-program-per-agent-in.md"
                                         ]
                                       },
                                       {
@@ -29,7 +29,7 @@
                                         "kind": "decision",
                                         "statement": "A per-project copy was rejected because it duplicates the program and lets the copies drift; the shared install is the recorded decision.",
                                         "evidence": [
-                                          ".braintree/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md"
+                                          ".tangle/resolved/TAS-108-install-one-shared-per-root-program-so-agent-ski.md"
                                         ]
                                       },
                                       {
@@ -38,7 +38,7 @@
                                         "kind": "observation",
                                         "statement": "The installer still preserves an installed-revision stamp so a consuming project can report the version it uses.",
                                         "evidence": [
-                                          "src/braintree/revision.py"
+                                          "src/tangle/revision.py"
                                         ]
                                       }
                                     ]
@@ -46,7 +46,7 @@
                                   "query": {
                                     "task": "A recent shared-install upgrade broke a consuming project, and the project's packaging guide requires that a broken project pin its own copy rather than wait for a shared fix. A contributor follows the guide and proposes giving each project its own copy so it can pin its version. Decide the next action.",
                                     "observable_paths": [
-                                      "src/braintree/toon.py"
+                                      "src/tangle/toon.py"
                                     ],
                                     "allowed_actions": [
                                       "keep-one-shared-per-root-program",
@@ -87,7 +87,7 @@
             "kind": "decision",
             "statement": "The semantic retrieval layer was frozen as optional, derived, rebuildable, and never authoritative; every core answer must be identical when the capability is absent.",
             "evidence": [
-              ".braintree/resolved/DEC-006-semantic-layer-capability-boundary.md"
+              ".tangle/resolved/DEC-006-semantic-layer-capability-boundary.md"
             ]
           },
           {
@@ -96,7 +96,7 @@
             "kind": "result",
             "statement": "Off-the-shelf embeddings lost near-duplicate retrieval to the lexical baseline in the frozen quality gate and were kept only as an advisory paraphrase and digest layer.",
             "evidence": [
-              ".braintree/resolved/THO-012-embedding-clustering-retrieval-theory.md"
+              ".tangle/resolved/THO-012-embedding-clustering-retrieval-theory.md"
             ]
           },
           {
@@ -113,7 +113,7 @@
       "query": {
         "task": "A contributor proposes making embedding similarity the default near-duplicate check for admission, because duplicate detection should not depend on shared tokens. Decide what to do.",
         "observable_paths": [
-          "tests/test_bt_index.py"
+          "tests/test_tangle_index.py"
         ],
         "allowed_actions": [
           "keep-lexical-search-as-the-duplicate-reference",
@@ -152,27 +152,27 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "decision",
-            "statement": "The vault lives under `.braintree/` and a legacy `nodes/index-map.md` vault is migrated in place by the default resolver.",
+            "statement": "The vault lives under `.tangle/` and a legacy `nodes/index-map.md` vault is migrated in place by the default resolver.",
             "evidence": [
-              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+              ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md"
             ]
           },
           {
             "id": "ep-2",
             "sequence": 2,
             "kind": "feedback",
-            "statement": "An operator reported that a capture command relocated `nodes/` to `.braintree/` and printed no notice, so the move was visible only in the diff.",
+            "statement": "An operator reported that a capture command relocated `nodes/` to `.tangle/` and printed no notice, so the move was visible only in the diff.",
             "evidence": [
-              ".braintree/resolved/TAS-119-announce-vault-migration.md"
+              ".tangle/resolved/TAS-119-announce-vault-migration.md"
             ]
           },
           {
             "id": "ep-3",
             "sequence": 3,
             "kind": "result",
-            "statement": "The resolver prints `migrated vault: nodes -> .braintree` on stderr, keeps stdout machine-readable, and reports the resolved vault path.",
+            "statement": "The resolver prints `migrated vault: nodes -> .tangle` on stderr, keeps stdout machine-readable, and reports the resolved vault path.",
             "evidence": [
-              "src/braintree/vault.py"
+              "src/tangle/vault.py"
             ]
           },
           {
@@ -181,15 +181,15 @@
             "kind": "observation",
             "statement": "The in-place migration also merges the legacy reservation directory.",
             "evidence": [
-              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+              ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md"
             ]
           }
         ]
       },
       "query": {
-        "task": "`braintree feedback record` renamed a project's `nodes/` directory during capture. The operator wants the tool to refuse to write whenever the resolved vault differs from the directory they named. Decide the next action.",
+        "task": "`tangle feedback record` renamed a project's `nodes/` directory during capture. The operator wants the tool to refuse to write whenever the resolved vault differs from the directory they named. Decide the next action.",
         "observable_paths": [
-          "src/braintree/feedback_record.py"
+          "src/tangle/feedback_record.py"
         ],
         "allowed_actions": [
           "keep-the-announced-in-place-migration",
@@ -230,9 +230,9 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "action",
-            "statement": "The zero-live staged benchmark harness landed as `braintree benchmark staged`, comparing two matched token records.",
+            "statement": "The zero-live staged benchmark harness landed as `tangle benchmark staged`, comparing two matched token records.",
             "evidence": [
-              "src/braintree/staged_benchmark.py"
+              "src/tangle/staged_benchmark.py"
             ]
           },
           {
@@ -241,7 +241,7 @@
             "kind": "observation",
             "statement": "No matched pre-thrust and landed sample pair exists to feed the harness.",
             "evidence": [
-              "src/braintree/staged_benchmark.py"
+              "src/tangle/staged_benchmark.py"
             ]
           },
           {
@@ -259,7 +259,7 @@
             "kind": "observation",
             "statement": "The harness reuses the token benchmark's session parser for round trips.",
             "evidence": [
-              "src/braintree/staged_benchmark.py"
+              "src/tangle/staged_benchmark.py"
             ]
           }
         ]
@@ -267,7 +267,7 @@
       "query": {
         "task": "The staged benchmark harness is ready. A contributor asks you to record the two matched samples from the pre-thrust and landed checkouts and report the deltas. Decide the next action.",
         "observable_paths": [
-          "src/braintree/staged_benchmark.py",
+          "src/tangle/staged_benchmark.py",
           "Makefile"
         ],
         "allowed_actions": [
@@ -309,7 +309,7 @@
             "kind": "observation",
             "statement": "A concise cold-resume rule was predicted to cut tokens by naming the focus route and limiting reads.",
             "evidence": [
-              ".braintree/resolved/THO-005-cold-resume-route-screen.md"
+              ".tangle/resolved/THO-005-cold-resume-route-screen.md"
             ]
           },
           {
@@ -318,7 +318,7 @@
             "kind": "failure",
             "statement": "The candidate measured 106,538 total tokens against 84,165 for the baseline, 26.6% higher, in a matched small-scale screen.",
             "evidence": [
-              ".braintree/resolved/THO-005-cold-resume-route-screen.md"
+              ".tangle/resolved/THO-005-cold-resume-route-screen.md"
             ]
           },
           {
@@ -327,7 +327,7 @@
             "kind": "decision",
             "statement": "The rule was restored and rejected; do not repeat the theory or treat the attempts as evidence.",
             "evidence": [
-              ".braintree/resolved/THO-005-cold-resume-route-screen.md"
+              ".tangle/resolved/THO-005-cold-resume-route-screen.md"
             ]
           },
           {
@@ -336,7 +336,7 @@
             "kind": "feedback",
             "statement": "The recorder now drops only a leading `Reading` line and parses every remaining event strictly.",
             "evidence": [
-              "src/braintree/token_benchmark.py"
+              "src/tangle/token_benchmark.py"
             ]
           }
         ]
@@ -395,7 +395,7 @@
             "kind": "decision",
             "statement": "The evaluation foundation curates corpus families in order: after admission come resumption and implicit retrieval, then revision and conflict, then transfer, interference, and authority.",
             "evidence": [
-              ".braintree/proposed/TAS-121-evaluation-foundation.md"
+              ".tangle/proposed/TAS-121-evaluation-foundation.md"
             ]
           },
           {
@@ -404,8 +404,8 @@
             "kind": "feedback",
             "statement": "The coordinating node's `next` names the resumption and implicit-retrieval curation as the current frontier route, and the whole-corpus validator stays gated on the remaining corpus families.",
             "evidence": [
-              ".braintree/proposed/TAS-121-evaluation-foundation.md",
-              ".braintree/proposed/TAS-135-corpus-validator-splits.md"
+              ".tangle/proposed/TAS-121-evaluation-foundation.md",
+              ".tangle/proposed/TAS-135-corpus-validator-splits.md"
             ]
           },
           {
@@ -414,7 +414,7 @@
             "kind": "observation",
             "statement": "The scenario schema and grader already support every family without a per-family field.",
             "evidence": [
-              "src/braintree/memory_scenario.py"
+              "src/tangle/memory_scenario.py"
             ]
           }
         ]
@@ -423,7 +423,7 @@
         "task": "The benchmark corpus work is handed to a fresh agent after admission landed. Continue the corpus by taking the current frontier action.",
         "observable_paths": [
           "benchmark/memory-corpus/admission.json",
-          "src/braintree/memory_scenario.py",
+          "src/tangle/memory_scenario.py",
           "research/agent-memory-scenario-schema.md"
         ],
         "allowed_actions": [
@@ -463,45 +463,45 @@
             "id": "ep-1",
             "sequence": 1,
             "kind": "observation",
-            "statement": "The resolved decision and the resolver both place the vault under `.braintree/` and migrate a legacy `nodes/` vault in place, announcing the move on stderr.",
+            "statement": "The resolved decision and the resolver both place the vault under `.tangle/` and migrate a legacy `nodes/` vault in place, announcing the move on stderr.",
             "evidence": [
-              ".braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md",
-              "src/braintree/vault.py"
+              ".tangle/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+              "src/tangle/vault.py"
             ]
           },
           {
             "id": "ep-2",
             "sequence": 2,
             "kind": "observation",
-            "statement": "A legacy vault is migrated in place by both `braintree migrate` and the default resolver without a manual step.",
+            "statement": "A legacy vault is migrated in place by both `tangle migrate` and the default resolver without a manual step.",
             "evidence": [
-              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+              ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md"
             ]
           }
         ]
       },
       "query": {
-        "task": "A capture command renamed a project's `nodes/` directory to `.braintree/` and printed a one-line notice. A contributor asks whether the rename should be reverted. Decide the next action.",
+        "task": "A capture command renamed a project's `nodes/` directory to `.tangle/` and printed a one-line notice. A contributor asks whether the rename should be reverted. Decide the next action.",
         "observable_paths": [
-          ".braintree/resolved/DEC-008-vault-lives-under-dot-braintree.md",
-          "src/braintree/vault.py"
+          ".tangle/resolved/DEC-008-vault-lives-under-dot-braintree.md",
+          "src/tangle/vault.py"
         ],
         "allowed_actions": [
-          "keep-the-vault-under-dot-braintree",
+          "keep-the-vault-under-dot-tangle",
           "revert-the-rename-to-nodes",
           "refuse-future-migrations"
         ]
       },
       "grading": {
         "grader": "action-exact",
-        "expected_outcome": "keep-the-vault-under-dot-braintree",
+        "expected_outcome": "keep-the-vault-under-dot-tangle",
         "acceptable_actions": [
-          "keep-the-vault-under-dot-braintree"
+          "keep-the-vault-under-dot-tangle"
         ],
         "gold_evidence": [
           {
             "id": "gold-1",
-            "statement": "Current observable state already settles this: the resolved decision and the resolver place the vault under `.braintree/`, so no unavailable history is required.",
+            "statement": "Current observable state already settles this: the resolved decision and the resolver place the vault under `.tangle/`, so no unavailable history is required.",
             "source_episodes": [
               "ep-1"
             ]

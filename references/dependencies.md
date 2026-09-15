@@ -3,7 +3,7 @@
 Load this before pinning or gating a dependency, bumping `context_rev`, staging
 staleness, reversing or superseding an outcome, or regenerating an artifact
 committed by a resolved node. It is the canonical Markdown printed by
-`braintree help dependencies` and is installed with `SKILL.md` and the command.
+`tangle help dependencies` and is installed with `SKILL.md` and the command.
 
 ## Pins, gates, and readiness
 
@@ -17,8 +17,8 @@ work.
 
 The non-pinned `Informed by [[TARGET]].` reconnaissance reference is none of
 these: it records optional shared context, carries no pin, and changes no
-readiness, staleness, or routing answer. See `braintree help authoring` for its
-shape and the opt-in `braintree node references NODE` read surface.
+readiness, staleness, or routing answer. See `tangle help authoring` for its
+shape and the opt-in `tangle node references NODE` read surface.
 
 An unresolved target has no consumable context. Record it as a gate instead of a
 context edge: put `Gated on [[DEF-auth-protocol]].` in `# Context`, leave the
@@ -31,12 +31,12 @@ the target resolves, not when the node returns to `proposed`.
 Use line-anchored searches so the reference's command text does not self-match:
 
 ```sh
-rg -n '^Gated on \[\[DEF-auth-protocol\]\]\.' .braintree
-rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .braintree
+rg -n '^Gated on \[\[DEF-auth-protocol\]\]\.' .tangle
+rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .tangle
 ```
 
 The `^` selects an authored relation, not the command text where it is quoted;
-zero results therefore need no inspection. `braintree check` rejects an
+zero results therefore need no inspection. `tangle check` rejects an
 unpinned context edge and any pin whose target is `proposed`, `active`, or
 `blocked`. `--allow-stale` relaxes revision equality only, never target status or
 malformed relations.
@@ -45,8 +45,8 @@ malformed relations.
 
 Commit a semantic `context_rev` bump with the bumped node alone, deliberately
 leaving consumers stale for the exact backlink search. That commit uses the
-sanctioned staged gate `braintree check --allow-stale`; plain
-`braintree check` remains the normal gate.
+sanctioned staged gate `tangle check --allow-stale`; plain
+`tangle check` remains the normal gate.
 
 Reconciliation is separate work owned by each consumer: reread the dependency,
 update its assumptions, pin the current revision, and pass the plain gate before

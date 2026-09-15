@@ -7,7 +7,7 @@
   "child_profile": "memory-pilot-child",
   "model": "deepseek/deepseek-v4-flash",
   "reasoning_effort": "high",
-  "corpus_digest": "sha256:cabe4ac352feb613cef7d9ed025e9a383b8a04f1d4c0306796fac1f94a3f379c",
+  "corpus_digest": "sha256:43199538957715dc5abde49982e8b2bfe82f0ffa224a29e6a9f9c0bdf1de3d01",
   "source_revision": "4bbf8cc1be2d",
   "pins": {
     "protocol": "memory-pilot-v2",
@@ -962,15 +962,15 @@
       "control": true,
       "child_run_id": "da259bec-53ff-4aa1-a216-ebe4e211a916",
       "raw_output_ref": "/var/folders/ts/kr64ygzn283cg3tdcv6c21pr0000gn/T/pi-subagents-uid-501/async-subagent-runs/da259bec-53ff-4aa1-a216-ebe4e211a916/output-0.log",
-      "raw_output": "{\"action\": \"keep-the-vault-under-dot-braintree\"}",
+      "raw_output": "{\"action\": \"keep-the-vault-under-dot-tangle\"}",
       "prompt_digest": "sha256:0e1293c8eada0a701eb4b96ef1c980f70c869505b6c5ce0cfcd2d31f511f8f0a",
       "started_at": "2026-09-13T19:07:50.601000Z",
       "finished_at": "2026-09-13T19:07:53.361000Z",
-      "expected_outcome": "keep-the-vault-under-dot-braintree",
+      "expected_outcome": "keep-the-vault-under-dot-tangle",
       "acceptable_actions": [
-        "keep-the-vault-under-dot-braintree"
+        "keep-the-vault-under-dot-tangle"
       ],
-      "action": "keep-the-vault-under-dot-braintree",
+      "action": "keep-the-vault-under-dot-tangle",
       "correct": true,
       "credit": 1.0,
       "regret": 0.0,
@@ -1001,15 +1001,15 @@
       "control": true,
       "child_run_id": "8ffd7080-4e7c-4011-8d8e-2f54396286e5",
       "raw_output_ref": "/var/folders/ts/kr64ygzn283cg3tdcv6c21pr0000gn/T/pi-subagents-uid-501/async-subagent-runs/8ffd7080-4e7c-4011-8d8e-2f54396286e5/output-0.log",
-      "raw_output": "{\"action\": \"keep-the-vault-under-dot-braintree\"}",
+      "raw_output": "{\"action\": \"keep-the-vault-under-dot-tangle\"}",
       "prompt_digest": "sha256:0e1293c8eada0a701eb4b96ef1c980f70c869505b6c5ce0cfcd2d31f511f8f0a",
       "started_at": "2026-09-13T19:07:50.608000Z",
       "finished_at": "2026-09-13T19:07:55.888000Z",
-      "expected_outcome": "keep-the-vault-under-dot-braintree",
+      "expected_outcome": "keep-the-vault-under-dot-tangle",
       "acceptable_actions": [
-        "keep-the-vault-under-dot-braintree"
+        "keep-the-vault-under-dot-tangle"
       ],
-      "action": "keep-the-vault-under-dot-braintree",
+      "action": "keep-the-vault-under-dot-tangle",
       "correct": true,
       "credit": 1.0,
       "regret": 0.0,
@@ -1040,15 +1040,15 @@
       "control": true,
       "child_run_id": "c6a7e3d6-c1af-4216-8db4-e082d95a599e",
       "raw_output_ref": "/var/folders/ts/kr64ygzn283cg3tdcv6c21pr0000gn/T/pi-subagents-uid-501/async-subagent-runs/c6a7e3d6-c1af-4216-8db4-e082d95a599e/output-0.log",
-      "raw_output": "{\"action\": \"keep-the-vault-under-dot-braintree\"}",
+      "raw_output": "{\"action\": \"keep-the-vault-under-dot-tangle\"}",
       "prompt_digest": "sha256:0e1293c8eada0a701eb4b96ef1c980f70c869505b6c5ce0cfcd2d31f511f8f0a",
       "started_at": "2026-09-13T19:07:56.458000Z",
       "finished_at": "2026-09-13T19:07:58.003000Z",
-      "expected_outcome": "keep-the-vault-under-dot-braintree",
+      "expected_outcome": "keep-the-vault-under-dot-tangle",
       "acceptable_actions": [
-        "keep-the-vault-under-dot-braintree"
+        "keep-the-vault-under-dot-tangle"
       ],
-      "action": "keep-the-vault-under-dot-braintree",
+      "action": "keep-the-vault-under-dot-tangle",
       "correct": true,
       "credit": 1.0,
       "regret": 0.0,
@@ -1079,15 +1079,15 @@
       "control": true,
       "child_run_id": "4c880c28-06ba-45cd-9fdf-c19b3d54e810",
       "raw_output_ref": "/var/folders/ts/kr64ygzn283cg3tdcv6c21pr0000gn/T/pi-subagents-uid-501/async-subagent-runs/4c880c28-06ba-45cd-9fdf-c19b3d54e810/output-0.log",
-      "raw_output": "{\"action\": \"keep-the-vault-under-dot-braintree\"}",
+      "raw_output": "{\"action\": \"keep-the-vault-under-dot-tangle\"}",
       "prompt_digest": "sha256:2a016ca2b5c0dc33459a85507cb784eb327b961a758bb6929dd47a5eacad8539",
       "started_at": "2026-09-13T19:07:56.673000Z",
       "finished_at": "2026-09-13T19:07:59.188000Z",
-      "expected_outcome": "keep-the-vault-under-dot-braintree",
+      "expected_outcome": "keep-the-vault-under-dot-tangle",
       "acceptable_actions": [
-        "keep-the-vault-under-dot-braintree"
+        "keep-the-vault-under-dot-tangle"
       ],
-      "action": "keep-the-vault-under-dot-braintree",
+      "action": "keep-the-vault-under-dot-tangle",
       "correct": true,
       "credit": 1.0,
       "regret": 0.0,
@@ -1118,15 +1118,15 @@
       "control": true,
       "child_run_id": "8cb3d250-ab74-4777-a14e-4929b4c235cd",
       "raw_output_ref": "/var/folders/ts/kr64ygzn283cg3tdcv6c21pr0000gn/T/pi-subagents-uid-501/async-subagent-runs/8cb3d250-ab74-4777-a14e-4929b4c235cd/output-0.log",
-      "raw_output": "{\"action\": \"keep-the-vault-under-dot-braintree\"}",
+      "raw_output": "{\"action\": \"keep-the-vault-under-dot-tangle\"}",
       "prompt_digest": "sha256:2a016ca2b5c0dc33459a85507cb784eb327b961a758bb6929dd47a5eacad8539",
       "started_at": "2026-09-13T19:07:56.942000Z",
       "finished_at": "2026-09-13T19:07:58.321000Z",
-      "expected_outcome": "keep-the-vault-under-dot-braintree",
+      "expected_outcome": "keep-the-vault-under-dot-tangle",
       "acceptable_actions": [
-        "keep-the-vault-under-dot-braintree"
+        "keep-the-vault-under-dot-tangle"
       ],
-      "action": "keep-the-vault-under-dot-braintree",
+      "action": "keep-the-vault-under-dot-tangle",
       "correct": true,
       "credit": 1.0,
       "regret": 0.0,
@@ -1157,15 +1157,15 @@
       "control": true,
       "child_run_id": "607d7f6a-2329-4b05-afa6-c1784024bb4f",
       "raw_output_ref": "/var/folders/ts/kr64ygzn283cg3tdcv6c21pr0000gn/T/pi-subagents-uid-501/async-subagent-runs/607d7f6a-2329-4b05-afa6-c1784024bb4f/output-0.log",
-      "raw_output": "{\"action\": \"keep-the-vault-under-dot-braintree\"}",
+      "raw_output": "{\"action\": \"keep-the-vault-under-dot-tangle\"}",
       "prompt_digest": "sha256:2a016ca2b5c0dc33459a85507cb784eb327b961a758bb6929dd47a5eacad8539",
       "started_at": "2026-09-13T19:07:57.183000Z",
       "finished_at": "2026-09-13T19:07:58.928000Z",
-      "expected_outcome": "keep-the-vault-under-dot-braintree",
+      "expected_outcome": "keep-the-vault-under-dot-tangle",
       "acceptable_actions": [
-        "keep-the-vault-under-dot-braintree"
+        "keep-the-vault-under-dot-tangle"
       ],
-      "action": "keep-the-vault-under-dot-braintree",
+      "action": "keep-the-vault-under-dot-tangle",
       "correct": true,
       "credit": 1.0,
       "regret": 0.0,

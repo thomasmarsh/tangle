@@ -27,9 +27,9 @@ expected_record="$expected_version+$expected_revision"
 # install record. Every agent destination is only the skill prose the agent
 # discovers, so an agent install never duplicates or repoints the program.
 program_files="pyproject.toml uv.lock .python-version README.md"
-for file in "$repo_root"/src/braintree/*; do
+for file in "$repo_root"/src/tangle/*; do
   [ -f "$file" ] || continue
-  program_files="$program_files src/braintree/$(basename -- "$file")"
+  program_files="$program_files src/tangle/$(basename -- "$file")"
 done
 for file in "$repo_root"/references/*.md; do
   [ -f "$file" ] || continue
@@ -60,17 +60,17 @@ check_prose() {
 
 check_record() {
   program=$1
-  [ "$(cat "$program/src/braintree/installed-revision")" = "$expected_record" ]
+  [ "$(cat "$program/src/tangle/installed-revision")" = "$expected_record" ]
 }
 
 mtime() {
   stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"
 }
 
-# Every install writes the single `braintree` command to <root>/.local/bin; it
+# Every install writes the single `tangle` command to <root>/.local/bin; it
 # runs the shared program and exposes the same revision as that program.
 check_launcher() {
-  launcher="$1/.local/bin/braintree"
+  launcher="$1/.local/bin/tangle"
   [ -x "$launcher" ]
   [ "$("$launcher" --version)" = "$expected_record" ]
   # A read-only command must run the prepared program environment directly and
@@ -87,9 +87,9 @@ check_launcher() {
 
 run_installed() {
   program=$1
-  uv run --project "$program" --frozen --quiet braintree check "$repo_root/.braintree" >/dev/null
-  uv run --project "$program" --frozen --quiet braintree feedback scan "$repo_root/.braintree" >/dev/null
-  [ "$(uv run --project "$program" --frozen --quiet braintree --version)" = "$expected_record" ]
+  uv run --project "$program" --frozen --quiet tangle check "$repo_root/.tangle" >/dev/null
+  uv run --project "$program" --frozen --quiet tangle feedback scan "$repo_root/.tangle" >/dev/null
+  [ "$(uv run --project "$program" --frozen --quiet tangle --version)" = "$expected_record" ]
   run_installed_help "$program"
   run_installed_feedback_record "$program"
 }
@@ -101,10 +101,10 @@ run_installed_help() {
   help_cwd=$(mktemp -d "$test_root/help.XXXXXX")
   for topic in coordination dependencies authoring; do
     rendered=$(cd "$help_cwd" && uv run --project "$program" --frozen --quiet \
-      braintree help "$topic")
+      tangle help "$topic")
     case "$rendered" in *"$topic"*) ;; *) exit 1;; esac
   done
-  [ ! -e "$help_cwd/.braintree" ]
+  [ ! -e "$help_cwd/.tangle" ]
   rm -rf "$help_cwd"
 }
 
@@ -113,47 +113,47 @@ run_installed_help() {
 run_installed_feedback_record() {
   program=$1
   vault=$(mktemp -d "$test_root/feedback.XXXXXX")
-  mkdir -p "$vault/.braintree/resolved"
-  cat >"$vault/.braintree/index-map.md" <<'EOF'
+  mkdir -p "$vault/.tangle/resolved"
+  cat >"$vault/.tangle/index-map.md" <<'EOF'
 # Root hubs
 
 - Indexes [[IDX-001-root]]
 EOF
-  cat >"$vault/.braintree/resolved/IDX-001-root.md" <<'EOF'
+  cat >"$vault/.tangle/resolved/IDX-001-root.md" <<'EOF'
 ---
 context_rev: 1
 updated: 2026-09-12T00:00:00Z
 summary: Root hub.
 ---
 EOF
-  uv run --project "$program" --frozen --quiet braintree feedback record \
-    --nodes "$vault/.braintree" \
+  uv run --project "$program" --frozen --quiet tangle feedback record \
+    --nodes "$vault/.tangle" \
     --attempted 'Ran the installed command.' \
     --friction 'The installed recording path was untested.' \
     --improvement 'Exercise it in the install test.' >/dev/null
-  uv run --project "$program" --frozen --quiet braintree check "$vault/.braintree" >/dev/null
-  grep -q "braintree_revision: $expected_record" "$vault"/.braintree/canonical/*/fbk-*.md
+  uv run --project "$program" --frozen --quiet tangle check "$vault/.tangle" >/dev/null
+  grep -q "tangle_revision: $expected_record" "$vault"/.tangle/canonical/*/fbk-*.md
   rm -rf "$vault"
 }
 
 dry_run=$($repo_root/scripts/install.sh --codex --project "$project" --dry-run)
-case "$dry_run" in *"$project/.agents/skills/braintree"*) ;; *) exit 1;; esac
-case "$dry_run" in *"program: \"$project/.local/share/braintree\""*) ;; *) exit 1;; esac
+case "$dry_run" in *"$project/.agents/skills/tangle"*) ;; *) exit 1;; esac
+case "$dry_run" in *"program: \"$project/.local/share/tangle\""*) ;; *) exit 1;; esac
 [ ! -e "$project/.agents" ]
 [ ! -e "$project/.local" ]
 
 $repo_root/scripts/install.sh --codex --project "$project" >/dev/null
-codex_destination="$project/.agents/skills/braintree"
+codex_destination="$project/.agents/skills/tangle"
 check_prose "$codex_destination"
 cmp -s "$repo_root/agents/openai.yaml" "$codex_destination/agents/openai.yaml"
-program_dir="$project/.local/share/braintree"
+program_dir="$project/.local/share/tangle"
 check_program "$program_dir"
 check_record "$program_dir"
 run_installed "$program_dir"
 check_launcher "$project"
 
-launcher_path="$project/.local/bin/braintree"
-program_record_path="$program_dir/src/braintree/installed-revision"
+launcher_path="$project/.local/bin/tangle"
+program_record_path="$program_dir/src/tangle/installed-revision"
 record_mtime=$(mtime "$program_record_path")
 launcher_mtime=$(mtime "$launcher_path")
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
@@ -185,17 +185,17 @@ launcher_mtime=$(mtime "$launcher_path")
 program_mtime=$(mtime "$program_record_path")
 
 $repo_root/scripts/install.sh --codex --home "$home_root" >/dev/null
-check_prose "$home_root/.agents/skills/braintree"
-check_program "$home_root/.local/share/braintree"
-check_record "$home_root/.local/share/braintree"
+check_prose "$home_root/.agents/skills/tangle"
+check_program "$home_root/.local/share/tangle"
+check_record "$home_root/.local/share/tangle"
 check_launcher "$home_root"
 
 pi_dry_run=$($repo_root/scripts/install.sh --pi --project "$project" --dry-run)
-case "$pi_dry_run" in *'result: "dry-run"'*"$project/.pi/skills/braintree"*) ;; *) exit 1;; esac
+case "$pi_dry_run" in *'result: "dry-run"'*"$project/.pi/skills/tangle"*) ;; *) exit 1;; esac
 [ ! -e "$project/.pi" ]
 
 $repo_root/scripts/install.sh --pi --project "$project" >/dev/null
-pi_destination="$project/.pi/skills/braintree"
+pi_destination="$project/.pi/skills/tangle"
 check_prose "$pi_destination"
 [ ! -e "$pi_destination/agents" ]
 run_installed "$program_dir"
@@ -204,11 +204,11 @@ pi_repeat=$($repo_root/scripts/install.sh --pi --project "$project")
 case "$pi_repeat" in *'result: "no-op"'*'agent: "pi"'*) ;; *) exit 1;; esac
 
 $repo_root/scripts/install.sh --pi --home "$home_root" >/dev/null
-check_prose "$home_root/.pi/agent/skills/braintree"
-[ ! -e "$home_root/.pi/agent/skills/braintree/agents" ]
+check_prose "$home_root/.pi/agent/skills/tangle"
+[ ! -e "$home_root/.pi/agent/skills/tangle/agents" ]
 
 $repo_root/scripts/install.sh --claude --project "$project" >/dev/null
-claude_destination="$project/.claude/skills/braintree"
+claude_destination="$project/.claude/skills/tangle"
 check_prose "$claude_destination"
 [ ! -e "$claude_destination/agents" ]
 run_installed "$program_dir"
@@ -231,34 +231,34 @@ for agent_destination in "$codex_destination" "$pi_destination" "$claude_destina
 done
 
 $repo_root/scripts/install.sh --claude --home "$home_root" >/dev/null
-check_prose "$home_root/.claude/skills/braintree"
-[ ! -e "$home_root/.claude/skills/braintree/agents" ]
+check_prose "$home_root/.claude/skills/tangle"
+[ ! -e "$home_root/.claude/skills/tangle/agents" ]
 
 claude_project="$test_root/claude-project"
 claude_home="$test_root/claude-home"
 mkdir -p "$claude_project" "$claude_home"
 
 claude_dry_run=$($repo_root/scripts/install-claude.sh --project "$claude_project" --dry-run)
-case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/braintree"*) ;; *) exit 1;; esac
+case "$claude_dry_run" in *'result: "dry-run"'*"$claude_project/.claude/skills/tangle"*) ;; *) exit 1;; esac
 [ ! -e "$claude_project/.claude" ]
 [ ! -e "$claude_project/.local" ]
 
 $repo_root/scripts/install-claude.sh --project "$claude_project" >/dev/null
-wrapper_destination="$claude_project/.claude/skills/braintree"
+wrapper_destination="$claude_project/.claude/skills/tangle"
 check_prose "$wrapper_destination"
-check_program "$claude_project/.local/share/braintree"
-check_record "$claude_project/.local/share/braintree"
+check_program "$claude_project/.local/share/tangle"
+check_record "$claude_project/.local/share/tangle"
 [ ! -e "$wrapper_destination/agents" ]
-run_installed "$claude_project/.local/share/braintree"
+run_installed "$claude_project/.local/share/tangle"
 check_launcher "$claude_project"
 claude_repeat=$($repo_root/scripts/install-claude.sh --project "$claude_project")
 case "$claude_repeat" in *'result: "no-op"'*'agent: "claude"'*) ;; *) exit 1;; esac
 
 $repo_root/scripts/install-claude.sh --home "$claude_home" >/dev/null
-check_prose "$claude_home/.claude/skills/braintree"
-check_program "$claude_home/.local/share/braintree"
-check_record "$claude_home/.local/share/braintree"
-[ ! -e "$claude_home/.claude/skills/braintree/agents" ]
+check_prose "$claude_home/.claude/skills/tangle"
+check_program "$claude_home/.local/share/tangle"
+check_record "$claude_home/.local/share/tangle"
+[ ! -e "$claude_home/.claude/skills/tangle/agents" ]
 
 # An explicit --semantic install requests the optional extra and defaults the
 # provider, so the installed capability is zero-config; a plain install keeps the
@@ -269,8 +269,8 @@ fake_bin="$test_root/fake-bin"
 mkdir -p "$fake_bin"
 cat > "$fake_bin/uv" <<'FAKE_UV'
 #!/bin/sh
-case "${BT_SEMANTIC_PROVIDER+x}" in
-  x) printf 'provider=[%s]\n' "$BT_SEMANTIC_PROVIDER" ;;
+case "${TANGLE_SEMANTIC_PROVIDER+x}" in
+  x) printf 'provider=[%s]\n' "$TANGLE_SEMANTIC_PROVIDER" ;;
   *) printf 'provider=<unset>\n' ;;
 esac
 FAKE_UV
@@ -279,23 +279,23 @@ chmod 0755 "$fake_bin/uv"
 semantic_project="$test_root/semantic-project"
 mkdir -p "$semantic_project"
 PATH="$fake_bin:$PATH" "$repo_root/scripts/install.sh" --codex --project "$semantic_project" >/dev/null
-semantic_launcher="$semantic_project/.local/bin/braintree"
+semantic_launcher="$semantic_project/.local/bin/tangle"
 if grep -q -- '--extra semantic' "$semantic_launcher"; then exit 1; fi
-plain_env=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
+plain_env=$(unset TANGLE_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
 case "$plain_env" in *'provider=<unset>'*) ;; *) exit 1;; esac
 semantic_install=$(PATH="$fake_bin:$PATH" "$repo_root/scripts/install.sh" --codex --project "$semantic_project" --semantic)
 case "$semantic_install" in
-  *'result: "installed"'*'provider: "defaults to braintree semantic embed'*) ;;
+  *'result: "installed"'*'provider: "defaults to tangle semantic embed'*) ;;
   *) exit 1 ;;
 esac
-grep -q -- '--frozen --extra semantic braintree "$@"' "$semantic_launcher"
-semantic_default=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
-case "$semantic_default" in *'provider=[braintree semantic embed]'*) ;; *) exit 1;; esac
-semantic_override=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" BT_SEMANTIC_PROVIDER='custom provider' "$semantic_launcher")
+grep -q -- '--frozen --extra semantic tangle "$@"' "$semantic_launcher"
+semantic_default=$(unset TANGLE_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" "$semantic_launcher")
+case "$semantic_default" in *'provider=[tangle semantic embed]'*) ;; *) exit 1;; esac
+semantic_override=$(unset TANGLE_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" TANGLE_SEMANTIC_PROVIDER='custom provider' "$semantic_launcher")
 case "$semantic_override" in *'provider=[custom provider]'*) ;; *) exit 1;; esac
-semantic_empty=$(unset BT_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" BT_SEMANTIC_PROVIDER='' "$semantic_launcher")
+semantic_empty=$(unset TANGLE_SEMANTIC_PROVIDER; PATH="$fake_bin:$PATH" TANGLE_SEMANTIC_PROVIDER='' "$semantic_launcher")
 case "$semantic_empty" in *'provider=[]'*) ;; *) exit 1;; esac
-[ "$(cat "$semantic_project/.local/share/braintree/src/braintree/installed-revision")" = "$expected_record" ]
+[ "$(cat "$semantic_project/.local/share/tangle/src/tangle/installed-revision")" = "$expected_record" ]
 semantic_repeat=$(PATH="$fake_bin:$PATH" "$repo_root/scripts/install.sh" --codex --project "$semantic_project" --semantic)
 case "$semantic_repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 
@@ -305,7 +305,7 @@ if $repo_root/scripts/install.sh --codex --project "$project" --unknown >/dev/nu
 default_home="$test_root/default-home"
 mkdir -p "$default_home"
 default_out=$(HOME="$default_home" $repo_root/scripts/install.sh --codex)
-case "$default_out" in *'result: "installed"'*'agent: "codex"'*"$default_home/.agents/skills/braintree"*) ;; *) exit 1;; esac
+case "$default_out" in *'result: "installed"'*'agent: "codex"'*"$default_home/.agents/skills/tangle"*) ;; *) exit 1;; esac
 no_home=$(env -u HOME "$repo_root/scripts/install.sh" 2>/dev/null || true)
 case "$no_home" in *'error: "no home root: set HOME or pass --project DIR"'*) ;; *) exit 1;; esac
 for installer in "$repo_root/scripts/install.sh" "$repo_root/scripts/install-claude.sh"; do
@@ -318,12 +318,12 @@ for installer in "$repo_root/scripts/install.sh" "$repo_root/scripts/install-cla
 done
 
 help=$($repo_root/scripts/install.sh --help)
-for expected in 'options[11]{flag,meaning}:' 'usage: "scripts/install.sh [--codex | --claude | --pi] [--project DIR | --home DIR] [--dry-run] [--semantic] [--select]"' 'default: "With no flags, installs the shared command and every agent skill into $HOME; pass --select to choose other targets."' 'interactive: "With --select, discovers the enclosing project root and the home root' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'program: "DIR/.local/share/braintree, the one shared program per root the launcher runs"' '"--select"' '"--semantic"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[6]{command,purpose}:' '"./scripts/install.sh","install the shared command and every agent skill into $HOME"' '"./scripts/install.sh --pi","install pi at $HOME"' '"./scripts/install.sh --select","choose discovered targets interactively"' '--codex --project /path/to/project --dry-run' '--pi --project /path/to/project' '--pi --home $HOME --semantic'; do
+for expected in 'options[11]{flag,meaning}:' 'usage: "scripts/install.sh [--codex | --claude | --pi] [--project DIR | --home DIR] [--dry-run] [--semantic] [--select]"' 'default: "With no flags, installs the shared command and every agent skill into $HOME; pass --select to choose other targets."' 'interactive: "With --select, discovers the enclosing project root and the home root' 'claude_wrapper: "scripts/install-claude.sh omits --claude and accepts the same destination flags."' 'launcher: "DIR/.local/bin/tangle, the single documented entry point"' 'program: "DIR/.local/share/tangle, the one shared program per root the launcher runs"' '"--select"' '"--semantic"' '"--help, -h"' '"--version"' '"-v, -V"' 'examples[6]{command,purpose}:' '"./scripts/install.sh","install the shared command and every agent skill into $HOME"' '"./scripts/install.sh --pi","install pi at $HOME"' '"./scripts/install.sh --select","choose discovered targets interactively"' '--codex --project /path/to/project --dry-run' '--pi --project /path/to/project' '--pi --home $HOME --semantic'; do
   case "$help" in *"$expected"*) ;; *) exit 1;; esac
 done
 
 claude_help=$($repo_root/scripts/install-claude.sh --help)
-for expected in 'usage: "scripts/install-claude.sh [--project DIR | --home DIR] [--dry-run] [--semantic]"' 'default: "With no destination flag, installs the shared command and the Claude Code skill into $HOME."' 'launcher: "DIR/.local/bin/braintree, the single documented entry point"' 'program: "DIR/.local/share/braintree, the one shared program per root the launcher runs"' 'options[7]{flag,meaning}:' '"--semantic"' 'examples[4]{command,purpose}:' '"./scripts/install-claude.sh","install the shared command and the Claude Code skill into $HOME"' './scripts/install-claude.sh --project /path/to/project' './scripts/install-claude.sh --home $HOME --semantic' './scripts/install-claude.sh --project /path/to/project --dry-run'; do
+for expected in 'usage: "scripts/install-claude.sh [--project DIR | --home DIR] [--dry-run] [--semantic]"' 'default: "With no destination flag, installs the shared command and the Claude Code skill into $HOME."' 'launcher: "DIR/.local/bin/tangle, the single documented entry point"' 'program: "DIR/.local/share/tangle, the one shared program per root the launcher runs"' 'options[7]{flag,meaning}:' '"--semantic"' 'examples[4]{command,purpose}:' '"./scripts/install-claude.sh","install the shared command and the Claude Code skill into $HOME"' './scripts/install-claude.sh --project /path/to/project' './scripts/install-claude.sh --home $HOME --semantic' './scripts/install-claude.sh --project /path/to/project --dry-run'; do
   case "$claude_help" in *"$expected"*) ;; *) exit 1;; esac
 done
 case "$claude_help" in *'--claude'*|*'--codex'*|*'--pi'*) exit 1;; esac
@@ -342,16 +342,16 @@ zero_output=$(HOME="$zero_home" "$repo_root/scripts/install.sh" </dev/null)
 case "$zero_output" in *'result: "installed"'*'selected: "3"'*'scope: "home"'*) ;; *) exit 1;; esac
 case "$zero_output" in *'outcomes[3]{agent,destination,program,launcher,result}:'*) ;; *) exit 1;; esac
 for expected in \
-  "\"codex\",\"$zero_home/.agents/skills/braintree\"" \
-  "\"claude\",\"$zero_home/.claude/skills/braintree\"" \
-  "\"pi\",\"$zero_home/.pi/agent/skills/braintree\""; do
+  "\"codex\",\"$zero_home/.agents/skills/tangle\"" \
+  "\"claude\",\"$zero_home/.claude/skills/tangle\"" \
+  "\"pi\",\"$zero_home/.pi/agent/skills/tangle\""; do
   case "$zero_output" in *"$expected"*) ;; *) exit 1;; esac
 done
-check_prose "$zero_home/.agents/skills/braintree"
-check_prose "$zero_home/.claude/skills/braintree"
-check_prose "$zero_home/.pi/agent/skills/braintree"
-check_program "$zero_home/.local/share/braintree"
-check_record "$zero_home/.local/share/braintree"
+check_prose "$zero_home/.agents/skills/tangle"
+check_prose "$zero_home/.claude/skills/tangle"
+check_prose "$zero_home/.pi/agent/skills/tangle"
+check_program "$zero_home/.local/share/tangle"
+check_record "$zero_home/.local/share/tangle"
 check_launcher "$zero_home"
 
 # Re-running the zero-config install is a no-op, and an omitted agent with an
@@ -361,7 +361,7 @@ case "$zero_repeat" in *'result: "no-op"'*'selected: "3"'*) ;; *) exit 1;; esac
 zero_project="$test_root/zero-project"
 mkdir -p "$zero_project"
 zero_project_output=$(HOME="$zero_home" "$repo_root/scripts/install.sh" --project "$zero_project" </dev/null)
-case "$zero_project_output" in *'result: "installed"'*'scope: "project"'*"$zero_project/.pi/skills/braintree"*) ;; *) exit 1;; esac
+case "$zero_project_output" in *'result: "installed"'*'scope: "project"'*"$zero_project/.pi/skills/tangle"*) ;; *) exit 1;; esac
 check_launcher "$zero_project"
 
 # --select opts into the interactive selector and cannot be combined with an
@@ -372,23 +372,23 @@ case "$zero_conflict" in *'error: "--select cannot be combined with an agent or 
 
 # --select discovers the enclosing project root and the home root, crosses them
 # with the supported agents, and installs every selected target.
-# BT_INSTALL_SELECTION supplies the selection so the multi-select path runs
+# TANGLE_INSTALL_SELECTION supplies the selection so the multi-select path runs
 # without a terminal; the menu it replaces is asserted through the same output.
 selector_project="$test_root/selector-project"
 selector_home="$test_root/selector-home"
 mkdir -p "$selector_project/.git" "$selector_home"
 
-selector_output=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='1,4' \
+selector_output=$(cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='1,4' \
   "$repo_root/scripts/install.sh" --select </dev/null)
 case "$selector_output" in *'result: "menu"'*) ;; *) exit 1;; esac
 case "$selector_output" in *'targets[6]{index,agent,root,destination}:'*) ;; *) exit 1;; esac
 for expected in \
-  "\"1\",\"codex\",\"$selector_project\",\"$selector_project/.agents/skills/braintree\"" \
-  "\"2\",\"claude\",\"$selector_project\",\"$selector_project/.claude/skills/braintree\"" \
-  "\"3\",\"pi\",\"$selector_project\",\"$selector_project/.pi/skills/braintree\"" \
-  "\"4\",\"codex\",\"$selector_home\",\"$selector_home/.agents/skills/braintree\"" \
-  "\"5\",\"claude\",\"$selector_home\",\"$selector_home/.claude/skills/braintree\"" \
-  "\"6\",\"pi\",\"$selector_home\",\"$selector_home/.pi/agent/skills/braintree\""; do
+  "\"1\",\"codex\",\"$selector_project\",\"$selector_project/.agents/skills/tangle\"" \
+  "\"2\",\"claude\",\"$selector_project\",\"$selector_project/.claude/skills/tangle\"" \
+  "\"3\",\"pi\",\"$selector_project\",\"$selector_project/.pi/skills/tangle\"" \
+  "\"4\",\"codex\",\"$selector_home\",\"$selector_home/.agents/skills/tangle\"" \
+  "\"5\",\"claude\",\"$selector_home\",\"$selector_home/.claude/skills/tangle\"" \
+  "\"6\",\"pi\",\"$selector_home\",\"$selector_home/.pi/agent/skills/tangle\""; do
   case "$selector_output" in *"$expected"*) ;; *) exit 1;; esac
 done
 case "$selector_output" in *'result: "multi"'*'selected: "2"'*'outcomes[2]{agent,destination,program,launcher,result}:'*) ;; *) exit 1;; esac
@@ -396,10 +396,10 @@ case "$selector_output" in *'"installed"'*'"installed"'*) ;; *) exit 1;; esac
 
 # Only the selected targets are installed, and each selected one carries both
 # the skill prose and the shared per-root command.
-check_prose "$selector_project/.agents/skills/braintree"
-check_prose "$selector_home/.agents/skills/braintree"
-check_program "$selector_project/.local/share/braintree"
-check_record "$selector_project/.local/share/braintree"
+check_prose "$selector_project/.agents/skills/tangle"
+check_prose "$selector_home/.agents/skills/tangle"
+check_program "$selector_project/.local/share/tangle"
+check_record "$selector_project/.local/share/tangle"
 check_launcher "$selector_project"
 check_launcher "$selector_home"
 [ ! -e "$selector_project/.claude" ]
@@ -409,19 +409,19 @@ check_launcher "$selector_home"
 
 # Re-selecting the same targets is a no-op for each outcome, and a space
 # separated selection parses like the comma separated one.
-selector_repeat=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='1 4' \
+selector_repeat=$(cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='1 4' \
   "$repo_root/scripts/install.sh" --select </dev/null)
 case "$selector_repeat" in *'selected: "2"'*'"no-op"'*'"no-op"'*) ;; *) exit 1;; esac
 [ ! -e "$selector_project/.claude" ]
 
 # "all" selects every discovered target; an empty selection cancels without
 # installing.
-selector_all=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='all' \
+selector_all=$(cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='all' \
   "$repo_root/scripts/install.sh" --select </dev/null)
 case "$selector_all" in *'selected: "6"'*) ;; *) exit 1;; esac
-check_prose "$selector_project/.claude/skills/braintree"
-check_prose "$selector_project/.pi/skills/braintree"
-selector_empty=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='' \
+check_prose "$selector_project/.claude/skills/tangle"
+check_prose "$selector_project/.pi/skills/tangle"
+selector_empty=$(cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='' \
   "$repo_root/scripts/install.sh" --select </dev/null)
 case "$selector_empty" in *'result: "cancelled"'*) ;; *) exit 1;; esac
 
@@ -429,7 +429,7 @@ case "$selector_empty" in *'result: "cancelled"'*) ;; *) exit 1;; esac
 selector_cancel_project="$test_root/selector-cancel-project"
 selector_cancel_home="$test_root/selector-cancel-home"
 mkdir -p "$selector_cancel_project/.git" "$selector_cancel_home"
-selector_cancel=$(cd "$selector_cancel_project" && HOME="$selector_cancel_home" BT_INSTALL_SELECTION='' \
+selector_cancel=$(cd "$selector_cancel_project" && HOME="$selector_cancel_home" TANGLE_INSTALL_SELECTION='' \
   "$repo_root/scripts/install.sh" --select </dev/null)
 case "$selector_cancel" in *'result: "cancelled"'*) ;; *) exit 1;; esac
 [ ! -e "$selector_cancel_project/.local" ]
@@ -440,19 +440,19 @@ case "$selector_cancel" in *'result: "cancelled"'*) ;; *) exit 1;; esac
 selector_dry_project="$test_root/selector-dry-project"
 selector_dry_home="$test_root/selector-dry-home"
 mkdir -p "$selector_dry_project/.git"
-selector_dry=$(cd "$selector_dry_project" && HOME="$selector_dry_home" BT_INSTALL_SELECTION='1' \
+selector_dry=$(cd "$selector_dry_project" && HOME="$selector_dry_home" TANGLE_INSTALL_SELECTION='1' \
   "$repo_root/scripts/install.sh" --select --dry-run </dev/null)
 case "$selector_dry" in *'outcomes[1]'*'"dry-run"'*) ;; *) exit 1;; esac
 [ ! -e "$selector_dry_project/.agents" ]
 [ ! -e "$selector_dry_project/.local" ]
 
 # An invalid selection and an out-of-range number fail clearly.
-if (cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='x' \
+if (cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='x' \
   "$repo_root/scripts/install.sh" --select </dev/null) >/dev/null 2>&1; then exit 1; fi
-selector_invalid=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='x' \
+selector_invalid=$(cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='x' \
   "$repo_root/scripts/install.sh" --select </dev/null 2>/dev/null || true)
 case "$selector_invalid" in *'error: "invalid selection: x"'*) ;; *) exit 1;; esac
-selector_range=$(cd "$selector_project" && HOME="$selector_home" BT_INSTALL_SELECTION='9' \
+selector_range=$(cd "$selector_project" && HOME="$selector_home" TANGLE_INSTALL_SELECTION='9' \
   "$repo_root/scripts/install.sh" --select </dev/null 2>/dev/null || true)
 case "$selector_range" in *'error: "selection out of range: 9"'*) ;; *) exit 1;; esac
 

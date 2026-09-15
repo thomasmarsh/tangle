@@ -1,11 +1,11 @@
 # Whole-corpus validation, splits, and digest
 
 This document is the prose authority for the whole gold memory corpus. The
-machine-readable halves are [`src/braintree/memory_corpus.py`](../src/braintree/memory_corpus.py),
+machine-readable halves are [`src/tangle/memory_corpus.py`](../src/tangle/memory_corpus.py),
 the nine family envelopes under [`benchmark/memory-corpus/`](../benchmark/memory-corpus),
 and the committed [`manifest.json`](../benchmark/memory-corpus/manifest.json).
 The case format belongs to
-[`src/braintree/memory_scenario.py`](../src/braintree/memory_scenario.py) and
+[`src/tangle/memory_scenario.py`](../src/tangle/memory_scenario.py) and
 [`research/agent-memory-scenario-schema.md`](agent-memory-scenario-schema.md);
 the evaluation protocol belongs to
 [`research/agent-memory-evaluation-contract.md`](agent-memory-evaluation-contract.md).
@@ -15,7 +15,7 @@ TAS-131 through TAS-134 curated the nine families. TAS-135 owns the whole-corpus
 validator, the deterministic development/held-out split, the corpus digest and
 verify mode, and the leakage audit; it reconciles the two inherited questions
 about the observable boundary and the per-family control balance. Everything
-here is offline and makes **zero live model calls**, and `braintree benchmark
+here is offline and makes **zero live model calls**, and `tangle benchmark
 corpus verify` imports no optional model runtime.
 
 ## 1. Corpus layout
@@ -82,7 +82,7 @@ boundary the curated families already used, now applied corpus-wide; it is what
 keeps a case memory-required even when the repository as a whole records the
 deciding history somewhere.
 
-A `.braintree/<status>/<name>.md` citation resolves by node **name** across
+A `.tangle/<status>/<name>.md` citation resolves by node **name** across
 every status directory, because a node legitimately moves between directories
 and its stable identity is its name. The literal directory is retained in the
 case to record where the node sat when the case was curated.
@@ -145,7 +145,7 @@ the decision that the class is frozen here and the size is out of corpus scope.
 The conflict-and-uncertainty cases ground their resolution norms in
 [`research/agent-memory-theory-evaluation.md`](agent-memory-theory-evaluation.md)
 and in the resolved
-[`TAS-127-uncertainty-provenance-security`](../.braintree/resolved/TAS-127-uncertainty-provenance-security.md).
+[`TAS-127-uncertainty-provenance-security`](../.tangle/resolved/TAS-127-uncertainty-provenance-security.md).
 The validator requires the theory citation; the node is recorded here as the
 dependency that owns the uncertainty policy, so a later change to that policy
 knows it may affect these norms. TAS-127's own authority case set lives
@@ -164,8 +164,8 @@ re-derives and compares them; `freeze()` rewrites `manifest.json` after a clean
 validation.
 
 ```sh
-braintree benchmark corpus verify   # re-derive and compare; exit 1 on drift
-braintree benchmark corpus freeze   # re-validate and rewrite the manifest
+tangle benchmark corpus verify   # re-derive and compare; exit 1 on drift
+tangle benchmark corpus freeze   # re-validate and rewrite the manifest
 ```
 
 ## 9. Residuals
@@ -173,7 +173,7 @@ braintree benchmark corpus freeze   # re-validate and rewrite the manifest
 - Growth sizes are owned by the causal runner and the interference experiment,
   which instantiate the frozen classes.
 - The conflict norms cite the resolved
-  [`TAS-127-uncertainty-provenance-security`](../.braintree/resolved/TAS-127-uncertainty-provenance-security.md);
+  [`TAS-127-uncertainty-provenance-security`](../.tangle/resolved/TAS-127-uncertainty-provenance-security.md);
   that node's authority case set and rate measurement did not change the corpus
   digest or any conflict norm.
 - `research/agent-memory-evaluation-contract.md` was reconciled to the

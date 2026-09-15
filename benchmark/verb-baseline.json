@@ -1,6 +1,6 @@
 {
   "protocol": "direct-answer-verb-v1",
-  "note": "Exact stdout and exit status for each direct-answer verb on the deterministic gate fixture; run `braintree benchmark verbs` to regenerate.",
+  "note": "Exact stdout and exit status for each direct-answer verb on the deterministic gate fixture; run `tangle benchmark verbs` to regenerate.",
   "expected": {
     "frontier": {
       "exit": 0,
@@ -28,7 +28,7 @@
     },
     "clusters": {
       "exit": 0,
-      "stdout": "advisory: \"clusters are advisory, derived, and are not work claims\"\nclusters: \"capability absent\"\nhelp: \"Install the semantic extra and set BT_SEMANTIC_PROVIDER to cluster.\"\n"
+      "stdout": "advisory: \"clusters are advisory, derived, and are not work claims\"\nclusters: \"capability absent\"\nhelp: \"Install the semantic extra and set TANGLE_SEMANTIC_PROVIDER to cluster.\"\n"
     }
   }
 }

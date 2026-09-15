@@ -3,7 +3,7 @@
   "source": {
     "causal_protocol": "memory-causal-v1",
     "causal_result": "benchmark/memory-causal-result.json",
-    "corpus_digest": "sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5",
+    "corpus_digest": "sha256:43199538957715dc5abde49982e8b2bfe82f0ffa224a29e6a9f9c0bdf1de3d01",
     "plan_digest": "sha256:636c25705154e95bdd976b24233c0ae88927096091d3ec91e8b8c05603e3aac2",
     "source_revision": "20c88e7ba1ed",
     "evidence": "exploratory",
@@ -53,7 +53,7 @@
   "procedure": [
     "The oracle arm is injected with the distilled gold evidence, so its retrieval stage is exact by construction and every failure is downstream.",
     "The repository-only arm holds no memory, so every failure is write-miss: the admission stage never supplied the required evidence.",
-    "For a memory arm, compare the required gold source episodes with the query-time memory: braintree omitting a source it could write from is organization-error; raw-history or flat-memory omitting it is retrieval-miss.",
+    "For a memory arm, compare the required gold source episodes with the query-time memory: tangle omitting a source it could write from is organization-error; raw-history or flat-memory omitting it is retrieval-miss.",
     "When the required evidence was delivered, a chosen action whose leading verb discards or ignores the observation while the expected action does not is action-failure.",
     "Otherwise, a conflict or authority case whose delivered memory also carried a non-gold decision, action, or failure (competing guidance) is stale-or-conflicting-retrieval; an unrelated observation is not competing guidance and never earns that label.",
     "Every remaining delivered-evidence failure is reader-failure."
@@ -134,10 +134,10 @@
         "critical": 0
       },
       "arms": [
-        "braintree",
         "flat-memory",
         "oracle",
-        "raw-history"
+        "raw-history",
+        "tangle"
       ],
       "workstream": "skill prose and model interaction; not a memory mechanism"
     },
@@ -154,9 +154,9 @@
         "critical": 21
       },
       "arms": [
-        "braintree",
         "flat-memory",
-        "raw-history"
+        "raw-history",
+        "tangle"
       ],
       "workstream": "action selection and tooling"
     }
@@ -212,7 +212,7 @@
       "missed": 0,
       "miss_rate": 0.0
     },
-    "braintree": {
+    "tangle": {
       "failures": 44,
       "delivered": 44,
       "missed": 0,
@@ -264,10 +264,10 @@
         "critical": 0
       },
       "arms": [
-        "braintree",
         "flat-memory",
         "oracle",
-        "raw-history"
+        "raw-history",
+        "tangle"
       ],
       "workstream": "skill prose and model interaction; not a memory mechanism"
     },
@@ -284,9 +284,9 @@
         "critical": 21
       },
       "arms": [
-        "braintree",
         "flat-memory",
-        "raw-history"
+        "raw-history",
+        "tangle"
       ],
       "workstream": "action selection and tooling"
     }
@@ -545,11 +545,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-flash--r1",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-flash--r1",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "action": "discard-observation",
@@ -575,11 +575,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-flash--r2",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-flash--r2",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "action": "discard-observation",
@@ -605,11 +605,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-flash--r3",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-flash--r3",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "action": "discard-observation",
@@ -845,11 +845,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-v4-flash--r1",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-v4-flash--r1",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "action": "discard-observation",
@@ -875,11 +875,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-v4-flash--r2",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-v4-flash--r2",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "action": "discard-observation",
@@ -905,11 +905,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-v4-flash--r3",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-v4-flash--r3",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "action": "discard-observation",
@@ -1175,11 +1175,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-v4-pro--r1",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-v4-pro--r1",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "action": "discard-observation",
@@ -1205,11 +1205,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-v4-pro--r2",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-v4-pro--r2",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "action": "discard-observation",
@@ -1235,11 +1235,11 @@
       "agreement": true
     },
     {
-      "key": "admission-retain-label-stability-hypothesis-001--braintree--deepseek-v4-pro--r3",
+      "key": "admission-retain-label-stability-hypothesis-001--tangle--deepseek-v4-pro--r3",
       "case_id": "admission-retain-label-stability-hypothesis-001",
       "family": "admission",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "action": "discard-observation",
@@ -1625,11 +1625,11 @@
       "agreement": true
     },
     {
-      "key": "implicit-retrieval-after-decision-seam-reuse-001--braintree--deepseek-flash--r3",
+      "key": "implicit-retrieval-after-decision-seam-reuse-001--tangle--deepseek-flash--r3",
       "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
       "family": "implicit-retrieval",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "action": "escalate-the-seam-change",
@@ -1775,11 +1775,11 @@
       "agreement": true
     },
     {
-      "key": "implicit-retrieval-after-decision-seam-reuse-001--braintree--deepseek-v4-flash--r1",
+      "key": "implicit-retrieval-after-decision-seam-reuse-001--tangle--deepseek-v4-flash--r1",
       "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
       "family": "implicit-retrieval",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "action": "escalate-the-seam-change",
@@ -1805,11 +1805,11 @@
       "agreement": true
     },
     {
-      "key": "implicit-retrieval-after-decision-seam-reuse-001--braintree--deepseek-v4-flash--r3",
+      "key": "implicit-retrieval-after-decision-seam-reuse-001--tangle--deepseek-v4-flash--r3",
       "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
       "family": "implicit-retrieval",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "action": "escalate-the-seam-change",
@@ -2105,11 +2105,11 @@
       "agreement": true
     },
     {
-      "key": "implicit-retrieval-after-decision-seam-reuse-001--braintree--deepseek-v4-pro--r1",
+      "key": "implicit-retrieval-after-decision-seam-reuse-001--tangle--deepseek-v4-pro--r1",
       "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
       "family": "implicit-retrieval",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "action": "escalate-the-seam-change",
@@ -2135,11 +2135,11 @@
       "agreement": true
     },
     {
-      "key": "implicit-retrieval-after-decision-seam-reuse-001--braintree--deepseek-v4-pro--r2",
+      "key": "implicit-retrieval-after-decision-seam-reuse-001--tangle--deepseek-v4-pro--r2",
       "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
       "family": "implicit-retrieval",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "action": "escalate-the-seam-change",
@@ -2165,11 +2165,11 @@
       "agreement": true
     },
     {
-      "key": "implicit-retrieval-after-decision-seam-reuse-001--braintree--deepseek-v4-pro--r3",
+      "key": "implicit-retrieval-after-decision-seam-reuse-001--tangle--deepseek-v4-pro--r3",
       "case_id": "implicit-retrieval-after-decision-seam-reuse-001",
       "family": "implicit-retrieval",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "action": "escalate-the-seam-change",
@@ -2405,11 +2405,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-flash--r1",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-flash--r1",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "action": "execute-without-reconcile",
@@ -2435,11 +2435,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-flash--r2",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-flash--r2",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "action": "execute-without-reconcile",
@@ -2465,11 +2465,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-flash--r3",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-flash--r3",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "action": "execute-without-reconcile",
@@ -2765,11 +2765,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-v4-flash--r2",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-v4-flash--r2",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "action": "execute-without-reconcile",
@@ -2795,11 +2795,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-v4-flash--r3",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-v4-flash--r3",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "action": "execute-without-reconcile",
@@ -3095,11 +3095,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-v4-pro--r1",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-v4-pro--r1",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "action": "increment-the-dependency-revision",
@@ -3125,11 +3125,11 @@
       "agreement": true
     },
     {
-      "key": "temporal-update-cosmetic-edit-001--braintree--deepseek-v4-pro--r3",
+      "key": "temporal-update-cosmetic-edit-001--tangle--deepseek-v4-pro--r3",
       "case_id": "temporal-update-cosmetic-edit-001",
       "family": "temporal-update",
       "severity": "minor",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "action": "execute-without-reconcile",
@@ -3251,11 +3251,11 @@
       "agreement": true
     },
     {
-      "key": "cascading-invalidation-independent-evidence-001--braintree--deepseek-flash--r1",
+      "key": "cascading-invalidation-independent-evidence-001--tangle--deepseek-flash--r1",
       "case_id": "cascading-invalidation-independent-evidence-001",
       "family": "cascading-invalidation",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "action": "revise-the-consumer-conclusion",
@@ -3283,11 +3283,11 @@
       "agreement": true
     },
     {
-      "key": "cascading-invalidation-independent-evidence-001--braintree--deepseek-flash--r2",
+      "key": "cascading-invalidation-independent-evidence-001--tangle--deepseek-flash--r2",
       "case_id": "cascading-invalidation-independent-evidence-001",
       "family": "cascading-invalidation",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "action": "revise-the-consumer-conclusion",
@@ -3571,11 +3571,11 @@
       "agreement": true
     },
     {
-      "key": "cascading-invalidation-independent-evidence-001--braintree--deepseek-v4-flash--r1",
+      "key": "cascading-invalidation-independent-evidence-001--tangle--deepseek-v4-flash--r1",
       "case_id": "cascading-invalidation-independent-evidence-001",
       "family": "cascading-invalidation",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "action": "revise-the-consumer-conclusion",
@@ -3603,11 +3603,11 @@
       "agreement": true
     },
     {
-      "key": "cascading-invalidation-independent-evidence-001--braintree--deepseek-v4-flash--r2",
+      "key": "cascading-invalidation-independent-evidence-001--tangle--deepseek-v4-flash--r2",
       "case_id": "cascading-invalidation-independent-evidence-001",
       "family": "cascading-invalidation",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "action": "revise-the-consumer-conclusion",
@@ -3635,11 +3635,11 @@
       "agreement": true
     },
     {
-      "key": "cascading-invalidation-independent-evidence-001--braintree--deepseek-v4-flash--r3",
+      "key": "cascading-invalidation-independent-evidence-001--tangle--deepseek-v4-flash--r3",
       "case_id": "cascading-invalidation-independent-evidence-001",
       "family": "cascading-invalidation",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "action": "revise-the-consumer-conclusion",
@@ -4083,11 +4083,11 @@
       "agreement": true
     },
     {
-      "key": "conflict-and-uncertainty-competing-rules-001--braintree--deepseek-flash--r1",
+      "key": "conflict-and-uncertainty-competing-rules-001--tangle--deepseek-flash--r1",
       "case_id": "conflict-and-uncertainty-competing-rules-001",
       "family": "conflict-and-uncertainty",
       "severity": "major",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "action": "preserve-both-readings-and-report",
@@ -4115,11 +4115,11 @@
       "agreement": true
     },
     {
-      "key": "conflict-and-uncertainty-competing-rules-001--braintree--deepseek-flash--r2",
+      "key": "conflict-and-uncertainty-competing-rules-001--tangle--deepseek-flash--r2",
       "case_id": "conflict-and-uncertainty-competing-rules-001",
       "family": "conflict-and-uncertainty",
       "severity": "major",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "action": "preserve-both-readings-and-report",
@@ -4147,11 +4147,11 @@
       "agreement": true
     },
     {
-      "key": "conflict-and-uncertainty-competing-rules-001--braintree--deepseek-flash--r3",
+      "key": "conflict-and-uncertainty-competing-rules-001--tangle--deepseek-flash--r3",
       "case_id": "conflict-and-uncertainty-competing-rules-001",
       "family": "conflict-and-uncertainty",
       "severity": "major",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "action": "preserve-both-readings-and-report",
@@ -4499,11 +4499,11 @@
       "agreement": true
     },
     {
-      "key": "conflict-and-uncertainty-competing-rules-001--braintree--deepseek-v4-flash--r1",
+      "key": "conflict-and-uncertainty-competing-rules-001--tangle--deepseek-v4-flash--r1",
       "case_id": "conflict-and-uncertainty-competing-rules-001",
       "family": "conflict-and-uncertainty",
       "severity": "major",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "action": "preserve-both-readings-and-report",
@@ -5281,11 +5281,11 @@
       "agreement": true
     },
     {
-      "key": "forgetting-and-interference-irrelevant-growth-001--braintree--deepseek-flash--r1",
+      "key": "forgetting-and-interference-irrelevant-growth-001--tangle--deepseek-flash--r1",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "action": "reserve-an-id-atomically",
@@ -5311,11 +5311,11 @@
       "agreement": true
     },
     {
-      "key": "forgetting-and-interference-irrelevant-growth-001--braintree--deepseek-flash--r2",
+      "key": "forgetting-and-interference-irrelevant-growth-001--tangle--deepseek-flash--r2",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "action": "reserve-an-id-atomically",
@@ -5341,11 +5341,11 @@
       "agreement": true
     },
     {
-      "key": "forgetting-and-interference-irrelevant-growth-001--braintree--deepseek-flash--r3",
+      "key": "forgetting-and-interference-irrelevant-growth-001--tangle--deepseek-flash--r3",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 3,
       "action": "reserve-an-id-atomically",
@@ -5641,11 +5641,11 @@
       "agreement": true
     },
     {
-      "key": "forgetting-and-interference-irrelevant-growth-001--braintree--deepseek-v4-flash--r1",
+      "key": "forgetting-and-interference-irrelevant-growth-001--tangle--deepseek-v4-flash--r1",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "action": "reserve-an-id-atomically",
@@ -5671,11 +5671,11 @@
       "agreement": true
     },
     {
-      "key": "forgetting-and-interference-irrelevant-growth-001--braintree--deepseek-v4-flash--r2",
+      "key": "forgetting-and-interference-irrelevant-growth-001--tangle--deepseek-v4-flash--r2",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 2,
       "action": "reserve-an-id-atomically",
@@ -5821,11 +5821,11 @@
       "agreement": true
     },
     {
-      "key": "forgetting-and-interference-irrelevant-growth-001--braintree--deepseek-v4-pro--r1",
+      "key": "forgetting-and-interference-irrelevant-growth-001--tangle--deepseek-v4-pro--r1",
       "case_id": "forgetting-and-interference-irrelevant-growth-001",
       "family": "forgetting-and-interference",
       "severity": "moderate",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "action": "reserve-an-id-atomically",
@@ -6061,11 +6061,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-flash--r1",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-flash--r1",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 1,
       "action": "discard-the-note-and-the-reproducer",
@@ -6091,11 +6091,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-flash--r2",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-flash--r2",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-flash",
       "repetition": 2,
       "action": "discard-the-note-and-the-reproducer",
@@ -6331,11 +6331,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-v4-flash--r1",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-v4-flash--r1",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 1,
       "action": "discard-the-note-and-the-reproducer",
@@ -6361,11 +6361,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-v4-flash--r3",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-v4-flash--r3",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-flash",
       "repetition": 3,
       "action": "discard-the-note-and-the-reproducer",
@@ -6661,11 +6661,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-v4-pro--r1",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-v4-pro--r1",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 1,
       "action": "discard-the-note-and-the-reproducer",
@@ -6691,11 +6691,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-v4-pro--r2",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-v4-pro--r2",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 2,
       "action": "discard-the-note-and-the-reproducer",
@@ -6721,11 +6721,11 @@
       "agreement": true
     },
     {
-      "key": "poisoning-and-authority-direct-injection-001--braintree--deepseek-v4-pro--r3",
+      "key": "poisoning-and-authority-direct-injection-001--tangle--deepseek-v4-pro--r3",
       "case_id": "poisoning-and-authority-direct-injection-001",
       "family": "poisoning-and-authority",
       "severity": "critical",
-      "arm": "braintree",
+      "arm": "tangle",
       "model": "deepseek/deepseek-v4-pro",
       "repetition": 3,
       "action": "discard-the-note-and-the-reproducer",

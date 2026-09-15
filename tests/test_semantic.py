@@ -1,6 +1,6 @@
 """Capability-boundary tests for the optional semantic retrieval layer.
 
-``braintree similar`` is the lexical baseline by default. With an explicitly
+``tangle similar`` is the lexical baseline by default. With an explicitly
 enabled embedding provider it reranks by the provider's cosine and caches the
 node vectors in the disposable sidecar keyed by content hash; when the provider
 is absent or fails, the answer is the lexical baseline byte for byte. A small
@@ -32,9 +32,9 @@ from pathlib import Path
 
 import pytest
 
-from braintree import semantic
+from tangle import semantic
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -48,11 +48,11 @@ _HEAVY_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "fastembed")
 # none of them. It runs the installed entry point so dispatch is covered too.
 _IMPORT_PROBE = """\
 import sys
-from braintree import main, semantic
+from tangle import main, semantic
 
 assert semantic.probe() is None
 assert main.main(["--help"]) == 0
-assert main.main(["check", ".braintree"]) == 0
+assert main.main(["check", ".tangle"]) == 0
 assert main.main(["frontier"]) == 0
 assert main.main(["similar", "grant"]) == 0
 print("heavy:" + ",".join(name for name in sys.argv[1:] if name in sys.modules))
@@ -119,17 +119,17 @@ print(json.dumps([[1.0, 0.0, 0.0]]))
 
 def _env(tmp_path: Path, vault: Path) -> dict[str, str]:
     return {
-        "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-        "BT_PROJECT_ID": "semantic-test",
-        "BT_NODES_DIR": str(vault),
+        "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+        "TANGLE_PROJECT_ID": "semantic-test",
+        "TANGLE_NODES_DIR": str(vault),
     }
 
 
 def _plain_env(tmp_path: Path) -> dict[str, str]:
     """Return a default-install environment: no provider, no extra, no cache."""
     env = os.environ.copy()
-    env.update(_env(tmp_path, _ROOT / ".braintree"))
-    for name in ("BT_SEMANTIC_PROVIDER", "BT_MODEL_CACHE", "HF_HOME"):
+    env.update(_env(tmp_path, _ROOT / ".tangle"))
+    for name in ("TANGLE_SEMANTIC_PROVIDER", "TANGLE_MODEL_CACHE", "HF_HOME"):
         env.pop(name, None)
     return env
 
@@ -139,7 +139,7 @@ def _write(path: Path, text: str) -> None:
 
 
 def _provider_command(tmp_path: Path, source: str, log: Path | None = None) -> str:
-    """Install a stub provider script and return the ``BT_SEMANTIC_PROVIDER`` command."""
+    """Install a stub provider script and return the ``TANGLE_SEMANTIC_PROVIDER`` command."""
     digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:8]
     script = tmp_path / f"provider-{digest}.py"
     script.write_text(source, encoding="utf-8")
@@ -193,18 +193,18 @@ def _database(tmp_path: Path) -> Path:
 
 
 def test_provider_reranks_a_paraphrase_the_lexical_baseline_misses(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """A synonym paraphrase scores zero lexically and tops the semantic ranking."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     env = _env(tmp_path, vault)
-    lexical = run_bt("similar", _PARAPHRASE, env=env)
+    lexical = run_tangle("similar", _PARAPHRASE, env=env)
     assert lexical.returncode == 0
     assert lexical.stdout.strip() == "similar: 0 matching nodes"
 
-    env["BT_SEMANTIC_PROVIDER"] = _provider_command(tmp_path, _PROVIDER)
-    reranked = run_bt("similar", _PARAPHRASE, env=env)
+    env["TANGLE_SEMANTIC_PROVIDER"] = _provider_command(tmp_path, _PROVIDER)
+    reranked = run_tangle("similar", _PARAPHRASE, env=env)
     assert reranked.returncode == 0
     rows = _toon_rows(reranked.stdout, "similar")
     assert sorted(row[0] for row in rows) == ["DEF-001", "TAS-001"]
@@ -213,49 +213,49 @@ def test_provider_reranks_a_paraphrase_the_lexical_baseline_misses(
 
 
 def test_probe_failure_degrades_to_the_lexical_baseline(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """An unconfigured or missing provider leaves the lexical answer unchanged."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     env = _env(tmp_path, vault)
-    lexical = run_bt("similar", _PARAPHRASE, env=env)
-    env["BT_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
-    degraded = run_bt("similar", _PARAPHRASE, env=env)
+    lexical = run_tangle("similar", _PARAPHRASE, env=env)
+    env["TANGLE_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
+    degraded = run_tangle("similar", _PARAPHRASE, env=env)
     assert degraded.returncode == 0
     assert degraded.stdout == lexical.stdout
 
 
 def test_batch_failure_degrades_to_the_lexical_baseline(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """A provider that passes the probe but fails the batch still degrades cleanly."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     env = _env(tmp_path, vault)
-    lexical = run_bt("similar", _PARAPHRASE, env=env)
-    env["BT_SEMANTIC_PROVIDER"] = _provider_command(tmp_path, _FLAKY_PROVIDER)
-    degraded = run_bt("similar", _PARAPHRASE, env=env)
+    lexical = run_tangle("similar", _PARAPHRASE, env=env)
+    env["TANGLE_SEMANTIC_PROVIDER"] = _provider_command(tmp_path, _FLAKY_PROVIDER)
+    degraded = run_tangle("similar", _PARAPHRASE, env=env)
     assert degraded.returncode == 0
     assert degraded.stdout == lexical.stdout
 
 
-def test_vectors_are_cached_by_content_hash(tmp_path: Path, run_bt: RunBt) -> None:
+def test_vectors_are_cached_by_content_hash(tmp_path: Path, run_tangle: RunTangle) -> None:
     """A warm run embeds nothing new, and a changed node is the only re-embed."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     log = tmp_path / "calls.jsonl"
     env = _env(tmp_path, vault)
-    env["BT_SEMANTIC_PROVIDER"] = _provider_command(tmp_path, _PROVIDER, log)
+    env["TANGLE_SEMANTIC_PROVIDER"] = _provider_command(tmp_path, _PROVIDER, log)
 
-    first = run_bt("similar", _PARAPHRASE, env=env)
+    first = run_tangle("similar", _PARAPHRASE, env=env)
     assert first.returncode == 0
     calls = log.read_text(encoding="utf-8").splitlines()
     # One probe call, then one batch call carrying every node plus the query.
     assert len(calls) == 2
     assert _PARAPHRASE in json.loads(calls[1])
 
-    second = run_bt("similar", _PARAPHRASE, env=env)
+    second = run_tangle("similar", _PARAPHRASE, env=env)
     assert second.returncode == 0
     assert second.stdout == first.stdout
     # Only the probe ran: every vector came from the content-hash cache.
@@ -267,7 +267,7 @@ def test_vectors_are_cached_by_content_hash(tmp_path: Path, run_bt: RunBt) -> No
         "summary: Cache warming policy.\n---\n\n# Invariant\n\n"
         "The cache warms cold entries.\n",
     )
-    third = run_bt("similar", _PARAPHRASE, env=env)
+    third = run_tangle("similar", _PARAPHRASE, env=env)
     assert third.returncode == 0
     calls = log.read_text(encoding="utf-8").splitlines()
     # Probe plus one batch for the single changed content hash.
@@ -276,15 +276,15 @@ def test_vectors_are_cached_by_content_hash(tmp_path: Path, run_bt: RunBt) -> No
 
 
 def test_cache_rows_are_keyed_by_provider_and_content_hash(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """The sidecar cache stores one row per provider and embedded content hash."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
     env = _env(tmp_path, vault)
     command = _provider_command(tmp_path, _PROVIDER)
-    env["BT_SEMANTIC_PROVIDER"] = command
-    assert run_bt("similar", _PARAPHRASE, env=env).returncode == 0
+    env["TANGLE_SEMANTIC_PROVIDER"] = command
+    assert run_tangle("similar", _PARAPHRASE, env=env).returncode == 0
 
     provider = semantic.probe(command)
     assert provider is not None
@@ -339,7 +339,7 @@ def test_extra_probe_reports_the_extra_without_importing_it(
             f"raise AssertionError('{name} was imported')\n", encoding="utf-8"
         )
     monkeypatch.syspath_prepend(str(site))
-    monkeypatch.delenv("BT_MODEL_CACHE", raising=False)
+    monkeypatch.delenv("TANGLE_MODEL_CACHE", raising=False)
     monkeypatch.setenv("HF_HOME", str(tmp_path / "hf"))
 
     extra = semantic.extra()
@@ -364,11 +364,11 @@ def test_extra_probe_reports_the_capability_absent(
 def test_model_cache_prefers_the_explicit_directory_then_hf_home(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The documented offline cache resolves from BT_MODEL_CACHE, then HF_HOME."""
-    monkeypatch.setenv("BT_MODEL_CACHE", str(tmp_path / "models"))
+    """The documented offline cache resolves from TANGLE_MODEL_CACHE, then HF_HOME."""
+    monkeypatch.setenv("TANGLE_MODEL_CACHE", str(tmp_path / "models"))
     assert semantic.model_cache() == tmp_path / "models"
 
-    monkeypatch.delenv("BT_MODEL_CACHE")
+    monkeypatch.delenv("TANGLE_MODEL_CACHE")
     monkeypatch.setenv("HF_HOME", str(tmp_path / "hf"))
     assert semantic.model_cache() == tmp_path / "hf" / "hub"
 

@@ -11,13 +11,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from braintree import memory_authority as ma
-from braintree import memory_contract, memory_corpus
+from tangle import memory_authority as ma
+from tangle import memory_contract, memory_corpus
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DOCUMENT = _ROOT / "research" / "agent-memory-uncertainty-authority-cases.md"
 _FROZEN_CORPUS_DIGEST = (
-    "sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5"
+    "sha256:43199538957715dc5abde49982e8b2bfe82f0ffa224a29e6a9f9c0bdf1de3d01"
 )
 
 

@@ -1,9 +1,9 @@
-"""Contract tests for ``.braintree`` vault resolution and legacy migration.
+"""Contract tests for ``.tangle`` vault resolution and legacy migration.
 
-The default vault directory is ``.braintree``. A project that still holds a
-legacy ``nodes/index-map.md`` vault and no ``.braintree/`` is migrated in place
-by the default resolver and by ``braintree migrate``; an explicit operand or
-``BT_NODES_DIR`` names its own directory and is never migrated.
+The default vault directory is ``.tangle``. A project that still holds a
+legacy ``nodes/index-map.md`` vault and no ``.tangle/`` is migrated in place
+by the default resolver and by ``tangle migrate``; an explicit operand or
+``TANGLE_NODES_DIR`` names its own directory and is never migrated.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from braintree import cli, graph_check, vault
+from tangle import cli, graph_check, vault
 
 _INDEX = (
     "---\n"
@@ -51,7 +51,7 @@ def test_legacy_directory_qualifies_only_without_the_new_vault(tmp_path: Path) -
 
 def test_migrate_renames_and_merges_nested_reservations(tmp_path: Path) -> None:
     legacy = _legacy_vault(tmp_path)
-    nested = legacy / ".braintree" / "reservations"
+    nested = legacy / ".tangle" / "reservations"
     nested.mkdir(parents=True)
     (nested / "TAS-001").write_text("", encoding="utf-8")
 
@@ -62,7 +62,7 @@ def test_migrate_renames_and_merges_nested_reservations(tmp_path: Path) -> None:
     destination = tmp_path / vault.DIRECTORY_NAME
     assert (destination / "index-map.md").is_file()
     assert (destination / "reservations" / "TAS-001").is_file()
-    assert not (destination / ".braintree").exists()
+    assert not (destination / ".tangle").exists()
 
 
 def test_migrate_is_idempotent(tmp_path: Path) -> None:
@@ -79,7 +79,7 @@ def test_resolve_leaves_an_explicit_or_configured_directory_alone(
     assert vault.resolve(str(legacy)) == str(legacy)
     assert legacy.exists()
 
-    monkeypatch.setenv("BT_NODES_DIR", str(legacy))
+    monkeypatch.setenv("TANGLE_NODES_DIR", str(legacy))
     assert vault.resolve() == str(legacy)
     assert legacy.exists()
 
@@ -88,7 +88,7 @@ def test_resolve_migrates_the_default_legacy_vault(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _legacy_vault(tmp_path)
-    monkeypatch.delenv("BT_NODES_DIR", raising=False)
+    monkeypatch.delenv("TANGLE_NODES_DIR", raising=False)
     monkeypatch.chdir(tmp_path)
 
     assert vault.resolve() == str(tmp_path / vault.DIRECTORY_NAME)
@@ -101,14 +101,14 @@ def test_resolve_announces_the_move_on_stderr_only(
 ) -> None:
     """A default-resolved legacy vault is announced once, and never on stdout."""
     _legacy_vault(tmp_path)
-    monkeypatch.delenv("BT_NODES_DIR", raising=False)
+    monkeypatch.delenv("TANGLE_NODES_DIR", raising=False)
     monkeypatch.chdir(tmp_path)
 
     assert vault.resolve() == str(tmp_path / vault.DIRECTORY_NAME)
 
     captured = capsys.readouterr()
     assert captured.out == ""
-    assert captured.err == "migrated vault: nodes -> .braintree\n"
+    assert captured.err == "migrated vault: nodes -> .tangle\n"
 
     # The rename happens once, so an already-migrated resolver stays silent.
     assert vault.resolve() == str(tmp_path / vault.DIRECTORY_NAME)
@@ -132,7 +132,7 @@ def test_check_migrates_the_default_legacy_vault(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _legacy_vault(tmp_path)
-    monkeypatch.delenv("BT_NODES_DIR", raising=False)
+    monkeypatch.delenv("TANGLE_NODES_DIR", raising=False)
     monkeypatch.chdir(tmp_path)
 
     assert graph_check.main([]) == 0

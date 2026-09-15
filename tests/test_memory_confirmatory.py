@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from braintree import (
+from tangle import (
     memory_causal,
     memory_contract,
     memory_corpus,

@@ -19,8 +19,8 @@
             "kind": "observation",
             "statement": "One current rule supersedes only when an outcome moves to a different node, while another consolidates adjacent nodes that share one outcome and completion boundary.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md",
-              ".braintree/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md"
+              ".tangle/resolved/TAS-082-reversal-semantics.md",
+              ".tangle/resolved/TAS-104-state-event-triggered-split-and-consolidation-ev.md"
             ]
           },
           {
@@ -29,7 +29,7 @@
             "kind": "decision",
             "statement": "A recorded precedence decision holds that when the two rules collide on one node, the narrower later rule controls and the collision is noted in the result.",
             "evidence": [
-              ".braintree/resolved/TAS-082-reversal-semantics.md",
+              ".tangle/resolved/TAS-082-reversal-semantics.md",
               "references/dependencies.md"
             ]
           },
@@ -48,7 +48,7 @@
             "kind": "observation",
             "statement": "A different node's cosmetic edit refreshed its timestamp without a revision bump.",
             "evidence": [
-              ".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"
+              ".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md"
             ]
           }
         ]
@@ -56,7 +56,7 @@
       "query": {
         "task": "A node's outcome moved to a different node, and its remaining work shares one outcome and completion boundary with an adjacent node. The supersession rule and the consolidation rule can each be read to govern. No precedence between the two rules is available in the current observable state, and the standing convention for such a collision is to keep both readings and flag the disagreement. Decide how to proceed.",
         "observable_paths": [
-          "src/braintree/quality_benchmark.py"
+          "src/tangle/quality_benchmark.py"
         ],
         "allowed_actions": [
           "apply-the-narrower-recorded-rule",
@@ -99,8 +99,8 @@
             "kind": "observation",
             "statement": "The repository records two distinct migrations, a storage-architecture migration and a vault-directory migration, and a request referred only to 'the migration'.",
             "evidence": [
-              ".braintree/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
-              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+              ".tangle/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+              ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md"
             ]
           },
           {
@@ -109,8 +109,8 @@
             "kind": "observation",
             "statement": "A request that names only 'the migration' leaves which one it means undetermined.",
             "evidence": [
-              ".braintree/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
-              ".braintree/resolved/TAS-109-move-vault-to-dot-braintree.md"
+              ".tangle/resolved/TAS-030-hybrid-markdown-sqlite-migration.md",
+              ".tangle/resolved/TAS-109-move-vault-to-dot-braintree.md"
             ]
           },
           {
@@ -120,7 +120,7 @@
             "statement": "Correct behavior on a missing premise may be to ask one targeted clarification rather than guess or stall.",
             "evidence": [
               "research/agent-memory-theory-evaluation.md",
-              ".braintree/proposed/TAS-127-uncertainty-provenance-security.md"
+              ".tangle/proposed/TAS-127-uncertainty-provenance-security.md"
             ]
           },
           {
@@ -129,7 +129,7 @@
             "kind": "observation",
             "statement": "A separate definition changed at a higher revision and required consumer reconciliation.",
             "evidence": [
-              ".braintree/resolved/TAS-009-semantic-revisions.md"
+              ".tangle/resolved/TAS-009-semantic-revisions.md"
             ]
           }
         ]
@@ -137,7 +137,7 @@
       "query": {
         "task": "A request names 'the migration' while the repository records two distinct migrations, and the request does not identify which one it means. Decide the immediate next action.",
         "observable_paths": [
-          "src/braintree/quality_benchmark.py"
+          "src/tangle/quality_benchmark.py"
         ],
         "allowed_actions": [
           "ask-one-targeted-clarification",
@@ -179,7 +179,7 @@
             "kind": "decision",
             "statement": "One current decision requires the skill entrypoint stay compact and future skill-text edits be evaluated with a matched token A/B before growth is retained.",
             "evidence": [
-              ".braintree/resolved/DEC-004-compact-skill-text.md"
+              ".tangle/resolved/DEC-004-compact-skill-text.md"
             ]
           },
           {
@@ -188,8 +188,8 @@
             "kind": "observation",
             "statement": "A later analysis reports the compactness target is unmet and prescribes moving detail behind focused references, while the staged token A/B that would compare a new always-loaded rule against the compact entrypoint is blocked pending authorization.",
             "evidence": [
-              ".braintree/resolved/THO-016-has-cumulative-contract-growth-invalidated-the-c.md",
-              ".braintree/blocked/TAS-080-staged-token-ab.md"
+              ".tangle/resolved/THO-016-has-cumulative-contract-growth-invalidated-the-c.md",
+              ".tangle/blocked/TAS-080-staged-token-ab.md"
             ]
           },
           {
@@ -199,7 +199,7 @@
             "statement": "Under irreducible conflict and a missing tie-break, correct behavior may be calibrated inaction or preserving alternatives rather than one resolved answer.",
             "evidence": [
               "research/agent-memory-theory-evaluation.md",
-              ".braintree/proposed/TAS-127-uncertainty-provenance-security.md"
+              ".tangle/proposed/TAS-127-uncertainty-provenance-security.md"
             ]
           },
           {
@@ -208,7 +208,7 @@
             "kind": "observation",
             "statement": "A separate consumer pin mismatched after a semantic revision.",
             "evidence": [
-              ".braintree/resolved/TAS-009-semantic-revisions.md"
+              ".tangle/resolved/TAS-009-semantic-revisions.md"
             ]
           }
         ]
@@ -216,7 +216,7 @@
       "query": {
         "task": "Two current sources pull in different directions about whether a new always-loaded rule belongs in the compact entrypoint, and the staged comparison that could break the tie is blocked pending authorization. Decide what a worker may conclude.",
         "observable_paths": [
-          "src/braintree/quality_benchmark.py"
+          "src/tangle/quality_benchmark.py"
         ],
         "allowed_actions": [
           "preserve-both-conclusions-and-report-uncertainty",

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from braintree import feedback_scan
+from tangle import feedback_scan
 
 
 def _write(path: Path, *lines: str) -> None:
@@ -29,14 +29,14 @@ def _vault(root: Path, *, feedback: bool, feedback_id: str = "FBK-001-allocation
             "context_rev: 1",
             "updated: 2026-09-12T00:00:00Z",
             "summary: Allocation collided with nodes on disk.",
-            "braintree_revision: 0.4.0+g1b58d57",
+            "tangle_revision: 0.4.0+g1b58d57",
             "---",
             "",
             "Area [[IDX-001-root]].",
             "",
             "# Feedback",
             "",
-            "Attempted: Ran bt allocate after a reindex.",
+            "Attempted: Ran tangle allocate after a reindex.",
             "Friction: The allocated id already existed on disk.",
             "Improvement: Seed allocation from the Markdown maximum.",
         )
@@ -89,7 +89,7 @@ _CANONICAL_FBK = "fbk-01k5v6m3x8f2q7c9d4hn8w2pza-allocation-friction"
 
 def _stationary_vault(root: Path) -> Path:
     """Seed a stationary canonical vault with one lowercase fbk node."""
-    nodes = root / ".braintree"
+    nodes = root / ".tangle"
     directory = nodes / "canonical" / _CANONICAL_FBK[-2:]
     directory.mkdir(parents=True, exist_ok=True)
     _write(
@@ -99,7 +99,7 @@ def _stationary_vault(root: Path) -> Path:
         "context_rev: 1",
         "updated: 2026-09-12T00:00:00Z",
         "summary: Canonical feedback node.",
-        "braintree_revision: 0.4.0+g1b58d57",
+        "tangle_revision: 0.4.0+g1b58d57",
         "---",
         "",
         "Area [[IDX-001-root]].",
@@ -129,7 +129,7 @@ def test_scan_reads_mixed_legacy_and_canonical_feedback(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     vault = _stationary_vault(tmp_path / "mixed")
-    legacy = vault / ".braintree" / "proposed"
+    legacy = vault / ".tangle" / "proposed"
     legacy.mkdir(parents=True, exist_ok=True)
     _write(
         legacy / "FBK-001-one.md",
@@ -137,7 +137,7 @@ def test_scan_reads_mixed_legacy_and_canonical_feedback(
         "context_rev: 1",
         "updated: 2026-09-12T00:00:00Z",
         "summary: Legacy feedback node.",
-        "braintree_revision: 0.4.0+g1b58d57",
+        "tangle_revision: 0.4.0+g1b58d57",
         "---",
         "",
         "Area [[IDX-001-root]].",
@@ -193,7 +193,7 @@ def test_scan_missing_vault_errors(
 
 def test_scan_requires_a_vault(capsys: pytest.CaptureFixture[str]) -> None:
     assert feedback_scan.main([]) == 2
-    assert "braintree feedback scan requires at least one vault" in capsys.readouterr().out
+    assert "tangle feedback scan requires at least one vault" in capsys.readouterr().out
 
 
 def test_scan_rejects_bad_limit(capsys: pytest.CaptureFixture[str]) -> None:
@@ -209,4 +209,4 @@ def test_scan_unknown_option_exits_two(capsys: pytest.CaptureFixture[str]) -> No
 def test_scan_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert feedback_scan.main(["--help"]) == 0
     assert feedback_scan.main(["-h"]) == 0
-    assert "usage: braintree feedback scan" in capsys.readouterr().out
+    assert "usage: tangle feedback scan" in capsys.readouterr().out

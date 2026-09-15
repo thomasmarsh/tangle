@@ -1,13 +1,13 @@
 [project]
-name = "braintree"
-version = "0.6.0"
-description = "Typed Python implementation of the Braintree Markdown graph tooling."
+name = "tangle"
+version = "1.0.0"
+description = "Typed Python implementation of the Tangle Markdown graph tooling."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
 
 [project.scripts]
-braintree = "braintree.main:main"
+tangle = "tangle.main:main"
 
 # Optional off-the-shelf semantic layer: fastembed on ONNX Runtime is the
 # shipped in-process inference runtime, with numpy, scikit-learn, umap-learn
@@ -17,7 +17,7 @@ braintree = "braintree.main:main"
 # contradicts fastembed's numpy>=2.1. The numba/llvmlite pins bound the
 # transitive UMAP and HDBSCAN stack to versions that publish x86_64 macOS
 # wheels. A plain install stays dependency-free; install the extra with
-# `uv sync --extra semantic` or `pip install 'braintree[semantic]'`.
+# `uv sync --extra semantic` or `pip install 'tangle[semantic]'`.
 [project.optional-dependencies]
 semantic = [
     "fastembed>=0.7,<0.9",

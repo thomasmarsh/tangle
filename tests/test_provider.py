@@ -1,7 +1,7 @@
 """Protocol, offline, and cache tests for the native embedding provider.
 
-``braintree semantic embed`` is the shipped ``BT_SEMANTIC_PROVIDER`` command for
-the optional semantic seam in :mod:`braintree.semantic`. These tests drive it
+``tangle semantic embed`` is the shipped ``TANGLE_SEMANTIC_PROVIDER`` command for
+the optional semantic seam in :mod:`tangle.semantic`. These tests drive it
 with a deterministic injected fake model, so they never import fastembed, never
 download weights, and stay fast; the real runtime is the opt-in ``semantic``
 extra and needs a populated offline cache the suite must not depend on.
@@ -31,9 +31,9 @@ from pathlib import Path
 
 import pytest
 
-from braintree import provider, semantic
+from tangle import provider, semantic
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 _ROOT = Path(__file__).resolve().parents[1]
 
@@ -46,7 +46,7 @@ _HEAVY_MODULES = ("numpy", "sklearn", "fastembed", "onnxruntime")
 # then the probe reports every heavy module it loaded, which must be none.
 _IMPORT_PROBE = """\
 import sys
-from braintree import main, provider
+from tangle import main, provider
 
 assert provider.main(["--help"]) == 0
 assert main.main(["semantic", "embed", "--help"]) == 0
@@ -57,17 +57,17 @@ print("heavy:" + ",".join(name for name in sys.argv[1:] if name in sys.modules))
 # provider's one heavy load seam. It canonicalizes a few synonyms and projects
 # each canonical token onto a small fixed vocabulary, so a paraphrase sharing no
 # surface tokens with a node still matches it, and it appends one JSON line per
-# model load and per batch to ``BT_FAKE_MODEL_LOG`` so a test can count calls.
-# ``BT_FAKE_MODEL_MODE=unavailable`` makes the load fail like an unpopulated
+# model load and per batch to ``TANGLE_FAKE_MODEL_LOG`` so a test can count calls.
+# ``TANGLE_FAKE_MODEL_MODE=unavailable`` makes the load fail like an unpopulated
 # cache; ``empty`` returns an empty vector like a broken runtime.
 _FAKE_MODEL = """\
 import json
 import os
 import sys
 
-from braintree import provider
+from tangle import provider
 
-MODE = os.environ.get("BT_FAKE_MODEL_MODE", "ok")
+MODE = os.environ.get("TANGLE_FAKE_MODEL_MODE", "ok")
 CANONICAL = {
     "lapsed": "expired",
     "auth": "authentication",
@@ -100,7 +100,7 @@ def vector(text):
 
 
 def log(event):
-    with open(os.environ["BT_FAKE_MODEL_LOG"], "a", encoding="utf-8") as handle:
+    with open(os.environ["TANGLE_FAKE_MODEL_LOG"], "a", encoding="utf-8") as handle:
         handle.write(json.dumps(event) + chr(10))
 
 
@@ -236,10 +236,10 @@ def test_command_writes_only_the_protocol_vector_array(
 def test_command_model_flag_overrides_the_environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``--model`` wins over ``BT_EMBEDDING_MODEL``, which wins over the default."""
-    monkeypatch.setenv("BT_EMBEDDING_MODEL", provider.DEFAULT_MODEL)
+    """``--model`` wins over ``TANGLE_EMBEDDING_MODEL``, which wins over the default."""
+    monkeypatch.setenv("TANGLE_EMBEDDING_MODEL", provider.DEFAULT_MODEL)
     assert provider.model_name() == provider.DEFAULT_MODEL
-    monkeypatch.setenv("BT_EMBEDDING_MODEL", provider.FALLBACK_MODEL)
+    monkeypatch.setenv("TANGLE_EMBEDDING_MODEL", provider.FALLBACK_MODEL)
     assert provider.model_name() == provider.FALLBACK_MODEL
     assert provider.model_name("custom/model") == "custom/model"
 
@@ -311,7 +311,7 @@ def test_missing_extra_or_empty_cache_exits_non_zero_with_empty_stdout(
 def test_importing_and_running_the_provider_loads_no_heavy_module() -> None:
     """The registered verb and its help path stay on the plain install."""
     env = os.environ.copy()
-    env.pop("BT_SEMANTIC_PROVIDER", None)
+    env.pop("TANGLE_SEMANTIC_PROVIDER", None)
     probe = subprocess.run(
         [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
         cwd=str(_ROOT),
@@ -329,24 +329,24 @@ def test_importing_and_running_the_provider_loads_no_heavy_module() -> None:
 
 def _seam_env(tmp_path: Path, vault: Path, command: str) -> dict[str, str]:
     return {
-        "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-        "BT_PROJECT_ID": "provider-test",
-        "BT_NODES_DIR": str(vault),
-        "BT_SEMANTIC_PROVIDER": command,
-        "BT_FAKE_MODEL_LOG": str(tmp_path / "calls.jsonl"),
+        "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+        "TANGLE_PROJECT_ID": "provider-test",
+        "TANGLE_NODES_DIR": str(vault),
+        "TANGLE_SEMANTIC_PROVIDER": command,
+        "TANGLE_FAKE_MODEL_LOG": str(tmp_path / "calls.jsonl"),
     }
 
 
-def _lexical(tmp_path: Path, vault: Path, run_bt: RunBt) -> str:
+def _lexical(tmp_path: Path, vault: Path, run_tangle: RunTangle) -> str:
     """Return the lexical baseline answer with no provider configured."""
-    result = run_bt(
+    result = run_tangle(
         "similar",
         _QUERY,
         env={
-            "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-            "BT_PROJECT_ID": "provider-test",
-            "BT_NODES_DIR": str(vault),
-            "BT_SEMANTIC_PROVIDER": None,
+            "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+            "TANGLE_PROJECT_ID": "provider-test",
+            "TANGLE_NODES_DIR": str(vault),
+            "TANGLE_SEMANTIC_PROVIDER": None,
         },
     )
     assert result.returncode == 0
@@ -354,7 +354,7 @@ def _lexical(tmp_path: Path, vault: Path, run_bt: RunBt) -> str:
 
 
 def test_native_command_reranks_a_paraphrase_and_caches_by_content_hash(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """The seam serves real reranking from the native command, cached by content hash."""
     vault = tmp_path / "vault" / "nodes"
@@ -363,10 +363,10 @@ def test_native_command_reranks_a_paraphrase_and_caches_by_content_hash(
     env = _seam_env(tmp_path, vault, command)
     log = tmp_path / "calls.jsonl"
 
-    lexical = _lexical(tmp_path, vault, run_bt)
+    lexical = _lexical(tmp_path, vault, run_tangle)
     assert lexical.strip() == "similar: 0 matching nodes"
 
-    first = run_bt("similar", _QUERY, env=env)
+    first = run_tangle("similar", _QUERY, env=env)
     assert first.returncode == 0
     rows = _toon_rows(first.stdout, "similar")
     assert sorted(row[0] for row in rows) == ["DEF-001", "TAS-001"]
@@ -375,17 +375,17 @@ def test_native_command_reranks_a_paraphrase_and_caches_by_content_hash(
     # and the batch carries every node plus the query in a single call.
     calls = _lines(log)
     assert calls[0] == "load"
-    assert calls[1] == ["braintree semantic probe"]
+    assert calls[1] == ["tangle semantic probe"]
     assert calls[2] == "load"
     assert isinstance(calls[3], list) and len(calls[3]) == 4 and _QUERY in calls[3]
     assert len(calls) == 4
 
-    second = run_bt("similar", _QUERY, env=env)
+    second = run_tangle("similar", _QUERY, env=env)
     assert second.returncode == 0
     assert second.stdout == first.stdout
     # Only the probe process ran: every vector came from the content-hash cache,
     # so no node and not even the query was re-embedded.
-    assert _lines(log)[4:] == ["load", ["braintree semantic probe"]]
+    assert _lines(log)[4:] == ["load", ["tangle semantic probe"]]
 
     _write(
         vault / "resolved" / "DEF-002-cache-policy.md",
@@ -393,11 +393,11 @@ def test_native_command_reranks_a_paraphrase_and_caches_by_content_hash(
         "summary: Cache warming policy.\n---\n\n# Invariant\n\n"
         "The cache warms cold entries.\n",
     )
-    third = run_bt("similar", _QUERY, env=env)
+    third = run_tangle("similar", _QUERY, env=env)
     assert third.returncode == 0
     calls = _lines(log)
     # Probe plus exactly one embedding call, carrying the one changed node.
-    assert calls[6:8] == ["load", ["braintree semantic probe"]]
+    assert calls[6:8] == ["load", ["tangle semantic probe"]]
     assert calls[8] == "load"
     assert isinstance(calls[9], list) and len(calls[9]) == 1
     assert "cache warms" in calls[9][0]
@@ -408,7 +408,7 @@ def test_provider_identity_is_the_command_string(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The sidecar cache key follows the command string, so the model is pinnable."""
-    monkeypatch.setenv("BT_FAKE_MODEL_LOG", str(tmp_path / "calls.jsonl"))
+    monkeypatch.setenv("TANGLE_FAKE_MODEL_LOG", str(tmp_path / "calls.jsonl"))
     command = _fake_command(tmp_path)
 
     default = semantic.probe(command)
@@ -422,15 +422,16 @@ def test_provider_identity_is_the_command_string(
 
 @pytest.mark.parametrize("mode", ["unavailable", "empty"])
 def test_absent_or_broken_native_command_degrades_to_the_lexical_baseline(
-    tmp_path: Path, run_bt: RunBt, monkeypatch: pytest.MonkeyPatch, mode: str
+    tmp_path: Path, run_tangle: RunTangle, monkeypatch: pytest.MonkeyPatch, mode: str
 ) -> None:
     """A cold cache or a malformed result is capability absent, not a failed verb."""
     vault = tmp_path / "vault" / "nodes"
     _seed_similar(vault)
-    monkeypatch.setenv("BT_FAKE_MODEL_MODE", mode)
-    lexical = _lexical(tmp_path, vault, run_bt)
+    monkeypatch.setenv("TANGLE_FAKE_MODEL_MODE", mode)
+    lexical = _lexical(tmp_path, vault, run_tangle)
 
-    degraded = run_bt("similar", _QUERY, env=_seam_env(tmp_path, vault, _fake_command(tmp_path)))
+    seam = _seam_env(tmp_path, vault, _fake_command(tmp_path))
+    degraded = run_tangle("similar", _QUERY, env=seam)
 
     assert degraded.returncode == 0
     assert degraded.stdout == lexical

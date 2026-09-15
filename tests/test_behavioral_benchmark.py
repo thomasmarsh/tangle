@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from braintree import behavioral_benchmark
+from tangle import behavioral_benchmark
 
 # Benchmark verification recomputes full fixtures, so it is opt-in.
 pytestmark = pytest.mark.benchmark

@@ -1,7 +1,7 @@
 """Behavioral tests for the orphan warning on the direct-answer verbs.
 
 An unfinished node that cannot reach a hub is a graph-integrity failure that
-``braintree check`` reports as a ``route-orphan`` error. The direct-answer verbs
+``tangle check`` reports as a ``route-orphan`` error. The direct-answer verbs
 a client actually calls — ``frontier``, ``next``, ``orient``, and ``status`` —
 must surface the same finding as a loud stderr warning without failing the
 interaction or corrupting their machine-readable TOON on stdout.
@@ -15,16 +15,16 @@ from pathlib import Path
 
 import pytest
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 _DIRECT_ANSWER_VERBS = ("frontier", "next", "orient", "packet", "status")
 
 
 def _env(tmp_path: Path, vault: Path) -> dict[str, str]:
     return {
-        "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-        "BT_PROJECT_ID": "orphan-warning-test",
-        "BT_NODES_DIR": str(vault),
+        "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+        "TANGLE_PROJECT_ID": "orphan-warning-test",
+        "TANGLE_NODES_DIR": str(vault),
     }
 
 
@@ -59,12 +59,12 @@ def _seed(vault: Path, *, orphan: bool) -> None:
 
 @pytest.mark.parametrize("verb", _DIRECT_ANSWER_VERBS)
 def test_each_direct_answer_verb_warns_on_an_orphan(
-    tmp_path: Path, run_bt: RunBt, verb: str
+    tmp_path: Path, run_tangle: RunTangle, verb: str
 ) -> None:
     """Every direct-answer verb surfaces the orphan without failing."""
     vault = tmp_path / "nodes"
     _seed(vault, orphan=True)
-    result = run_bt(verb, env=_env(tmp_path, vault))
+    result = run_tangle(verb, env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert "cannot reach a hub" in result.stderr
     assert "TAS-002-orphan.md" in result.stderr
@@ -74,23 +74,23 @@ def test_each_direct_answer_verb_warns_on_an_orphan(
 
 @pytest.mark.parametrize("verb", _DIRECT_ANSWER_VERBS)
 def test_healthy_graph_has_no_orphan_warning(
-    tmp_path: Path, run_bt: RunBt, verb: str
+    tmp_path: Path, run_tangle: RunTangle, verb: str
 ) -> None:
     """A reachable graph produces no warning and no stderr noise."""
     vault = tmp_path / "nodes"
     _seed(vault, orphan=False)
-    result = run_bt(verb, env=_env(tmp_path, vault))
+    result = run_tangle(verb, env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stderr == ""
 
 
 def test_routing_the_orphan_silences_the_warning(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """Falsification probe: the warning follows reachability, not the node."""
     vault = tmp_path / "nodes"
     _seed(vault, orphan=True)
-    warned = run_bt("frontier", env=_env(tmp_path, vault))
+    warned = run_tangle("frontier", env=_env(tmp_path, vault))
     assert "cannot reach a hub" in warned.stderr
 
     orphan = vault / "active" / "TAS-002-orphan.md"
@@ -98,20 +98,20 @@ def test_routing_the_orphan_silences_the_warning(
         orphan,
         orphan.read_text(encoding="utf-8") + "\nParent [[IDX-001-root]].\n",
     )
-    routed = run_bt("frontier", env=_env(tmp_path, vault))
+    routed = run_tangle("frontier", env=_env(tmp_path, vault))
     assert routed.returncode == 0
     assert routed.stderr == ""
 
 
 def test_check_keeps_its_route_orphan_error_and_allow_orphan(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """``check`` keeps its non-zero error and its ``--allow-orphan`` exception."""
     vault = tmp_path / "nodes"
     _seed(vault, orphan=True)
-    checked = run_bt("check", env=_env(tmp_path, vault))
+    checked = run_tangle("check", env=_env(tmp_path, vault))
     assert checked.returncode == 1
     assert "orphan unfinished node" in checked.stderr
-    allowed = run_bt("check", "--allow-orphan", "TAS-002-orphan", env=_env(tmp_path, vault))
+    allowed = run_tangle("check", "--allow-orphan", "TAS-002-orphan", env=_env(tmp_path, vault))
     assert allowed.returncode == 0
     assert "graph check: passed" in allowed.stdout

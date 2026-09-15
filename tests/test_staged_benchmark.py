@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from braintree import main as bt_main
-from braintree import staged_benchmark, token_benchmark
+from tangle import main as bt_main
+from tangle import staged_benchmark, token_benchmark
 
 # Benchmark verification replays recorded samples, so it is opt-in.
 pytestmark = pytest.mark.benchmark
@@ -83,7 +83,7 @@ def _session(
                     "type": "custom_tool_call",
                     "name": name,
                     "call_id": f"call-{index}",
-                    "input": "braintree frontier",
+                    "input": "tangle frontier",
                 },
             }
         )

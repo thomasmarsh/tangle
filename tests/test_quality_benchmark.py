@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import embedding_benchmark, main
-from braintree import quality_benchmark as harness
+from tangle import embedding_benchmark, main
+from tangle import quality_benchmark as harness
 
 # Benchmark verification scores the committed corpus, so it is opt-in.
 pytestmark = pytest.mark.benchmark
@@ -44,7 +44,7 @@ _HEAVY_MODULES = (
 # without the optional extra, and the probe reports what it loaded.
 _IMPORT_PROBE = """\
 import sys
-from braintree import main, quality_benchmark
+from tangle import main, quality_benchmark
 
 assert main.main(["--help"]) == 0
 assert main.main(["benchmark", "quality", "--help"]) == 0
@@ -274,7 +274,7 @@ def test_benchmark_quality_is_dispatched(capsys: pytest.CaptureFixture[str]) -> 
 def test_default_install_imports_no_heavy_module() -> None:
     """The default install verifies the evidence with no heavy import."""
     env = dict(os.environ)
-    env["BT_MODEL_CACHE"] = "/nonexistent-model-cache"
+    env["TANGLE_MODEL_CACHE"] = "/nonexistent-model-cache"
     probe = subprocess.run(
         [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
         cwd=str(_ROOT),

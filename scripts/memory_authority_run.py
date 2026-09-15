@@ -30,7 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from braintree import memory_authority as ma  # noqa: E402
+from tangle import memory_authority as ma  # noqa: E402
 
 DEFAULT_RUN_DIR = Path(tempfile.gettempdir()) / "memory-authority-v1"
 _REASONING = re.compile(r'"reasoning":(\d+)')

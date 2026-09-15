@@ -1,4 +1,4 @@
-"""Tests for the strict ``braintree packet`` work-packet read surface.
+"""Tests for the strict ``tangle packet`` work-packet read surface.
 
 The verb must return exactly one executable frontier node when the route from
 ``index-map.md`` is unique, and must refuse to guess with a structured blocked,
@@ -13,7 +13,7 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 
 def _toon_rows(output: str, name: str) -> list[list[str]]:
@@ -73,14 +73,14 @@ def _hub(vault: Path, hub: str = "IDX-001-root") -> None:
 
 def _env(tmp_path: Path, vault: Path) -> dict[str, str]:
     return {
-        "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-        "BT_PROJECT_ID": "packet-test",
-        "BT_NODES_DIR": str(vault),
+        "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+        "TANGLE_PROJECT_ID": "packet-test",
+        "TANGLE_NODES_DIR": str(vault),
     }
 
 
 def test_packet_ready_returns_the_unique_executable_node(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -107,7 +107,7 @@ def test_packet_ready_returns_the_unique_executable_node(
         ),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert 'result: "ready"' in result.stdout
     assert 'id: "TAS-101"' in result.stdout
@@ -122,13 +122,13 @@ def test_packet_ready_returns_the_unique_executable_node(
     ]
     assert _toon_rows(result.stdout, "files") == [["proposed/TAS-101-first.md"]]
     assert _toon_rows(result.stdout, "verification") == [
-        ["braintree check"],
+        ["tangle check"],
         ["make test"],
     ]
 
 
 def test_packet_blocked_lists_the_terminal_blocked_route(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -150,7 +150,7 @@ def test_packet_blocked_lists_the_terminal_blocked_route(
         ),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "blocked"' in result.stdout
     rows = _toon_rows(result.stdout, "terminals")
@@ -161,7 +161,7 @@ def test_packet_blocked_lists_the_terminal_blocked_route(
 
 
 def test_packet_blocked_when_the_terminal_context_is_stale(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -188,7 +188,7 @@ def test_packet_blocked_when_the_terminal_context_is_stale(
         ),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "blocked"' in result.stdout
     rows = _toon_rows(result.stdout, "terminals")
@@ -197,7 +197,7 @@ def test_packet_blocked_when_the_terminal_context_is_stale(
 
 
 def test_packet_ambiguous_reports_every_distinct_route(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -216,7 +216,7 @@ def test_packet_ambiguous_reports_every_distinct_route(
             ),
         )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "ambiguous"' in result.stdout
     rows = _toon_rows(result.stdout, "candidates")
@@ -226,7 +226,7 @@ def test_packet_ambiguous_reports_every_distinct_route(
 
 
 def test_packet_invalid_when_next_is_not_a_direct_child(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -244,7 +244,7 @@ def test_packet_invalid_when_next_is_not_a_direct_child(
         ),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "invalid"' in result.stdout
     assert _toon_rows(result.stdout, "problems")[0][:2] == ["next-not-child", "TAS-100"]
@@ -256,7 +256,7 @@ def test_packet_walk_reports_a_route_cycle() -> None:
     The direct-child rule keeps a whole-vault route acyclic, so this defensive
     branch is exercised at the derivation boundary rather than through a vault.
     """
-    from braintree import index
+    from tangle import index
 
     loop = index.IndexedNode(
         id="TAS-100",
@@ -277,7 +277,7 @@ def test_packet_walk_reports_a_route_cycle() -> None:
 
 
 def test_packet_invalid_when_the_next_target_is_missing(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -286,14 +286,14 @@ def test_packet_invalid_when_the_next_target_is_missing(
         _node(status="proposed", summary="Coordinate.", next_value="[[TAS-404-absent]]"),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "invalid"' in result.stdout
     assert _toon_rows(result.stdout, "problems")[0][:2] == ["next-missing", "TAS-100"]
 
 
 def test_packet_invalid_when_next_mentions_a_link_inside_prose(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
@@ -306,13 +306,13 @@ def test_packet_invalid_when_next_mentions_a_link_inside_prose(
         ),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "invalid"' in result.stdout
     assert _toon_rows(result.stdout, "problems")[0][:2] == ["next-malformed", "TAS-100"]
 
 
-def test_packet_invalid_without_a_root_hub(tmp_path: Path, run_bt: RunBt) -> None:
+def test_packet_invalid_without_a_root_hub(tmp_path: Path, run_tangle: RunTangle) -> None:
     vault = tmp_path / "vault"
     _write(vault / "index-map.md", "# Root hubs\n\nNo hubs here.\n")
     _write(
@@ -320,23 +320,23 @@ def test_packet_invalid_without_a_root_hub(tmp_path: Path, run_bt: RunBt) -> Non
         _node(status="resolved", summary="Root hub.", route=""),
     )
 
-    result = run_bt("packet", env=_env(tmp_path, vault))
+    result = run_tangle("packet", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'result: "invalid"' in result.stdout
     assert _toon_rows(result.stdout, "problems")[0][0] == "no-root-hub"
 
 
-def test_packet_rejects_arguments(tmp_path: Path, run_bt: RunBt) -> None:
+def test_packet_rejects_arguments(tmp_path: Path, run_tangle: RunTangle) -> None:
     vault = tmp_path / "vault"
     _hub(vault)
-    result = run_bt("packet", "extra", env=_env(tmp_path, vault))
+    result = run_tangle("packet", "extra", env=_env(tmp_path, vault))
     assert result.returncode == 2
     assert 'error: "packet takes no arguments: extra"' in result.stdout
 
 
 def test_packet_requires_an_existing_nodes_directory(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
-    result = run_bt("packet", env=_env(tmp_path, tmp_path / "missing"))
+    result = run_tangle("packet", env=_env(tmp_path, tmp_path / "missing"))
     assert result.returncode == 1
     assert "nodes directory does not exist" in result.stdout

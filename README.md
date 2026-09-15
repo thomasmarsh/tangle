@@ -1,22 +1,22 @@
-# Braintree
+# Tangle
 
 <p align="center">
-  <img src="assets/braintree.jpg" alt="A brain growing into a tree, with branching roots and smaller brains among the leaves" width="100%">
+  <img src="assets/tangle.jpg" alt="A brain growing into a tree, with branching roots and smaller brains among the leaves" width="100%">
 </p>
 
-Braintree keeps execution memory in a repository-local Markdown graph. Tasks,
+Tangle keeps execution memory in a repository-local Markdown graph. Tasks,
 decisions, definitions, blockers, and dependency state remain readable in Git and
 Obsidian. An optional local sidecar provides faster queries and same-host
 coordination.
 
-The scope is deliberately narrow. Braintree is not a general note-taking system or
+The scope is deliberately narrow. Tangle is not a general note-taking system or
 a replacement for a hosted issue tracker. Markdown remains authoritative, local
 coordination is limited to one host, and semantic suggestions are advisory.
 
 ## Why it exists
 
 Long-running engineering work tends to lose the reasoning between commits and chat
-threads. Braintree records enough durable context to answer a few practical
+threads. Tangle records enough durable context to answer a few practical
 questions:
 
 - What should happen next?
@@ -29,10 +29,10 @@ without a service or a database.
 
 ## The model
 
-Each concern is a small node in `.braintree/`:
+Each concern is a small node in `.tangle/`:
 
 ```text
-.braintree/
+.tangle/
   index-map.md
   project-id
   canonical/
@@ -45,14 +45,14 @@ lowercase 128-bit Crockford Base32 identities, and their canonical path is
 derived from the id, so a status change edits the node in place instead of moving
 it. Legacy uppercase numeric nodes in `proposed/`, `active/`, `blocked/`, and
 `resolved/` stay readable during a versioned compatibility window and are retired
-by `braintree stationarize`. Every non-root node has one primary `Parent`
+by `tangle stationarize`. Every non-root node has one primary `Parent`
 or `Area` link that reaches a root hub. Relationships are stored in one direction;
 backlinks and inverse views are derived by search.
 
 <p align="center">
-  <img src="assets/obsidian-graph.png" alt="This repository's .braintree vault visualized in Obsidian Graph view" width="100%">
+  <img src="assets/obsidian-graph.png" alt="This repository's .tangle vault visualized in Obsidian Graph view" width="100%">
   <br>
-  <em>This repository's own <code>.braintree/</code> vault visualized in Obsidian Graph view.</em>
+  <em>This repository's own <code>.tangle/</code> vault visualized in Obsidian Graph view.</em>
 </p>
 
 A node carries a semantic `context_rev`. Consumers pin the revision they used, so a
@@ -75,8 +75,8 @@ has semantic authority over scope.
 ## Install
 
 Clone this repository and run the installer with no arguments. It installs the
-shared `braintree` command and the Codex, Claude Code, and pi skills into your
-home root, so `~/.local/bin/braintree` is ready with no configuration:
+shared `tangle` command and the Codex, Claude Code, and pi skills into your
+home root, so `~/.local/bin/tangle` is ready with no configuration:
 
 ```sh
 ./scripts/install.sh
@@ -98,41 +98,41 @@ three; omitting the destination uses `$HOME`:
 
 Pass `--select` to discover the enclosing project root and the home root and
 choose targets from a numbered multi-select instead. `--select` needs a terminal
-(or `BT_INSTALL_SELECTION`). Use `--dry-run` to inspect a destination without
+(or `TANGLE_INSTALL_SELECTION`). Use `--dry-run` to inspect a destination without
 writing it. Add the generated `<root>/.local/bin` directory to `PATH`, then
 restart the relevant agent so it can discover the skill.
 
-Invoke the skill as `$braintree` in Codex, `/braintree` in Claude Code, or
-`/skill:braintree` in pi when automatic selection is not enough.
+Invoke the skill as `$tangle` in Codex, `/tangle` in Claude Code, or
+`/skill:tangle` in pi when automatic selection is not enough.
 
 ## Everyday use
 
 Start or inspect a vault:
 
 ```sh
-braintree init
-braintree orient
-braintree frontier
-braintree node TAS-101
-braintree impact DEF-auth-protocol
+tangle init
+tangle orient
+tangle frontier
+tangle node TAS-101
+tangle impact DEF-auth-protocol
 ```
 
 Validate Markdown and rebuild the optional local index:
 
 ```sh
-braintree check
-braintree index
-braintree search 'authentication' --limit 10
+tangle check
+tangle index
+tangle search 'authentication' --limit 10
 ```
 
 Capture feedback from a consuming project:
 
 ```sh
-braintree feedback record \
+tangle feedback record \
   --attempted '...' --friction '...' --improvement '...'
 ```
 
-Run `braintree --help` for the command index or `braintree <verb> --help` for one
+Run `tangle --help` for the command index or `tangle <verb> --help` for one
 command. The installed topical references contain the workflow contracts:
 
 - [`references/change-intake.md`](references/change-intake.md) covers the opt-in
@@ -144,21 +144,21 @@ command. The installed topical references contain the workflow contracts:
 - [`references/coordination.md`](references/coordination.md) covers claims, leases,
   worktrees, handoffs, and integration.
 
-`SKILL.md` is the concise agent entry point. `.braintree/` is the source of truth for
+`SKILL.md` is the concise agent entry point. `.tangle/` is the source of truth for
 this repository's own work.
 
 ## Optional local capabilities
 
 The sidecar is derived and disposable. It stores indexes, leases, and atomic ID
 reservations outside the repository. All worktrees for one Git repository share it.
-Losing it does not lose graph content; `braintree init` and `braintree index` rebuild
+Losing it does not lose graph content; `tangle init` and `tangle index` rebuild
 the derived state. SQLite coordination assumes one host and a local filesystem.
 
 Semantic retrieval and clustering require the optional extra. An installer
 requests it with `--semantic`, which materializes it into the shared program
 and its generated launcher; a package consumer can install the `semantic`
-extra from the package index (`braintree[semantic]`). Queries remain offline
-and require model weights in `BT_MODEL_CACHE` or the usual Hugging Face cache.
+extra from the package index (`tangle[semantic]`). Queries remain offline
+and require model weights in `TANGLE_MODEL_CACHE` or the usual Hugging Face cache.
 A missing extra or model, or an unhealthy provider, falls back to the lexical
 baseline.
 

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Braintree"
+  display_name: "Tangle"
   short_description: "Manage work through atomic Markdown graph nodes"
-  default_prompt: "Use $braintree to manage this engineering task in the local Markdown vault."
+  default_prompt: "Use $tangle to manage this engineering task in the local Markdown vault."

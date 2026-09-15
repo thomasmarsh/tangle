@@ -2,12 +2,12 @@
 
 Load this before claims, leases, parallel or multi-writer work, worktree
 handoffs, integration, or reconciliation. It is the canonical Markdown printed
-by `braintree help coordination` and is installed with `SKILL.md` and the
+by `tangle help coordination` and is installed with `SKILL.md` and the
 command.
 
 ## Local coordination
 
-Use `braintree` for derived answers and live coordination. A client never reads
+Use `tangle` for derived answers and live coordination. A client never reads
 or writes the local coordination state directly and never maintains a derived
 index by hand. The untracked, per-project store is shared by all worktrees of
 one repository.
@@ -16,7 +16,7 @@ one repository.
   (search, backlinks, stale pins) and live coordination (claims, leases,
   reserved IDs); losing it loses no durable graph knowledge.
 - The derived index maintains itself on every interaction.
-  `braintree index [.braintree]` exists only to repair or rebuild it from
+  `tangle index [.tangle]` exists only to repair or rebuild it from
   Markdown after loss or damage.
 - Local state coordinates concurrent processes on one host and local
   filesystem. Across hosts, coordinate through the shared Markdown vault.
@@ -26,27 +26,27 @@ one repository.
 ## Hash, claim, and lease
 
 NODE is a bare ID (`TAS-085`) or full filename stem
-(`TAS-085-hash-addressing-and-operand`), never a path. `braintree hash` resolves
+(`TAS-085-hash-addressing-and-operand`), never a path. `tangle hash` resolves
 either spelling; `claim` and `release` do not read Markdown and they treat NODE
 as the opaque claim key, so use the same spelling throughout one handoff.
 
-`braintree hash NODE` prints the SHA-256 `content_hash` of the raw node bytes.
+`tangle hash NODE` prints the SHA-256 `content_hash` of the raw node bytes.
 Pass that bare 64-character value as `--base-hash` to `claim` and `release`;
 do not reimplement the hash or pass the output block. A worker hashes and claims
 before editing. The starting hash covers the handed-off node before its frontier
 status change or `# Context` edit, which belong to the claimed work.
 
-`braintree claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or
+`tangle claim NODE AGENT --base-hash HASH [--lease-seconds N]` acquires or
 renews an exclusive lease. A lease lasts 900 seconds by default; repeating the
-same agent and base hash renews it for a fresh duration. `braintree release NODE
+same agent and base hash renews it for a fresh duration. `tangle release NODE
 AGENT --base-hash HASH` requires the claim's starting hash and owner. Both
 commands report `lease_remaining_seconds`; `release` distinguishes a lapsed
 matching lease (`expired`) from no claim (`no-op`).
 
 ```sh
-hash=$(braintree hash TAS-085 | sed -n 's/^content_hash: "\(.*\)"$/\1/p')
-braintree claim TAS-085 worker --base-hash "$hash"
-braintree release TAS-085 worker --base-hash "$hash"
+hash=$(tangle hash TAS-085 | sed -n 's/^content_hash: "\(.*\)"$/\1/p')
+tangle claim TAS-085 worker --base-hash "$hash"
+tangle release TAS-085 worker --base-hash "$hash"
 ```
 
 ## Parallel worktree contract
@@ -114,10 +114,10 @@ stage than the field it must read.
   creation needs no reservation, shared sequence, or preallocated range. For a
   legacy numeric prefix during the compatibility window only, reserve an ID, or a
   batch of `COUNT` consecutive ids in one call in a single transaction, with
-  `braintree allocate PREFIX [COUNT]`, or use coordinator-preallocated,
+  `tangle allocate PREFIX [COUNT]`, or use coordinator-preallocated,
   explicitly disjoint ranges offline. `find` only detects collisions. An
   allocated id is burned permanently: an allocation the caller discards is
-  never returned and never reused. `braintree reservations` lists each prefix's
+  never returned and never reused. `tangle reservations` lists each prefix's
   burned ids — reserved with no node on disk — so a gap in the vault is a
   discarded allocation, not a missing node. There is no release or reclaim
   because an in-flight worktree may already contain the ID.
@@ -145,13 +145,13 @@ When a frontier child resolves, its coordinating parent's `next` must advance:
   excludes the parent cannot make that edit: the child's resolution commit
   completes the worker's slice and the pending advance is its handoff action.
   Name the parent and resolved child, then verify with
-  `braintree check --allow-pending-advance PARENT`. When the node being resolved
+  `tangle check --allow-pending-advance PARENT`. When the node being resolved
   is the current `next` of a parent outside the write set, its acceptance line
   names that exact command rather than the plain gate, and the report surfaces
   the pending advance as the coordinator's integration action.
 
 A stale route is an unfinished coordinating node whose `next` is a single
-direct-child link naming an already-resolved child; `braintree check` reports it
+direct-child link naming an already-resolved child; `tangle check` reports it
 as `next-resolved-node`. The window between the child's resolution and the
 parent's advance is the multi-writer transient: the parent's `next` names an
 already-resolved child while its advance is still owed, and the failure appears
@@ -163,7 +163,7 @@ rather than by inference.
 `--allow-pending-advance NODE` sanctions exactly the one named parent whose
 `next` names an already-resolved child and relaxes nothing else. The sanction
 never clears the advance: the coordinator's integration gate is the plain
-`braintree check`, and the coordinator owns the advance and parent timestamp.
+`tangle check`, and the coordinator owns the advance and parent timestamp.
 
 A worker records a compact structured completion receipt before its long
 narrative report: the recorded base hash, the `release` result, a gate summary,
@@ -173,7 +173,7 @@ out while the worker is still composing prose.
 
 Serial work follows the same discipline without branches: self-assign the node
 and write set, claim it, keep its content and status coherent, run
-`braintree check`, and commit its resolved move.
+`tangle check`, and commit its resolved move.
 
 ## Timed-out worker recovery
 
@@ -204,9 +204,9 @@ behavior-preserving.
 
 Integrate worker branches one at a time. Never blindly auto-merge an upstream
 change to the assigned node or divergent status paths; reject the handoff or
-reconcile it semantically. After each integration, run `braintree check` and use
+reconcile it semantically. After each integration, run `tangle check` and use
 the line-anchored
-`rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .braintree` search
+`rg -n '^Depends on \[\[[^]]+\]\] at context_rev [0-9]+\.' .tangle` search
 for each dependency changed by the handoff. The anchor matches authored pins,
 not the command text where the recipe is quoted, so zero results need no further
 inspection. On integration, compare each submitted `updated` with the

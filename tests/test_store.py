@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from braintree import graph_check, index, store
+from tangle import graph_check, index, store
 
 _UID = "tas-0123456789abcdefghjkmnpqrs"
 _HUB = "idx-1123456789abcdefghjkmnpqrs"
@@ -25,7 +25,7 @@ def _node(node_id: str, status: str, route: str, *, next_line: str = "") -> str:
 
 
 def test_stationary_nodes_are_discovered_by_check_and_index(tmp_path: Path) -> None:
-    nodes = tmp_path / ".braintree"
+    nodes = tmp_path / ".tangle"
     canonical = nodes / store.CANONICAL_DIRECTORY / _UID[-2:]
     canonical.mkdir(parents=True)
     (nodes / "index-map.md").write_text(

@@ -1,10 +1,10 @@
 # Memory-evaluation admission cases
 
 This document is the prose authority for the **admission** family of the
-Braintree memory-evaluation gold corpus. The machine-readable half is
+Tangle memory-evaluation gold corpus. The machine-readable half is
 [`benchmark/memory-corpus/admission.json`](../benchmark/memory-corpus/admission.json);
 the case format is owned by
-[`src/braintree/memory_scenario.py`](../src/braintree/memory_scenario.py) and
+[`src/tangle/memory_scenario.py`](../src/tangle/memory_scenario.py) and
 [`research/agent-memory-scenario-schema.md`](agent-memory-scenario-schema.md),
 which this document must not restate. The corpus is offline: parsing, grading,
 and its tests make **zero live model calls**, and any live or paid run still

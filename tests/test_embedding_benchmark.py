@@ -1,6 +1,6 @@
 """Contract tests for the embedding model and runtime selection harness.
 
-The harness freezes a retrieval corpus, scores the lexical ``braintree similar``
+The harness freezes a retrieval corpus, scores the lexical ``tangle similar``
 baseline on it, and compares candidate off-the-shelf models. The real comparison
 is an explicit batch run that downloads weights and imports the optional
 ``semantic`` extra, so these tests drive the same pipeline with an injected
@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import embedding_benchmark as harness
-from braintree import index, main
+from tangle import embedding_benchmark as harness
+from tangle import index, main
 
 # Benchmark verification scores the committed corpus, so it is opt-in.
 pytestmark = pytest.mark.benchmark
@@ -34,7 +34,7 @@ _HEAVY_MODULES = ("torch", "sentence_transformers", "fastembed", "onnxruntime")
 # without the optional extra, and the probe reports what it loaded.
 _IMPORT_PROBE = """\
 import sys
-from braintree import embedding_benchmark, main
+from tangle import embedding_benchmark, main
 
 assert main.main(["--help"]) == 0
 assert main.main(["benchmark", "embedding", "--help"]) == 0
@@ -51,7 +51,7 @@ def _lexical_vectors(
 
     Every token the corpus and the probes use becomes one dimension, so a text
     is the dense form of the same lowercased token counts
-    :func:`braintree.index._similar_lexical` compares, and vector cosine equals
+    :func:`tangle.index._similar_lexical` compares, and vector cosine equals
     token-count cosine. This makes the whole scoring pipeline checkable offline:
     if the harness ranks by anything other than the shipped metric, the two
     results diverge.
@@ -147,7 +147,7 @@ def test_metrics_math() -> None:
 
 
 def test_lexical_order_matches_the_shipped_similar_baseline(tmp_path: Path) -> None:
-    """The harness ranks with the same metric ``braintree similar`` ships."""
+    """The harness ranks with the same metric ``tangle similar`` ships."""
     corpus = harness.load_corpus()
     nodes = [
         index.IndexedNode(
@@ -306,7 +306,7 @@ def test_benchmark_embedding_is_dispatched(capsys: pytest.CaptureFixture[str]) -
 def test_default_install_imports_no_heavy_module(tmp_path: Path) -> None:
     """The default install answers the harness commands with no heavy import."""
     env = dict(os.environ)
-    env["BT_MODEL_CACHE"] = str(tmp_path / "cache")
+    env["TANGLE_MODEL_CACHE"] = str(tmp_path / "cache")
     probe = subprocess.run(
         [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
         cwd=str(_ROOT),

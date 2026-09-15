@@ -4,7 +4,7 @@ This document preregisters the matched five-arm causal runner that realizes
 Stage 2 of the staged plan in
 [`research/agent-memory-theory-evaluation.md`](agent-memory-theory-evaluation.md).
 It is the prose authority for the runner; the machine-readable half is
-[`src/braintree/memory_causal.py`](../src/braintree/memory_causal.py), and
+[`src/tangle/memory_causal.py`](../src/tangle/memory_causal.py), and
 [`tests/test_memory_causal.py`](../tests/test_memory_causal.py) pins this
 document to it. The claim, observable-information boundary, causal arms,
 endpoints, statistical rules, and version pins belong to
@@ -19,7 +19,7 @@ exploratory run, so it cannot tune toward a confirming result.
 
 ## 1. What the runner isolates
 
-The contract's causal claim is that selective Braintree memory improves
+The contract's causal claim is that selective Tangle memory improves
 memory-dependent engineering actions at acceptable total interaction cost
 relative to repository-only, raw-history, and flat-memory baselines, and stays
 below an oracle that supplies the minimal gold memory. The runner instantiates
@@ -40,14 +40,14 @@ runner makes no model call to build a fixture.
 | `repository-only` | none | whether the case actually requires memory |
 | `raw-history` | the task-ranked public episodes as transcript statements, bounded by the shared budget | recency and lexical search of full history |
 | `flat-memory` | the same ranked episodes as untyped timestamped notes | whether typed lifecycle and governance beat mere persistence |
-| `braintree` | the case's dependency and decision chain, resolved from the episodes the gold evidence cites | the system under test |
+| `tangle` | the case's dependency and decision chain, resolved from the episodes the gold evidence cites | the system under test |
 | `oracle` | the minimal distilled gold evidence, injected directly | reading and reasoning loss independent of construction and retrieval |
 
 The shared memory budget is a statement count, not a token count, so every arm
 is bounded identically and no arm can win by flooding the context. The
-`repository-only` arm uses none of the budget. `braintree` retrieves the raw
+`repository-only` arm uses none of the budget. `tangle` retrieves the raw
 deciding episodes through the dependency chain; `oracle` receives the distilled
-gold evidence. The two are deliberately different: `braintree` exposes
+gold evidence. The two are deliberately different: `tangle` exposes
 construction and reading loss, while `oracle` is the upper bound the treatment
 approaches.
 
@@ -105,9 +105,9 @@ Secondary endpoints and diagnostic labels are the contract's. The runner
 reports:
 
 - per-arm and per-`(case, model)` graded outcomes;
-- paired treatment-minus-baseline effects for `braintree` against
+- paired treatment-minus-baseline effects for `tangle` against
   `repository-only` and `raw-history` (the two decision contrasts), plus
-  `braintree` against `flat-memory` and `oracle` against `braintree` for
+  `tangle` against `flat-memory` and `oracle` against `tangle` for
   diagnosis;
 - a 95% percentile bootstrap confidence interval over the paired effects, with
   the bootstrap unit being one mean effect per `(case, model)` stratum so
@@ -150,9 +150,9 @@ prompt, arm, model, or repetition count changes it.
 The offline reproduction is:
 
 ```sh
-uv run braintree benchmark causal plan
-uv run braintree benchmark causal dry-run
-uv run braintree benchmark causal record --input SAMPLES.json \
+uv run tangle benchmark causal plan
+uv run tangle benchmark causal dry-run
+uv run tangle benchmark causal record --input SAMPLES.json \
   --output benchmark/memory-causal-result.json
 ```
 

@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import memory_contract as harness
-from braintree import token_benchmark
+from tangle import memory_contract as harness
+from tangle import token_benchmark
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DOCUMENT = _ROOT / "research" / "agent-memory-evaluation-contract.md"
@@ -31,7 +31,7 @@ def test_arms_are_the_five_canonical_conditions() -> None:
         "repository-only",
         "raw-history",
         "flat-memory",
-        "braintree",
+        "tangle",
         "oracle",
     )
     assert list(harness.CANONICAL_ARM_IDS) == [arm.id for arm in harness.ARMS]

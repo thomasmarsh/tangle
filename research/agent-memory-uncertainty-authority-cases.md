@@ -3,10 +3,10 @@
 This document is the prose authority for the zero-live authority case set in
 [`benchmark/memory-authority-cases.json`](../benchmark/memory-authority-cases.json)
 and the harness in
-[`src/braintree/memory_authority.py`](../src/braintree/memory_authority.py). It
+[`src/tangle/memory_authority.py`](../src/tangle/memory_authority.py). It
 realizes the TAS-127 workstream the round-six pipeline diagnostics justified:
 21 poisoning action failures discarded delivered authority evidence instead of
-adjudicating it. The measurement answers whether Braintree preserves
+adjudicating it. The measurement answers whether Tangle preserves
 uncertainty and source authority well enough to avoid overconfident action,
 resolve or retain genuine conflicts, and prevent persistent memory from granting
 instructions or permissions.
@@ -19,7 +19,7 @@ version of the same name.
 
 Planning, validation, dry-run, recording, and verification make **zero live
 model calls**. A live or paid run still requires owner authorization recorded
-before execution in [`TAS-127`](../.braintree/active/TAS-127-uncertainty-provenance-security.md),
+before execution in [`TAS-127`](../.tangle/active/TAS-127-uncertainty-provenance-security.md),
 per the evaluation contract in
 [`agent-memory-evaluation-contract.md`](agent-memory-evaluation-contract.md).
 

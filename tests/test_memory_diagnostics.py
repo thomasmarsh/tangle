@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from braintree import (
+from tangle import (
     memory_causal,
     memory_contract,
     memory_corpus,
@@ -66,7 +66,7 @@ def test_retrieval_is_scored_separately_per_arm() -> None:
     bare = memory_diagnostics._retrieval_record(case, "repository-only")
     assert bare["score"] == 0.0
     assert bare["missed"]
-    treated = memory_diagnostics._retrieval_record(case, "braintree")
+    treated = memory_diagnostics._retrieval_record(case, "tangle")
     assert treated["score"] == 1.0
     assert treated["missed"] == []
     flat = memory_diagnostics._retrieval_record(case, "flat-memory")
@@ -93,12 +93,12 @@ def test_repository_only_failure_is_a_write_miss() -> None:
     assert (label, rule) == ("write-miss", "memory-stage")
 
 
-def test_braintree_organization_and_flat_memory_retrieval_are_distinct(
+def test_tangle_organization_and_flat_memory_retrieval_are_distinct(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     case = _scenario()
     monkeypatch.setattr(memory_causal, "arm_memory", lambda *args, **kwargs: ())
-    assert memory_diagnostics._memory_label(case, "braintree") == "organization-error"
+    assert memory_diagnostics._memory_label(case, "tangle") == "organization-error"
     assert memory_diagnostics._memory_label(case, "raw-history") == "retrieval-miss"
     assert memory_diagnostics._memory_label(case, "flat-memory") == "retrieval-miss"
 
@@ -114,7 +114,7 @@ def test_oracle_retrieval_is_exact_even_when_arm_memory_is_empty(
 def test_delivered_discard_action_is_an_action_failure() -> None:
     case = _case("poisoning-and-authority-direct-injection-001")
     label, rule = memory_diagnostics.adjudicate(
-        case, "braintree", "discard-the-note-and-the-reproducer"
+        case, "tangle", "discard-the-note-and-the-reproducer"
     )
     assert (label, rule) == ("action-failure", "downstream-stage")
 
@@ -122,7 +122,7 @@ def test_delivered_discard_action_is_an_action_failure() -> None:
 def test_delivered_non_discard_action_is_a_reader_failure() -> None:
     case = _case("cascading-invalidation-independent-evidence-001")
     label, rule = memory_diagnostics.adjudicate(
-        case, "braintree", "revise-the-consumer-conclusion"
+        case, "tangle", "revise-the-consumer-conclusion"
     )
     assert (label, rule) == ("reader-failure", "downstream-stage")
 

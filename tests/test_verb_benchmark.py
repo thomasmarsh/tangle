@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from braintree import verb_benchmark
+from tangle import verb_benchmark
 
 # Benchmark verification spawns the verb gate, so it is opt-in.
 pytestmark = pytest.mark.benchmark

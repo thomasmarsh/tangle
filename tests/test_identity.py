@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from braintree import identity
+from tangle import identity
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 
 def test_generated_ids_have_the_exact_canonical_128_bit_shape() -> None:
@@ -30,23 +30,23 @@ def test_noncanonical_node_payloads_are_rejected(value: str) -> None:
 
 
 def test_project_uid_is_committed_once_and_shared_by_a_clone(tmp_path: Path) -> None:
-    vault = tmp_path / ".braintree"
+    vault = tmp_path / ".tangle"
     vault.mkdir()
     first = identity.ensure_project_uid(vault)
     assert identity.ensure_project_uid(vault) == first
     assert (vault / "project-id").read_text(encoding="utf-8") == first + "\n"
 
 
-def test_location_reports_committed_project_uid(tmp_path: Path, run_bt: RunBt) -> None:
-    vault = tmp_path / ".braintree"
+def test_location_reports_committed_project_uid(tmp_path: Path, run_tangle: RunTangle) -> None:
+    vault = tmp_path / ".tangle"
     vault.mkdir()
     project = identity.ensure_project_uid(vault)
-    result = run_bt(
+    result = run_tangle(
         "location",
         env={
-            "BT_NODES_DIR": str(vault),
-            "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-            "BT_PROJECT_ID": "sidecar-test",
+            "TANGLE_NODES_DIR": str(vault),
+            "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+            "TANGLE_PROJECT_ID": "sidecar-test",
         },
     )
     assert result.returncode == 0

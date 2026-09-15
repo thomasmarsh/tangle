@@ -1,18 +1,18 @@
-# Braintree Through the Theory of External Agent Memory
+# Tangle Through the Theory of External Agent Memory
 
 ## Executive assessment
 
-Braintree is best understood as a **selective, external execution-memory system**, not as a general episodic archive. Its task nodes are prospective memory (what must happen), its definitions and decisions are semantic memory (what is currently believed or chosen), its thought and feedback nodes are reflective inputs, and its results preserve a deliberately compressed episodic trace (what happened and what was learned). That mixture is appropriate for software agents. The project should not try to preserve a complete autobiography.
+Tangle is best understood as a **selective, external execution-memory system**, not as a general episodic archive. Its task nodes are prospective memory (what must happen), its definitions and decisions are semantic memory (what is currently believed or chosen), its thought and feedback nodes are reflective inputs, and its results preserve a deliberately compressed episodic trace (what happened and what was learned). That mixture is appropriate for software agents. The project should not try to preserve a complete autobiography.
 
 The design is unusually strong in four areas that the agent-memory literature often treats lightly: explicit admission, inspectable authority, typed lifecycle, and mechanical consistency. Its rule to retain only information likely to change a future decision or action is a sound approximation to decision-relevant memory. Canonical links, status directories, semantic revision pins, stale-consumer detection, Git history, and a disposable derived index give the system a stronger governance model than most research prototypes.[^25]
 
-The largest gap is empirical, not architectural. Braintree has shown that its representation is compact, merge-friendly, structurally valid, queryable, and sometimes token-efficient. It has not yet shown, with a causal controlled evaluation, that agents using it make better downstream decisions than agents given only the repository, a raw history, a flat memory, or a conventional plan. Retrieval quality has been tested on graph-derived paraphrase and near-duplicate probes, but those probes do not establish memory-dependent task success. The current system also lacks systematic tests of memory admission, outcome-based consolidation, uncertainty, unresolved conflict, selective forgetting, provenance under untrusted inputs, and transfer of recurring experience into reusable procedures.
+The largest gap is empirical, not architectural. Tangle has shown that its representation is compact, merge-friendly, structurally valid, queryable, and sometimes token-efficient. It has not yet shown, with a causal controlled evaluation, that agents using it make better downstream decisions than agents given only the repository, a raw history, a flat memory, or a conventional plan. Retrieval quality has been tested on graph-derived paraphrase and near-duplicate probes, but those probes do not establish memory-dependent task success. The current system also lacks systematic tests of memory admission, outcome-based consolidation, uncertainty, unresolved conflict, selective forgetting, provenance under untrusted inputs, and transfer of recurring experience into reusable procedures.
 
 The proposed boundary—store only what cannot be reconstructed from files, prompts, and present environment state—is a valuable anti-duplication rule, but it is too strict as a complete theory. Reconstructibility is not binary. A fact can be derivable yet costly, ambiguous, nondeterministic, or impossible to reacquire after an external state changes. The stronger rule is:
 
 > Preserve a memory when its expected reduction in future decision error and reacquisition cost exceeds its write, review, retrieval, interference, and staleness costs.
 
-This is close to Braintree's existing admission language, especially its allowance for information that materially reduces future resumption cost. The project should retain that broader formulation and make “not already cheaply and reliably reconstructible” an explicit supporting test.
+This is close to Tangle's existing admission language, especially its allowance for information that materially reduces future resumption cost. The project should retain that broader formulation and make “not already cheaply and reliably reconstructible” an explicit supporting test.
 
 Overall assessment: **strong design, incomplete scientific validation**. The conceptual and governance layer is roughly 8/10; the evidence that the memory improves real agent behavior is roughly 5/10. The combined project is around **7/10** today: ahead of common flat-vector or transcript-memory designs in control and auditability, but not yet demonstrated as a superior memory policy.
 
@@ -50,17 +50,17 @@ This view produces four important conclusions.
 
 First, **storage is not the objective**. The relevant unit is a decision-relevant sufficient history: a compressed representation of the past that preserves what future policies need. Long-context research shows why indiscriminately replaying history is not an adequate substitute; models can use evidence unevenly as context grows, with material sensitivity to where relevant information appears.[^10]
 
-Second, **admission and retrieval are separate decisions**. A memory can be worth preserving without being worth showing on every turn. MemGPT's virtual-context framing makes this distinction explicit by separating limited in-context memory from larger archival tiers.[^6] Braintree similarly separates an always-loaded skill, routing metadata, node bodies, and optional derived indexes, but it has not evaluated that hierarchy as a memory policy.
+Second, **admission and retrieval are separate decisions**. A memory can be worth preserving without being worth showing on every turn. MemGPT's virtual-context framing makes this distinction explicit by separating limited in-context memory from larger archival tiers.[^6] Tangle similarly separates an always-loaded skill, routing metadata, node bodies, and optional derived indexes, but it has not evaluated that hierarchy as a memory policy.
 
-Third, **memory is active state, not an append-only log**. Generative Agents combines a memory stream with relevance/recency/importance retrieval and higher-level reflection; Think-in-Memory uses insert, forget, and merge operations after post-response reflection; A-MEM dynamically links and evolves note representations.[^1][^7][^8] Braintree deliberately chooses more conservative, human-visible mutation. That is a governance advantage, but the system still needs an explicit consolidation policy.
+Third, **memory is active state, not an append-only log**. Generative Agents combines a memory stream with relevance/recency/importance retrieval and higher-level reflection; Think-in-Memory uses insert, forget, and merge operations after post-response reflection; A-MEM dynamically links and evolves note representations.[^1][^7][^8] Tangle deliberately chooses more conservative, human-visible mutation. That is a governance advantage, but the system still needs an explicit consolidation policy.
 
-Fourth, **uncertainty is part of memory content**. A transient failure should not silently become “API X is broken.” Recent work on belief memory shows the self-reinforcing error created when partial observations are stored as deterministic conclusions, while conflict benchmarks test whether an agent preserves alternatives, recognizes underdetermination, calibrates confidence, and asks for missing context.[^16][^18] Braintree's `THO` versus settled `DEF`/`DEC` distinction partially encodes epistemic status, but confidence, evidence strength, temporal scope, and unresolved alternatives are not first-class.
+Fourth, **uncertainty is part of memory content**. A transient failure should not silently become “API X is broken.” Recent work on belief memory shows the self-reinforcing error created when partial observations are stored as deterministic conclusions, while conflict benchmarks test whether an agent preserves alternatives, recognizes underdetermination, calibrates confidence, and asks for missing context.[^16][^18] Tangle's `THO` versus settled `DEF`/`DEC` distinction partially encodes epistemic status, but confidence, evidence strength, temporal scope, and unresolved alternatives are not first-class.
 
-## What kind of memory Braintree actually implements
+## What kind of memory Tangle actually implements
 
 Calling the whole vault “episodic memory” obscures its useful specialization.
 
-| Braintree construct | Functional memory type | What it preserves | Main theoretical role |
+| Tangle construct | Functional memory type | What it preserves | Main theoretical role |
 |---|---|---|---|
 | `TAS`, `next`, status directories | Prospective and working-state memory | commitments, frontier, blockers, completion state | resume the correct action under partial observability |
 | `DEF` | Semantic memory | current invariants and interfaces | make stable facts available without re-derivation |
@@ -75,15 +75,15 @@ Calling the whole vault “episodic memory” obscures its useful specialization
 
 The system therefore resembles a **semanticized episode graph**. It intentionally throws away most observations and retains prospective state, decisions, durable conclusions, and concise outcome evidence. This is closer to experiential-learning systems that distill feedback into reusable insight than to systems that store complete conversation histories. Reflexion retains verbal feedback for subsequent trials, ExpeL extracts natural-language insights and recalls experiences, and Agent Workflow Memory induces reusable workflows from prior trajectories.[^2][^3][^5]
 
-This distinction matters for evaluation. A conversational memory benchmark can test retrieval mechanics, but the core Braintree claim is that selective execution memory improves later engineering action. The gold outcome is not “answer a question about the past”; it is “take the right next action, for the right reasons, at lower total cost.”
+This distinction matters for evaluation. A conversational memory benchmark can test retrieval mechanics, but the core Tangle claim is that selective execution memory improves later engineering action. The gold outcome is not “answer a question about the past”; it is “take the right next action, for the right reasons, at lower total cost.”
 
 ## Where the technique aligns with research
 
 ### 1. Selective admission instead of transcript retention
 
-Braintree excludes transcripts, tool logs, routine narration, copied source material, and observations without foreseeable action value. This is theoretically well motivated. Raw trajectories are expensive and noisy, while reflection- and experience-based systems improve subsequent behavior by retaining compressed feedback or insights rather than replaying every token.[^2][^3] LongMemEval-V2 goes further in the same direction: it frames memory as gathering compact evidence from up to hundreds of trajectories and explicitly includes questions answerable only from failed trajectories.[^14]
+Tangle excludes transcripts, tool logs, routine narration, copied source material, and observations without foreseeable action value. This is theoretically well motivated. Raw trajectories are expensive and noisy, while reflection- and experience-based systems improve subsequent behavior by retaining compressed feedback or insights rather than replaying every token.[^2][^3] LongMemEval-V2 goes further in the same direction: it frames memory as gathering compact evidence from up to hundreds of trajectories and explicitly includes questions answerable only from failed trajectories.[^14]
 
-The project's “one durable outcome” node boundary also resembles event segmentation. LongMemEval reports that memory-unit granularity and time-aware retrieval materially affect long-term-memory performance, while segment-level construction work finds that turn-level, session-level, and broad summaries each fail in different ways.[^11][^20] Braintree's event-triggered split/consolidate rule is a principled answer: the unit is determined by independent future utility rather than a session, an agent, or an arbitrary chunk size.
+The project's “one durable outcome” node boundary also resembles event segmentation. LongMemEval reports that memory-unit granularity and time-aware retrieval materially affect long-term-memory performance, while segment-level construction work finds that turn-level, session-level, and broad summaries each fail in different ways.[^11][^20] Tangle's event-triggered split/consolidate rule is a principled answer: the unit is determined by independent future utility rather than a session, an agent, or an arbitrary chunk size.
 
 ### 2. Bounded, hierarchical context
 
@@ -93,19 +93,19 @@ The project's measured reduction in repeated skill context is relevant here. A t
 
 ### 3. Structured associative organization
 
-Graph links are a defensible choice when the useful query follows relations rather than text similarity. HippoRAG reports gains from knowledge-graph organization plus graph search on multi-hop retrieval, and A-MEM reports gains from dynamically linking note-like memories.[^9][^8] Braintree's dependency edges are more precise than either generic semantic similarity or auto-generated entity graphs because their meaning is explicit and mechanically checked.
+Graph links are a defensible choice when the useful query follows relations rather than text similarity. HippoRAG reports gains from knowledge-graph organization plus graph search on multi-hop retrieval, and A-MEM reports gains from dynamically linking note-like memories.[^9][^8] Tangle's dependency edges are more precise than either generic semantic similarity or auto-generated entity graphs because their meaning is explicit and mechanically checked.
 
-The design is also appropriately skeptical of graph structure. Mem0's reported graph extension improved its overall conversational benchmark score only modestly over its non-graph memory, even though both greatly reduced latency and tokens versus full context.[^19] Braintree's own evidence similarly shows that an embedding layer did not dominate its lexical baseline and that unsupervised clustering agreed weakly with explicit graph routes. Treating semantic retrieval and clustering as advisory rather than authoritative is therefore a strength.
+The design is also appropriately skeptical of graph structure. Mem0's reported graph extension improved its overall conversational benchmark score only modestly over its non-graph memory, even though both greatly reduced latency and tokens versus full context.[^19] Tangle's own evidence similarly shows that an embedding layer did not dominate its lexical baseline and that unsupervised clustering agreed weakly with explicit graph routes. Treating semantic retrieval and clustering as advisory rather than authoritative is therefore a strength.
 
 ### 4. Temporal validity and conflict propagation
 
-Most memory systems ask whether an item is relevant. Braintree also asks whether a consumer read the current semantic revision. That is an important distinction: retrieval relevance cannot by itself determine whether a formerly correct conclusion remains valid.
+Most memory systems ask whether an item is relevant. Tangle also asks whether a consumer read the current semantic revision. That is an important distinction: retrieval relevance cannot by itself determine whether a formerly correct conclusion remains valid.
 
-LongMemEval makes knowledge updates and temporal reasoning first-class evaluation categories.[^11] MemoryAgentBench incrementally evaluates accurate retrieval, test-time learning, long-range understanding, and selective forgetting/conflict handling rather than treating static long-context QA as sufficient.[^13] RECON extends this idea to cascading invalidations—what downstream conclusions change after evidence changes—and counterfactual timelines.[^17] Braintree's `context_rev`, pinned dependencies, impact traversal, and supersession rules are unusually well aligned with this line of theory.
+LongMemEval makes knowledge updates and temporal reasoning first-class evaluation categories.[^11] MemoryAgentBench incrementally evaluates accurate retrieval, test-time learning, long-range understanding, and selective forgetting/conflict handling rather than treating static long-context QA as sufficient.[^13] RECON extends this idea to cascading invalidations—what downstream conclusions change after evidence changes—and counterfactual timelines.[^17] Tangle's `context_rev`, pinned dependencies, impact traversal, and supersession rules are unusually well aligned with this line of theory.
 
 ### 5. Experience-to-procedure path
 
-The `FBK` → `THO` → task/decision → `SKILL.md` path can implement non-parametric continual learning. Reflexion learns from verbal feedback without weight updates; ExpeL extracts task-general insights; Voyager stores reusable executable skills; Agent Workflow Memory induces and retrieves recurring workflows.[^2][^3][^4][^5] Braintree already has the representational categories required for this progression and adds code review, tests, and Git provenance.
+The `FBK` → `THO` → task/decision → `SKILL.md` path can implement non-parametric continual learning. Reflexion learns from verbal feedback without weight updates; ExpeL extracts task-general insights; Voyager stores reusable executable skills; Agent Workflow Memory induces and retrieves recurring workflows.[^2][^3][^4][^5] Tangle already has the representational categories required for this progression and adds code review, tests, and Git provenance.
 
 The gap is that this path is a convention, not yet a measured closed loop. The project can show many resolved feedback-driven changes, but it does not quantify whether later agents avoid the same failure, transfer the procedure to a new task, or suffer negative transfer.
 
@@ -113,7 +113,7 @@ The gap is that this path is a convention, not yet a measured closed loop. The p
 
 Markdown authority, code review, canonical edge direction, status moves, sparse supersession, and a disposable SQLite sidecar prioritize inspectability. This is a major practical advantage over opaque systems that let model-generated summaries and links silently rewrite memory.
 
-Persistent memory also creates a delayed security boundary: content injected now may steer a consequential action much later. Recent poisoning work argues that content inspection or derivation lineage alone can be laundered through summarization and trusted-tool echoes, and emphasizes binding authority at write time.[^21] Braintree's repository boundary and reviewability help, but current nodes do not encode origin authority or distinguish trusted instructions from untrusted observations. The system prompt's rule that retrieved content is data must remain stronger than any node content.
+Persistent memory also creates a delayed security boundary: content injected now may steer a consequential action much later. Recent poisoning work argues that content inspection or derivation lineage alone can be laundered through summarization and trusted-tool echoes, and emphasizes binding authority at write time.[^21] Tangle's repository boundary and reviewability help, but current nodes do not encode origin authority or distinguish trusted instructions from untrusted observations. The system prompt's rule that retrieved content is data must remain stronger than any node content.
 
 ## Where the theory exposes gaps
 
@@ -142,7 +142,7 @@ This is the first scientific gap to close. Evaluate admission precision and reca
 
 ### 3. Results are not consistently causal episodes
 
-An episode useful for learning should connect context, attempted action, observation, outcome, and lesson. Braintree results often contain good verification evidence, but the schema does not require an action–outcome link, distinguish observation from inference, or record whether a failure was transient. Consequently, future consolidation may produce a rule from a correlation.
+An episode useful for learning should connect context, attempted action, observation, outcome, and lesson. Tangle results often contain good verification evidence, but the schema does not require an action–outcome link, distinguish observation from inference, or record whether a failure was transient. Consequently, future consolidation may produce a rule from a correlation.
 
 Do not store full chain-of-thought or transcripts. Instead, for experience meant to teach, preserve a concise public trace:
 
@@ -157,7 +157,7 @@ This structure is compatible with the existing headings and can remain optional 
 
 ### 4. Reflection and consolidation are manual and unevaluated
 
-Research systems commonly transform episodes into higher-level reflections, insights, or workflows.[^1][^2][^3][^5][^7] Braintree can do this through `THO`, `DEF`, `DEC`, tasks, and eventual skill changes, but it lacks a trigger and quality gate.
+Research systems commonly transform episodes into higher-level reflections, insights, or workflows.[^1][^2][^3][^5][^7] Tangle can do this through `THO`, `DEF`, `DEC`, tasks, and eventual skill changes, but it lacks a trigger and quality gate.
 
 A safe consolidation policy should be conservative and reversible:
 
@@ -189,7 +189,7 @@ The near-term response should be representational discipline, not probabilistic 
 
 Resolved nodes accumulate indefinitely. That is safe for auditability but can harm retrieval through interference and corpus growth. MemoryBank and more recent benchmarks treat reinforcement, forgetting, or conflict-aware replacement as core memory operations.[^22][^13]
 
-For Braintree, physical deletion is usually the wrong mechanism because Git already provides cheap archival history. “Forgetting” should mean reversible exclusion from ordinary retrieval: superseded/deprecated disposition, current-view filtering, deduplicated consolidation, or lower ranking for low-utility episodes. The project should measure the downstream effect before adding age-based decay; old decisions may be rare but crucial.
+For Tangle, physical deletion is usually the wrong mechanism because Git already provides cheap archival history. “Forgetting” should mean reversible exclusion from ordinary retrieval: superseded/deprecated disposition, current-view filtering, deduplicated consolidation, or lower ranking for low-utility episodes. The project should measure the downstream effect before adding age-based decay; old decisions may be rare but crucial.
 
 ### 9. Trust provenance is implicit
 
@@ -199,13 +199,13 @@ At minimum, benchmark the rule that memory can inform factual context but cannot
 
 ### 10. Cross-project learning is not yet separated from project state
 
-Braintree is intentionally repository-local. That is appropriate for project truth, but reusable workflows and gotchas can generalize across projects. Voyager and Agent Workflow Memory show the value of executable, compositional skills and induced workflows.[^4][^5] The system needs a promotion boundary: repeated project experience may justify a versioned skill/reference change, while project-specific facts must remain local.
+Tangle is intentionally repository-local. That is appropriate for project truth, but reusable workflows and gotchas can generalize across projects. Voyager and Agent Workflow Memory show the value of executable, compositional skills and induced workflows.[^4][^5] The system needs a promotion boundary: repeated project experience may justify a versioned skill/reference change, while project-specific facts must remain local.
 
 ## Evaluation program
 
 ### Core experimental question
 
-Does Braintree improve memory-dependent engineering decisions and task outcomes, at acceptable total cost, compared with credible alternatives?
+Does Tangle improve memory-dependent engineering decisions and task outcomes, at acceptable total cost, compared with credible alternatives?
 
 The principal experiment should use matched fresh agents and identical base models across five conditions:
 
@@ -214,7 +214,7 @@ The principal experiment should use matched fresh agents and identical base mode
 | Repository only | current files, prompts, and tools; no episodic memory |
 | Raw history | prior public action/observation transcripts within the same retrieval budget |
 | Flat memory | untyped timestamped notes with lexical retrieval |
-| Braintree | current graph, lifecycle, revisions, and retrieval commands |
+| Tangle | current graph, lifecycle, revisions, and retrieval commands |
 | Oracle | only the minimal gold memories required for the task |
 
 The oracle estimates the loss attributable to reader/reasoner limitations rather than memory construction or retrieval. Repository-only measures whether a task truly requires memory. Raw history tests whether selective consolidation adds value. Flat memory isolates the value of graph/lifecycle/governance from mere persistence.
@@ -283,7 +283,7 @@ Retrieval and answer generation should be scored separately. RAGChecker's motiva
 
 ### Public benchmarks and their fit
 
-| Benchmark | What it tests | Fit for Braintree | Recommended use |
+| Benchmark | What it tests | Fit for Tangle | Recommended use |
 |---|---|---|---|
 | LongMemEval-V2 | static state, dynamic state, workflows, gotchas, premise awareness over large agent-trajectory histories | **High** | adopt its insert/query context-gathering protocol and adapt tasks to repository/CLI trajectories; compare against its file-searching coding-agent approach[^14] |
 | MemoryAgentBench | accurate retrieval, test-time learning, long-range understanding, selective forgetting/conflict in incremental multi-turn inputs | **High conceptual, medium domain** | run the external store as one memory agent; use category failures diagnostically, not as the main product score[^13] |
@@ -291,18 +291,18 @@ Retrieval and answer generation should be scored separately. RAGChecker's motiva
 | LoCoMo | long-range QA, causal/temporal event summarization, and long conversation use | **Medium-low** | use as a retrieval sanity check and comparison to published systems; its conversational domain and small number of long conversations limit product conclusions[^12] |
 | RECON | multi-hop evidence, cascading invalidation, source conflict, counterfactual and temporal reasoning | **High for revision theory, low domain** | port its invalidation and independently-supported-conclusion patterns to dependency revisions[^17] |
 | TANGLE | irreducible conflict, calibration, clarification, memory faithfulness | **Medium-high** | adapt to conflicting requirements, transient failures, and source authority[^18] |
-| EMemBench | trajectory-grounded episodic questions across recall, induction, temporal, spatial, logical, and adversarial skills | **Medium-low** | borrow programmatic question generation from ground-truth trajectories; omit visual/spatial categories unless Braintree expands scope[^24] |
+| EMemBench | trajectory-grounded episodic questions across recall, induction, temporal, spatial, logical, and adversarial skills | **Medium-low** | borrow programmatic question generation from ground-truth trajectories; omit visual/spatial categories unless Tangle expands scope[^24] |
 | WebArena/OSWorld with memory | downstream long-horizon interaction | **Medium** | use only for cross-task workflow-memory research; expensive and less repository-specific |
 
-No public benchmark directly settles Braintree's central claim. LongMemEval-V2 is the closest because its questions are intentionally unanswerable from public/model knowledge, it includes failed trajectories, and its coding-agent method searches files and scripts to gather compact evidence. Its reported best method reached 72.5% rather than saturating the task, and coding-agent retrieval remained latency-heavy.[^14] That is both encouragement for Braintree's substrate and evidence that the retrieval policy remains an open problem.
+No public benchmark directly settles Tangle's central claim. LongMemEval-V2 is the closest because its questions are intentionally unanswerable from public/model knowledge, it includes failed trajectories, and its coding-agent method searches files and scripts to gather compact evidence. Its reported best method reached 72.5% rather than saturating the task, and coding-agent retrieval remained latency-heavy.[^14] That is both encouragement for Tangle's substrate and evidence that the retrieval policy remains an open problem.
 
 ### A practical staged benchmark plan
 
-**Stage 0 — Formalize the claim.** Define Braintree's target as memory-dependent downstream action quality under a total interaction budget. Publish the reconstructibility/cost-sensitive admission rule and declare which memory types are in scope.
+**Stage 0 — Formalize the claim.** Define Tangle's target as memory-dependent downstream action quality under a total interaction budget. Publish the reconstructibility/cost-sensitive admission rule and declare which memory types are in scope.
 
-**Stage 1 — Build a small gold corpus.** Curate 40–60 repository scenarios from actual Braintree history: roughly equal admission, resumption, revision/conflict, and transfer cases. Each case identifies current observable files, unavailable historical evidence, minimal gold memories, acceptable actions, and executable grading.
+**Stage 1 — Build a small gold corpus.** Curate 40–60 repository scenarios from actual Tangle history: roughly equal admission, resumption, revision/conflict, and transfer cases. Each case identifies current observable files, unavailable historical evidence, minimal gold memories, acceptable actions, and executable grading.
 
-**Stage 2 — Run causal arms.** Compare repository-only, raw history, flat memory, Braintree, and oracle using fresh matched sessions. Use at least three repetitions per case/model initially; report bootstrap intervals and paired differences.
+**Stage 2 — Run causal arms.** Compare repository-only, raw history, flat memory, Tangle, and oracle using fresh matched sessions. Use at least three repetitions per case/model initially; report bootstrap intervals and paired differences.
 
 **Stage 3 — Diagnose the pipeline.** For failures, label write miss, organization/consolidation error, retrieval miss, stale/conflicting retrieval, reader failure, or action failure. This determines whether to change the schema, retrieval, skill prose, or model interaction.
 
@@ -324,7 +324,7 @@ No public benchmark directly settles Braintree's central claim. LongMemEval-V2 i
 | Systems engineering and reproducibility | **9/10** | deterministic graph checker, derived/disposable sidecar, offline tests, controlled fixtures, telemetry validation, committed evidence, and negative results |
 | End-to-end scientific evidence | **5/10** | representation, scaling, correctness gates, retrieval proxies, and token cost are measured; no sufficiently powered causal memory-versus-baseline task-success result |
 
-The scorecard deliberately separates engineering quality from proof of behavioral value. Braintree has done rigorous systems work around authority, staleness, reproducibility, and honest negative findings.[^26][^28][^29] Conversely, papers such as Generative Agents, Reflexion, ExpeL, Agent Workflow Memory, and LongMemEval-V2 connect memory components to downstream behavior through ablation or comparative tasks.[^1][^2][^3][^5][^14] Braintree's next credibility gain will come from that kind of causal evidence, not another storage feature.
+The scorecard deliberately separates engineering quality from proof of behavioral value. Tangle has done rigorous systems work around authority, staleness, reproducibility, and honest negative findings.[^26][^28][^29] Conversely, papers such as Generative Agents, Reflexion, ExpeL, Agent Workflow Memory, and LongMemEval-V2 connect memory components to downstream behavior through ablation or comparative tasks.[^1][^2][^3][^5][^14] Tangle's next credibility gain will come from that kind of causal evidence, not another storage feature.
 
 ## Recommendations
 
@@ -377,11 +377,11 @@ Retain exact fixtures, correctness-before-cost gates, committed evidence, negati
 
 ## Conclusion
 
-Braintree's strongest theoretical choice is not Markdown, a graph, or a sidecar. It is the decision to treat durable memory as a governed admission boundary rather than a transcript. Its strongest engineering contribution is making lifecycle, authority, staleness, and reversibility explicit in a medium both humans and agents can inspect.
+Tangle's strongest theoretical choice is not Markdown, a graph, or a sidecar. It is the decision to treat durable memory as a governed admission boundary rather than a transcript. Its strongest engineering contribution is making lifecycle, authority, staleness, and reversibility explicit in a medium both humans and agents can inspect.
 
 The system should resist two temptations. The first is to narrow admission to literally irreconstructible facts; that would discard expensive, ambiguous, or temporally unrecoverable evidence. The second is to add sophisticated retrieval, reflection, or forgetting mechanisms before establishing an end-to-end behavioral baseline.
 
-The next phase should be empirical: demonstrate that carefully admitted, evidence-bearing execution memory makes fresh agents resume better, update beliefs correctly, avoid repeated failures, transfer workflows, and abstain under uncertainty—while using less total context and causing less interference than raw history or flat notes. If those results hold, Braintree will have evidence not merely that its graph is clean and efficient, but that its memory changes agent behavior in the intended direction.
+The next phase should be empirical: demonstrate that carefully admitted, evidence-bearing execution memory makes fresh agents resume better, update beliefs correctly, avoid repeated failures, transfer workflows, and abstain under uncertainty—while using less total context and causing less interference than raw history or flat notes. If those results hold, Tangle will have evidence not merely that its graph is clean and efficient, but that its memory changes agent behavior in the intended direction.
 
 ## Sources
 
@@ -409,8 +409,8 @@ The next phase should be empirical: demonstrate that carefully admitted, evidenc
 [^22]: Wanjun Zhong et al., “[MemoryBank: Enhancing Large Language Models with Long-Term Memory](https://arxiv.org/abs/2305.10250),” 2023.
 [^23]: Dongyu Ru et al., “[RAGChecker: A Fine-grained Framework for Diagnosing Retrieval-Augmented Generation](https://arxiv.org/abs/2408.08067),” 2024.
 [^24]: Xinze Li et al., “[EMemBench: Interactive Benchmarking of Episodic Memory for VLM Agents](https://arxiv.org/abs/2601.16690),” 2026. Recent preprint.
-[^25]: Braintree, “[Skill contract](../SKILL.md),” current repository revision.
-[^26]: Braintree, “[Benchmark design and evidence summary](../BENCHMARK.md),” current repository revision.
-[^27]: Braintree, “[Compact skill-text decision](../.braintree/resolved/DEC-004-compact-skill-text.md),” current repository revision.
-[^28]: Braintree, “[Token benchmark outcome](../.braintree/resolved/TAS-020-token-benchmark.md),” current repository revision.
-[^29]: Braintree, “[Embedding and clustering quality evidence](../benchmark/clustering-quality-evidence.json),” current repository revision.
+[^25]: Tangle, “[Skill contract](../SKILL.md),” current repository revision.
+[^26]: Tangle, “[Benchmark design and evidence summary](../BENCHMARK.md),” current repository revision.
+[^27]: Tangle, “[Compact skill-text decision](../.tangle/resolved/DEC-004-compact-skill-text.md),” current repository revision.
+[^28]: Tangle, “[Token benchmark outcome](../.tangle/resolved/TAS-020-token-benchmark.md),” current repository revision.
+[^29]: Tangle, “[Embedding and clustering quality evidence](../benchmark/clustering-quality-evidence.json),” current repository revision.

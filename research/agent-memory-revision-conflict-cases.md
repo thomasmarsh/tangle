@@ -2,13 +2,13 @@
 
 This document is the prose authority for the **temporal-update**,
 **cascading-invalidation**, and **conflict-and-uncertainty** families of the
-Braintree memory-evaluation gold corpus. The machine-readable halves are
+Tangle memory-evaluation gold corpus. The machine-readable halves are
 [`benchmark/memory-corpus/temporal-update.json`](../benchmark/memory-corpus/temporal-update.json),
 [`benchmark/memory-corpus/cascading-invalidation.json`](../benchmark/memory-corpus/cascading-invalidation.json),
 and
 [`benchmark/memory-corpus/conflict-and-uncertainty.json`](../benchmark/memory-corpus/conflict-and-uncertainty.json);
 the case format is owned by
-[`src/braintree/memory_scenario.py`](../src/braintree/memory_scenario.py) and
+[`src/tangle/memory_scenario.py`](../src/tangle/memory_scenario.py) and
 [`research/agent-memory-scenario-schema.md`](agent-memory-scenario-schema.md),
 which this document must not restate. The corpus is offline: parsing, grading,
 and its tests make **zero live model calls**, and any live or paid run still

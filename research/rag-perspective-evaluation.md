@@ -1,16 +1,16 @@
-# Braintree from a RAG perspective
+# Tangle from a RAG perspective
 
 ## Executive conclusion
 
-Braintree is not primarily a conventional GraphRAG system. Conventional
+Tangle is not primarily a conventional GraphRAG system. Conventional
 GraphRAG starts with unstructured documents, extracts an entity graph, clusters
-that graph, and uses the result to answer questions. Braintree starts with a
+that graph, and uses the result to answer questions. Tangle starts with a
 small, human- and agent-authored graph whose nodes already have operational
 meaning: tasks, definitions, decisions, hypotheses, feedback, status, a single
 frontier route, typed dependencies, and semantic revision pins. Its more useful
 category is **versioned execution-memory RAG** or **retrieval-augmented action**.
 
-That distinction should drive the roadmap. Braintree's moat is not that it has
+That distinction should drive the roadmap. Tangle's moat is not that it has
 a graph or can run HDBSCAN. Its moat is that it governs what may be written,
 keeps Markdown authoritative, distinguishes prospective and semantic memory,
 and can mechanically reject stale context. The largest remaining opportunity is
@@ -20,7 +20,7 @@ selected, and expand only when the first packet is insufficient.
 
 The recommended order is:
 
-1. Evaluate the real `braintree` retrieval commands rather than injected memory.
+1. Evaluate the real `tangle` retrieval commands rather than injected memory.
 2. Add one bounded, query-aware context surface over the existing exact verbs.
 3. Fuse lexical, optional semantic, and typed-graph signals instead of choosing
    lexical *or* semantic retrieval.
@@ -32,12 +32,12 @@ The recommended order is:
 Do not make clustering authoritative, require embeddings, generate an automatic
 entity graph, or persist broad model summaries as project truth.
 
-## What Braintree already does unusually well
+## What Tangle already does unusually well
 
 ### Governed memory construction
 
 Most RAG systems focus on chunking and retrieval after accepting the corpus as
-given. Braintree also controls the write boundary. Its admission rule, durable
+given. Tangle also controls the write boundary. Its admission rule, durable
 outcome boundary, node types, status lifecycle, canonical edges, and explicit
 disposition prevent a raw transcript from silently becoming permanent memory.
 This remains more important than adopting a more elaborate vector store.
@@ -122,7 +122,7 @@ Important implementation-level gaps follow.
 ### Supported conclusions
 
 The held-out program is substantial: 24 cases, five arms, three models, three
-repetitions, and 1,080 completed samples. Braintree beat repository-only by
+repetitions, and 1,080 completed samples. Tangle beat repository-only by
 0.093 with a 95% interval of [0.037, 0.148]. It was the cheapest non-oracle
 memory arm in the correctness-gated totals: 209 correct samples and 112,771
 tokens, compared with raw history's 214 and 265,523. This supports two useful
@@ -134,16 +134,16 @@ claims:
   remaining near the oracle result.
 
 The preregistered broad claim was correctly marked rejected because the
-`braintree - raw-history` interval included zero. The procedural discipline
+`tangle - raw-history` interval included zero. The procedural discipline
 should be retained.
 
 ### The evaluation does not test the actual retriever
 
-The `braintree` arm does not run `search`, `similar`, `node`, `impact`, or any
+The `tangle` arm does not run `search`, `similar`, `node`, `impact`, or any
 other graph command. The run is explicitly no-tools. In the harness,
-`arm_memory(..., "braintree")` selects the source episodes named by the gold
+`arm_memory(..., "tangle")` selects the source episodes named by the gold
 evidence and injects their statements directly. This is a gold-informed memory
-packing condition, not a measurement of whether Braintree can retrieve those
+packing condition, not a measurement of whether Tangle can retrieve those
 sources from a vault.
 
 Consequently, the result can evaluate how a model acts after receiving a
@@ -159,25 +159,25 @@ The report attributes the whole raw-history contrast to
 and preserved raw artifacts shows:
 
 - the case has two episodes;
-- both `raw-history` and `braintree` receive the same two statements, in the
+- both `raw-history` and `tangle` receive the same two statements, in the
   same order;
 - both arms have the same recorded prompt digest;
 - for the v4-flash and v4-pro runs, the effective user-message bytes are also
   identical across the two arms;
 - the raw reasoning shows models choosing different actions because they
   interpret “unrelated seam” differently, not because evidence is absent;
-- six of the 24 held-out cases have byte-identical raw-history and Braintree
+- six of the 24 held-out cases have byte-identical raw-history and Tangle
   memory, including every held-out admission case.
 
 The preregistered aggregate rejection still stands, but the claim that this is a
-concrete Braintree retrieval defect is unsupported. It is stochastic reader
+concrete Tangle retrieval defect is unsupported. It is stochastic reader
 variance under identical inputs. It should not, by itself, trigger a retrieval
 mechanism.
 
 A read-only check against the current real command strengthens that caution:
 
 ```text
-braintree similar 'Decide how to record a reuse question raised on a new seam.'
+tangle similar 'Decide how to record a reuse question raised on a new seam.'
   -> TAS-118 at rank 1, lexical score 0.3389
 ```
 
@@ -189,7 +189,7 @@ finds the intended owner for the exact failed-case wording.
 For the older `deepseek-flash` runs, the runtime appended an output-artifact
 instruction whose path contained the arm and repetition. The committed
 `prompt_digest` covers the benchmark system prompt plus rendered task, but not
-this runtime-added wrapper. The only raw-history/Braintree byte difference in a
+this runtime-added wrapper. The only raw-history/Tangle byte difference in a
 checked pair was that output path, but the important methodological point is
 broader: the digest did not identify the complete effective model input.
 
@@ -219,12 +219,12 @@ it with an opaque run identifier.
 ### P0 — Benchmark the real retrieval and context-assembly path
 
 This is the highest-value next research deliverable. Build a held-out benchmark
-in which the Braintree arm starts from an actual Markdown vault and may call the
+in which the Tangle arm starts from an actual Markdown vault and may call the
 real CLI under a fixed tool, token, and latency budget. Compare at least:
 
 - repository plus ordinary `rg`/file reads;
 - raw history with a realistic retrieval budget;
-- current Braintree exact/lexical commands;
+- current Tangle exact/lexical commands;
 - candidate hybrid or graph-expansion policies;
 - an oracle evidence packet.
 
@@ -250,7 +250,7 @@ action. Freeze evaluation cases before tuning a mechanism.
 Introduce a read-only surface conceptually like:
 
 ```text
-braintree context QUERY [--mode resume|local|impact|admit|global]
+tangle context QUERY [--mode resume|local|impact|admit|global]
                         [--budget N] [--depth N] [--history]
 ```
 
@@ -346,7 +346,7 @@ Expansion can add one graph hop, the next rank band, or optional semantic seeds.
 It should stop when the closure is sufficient, the budget is exhausted, or the
 system must report uncertainty. This takes the useful part of DRIFT-style
 iterative search without requiring an LLM loop for every command. LazyGraphRAG's
-minimal up-front indexing and query-time work similarly fit Braintree better
+minimal up-front indexing and query-time work similarly fit Tangle better
 than eager model-generated community summaries.
 
 ### P1 — Complete transparent incremental indexing
@@ -365,7 +365,7 @@ clean rebuild.
 ### P2 — Add query-focused global synthesis over explicit routes
 
 Microsoft GraphRAG's community reports help with corpus-global questions that
-top-k retrieval cannot answer. Braintree has not established demand for this
+top-k retrieval cannot answer. Tangle has not established demand for this
 class yet, and its explicit hubs are a better starting hierarchy than HDBSCAN.
 
 First extend deterministic digest behavior: support depth, resolved/current/all
@@ -446,8 +446,8 @@ example:
 ```text
 context{mode,budget_used,sufficient,truncated}: admit,612,true,false
 evidence[2]{id,status,section,path,reason,current}:
-  TAS-118,resolved,Result,.braintree/resolved/TAS-118-...,lexical-rank-1,true
-  TAS-117,resolved,Result,.braintree/resolved/TAS-117-...,backlink-of-TAS-118,true
+  TAS-118,resolved,Result,.tangle/resolved/TAS-118-...,lexical-rank-1,true
+  TAS-117,resolved,Result,.tangle/resolved/TAS-117-...,backlink-of-TAS-118,true
 paths[1]{from,edge,to}: TAS-117,Parent,TAS-111
 warnings: 0
 ```
@@ -462,7 +462,7 @@ fresh evidence closure.
 - **Do not let embeddings replace lexical retrieval.** The signals are
   complementary, and lexical retrieval is substantially better for exact and
   near-duplicate admission.
-- **Do not auto-extract a second entity graph from Braintree nodes.** The source
+- **Do not auto-extract a second entity graph from Tangle nodes.** The source
   graph is already curated and typed; extraction would add lossy duplicate
   structure and provenance problems.
 - **Do not eagerly summarize every cluster or hub with a model.** Prefer authored
@@ -473,7 +473,7 @@ fresh evidence closure.
 - **Do not optimize only retrieval recall or token totals.** The product target
   remains correct downstream action under total cost and integrity constraints.
 - **Do not broaden to general document RAG yet.** Repository code and current
-  documentation are usually directly observable; Braintree should remain the
+  documentation are usually directly observable; Tangle should remain the
   selective historical/decision layer unless a separate corpus use case is
   proven.
 
@@ -481,7 +481,7 @@ fresh evidence closure.
 
 The most defensible description is:
 
-> Braintree is a Markdown-canonical, versioned execution-memory graph that
+> Tangle is a Markdown-canonical, versioned execution-memory graph that
 > retrieves a bounded, current evidence closure for agent action.
 
 This is more specific than “GraphRAG” and highlights the features ordinary RAG
@@ -539,14 +539,14 @@ a target architecture to copy wholesale.
 - `research/agent-memory-evaluation-contract.md`
 - `benchmark/memory-causal-confirmatory-result.json`
 - preserved confirmatory-run artifacts under the recorded temporary paths
-- `.braintree/resolved/THO-012-embedding-clustering-retrieval-theory.md`
-- `.braintree/resolved/TAS-120-agent-memory-evaluation-program.md`
-- `.braintree/resolved/TAS-124-action-weighted-retrieval.md`
-- `.braintree/resolved/TAS-125-episode-consolidation-transfer.md`
-- `.braintree/resolved/TAS-126-interference-forgetting.md`
-- `.braintree/resolved/TAS-127-uncertainty-provenance-security.md`
-- `.braintree/proposed/TAS-163-amortized-transparent-index.md`
-- `src/braintree/index.py`
-- `src/braintree/memory_causal.py`
+- `.tangle/resolved/THO-012-embedding-clustering-retrieval-theory.md`
+- `.tangle/resolved/TAS-120-agent-memory-evaluation-program.md`
+- `.tangle/resolved/TAS-124-action-weighted-retrieval.md`
+- `.tangle/resolved/TAS-125-episode-consolidation-transfer.md`
+- `.tangle/resolved/TAS-126-interference-forgetting.md`
+- `.tangle/resolved/TAS-127-uncertainty-provenance-security.md`
+- `.tangle/proposed/TAS-163-amortized-transparent-index.md`
+- `src/tangle/index.py`
+- `src/tangle/memory_causal.py`
 - retrieval, semantic, clustering, memory-corpus, and benchmark tests
 

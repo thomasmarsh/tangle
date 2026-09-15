@@ -1,13 +1,13 @@
 # Memory-evaluation resumption and implicit-retrieval cases
 
 This document is the prose authority for the **resumption** and
-**implicit-retrieval** families of the Braintree memory-evaluation gold corpus.
+**implicit-retrieval** families of the Tangle memory-evaluation gold corpus.
 The machine-readable halves are
 [`benchmark/memory-corpus/resumption.json`](../benchmark/memory-corpus/resumption.json)
 and
 [`benchmark/memory-corpus/implicit-retrieval.json`](../benchmark/memory-corpus/implicit-retrieval.json);
 the case format is owned by
-[`src/braintree/memory_scenario.py`](../src/braintree/memory_scenario.py) and
+[`src/tangle/memory_scenario.py`](../src/tangle/memory_scenario.py) and
 [`research/agent-memory-scenario-schema.md`](agent-memory-scenario-schema.md),
 which this document must not restate. The corpus is offline: parsing, grading,
 and its tests make **zero live model calls**, and any live or paid run still
@@ -103,7 +103,7 @@ correct.
 | `resumption-blocker-live-authorization-001` | blocker | critical | development | Record the two matched live token samples now | Live or paid runs need owner authorization recorded before execution | Session-parser reuse |
 | `resumption-failed-experiment-cold-resume-rule-001` | failed-experiment | major | held-out | Add a header-first cold-resume instruction | The cold-resume rule raised tokens 26.6% and was rejected | `Reading`-prefix parser repair |
 | `resumption-handoff-corpus-continuation-001` | handoff | major | held-out | Continue the corpus after admission landed | The next route is resumption and implicit-retrieval curation | Schema needs no per-family field |
-| `resumption-control-vault-rename-001` | control | minor | development | Revert the `nodes/` to `.braintree/` rename | Current state and the resolved decision already settle it | Legacy in-place migration |
+| `resumption-control-vault-rename-001` | control | minor | development | Revert the `nodes/` to `.tangle/` rename | Current state and the resolved decision already settle it | Legacy in-place migration |
 
 ### Implicit retrieval
 
@@ -130,16 +130,16 @@ every case against the TAS-132 Done-when before the cases were frozen.
 
 | # | Reviewer finding | Disposition |
 |---|---|---|
-| 1 | Six memory-required cases leaked the deciding fact through `observable_paths`: the semantic-capability cases observed `semantic.py`/`clustering.py`, the benchmark-opt-in cases observed `tests/test_quality_benchmark.py`, the lease case observed `cli.py`, and the vault case observed `README.md`. | Replaced each observable set with a task-grounding surface that does not state the decision (`quality_benchmark.py`, `feedback_record.py`, `SKILL.md`, and `tests/test_bt_index.py` for the semantic cases) and pinned the forbidden surfaces in `_FORBIDDEN_OBSERVABLE`. Residual status-quo bias is deferred to TAS-135's leakage audit. |
-| 2 | `implicit-retrieval-blocker-lease-handoff-001` ep-2 cited `SKILL.md`, which does not state the 900-second lease. | Retargeted ep-2 to `references/coordination.md` and `src/braintree/sidecar.py`. |
-| 3 | The benchmark episodes cited test files that do not state the 83-second runtime or the marker exclusion. | Added `.braintree/resolved/TAS-110-fast-default-test-suite.md` and `pyproject.toml` to the relevant episodes. |
+| 1 | Six memory-required cases leaked the deciding fact through `observable_paths`: the semantic-capability cases observed `semantic.py`/`clustering.py`, the benchmark-opt-in cases observed `tests/test_quality_benchmark.py`, the lease case observed `cli.py`, and the vault case observed `README.md`. | Replaced each observable set with a task-grounding surface that does not state the decision (`quality_benchmark.py`, `feedback_record.py`, `SKILL.md`, and `tests/test_tangle_index.py` for the semantic cases) and pinned the forbidden surfaces in `_FORBIDDEN_OBSERVABLE`. Residual status-quo bias is deferred to TAS-135's leakage audit. |
+| 2 | `implicit-retrieval-blocker-lease-handoff-001` ep-2 cited `SKILL.md`, which does not state the 900-second lease. | Retargeted ep-2 to `references/coordination.md` and `src/tangle/sidecar.py`. |
+| 3 | The benchmark episodes cited test files that do not state the 83-second runtime or the marker exclusion. | Added `.tangle/resolved/TAS-110-fast-default-test-suite.md` and `pyproject.toml` to the relevant episodes. |
 | 4 | `resumption-handoff-corpus-continuation-001` ep-3 misattributed the gating: `TAS-133` is gated on `TAS-130`, not on resumption. | Cited `TAS-121` as the coordinating node and dropped the revision-and-conflict gating clause. |
 | 5 | The prose counted two low-overlap resumption cases; three memory-required resumption cases plus the control qualify. | Corrected to twelve of fifteen and pinned the exact low-overlap set in the test. |
 | 6 | The prose claimed every case carries a distractor, but the three controls did not. | Added a distractor episode to each control and a test that every case has an unreferenced episode. |
 | 7 | `implicit-retrieval-failed-experiment-orientation-compaction-001` ep-3 cited `THO-004` for a resumable-action claim it does not make. | Rewrote ep-3 to `THO-004`'s actual recording-pipeline statement and corrected its distractor cell. |
 | 8 | The review record was an unfilled placeholder. | Filled with this review. |
 | 9 | The guards did not enforce the node-id/family-prompt rule, the distractor rule, or the exact low-overlap set. | Added `test_task_prompts_expose_no_node_ids_or_family_names`, `test_every_case_carries_a_distractor_episode`, the forbidden-observable test, and the exact low-overlap-set assertion. |
-| 10 | Second pass: the two semantic cases still observed `src/braintree/index.py`, whose `similar` docstring calls the lexical baseline "the correctness reference an admission decision compares a draft against" — the `DEC-006` conclusion. | Moved both observables to `tests/test_bt_index.py`, which exercises near-duplicate ranking without stating the boundary decision, and broadened `_SEMANTIC_DECIDING_SURFACES` to cover every leaky semantic surface. |
+| 10 | Second pass: the two semantic cases still observed `src/tangle/index.py`, whose `similar` docstring calls the lexical baseline "the correctness reference an admission decision compares a draft against" — the `DEC-006` conclusion. | Moved both observables to `tests/test_tangle_index.py`, which exercises near-duplicate ranking without stating the boundary decision, and broadened `_SEMANTIC_DECIDING_SURFACES` to cover every leaky semantic surface. |
 | 11 | Second pass: the orientation-compaction distractor cell still described the pre-rewrite claim. | Updated the cell to the recording-pipeline statement. |
 | 12 | Second pass: the offline-gate control's second episode restated the first rather than being a related distractor. | Replaced it with the token-telemetry observation. |
 | 13 | Third pass (non-blocking): the offline-gate control's distractor cell still named the old episode. | Updated the cell to "Cumulative token telemetry"; the third pass accepted. |

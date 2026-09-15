@@ -1,7 +1,7 @@
-"""Shared subprocess harness for the ``bt`` sidecar tests.
+"""Shared subprocess harness for the ``tangle`` sidecar tests.
 
 The shell suites in ``tests/*.sh`` drive the installed Python launchers.
-These helpers let the pytest ports drive the Python ``bt`` as a real process so
+These helpers let the pytest ports drive the Python ``tangle`` as a real process so
 concurrency, cross-worktree identity, and environment handling are identical.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-_BT_COMMAND = (sys.executable, "-m", "braintree")
+_TANGLE_COMMAND = (sys.executable, "-m", "tangle")
 
 
 def build_env(overrides: dict[str, str | None] | None) -> dict[str, str]:
@@ -30,18 +30,18 @@ def build_env(overrides: dict[str, str | None] | None) -> dict[str, str]:
 
 
 def _command() -> list[str]:
-    return list(_BT_COMMAND)
+    return list(_TANGLE_COMMAND)
 
 
 @pytest.fixture
 def bt_command() -> Callable[[], list[str]]:
-    """Return a factory for the argv prefix that runs the Python ``bt``."""
+    """Return a factory for the argv prefix that runs the Python ``tangle``."""
     return _command
 
 
 @pytest.fixture
-def run_bt() -> Callable[..., subprocess.CompletedProcess[str]]:
-    """Run the Python ``bt`` and capture its text output."""
+def run_tangle() -> Callable[..., subprocess.CompletedProcess[str]]:
+    """Run the Python ``tangle`` and capture its text output."""
 
     def run(
         *args: str,
@@ -50,7 +50,7 @@ def run_bt() -> Callable[..., subprocess.CompletedProcess[str]]:
         check: bool = False,
     ) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(
-            [*_BT_COMMAND, *args],
+            [*_TANGLE_COMMAND, *args],
             cwd=None if cwd is None else str(cwd),
             env=build_env(env),
             capture_output=True,
@@ -58,7 +58,7 @@ def run_bt() -> Callable[..., subprocess.CompletedProcess[str]]:
         )
         if check and result.returncode != 0:
             raise AssertionError(
-                f"bt {' '.join(args)} failed ({result.returncode}): "
+                f"tangle {' '.join(args)} failed ({result.returncode}): "
                 f"{result.stdout}{result.stderr}"
             )
         return result

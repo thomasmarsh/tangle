@@ -2,7 +2,7 @@
   "protocol": "memory-corpus-v1",
   "schema_version": "memory-scenario-v1",
   "cases": 53,
-  "digest": "sha256:06e7a09963e484b1d38eb4ea6ed6d3da5fc8790183e6e0b5e96e3e1037c07ce5",
+  "digest": "sha256:43199538957715dc5abde49982e8b2bfe82f0ffa224a29e6a9f9c0bdf1de3d01",
   "families": [
     {
       "family": "admission",
@@ -10,7 +10,7 @@
       "corpus_version": "memory-admission-corpus-v1",
       "source_revision": "86d81e3",
       "cases": 15,
-      "digest": "sha256:9e7309a0097b41398c13e7f52f654bcf295c0bf109b7539f49bbe3283e6f1a88"
+      "digest": "sha256:7e5eb494ce53e261ddde8731be4b551517427125f0e4fe3ad8c807f5742727ab"
     },
     {
       "family": "cascading-invalidation",
@@ -18,7 +18,7 @@
       "corpus_version": "memory-cascading-invalidation-corpus-v1",
       "source_revision": "c08af27",
       "cases": 4,
-      "digest": "sha256:0edafe63d9c45b3f362717bf59e84b6c257f2b6893ee93cd915e4428be4f0169"
+      "digest": "sha256:8d02359eac7a184f5b29c9fddcb998f4a818eb290b60a07d8a8a42aa1c2fd9e9"
     },
     {
       "family": "conflict-and-uncertainty",
@@ -26,7 +26,7 @@
       "corpus_version": "memory-conflict-and-uncertainty-corpus-v1",
       "source_revision": "c08af27",
       "cases": 3,
-      "digest": "sha256:b1f033a78b7a83b2e24f206f671dcacfd41d0e70c75f0421fdc0314a97e29570"
+      "digest": "sha256:609de5699df558cdfe4553bc083295cb0568067210899df1bf43cbdeb5abbc1b"
     },
     {
       "family": "experience-transfer",
@@ -34,7 +34,7 @@
       "corpus_version": "memory-experience-transfer-corpus-v1",
       "source_revision": "f91f3be",
       "cases": 4,
-      "digest": "sha256:b849e1c78bc5a186a7f154aa8b87c4941a62bb4fd952132b766d2a8e1c06a19c"
+      "digest": "sha256:618cdeeb1ef0ec3ad2e75e678d58c81201aeb289b7f3e24e51dbd339991c974e"
     },
     {
       "family": "forgetting-and-interference",
@@ -42,7 +42,7 @@
       "corpus_version": "memory-forgetting-and-interference-corpus-v1",
       "source_revision": "f91f3be",
       "cases": 4,
-      "digest": "sha256:95416f96af3fd100a99ac540c3f7230cfb6d3855363e7a00a8387796d4df8c0d"
+      "digest": "sha256:e6ca851266f0dd8215eb148be6561f44f2a434d802be62dda1c2e9a336c9405c"
     },
     {
       "family": "implicit-retrieval",
@@ -50,7 +50,7 @@
       "corpus_version": "memory-implicit-retrieval-corpus-v1",
       "source_revision": "b8cd7d5",
       "cases": 8,
-      "digest": "sha256:872a5f628a39e822aeb58eefd520f73bee9ca304e749e79aedaf3a4963aee6b6"
+      "digest": "sha256:fd2598549b91c945d36a70e655d41e8adbc18ac05e09ab5c6d410ea54e4c8acc"
     },
     {
       "family": "poisoning-and-authority",
@@ -58,7 +58,7 @@
       "corpus_version": "memory-poisoning-and-authority-corpus-v1",
       "source_revision": "f91f3be",
       "cases": 4,
-      "digest": "sha256:ace3da199387f5170475a6be416ddd9dc470789824c6ffc862cae2491e12ad1e"
+      "digest": "sha256:6d8dee03b736bf8b8a7cc8b0683edfab56073c12410f0854d213ddd1d596b9d7"
     },
     {
       "family": "resumption",
@@ -66,7 +66,7 @@
       "corpus_version": "memory-resumption-corpus-v1",
       "source_revision": "b8cd7d5",
       "cases": 7,
-      "digest": "sha256:293b553d15d0169d18b143f6a3627a29a6e8c57ffe9de3cf509ad6f16011ab98"
+      "digest": "sha256:5cbfb7c2b1b799e70c870d07369faeb7928e9b8d1a4ada04f29d2e9be5dc8714"
     },
     {
       "family": "temporal-update",
@@ -74,7 +74,7 @@
       "corpus_version": "memory-temporal-update-corpus-v1",
       "source_revision": "c08af27",
       "cases": 4,
-      "digest": "sha256:9c6fb3a5772b52f3b98e43bfe9a666ff489e1fb5d7052ea9dabe1f7aebe2ebc2"
+      "digest": "sha256:c276bba34817510029fc025899b7ed3bf9e049d4702f6c04a18971a457adc35c"
     }
   ],
   "splits": {

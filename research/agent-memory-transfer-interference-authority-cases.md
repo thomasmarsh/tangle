@@ -2,13 +2,13 @@
 
 This document is the prose authority for the **experience-transfer**,
 **forgetting-and-interference**, and **poisoning-and-authority** families of the
-Braintree memory-evaluation gold corpus. The machine-readable halves are
+Tangle memory-evaluation gold corpus. The machine-readable halves are
 [`benchmark/memory-corpus/experience-transfer.json`](../benchmark/memory-corpus/experience-transfer.json),
 [`benchmark/memory-corpus/forgetting-and-interference.json`](../benchmark/memory-corpus/forgetting-and-interference.json),
 and
 [`benchmark/memory-corpus/poisoning-and-authority.json`](../benchmark/memory-corpus/poisoning-and-authority.json);
 the case format is owned by
-[`src/braintree/memory_scenario.py`](../src/braintree/memory_scenario.py) and
+[`src/tangle/memory_scenario.py`](../src/tangle/memory_scenario.py) and
 [`research/agent-memory-scenario-schema.md`](agent-memory-scenario-schema.md),
 which this document must not restate. The corpus is offline: parsing, grading,
 and its tests make **zero live model calls**, and any live or paid run still
@@ -174,7 +174,7 @@ fixes and raised four report-only precision notes, all applied.
 
 | # | Reviewer finding | Disposition |
 |---|---|---|
-| 1 | Both: `forgetting-and-interference-irrelevant-growth-001` observed `src/braintree/cli.py`, whose help text advertises "atomically allocate PREFIX-NNN" and hands the repository-only arm the gold action. | Moved the observable to `src/braintree/toon.py`, added `src/braintree/cli.py` to the case's forbidden set, and added `test_observable_files_do_not_state_the_deciding_rule`, a content-level guard. |
+| 1 | Both: `forgetting-and-interference-irrelevant-growth-001` observed `src/tangle/cli.py`, whose help text advertises "atomically allocate PREFIX-NNN" and hands the repository-only arm the gold action. | Moved the observable to `src/tangle/toon.py`, added `src/tangle/cli.py` to the case's forbidden set, and added `test_observable_files_do_not_state_the_deciding_rule`, a content-level guard. |
 | 2 | External: `forgetting-and-interference-superseded-growth-001` cited `TAS-088`, which records an in-place reversal with no replacement link, so the case invented a supersession. | Rebased the case on the supersession rule (`TAS-082`, `references/dependencies.md`) and a constructed retained memory; it no longer claims a real node was superseded. |
 | 3 | External: `forgetting-and-interference-near-duplicate-growth-001` graded `keep-the-previous-timestamp` wrong although it equals `max(now, previous)` ahead of the clock, and it duplicated the frozen temporal-update case. | Replaced the case core with the install-layout decision (`DEC-007`), which has one correct action, and moved it off the clamp rule. |
 | 4 | Both: several constructed incidents cited documents that do not contain them, and `permission-expansion` ep-1 contradicted its own contract citation. | Documented the constructed-episode convention in §1, reworded each constructed episode, and made the permission claim consistent with the quoted policy surface. |

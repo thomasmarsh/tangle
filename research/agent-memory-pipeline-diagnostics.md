@@ -1,7 +1,7 @@
 # Pipeline diagnostics for the memory causal result
 
 This document is the prose authority for
-[`src/braintree/memory_diagnostics.py`](../src/braintree/memory_diagnostics.py)
+[`src/tangle/memory_diagnostics.py`](../src/tangle/memory_diagnostics.py)
 and the committed
 [`benchmark/memory-diagnostics-report.json`](../benchmark/memory-diagnostics-report.json).
 It realizes Stage 3, "Diagnose the pipeline", of
@@ -37,7 +37,7 @@ miss can never be reported as a reader or action failure. The ordered rules are:
    retrieval stage is exact by construction and every failure is downstream.
 2. The `repository-only` arm holds no memory, so every failure is `write-miss`.
 3. For a memory arm, compare the required gold source episodes with the
-   query-time memory: `braintree` omitting a source it could write from is
+   query-time memory: `tangle` omitting a source it could write from is
    `organization-error`; `raw-history` or `flat-memory` omitting it is
    `retrieval-miss`.
 4. When the required evidence was delivered, a chosen action whose leading verb
@@ -66,7 +66,7 @@ result, not a memory-system defect.
 | `retrieval-miss` | 0 | 0.000 | 0 | — |
 | `stale-or-conflicting-retrieval` | 0 | 0.000 | 0 | — |
 | `reader-failure` | 40 | 0.305 | 79 | all memory arms and oracle |
-| `action-failure` | 21 | 0.160 | 101 | `raw-history`, `flat-memory`, `braintree` |
+| `action-failure` | 21 | 0.160 | 101 | `raw-history`, `flat-memory`, `tangle` |
 
 Retrieval stage, by arm:
 
@@ -75,7 +75,7 @@ Retrieval stage, by arm:
 | `repository-only` | 70 | 0 | 70 | 1.00 |
 | `raw-history` | 18 | 18 | 0 | 0.00 |
 | `flat-memory` | 23 | 23 | 0 | 0.00 |
-| `braintree` | 18 | 18 | 0 | 0.00 |
+| `tangle` | 18 | 18 | 0 | 0.00 |
 | `oracle` | 2 | 2 | 0 | 0.00 |
 
 Every memory arm delivered the required gold evidence on every failure it had.
@@ -94,7 +94,7 @@ the 70 `repository-only` floor failures to admission.
   largest case (5 episodes), so `raw-history` and `flat-memory` surface the
   whole construction and cannot miss.
 - **TAS-125 (episode and consolidation) — not demonstrated.**
-  `organization-error` is zero, and `braintree` is constructed to hold exactly
+  `organization-error` is zero, and `tangle` is constructed to hold exactly
   the gold chain, so the development run cannot distinguish a correct
   consolidation from an unexercised one.
 - **TAS-126 (interference and forgetting) — not demonstrated.** No delivered
@@ -150,8 +150,8 @@ committed rule keeps as `write-miss` because no memory was ever delivered.
 ## Reproduction
 
 ```sh
-uv run braintree benchmark diagnostics record --output benchmark/memory-diagnostics-report.json
-uv run braintree benchmark diagnostics verify
+uv run tangle benchmark diagnostics record --output benchmark/memory-diagnostics-report.json
+uv run tangle benchmark diagnostics verify
 uv run pytest -q tests/test_memory_diagnostics.py
 ```
 

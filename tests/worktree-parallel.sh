@@ -2,8 +2,8 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-checker="$repo_root/scripts/braintree"
-root=$(mktemp -d "${TMPDIR:-/tmp}/bt-worktree-parallel.XXXXXX")
+checker="$repo_root/scripts/tangle"
+root=$(mktemp -d "${TMPDIR:-/tmp}/tangle-worktree-parallel.XXXXXX")
 repo="$root/repo"
 trees=""
 cleanup() { for tree in $trees; do git -C "$repo" worktree remove --force "$tree" >/dev/null 2>&1 || true; done; rm -rf "$root"; }

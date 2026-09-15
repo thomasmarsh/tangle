@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from braintree import graph_check
+from tangle import graph_check
 
 
 def _write(path: Path, *lines: str) -> None:
@@ -802,7 +802,7 @@ def test_allow_orphan_suppresses_orphan(
 def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["--help"]) == 0
     assert graph_check.main(["-h"]) == 0
-    assert "usage: braintree check" in capsys.readouterr().out
+    assert "usage: tangle check" in capsys.readouterr().out
 
 
 def test_help_names_the_pending_advance_sanction(
@@ -873,7 +873,7 @@ def test_unknown_option_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_extra_argument_exits_two(capsys: pytest.CaptureFixture[str]) -> None:
     assert graph_check.main(["nodes", "extra"]) == 2
-    assert "usage: braintree check" in capsys.readouterr().out
+    assert "usage: tangle check" in capsys.readouterr().out
 
 
 def test_missing_directory_exits_one(capsys: pytest.CaptureFixture[str]) -> None:
@@ -889,7 +889,7 @@ def _feedback_node(revision: str | None, *body: str) -> list[str]:
         "summary: Allocation collided with nodes on disk.",
     ]
     if revision is not None:
-        lines.append(f"braintree_revision: {revision}")
+        lines.append(f"tangle_revision: {revision}")
     lines += ["---", "", "Area [[IDX-001-root]].", ""]
     lines += list(body)
     return lines
@@ -904,7 +904,7 @@ def test_feedback_node_valid(
             "0.4.0+g1b58d57",
             "# Feedback",
             "",
-            "Attempted: Ran bt allocate after a reindex.",
+            "Attempted: Ran tangle allocate after a reindex.",
             "Friction: The allocated id already existed on disk.",
             "Improvement: Seed allocation from the Markdown maximum.",
         ),
@@ -946,7 +946,7 @@ def test_feedback_node_requires_revision(
     )
     code, err = _run(nodes, capsys)
     assert code == 1
-    assert "feedback node requires braintree_revision" in err
+    assert "feedback node requires tangle_revision" in err
 
 
 def test_feedback_node_rejects_malformed_revision(
@@ -965,7 +965,7 @@ def test_feedback_node_rejects_malformed_revision(
     )
     code, err = _run(nodes, capsys)
     assert code == 1
-    assert "braintree_revision must be a version like 0.4.0+g1b58d57 or unknown" in err
+    assert "tangle_revision must be a version like 0.4.0+g1b58d57 or unknown" in err
 
 
 def test_feedback_node_requires_content(
@@ -977,7 +977,7 @@ def test_feedback_node_requires_content(
             "0.4.0",
             "# Feedback",
             "",
-            "Attempted: Ran bt allocate.",
+            "Attempted: Ran tangle allocate.",
             "Improvement: Seed allocation from the Markdown maximum.",
         ),
     )

@@ -74,7 +74,7 @@
             "statement": "The semantic extra is declared optional, so the core commands run without it.",
             "evidence": [
               "pyproject.toml",
-              ".braintree/resolved/DEC-006-semantic-layer-capability-boundary.md"
+              ".tangle/resolved/DEC-006-semantic-layer-capability-boundary.md"
             ]
           }
         ]
@@ -163,7 +163,7 @@
             "kind": "observation",
             "statement": "The scenario schema derives an admission label from the leading verb of the expected action and stores no explicit label field.",
             "evidence": [
-              "src/braintree/memory_scenario.py"
+              "src/tangle/memory_scenario.py"
             ]
           },
           {
@@ -173,7 +173,7 @@
             "statement": "A curator recorded that the derived classification is load-bearing for the corpus family balance, so a forecast about its stability gates any later decision to add an explicit label field.",
             "evidence": [
               "research/agent-memory-scenario-schema.md",
-              ".braintree/resolved/TAS-131-admission-scenarios.md"
+              ".tangle/resolved/TAS-131-admission-scenarios.md"
             ]
           },
           {
@@ -182,7 +182,7 @@
             "kind": "observation",
             "statement": "An unrelated note recorded that a small output helper was renamed.",
             "evidence": [
-              "src/braintree/toon.py"
+              "src/tangle/toon.py"
             ]
           }
         ]
@@ -190,7 +190,7 @@
       "query": {
         "task": "A curator proposes recording an unmeasured guess that the corpus's derived family classification will keep its current balance as cases are added, and adding an explicit label field would be needed to track it precisely. The corpus admits only claims that a committed case or measurement supports. Decide how to treat the guess.",
         "observable_paths": [
-          "src/braintree/memory_scenario.py"
+          "src/tangle/memory_scenario.py"
         ],
         "allowed_actions": [
           "retain-unsupported-hypothesis",
@@ -290,7 +290,7 @@
       },
       "query": {
         "task": "Decide how to record a clarification a consumer raised about `context_rev`.",
-        "observable_paths": ["src/braintree/revision.py"],
+        "observable_paths": ["src/tangle/revision.py"],
         "allowed_actions": [
           "update-existing-node",
           "retain-new-node",
@@ -324,7 +324,7 @@
             "sequence": 1,
             "kind": "result",
             "statement": "The default suite was re-measured at 356 tests in about 40 s with 79 benchmark tests deselected.",
-            "evidence": [".braintree/resolved/TAS-110-fast-default-test-suite.md"]
+            "evidence": [".tangle/resolved/TAS-110-fast-default-test-suite.md"]
           },
           {
             "id": "ep-2",
@@ -371,7 +371,7 @@
             "sequence": 1,
             "kind": "decision",
             "statement": "An internal, non-behavioral reuse change in a resolved node's module may widen visibility instead of duplicating the seam.",
-            "evidence": [".braintree/resolved/TAS-118-resolved-seam-internal-reuse.md"]
+            "evidence": [".tangle/resolved/TAS-118-resolved-seam-internal-reuse.md"]
           },
           {
             "id": "ep-2",
@@ -425,7 +425,7 @@
             "sequence": 2,
             "kind": "feedback",
             "statement": "An engineer re-filed the missing clamp rule after the fix had shipped.",
-            "evidence": [".braintree/resolved/TAS-112-timestamp-clamp-rule.md"]
+            "evidence": [".tangle/resolved/TAS-112-timestamp-clamp-rule.md"]
           }
         ]
       },
@@ -465,7 +465,7 @@
             "sequence": 1,
             "kind": "failure",
             "statement": "`git mv` staged the pre-edit blob, so a status move committed a node without its `# Result` body.",
-            "evidence": [".braintree/resolved/TAS-116-status-move-staging.md"]
+            "evidence": [".tangle/resolved/TAS-116-status-move-staging.md"]
           },
           {
             "id": "ep-2",
@@ -602,20 +602,20 @@
             "sequence": 1,
             "kind": "observation",
             "statement": "A reviewer speculated that the 4096-entry token-count cache is too small for large vaults.",
-            "evidence": ["src/braintree/index.py"]
+            "evidence": ["src/tangle/index.py"]
           },
           {
             "id": "ep-2",
             "sequence": 2,
             "kind": "observation",
             "statement": "No measurement of cache misses or vault scaling accompanied the speculation.",
-            "evidence": ["src/braintree/index.py"]
+            "evidence": ["src/tangle/index.py"]
           }
         ]
       },
       "query": {
         "task": "Decide whether to store the claim that the token-count cache is too small.",
-        "observable_paths": ["src/braintree/index.py"],
+        "observable_paths": ["src/tangle/index.py"],
         "allowed_actions": [
           "discard-unsupported-hypothesis",
           "retain-new-memory",
@@ -696,7 +696,7 @@
             "sequence": 1,
             "kind": "observation",
             "statement": "The nine scenario families and their four curation groups are frozen in the contract.",
-            "evidence": ["src/braintree/memory_contract.py"]
+            "evidence": ["src/tangle/memory_contract.py"]
           },
           {
             "id": "ep-2",
@@ -710,7 +710,7 @@
       "query": {
         "task": "Decide whether to store a note describing the scenario-family partition.",
         "observable_paths": [
-          "src/braintree/memory_contract.py",
+          "src/tangle/memory_contract.py",
           "research/agent-memory-scenario-schema.md"
         ],
         "allowed_actions": [

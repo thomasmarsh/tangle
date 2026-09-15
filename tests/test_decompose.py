@@ -1,8 +1,8 @@
 """Behavioral tests for transactional decomposition and the parent-advance shorthand.
 
-``braintree node decompose`` writes an ordered child set and advances the parent
+``tangle node decompose`` writes an ordered child set and advances the parent
 in one operation; a rejected plan and a write failure both leave no half-built
-tree. ``braintree node advance`` is the parent-advance-only case.
+tree. ``tangle node advance`` is the parent-advance-only case.
 """
 
 from __future__ import annotations
@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from braintree import node_record
-from braintree.main import main as braintree_main
+from tangle import node_record
+from tangle.main import main as tangle_main
 
 
 def _write(path: Path, text: str) -> None:
@@ -23,7 +23,7 @@ def _write(path: Path, text: str) -> None:
 
 
 def _hub(root: Path) -> Path:
-    nodes = root / ".braintree"
+    nodes = root / ".tangle"
     (nodes / "active").mkdir(parents=True, exist_ok=True)
     _write(
         nodes / "index-map.md",
@@ -86,7 +86,7 @@ def test_decompose_writes_ordered_children_and_advances_parent(
         [_child(**{"slug": "alpha"}), _child(**{"slug": "beta"})],
     )
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "decompose", "--parent", "TAS-001", "--plan", str(plan), "--nodes", str(nodes)]
         )
         == 0
@@ -114,7 +114,7 @@ def test_decompose_dry_run_writes_and_reserves_nothing(
     plan = _plan(tmp_path / "plan.json", [_child()])
     before = _parent_text(nodes)
     assert (
-        braintree_main(
+        tangle_main(
             [
                 "node",
                 "decompose",
@@ -143,7 +143,7 @@ def test_decompose_rejects_an_invalid_plan_before_reserving(
     nodes = _hub(tmp_path / "consumer")
     plan = _plan(tmp_path / "plan.json", [_child(type="BOGUS")])
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "decompose", "--parent", "TAS-001", "--plan", str(plan), "--nodes", str(nodes)]
         )
         == 2
@@ -160,7 +160,7 @@ def test_decompose_rejects_an_unknown_child_key(
     nodes = _hub(tmp_path / "consumer")
     plan = _plan(tmp_path / "plan.json", [_child(**{"id": "TAS-099"})])
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "decompose", "--parent", "TAS-001", "--plan", str(plan), "--nodes", str(nodes)]
         )
         == 2
@@ -188,7 +188,7 @@ def test_decompose_rolls_back_written_children_on_a_write_failure(
 
     monkeypatch.setattr(node_record, "write_new", _fail_second)
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "decompose", "--parent", "TAS-001", "--plan", str(plan), "--nodes", str(nodes)]
         )
         == 1
@@ -204,7 +204,7 @@ def test_decompose_requires_parent_and_plan(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     nodes = _hub(tmp_path / "consumer")
-    assert braintree_main(["node", "decompose", "--nodes", str(nodes)]) == 2
+    assert tangle_main(["node", "decompose", "--nodes", str(nodes)]) == 2
     assert "requires --parent and --plan" in capsys.readouterr().out
 
 
@@ -214,7 +214,7 @@ def test_decompose_unknown_parent_exits_one(
     nodes = _hub(tmp_path / "consumer")
     plan = _plan(tmp_path / "plan.json", [_child()])
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "decompose", "--parent", "TAS-999", "--plan", str(plan), "--nodes", str(nodes)]
         )
         == 1
@@ -232,7 +232,7 @@ def test_advance_points_the_parent_at_a_direct_child(
         "summary: Child work.\nnext: Do it.\n---\n\nParent [[TAS-001-coordinator]].\n",
     )
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "advance", "TAS-001", "TAS-002", "--nodes", str(nodes)]
         )
         == 0
@@ -252,7 +252,7 @@ def test_advance_refuses_a_non_child(
         "summary: Other work.\nnext: Do it.\n---\n\nParent [[TAS-099-someone-else]].\n",
     )
     assert (
-        braintree_main(
+        tangle_main(
             ["node", "advance", "TAS-001", "TAS-002", "--nodes", str(nodes)]
         )
         == 1

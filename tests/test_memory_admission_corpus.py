@@ -17,8 +17,8 @@ from typing import Any
 
 import pytest
 
-from braintree import memory_corpus
-from braintree import memory_scenario as schema
+from tangle import memory_corpus
+from tangle import memory_scenario as schema
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CORPUS = _ROOT / "benchmark" / "memory-corpus" / "admission.json"

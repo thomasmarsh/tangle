@@ -1,10 +1,10 @@
 # Memory-evaluation scenario schema
 
 This document is the prose authority for the gold-corpus scenario format and
-grader interface of the Braintree memory-evaluation program. The
-machine-readable half is [`src/braintree/memory_scenario.py`](../src/braintree/memory_scenario.py),
+grader interface of the Tangle memory-evaluation program. The
+machine-readable half is [`src/tangle/memory_scenario.py`](../src/tangle/memory_scenario.py),
 which imports every shared literal from the frozen contract in
-[`src/braintree/memory_contract.py`](../src/braintree/memory_contract.py) rather
+[`src/tangle/memory_contract.py`](../src/tangle/memory_contract.py) rather
 than restating it. The module is the single source of truth; this prose must
 not drift from it.
 
@@ -83,7 +83,7 @@ The schema imports, rather than restates, the contract's:
 
 - `development` and `held-out` splits;
 - five causal arms (`repository-only`, `raw-history`, `flat-memory`,
-  `braintree`, `oracle`);
+  `tangle`, `oracle`);
 - `action-correctness` primary endpoint;
 - correctness-before-cost gate: a sample enters cost summaries only after it
   passes its case grader, so an incorrect cheap arm never wins;

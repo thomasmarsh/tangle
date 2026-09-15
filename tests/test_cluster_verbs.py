@@ -1,9 +1,9 @@
 """Capability-path tests for the ``clusters`` and ``digest`` answer verbs.
 
-``braintree clusters`` is an explicit derived answer: with the optional semantic
+``tangle clusters`` is an explicit derived answer: with the optional semantic
 extra installed and a provider configured it embeds the vault, clusters it
 advisoriy, and prints bounded TOON; with either missing it prints one advisory
-line and exits zero without loading a heavy module. ``braintree digest`` is a
+line and exits zero without loading a heavy module. ``tangle digest`` is a
 pure graph answer over a hub's or coordinating node's unresolved direct members,
 so it stays on the fast path. These tests drive the absent path through the real
 command, the derived answer with deterministic stand-in clusterer and reducer
@@ -24,9 +24,9 @@ from pathlib import Path
 
 import pytest
 
-from braintree import clustering, index, main, reduction, semantic
+from tangle import clustering, index, main, reduction, semantic
 
-RunBt = Callable[..., subprocess.CompletedProcess[str]]
+RunTangle = Callable[..., subprocess.CompletedProcess[str]]
 
 _ROOT = Path(__file__).resolve().parents[1]
 # The heavy modules only the opt-in semantic extra provides.
@@ -36,7 +36,7 @@ _HEAVY_MODULES = ("numpy", "sklearn", "umap", "hdbscan", "fastembed")
 # real import graph: the command must answer without one heavy module loaded.
 _IMPORT_PROBE = """\
 import sys
-from braintree import main
+from tangle import main
 
 assert main.main(["clusters"]) == 0
 assert main.main(["digest", "IDX-001"]) == 0
@@ -98,11 +98,11 @@ class IdentityReducer:
 
 def _env(tmp_path: Path, vault: Path) -> dict[str, str | None]:
     return {
-        "BT_SIDECAR_DIR": str(tmp_path / "sidecar"),
-        "BT_PROJECT_ID": "cluster-verbs-test",
-        "BT_NODES_DIR": str(vault),
-        "BT_SEMANTIC_PROVIDER": None,
-        "BT_MODEL_CACHE": None,
+        "TANGLE_SIDECAR_DIR": str(tmp_path / "sidecar"),
+        "TANGLE_PROJECT_ID": "cluster-verbs-test",
+        "TANGLE_NODES_DIR": str(vault),
+        "TANGLE_SEMANTIC_PROVIDER": None,
+        "TANGLE_MODEL_CACHE": None,
         "HF_HOME": None,
     }
 
@@ -171,12 +171,12 @@ def _write_embed_vault(vault: Path) -> None:
 
 
 def test_clusters_absent_path_is_one_advisory_line(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """No provider means an advisory line, exit zero, and no model load."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_bt("clusters", env=_env(tmp_path, vault))
+    result = run_tangle("clusters", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stderr == ""
     lines = result.stdout.splitlines()
@@ -185,22 +185,22 @@ def test_clusters_absent_path_is_one_advisory_line(
 
 
 def test_clusters_present_path_is_bounded_and_advisory(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """A malformed provider still degrades to the advisory capability-absent line."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
     env = _env(tmp_path, vault)
-    env["BT_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
-    result = run_bt("clusters", env=env)
+    env["TANGLE_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
+    result = run_tangle("clusters", env=env)
     assert result.returncode == 0
     assert 'clusters: "capability absent"' in result.stdout
 
 
-def test_clusters_rejects_an_unknown_argument(tmp_path: Path, run_bt: RunBt) -> None:
+def test_clusters_rejects_an_unknown_argument(tmp_path: Path, run_tangle: RunTangle) -> None:
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_bt("clusters", "--bogus", env=_env(tmp_path, vault))
+    result = run_tangle("clusters", "--bogus", env=_env(tmp_path, vault))
     assert result.returncode == 2
     assert 'error: "unknown argument for clusters: --bogus"' in result.stdout
 
@@ -216,9 +216,9 @@ def test_clusters_present_path_answers_with_bounded_toon(
     """
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    monkeypatch.setenv("BT_NODES_DIR", str(vault))
-    monkeypatch.setenv("BT_SIDECAR_DIR", str(tmp_path / "sidecar"))
-    monkeypatch.setenv("BT_PROJECT_ID", "cluster-verbs-present")
+    monkeypatch.setenv("TANGLE_NODES_DIR", str(vault))
+    monkeypatch.setenv("TANGLE_SIDECAR_DIR", str(tmp_path / "sidecar"))
+    monkeypatch.setenv("TANGLE_PROJECT_ID", "cluster-verbs-present")
     monkeypatch.setattr(
         semantic, "extra", lambda: semantic.SemanticExtra(modules=(), model_cache=tmp_path)
     )
@@ -276,11 +276,11 @@ def test_clusters_present_path_answers_with_bounded_toon(
     assert 'outliers_total: "1"' in stdout
 
 
-def test_digest_lists_unresolved_members_by_priority(tmp_path: Path, run_bt: RunBt) -> None:
+def test_digest_lists_unresolved_members_by_priority(tmp_path: Path, run_tangle: RunTangle) -> None:
     """The digest is bounded, ordered, and excludes resolved members."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_bt("digest", "IDX-001-engine", env=_env(tmp_path, vault))
+    result = run_tangle("digest", "IDX-001-engine", env=_env(tmp_path, vault))
     assert result.returncode == 0
     assert result.stderr == ""
     assert 'target: "IDX-001"' in result.stdout
@@ -295,16 +295,16 @@ def test_digest_lists_unresolved_members_by_priority(tmp_path: Path, run_bt: Run
     ]
     assert "TAS-005" not in result.stdout
 
-    bounded = run_bt("digest", "IDX-001-engine", "--limit", "2", env=_env(tmp_path, vault))
+    bounded = run_tangle("digest", "IDX-001-engine", "--limit", "2", env=_env(tmp_path, vault))
     assert 'total: "4"' in bounded.stdout
     rows = [line for line in bounded.stdout.splitlines() if line.startswith("  ")]
     assert len(rows) == 2
 
 
-def test_digest_unknown_node_is_an_error(tmp_path: Path, run_bt: RunBt) -> None:
+def test_digest_unknown_node_is_an_error(tmp_path: Path, run_tangle: RunTangle) -> None:
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
-    result = run_bt("digest", "IDX-999", env=_env(tmp_path, vault))
+    result = run_tangle("digest", "IDX-999", env=_env(tmp_path, vault))
     assert result.returncode == 1
     assert 'error: "unknown node: IDX-999"' in result.stdout
 
@@ -379,28 +379,28 @@ def test_answer_refuses_a_non_positive_limit(tmp_path: Path) -> None:
 
 
 def test_similar_absent_path_is_byte_identical_to_the_lexical_baseline(
-    tmp_path: Path, run_bt: RunBt
+    tmp_path: Path, run_tangle: RunTangle
 ) -> None:
     """An absent or failed provider leaves the default ``similar`` answer untouched."""
     vault = tmp_path / "nodes"
     _write_hub_vault(vault)
     env = _env(tmp_path, vault)
-    lexical = run_bt("similar", "alpha beta priority", env=env)
-    env["BT_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
-    degraded = run_bt("similar", "alpha beta priority", env=env)
+    lexical = run_tangle("similar", "alpha beta priority", env=env)
+    env["TANGLE_SEMANTIC_PROVIDER"] = "definitely-not-a-provider-command"
+    degraded = run_tangle("similar", "alpha beta priority", env=env)
     assert degraded.returncode == 0
     assert degraded.stdout == lexical.stdout
 
 
 def test_absent_paths_import_no_heavy_module(tmp_path: Path) -> None:
     """A plain install answers ``clusters`` and ``digest`` without a heavy import."""
-    vault = _ROOT / ".braintree"
+    vault = _ROOT / ".tangle"
     env = os.environ.copy()
-    for name in ("BT_SEMANTIC_PROVIDER", "BT_MODEL_CACHE", "HF_HOME"):
+    for name in ("TANGLE_SEMANTIC_PROVIDER", "TANGLE_MODEL_CACHE", "HF_HOME"):
         env.pop(name, None)
-    env["BT_NODES_DIR"] = str(vault)
-    env["BT_SIDECAR_DIR"] = str(tmp_path / "sidecar")
-    env["BT_PROJECT_ID"] = "cluster-verbs-import"
+    env["TANGLE_NODES_DIR"] = str(vault)
+    env["TANGLE_SIDECAR_DIR"] = str(tmp_path / "sidecar")
+    env["TANGLE_PROJECT_ID"] = "cluster-verbs-import"
     probe = subprocess.run(
         [sys.executable, "-c", _IMPORT_PROBE, *_HEAVY_MODULES],
         cwd=str(_ROOT),
@@ -419,7 +419,7 @@ def _require_extra() -> None:
         pytest.importorskip(module)
 
 
-def test_real_runtime_clusters_the_live_style_vault(tmp_path: Path, run_bt: RunBt) -> None:
+def test_real_runtime_clusters_the_live_style_vault(tmp_path: Path, run_tangle: RunTangle) -> None:
     """The shipped runtime wires the embedding, reduction, and clustering layers."""
     _require_extra()
     vault = tmp_path / "nodes"
@@ -428,9 +428,9 @@ def test_real_runtime_clusters_the_live_style_vault(tmp_path: Path, run_bt: RunB
     script = tmp_path / f"provider-{digest}.py"
     script.write_text(_PROVIDER, encoding="utf-8")
     env = _env(tmp_path, vault)
-    env["BT_SEMANTIC_PROVIDER"] = shlex.join([sys.executable, str(script)])
+    env["TANGLE_SEMANTIC_PROVIDER"] = shlex.join([sys.executable, str(script)])
 
-    result = run_bt("clusters", "--limit", "2", env=env)
+    result = run_tangle("clusters", "--limit", "2", env=env)
     assert result.returncode == 0
     assert result.stderr == ""
     lines = result.stdout.splitlines()
