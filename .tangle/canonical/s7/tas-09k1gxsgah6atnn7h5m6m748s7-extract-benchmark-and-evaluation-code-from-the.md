@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 status: active
-updated: 2026-09-16T02:04:44Z
+updated: 2026-09-16T02:47:07Z
 summary: Extract benchmark and evaluation code from the core package.
-next: Move the verb benchmark through the development-only research package and repository entry point.
+next: Move the token benchmark through the development-only research package and repository entry point.
 ---
 
 Parent [[tas-6rtfr5av742kr8b2n7jvkxyr1c-separate-research-evidence-from-the-runtime]].
@@ -89,7 +89,35 @@ findings, and the reviewed and staged patches were byte-identical. Benchmark
 baselines, frozen fixtures, provenance, and the four optional-search-owned
 modules were unchanged.
 
-Remaining scope is the relocation and command/install cutover for the verb,
-token, staged, embedding, and quality benchmarks; storage comparison; all
-seven memory-evaluation modules and their runners; fixture discovery assumptions;
+Commit `bdb8912` completed the verb slice. It moved
+`src/tangle/verb_benchmark.py` to
+`research/tangle_research/verb_benchmark.py` without a forwarding module and
+preserved the repository command as
+`PYTHONPATH=research uv run python -m tangle_research.verb_benchmark`. The
+installed `tangle benchmark verb` and legacy `verbs` spellings now exit 2 with
+that source-checkout guidance and never import, install, or probe for research
+code. The quality benchmark remains in its current intermediate location and
+checks the exact committed seven-case verb baseline rather than importing the
+moved implementation or representing the baseline as a fresh run.
+
+Package-boundary verification built a 50-member default wheel with zero
+`tangle_research/` entries and no `tangle/verb_benchmark.py`. The installer
+suite proved that neither the research package nor the retired core module is
+importable in an ordinary installation and that upgrading removes a seeded
+stale `tangle/verb_benchmark.py`. The repository help and seven-case
+verification command passed with compatible arguments, output, and errors.
+Only the stale verb-gate harness label in
+`benchmark/clustering-quality-evidence.json` changed to identify committed
+baseline integrity; all baselines, frozen fixtures, other generated evidence,
+and provenance stayed unchanged.
+
+Fresh verification passed Ruff, mypy over 100 source files, 25 focused
+benchmark tests, 131 scaffold and skill tests, `tests/install.sh`, both
+repository verb invocations, default-wheel inspection, and tracked plus new-file
+whitespace checks. The final reviewer returned `OK` with no findings, and the
+reviewed working-tree patch and staged patch were byte-identical.
+
+Remaining scope is the relocation and command/install cutover for the token,
+staged, embedding, and quality benchmarks; storage comparison; all seven
+memory-evaluation modules and their runners; fixture discovery assumptions;
 and the final `make test` and `make test-benchmarks` acceptance gates.
