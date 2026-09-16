@@ -219,6 +219,12 @@ install_target() {
       || runtime_error "unable to remove retired research module: $retired_behavioral"
     changed=true
   fi
+  retired_verb="$program_dir/src/tangle/verb_benchmark.py"
+  if [ -e "$retired_verb" ]; then
+    rm -f -- "$retired_verb" 2>/dev/null \
+      || runtime_error "unable to remove retired research module: $retired_verb"
+    changed=true
+  fi
 
   # Record the release version and the source revision the shared program was
   # copied from as generated install data. The installed ``tangle`` command

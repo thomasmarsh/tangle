@@ -28,7 +28,7 @@ _NOTE = (
     "gate fixture; run `tangle benchmark verbs` to regenerate."
 )
 _USAGE = (
-    "usage: tangle benchmark verbs [--verify]\n"
+    "usage: python -m tangle_research.verb_benchmark [--verify]\n"
     "Emit the direct-answer verb baseline, or verify each verb against it."
 )
 # The generated fixture is a valid vault with exactly one intentional stale pin,

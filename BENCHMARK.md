@@ -424,7 +424,8 @@ the tracked baseline before using `--verify` for that scale.
 ## Direct-answer verb gate
 
 The direct-answer verbs answer graph questions in one call; a cheaper route must
-not win by answering them wrongly. `tangle benchmark verbs` generates one
+not win by answering them wrongly. The development-only
+`tangle_research.verb_benchmark` module generates one
 small valid vault whose only deliberate defect is a single stale pin, runs each
 new verb against it, and compares the exact stdout and exit status with the
 checked-in baseline `benchmark/verb-baseline.json`. The five cases are
@@ -433,10 +434,13 @@ checked-in baseline `benchmark/verb-baseline.json`. The five cases are
 so an omitted or recomputed row fails the comparison.
 
 The gate makes no model calls and no network calls: it runs the installed
-`tangle` verbs locally. Print the current baseline with
-`tangle benchmark verbs` and verify it with `make verb-benchmark` or
-`tangle benchmark verbs --verify`; the fixture's intentional stale pin means
-`check --format toon` is expected to report the one mismatch and exit `1`.
+`tangle` verbs locally. From a source checkout, print the current baseline with
+`PYTHONPATH=research uv run python -m tangle_research.verb_benchmark` and verify
+it with `make verb-benchmark` or the same repository command plus `--verify`;
+the fixture's intentional stale pin means `check --format toon` is expected to
+report the one mismatch and exit `1`. The ordinary installed command does not
+ship or load this module; `tangle benchmark verb` (and the former `verbs`
+spelling) exits with guidance to the repository target.
 
 ## Verification
 

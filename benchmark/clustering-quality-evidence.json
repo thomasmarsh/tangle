@@ -197,7 +197,7 @@
   },
   "answer_surface": {
     "verb_gate": {
-      "harness": "braintree benchmark verbs --verify",
+      "harness": "committed benchmark/verb-baseline.json integrity",
       "passed": true,
       "cases": [
         {

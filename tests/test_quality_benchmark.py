@@ -209,6 +209,27 @@ def test_digest_verdict_needs_a_passing_gate() -> None:
     assert harness._digest_decision(failing).verdict == "revert"
 
 
+def test_committed_verb_gate_integrity_rejects_missing_and_extra_cases(tmp_path: Path) -> None:
+    benchmark = tmp_path / "benchmark"
+    benchmark.mkdir()
+    baseline = json.loads((_ROOT / "benchmark" / "verb-baseline.json").read_text("utf-8"))
+    del baseline["expected"]["frontier"]
+    baseline["expected"]["unexpected"] = {"exit": 0, "stdout": "unexpected\n"}
+    (benchmark / "verb-baseline.json").write_text(json.dumps(baseline), encoding="utf-8")
+
+    assert harness._verb_gate(tmp_path)["passed"] is False
+
+
+def test_committed_verb_gate_integrity_rejects_malformed_results(tmp_path: Path) -> None:
+    benchmark = tmp_path / "benchmark"
+    benchmark.mkdir()
+    baseline = json.loads((_ROOT / "benchmark" / "verb-baseline.json").read_text("utf-8"))
+    baseline["expected"]["check-toon"] = {"exit": 0, "stdout": ""}
+    (benchmark / "verb-baseline.json").write_text(json.dumps(baseline), encoding="utf-8")
+
+    assert harness._verb_gate(tmp_path)["passed"] is False
+
+
 def test_emit_is_deterministic_offline_with_injected_inputs() -> None:
     first = _emit_offline()
     second = _emit_offline()
@@ -245,6 +266,27 @@ def test_verify_reports_a_corrupted_evidence(tmp_path: Path) -> None:
     problems = harness.verify(tmp_path)
     assert any("decision malformed for clustering" in problem for problem in problems)
     assert any("lexical baseline drifts" in problem for problem in problems)
+
+
+def test_verify_rejects_stale_recorded_verb_gate_evidence(tmp_path: Path) -> None:
+    benchmark = tmp_path / "benchmark"
+    benchmark.mkdir()
+    for relative in (
+        embedding_benchmark.CORPUS_RELATIVE,
+        embedding_benchmark.DOCUMENTS_RELATIVE,
+    ):
+        shutil.copy(_ROOT / relative, benchmark / Path(relative).name)
+    shutil.copy(_ROOT / harness.EVIDENCE_RELATIVE, benchmark / Path(harness.EVIDENCE_RELATIVE).name)
+    shutil.copy(_ROOT / "benchmark" / "verb-baseline.json", benchmark / "verb-baseline.json")
+
+    evidence_path = tmp_path / harness.EVIDENCE_RELATIVE
+    document = json.loads(evidence_path.read_text(encoding="utf-8"))
+    gate = document["answer_surface"]["verb_gate"]
+    gate["harness"] = "stale executed harness"
+    gate["cases"][0] = {"case": "wrong-case", "exit": 9}
+    evidence_path.write_text(json.dumps(document), encoding="utf-8")
+
+    assert "recorded verb baseline integrity evidence differs" in harness.verify(tmp_path)
 
 
 def test_verify_reports_a_missing_evidence(tmp_path: Path) -> None:

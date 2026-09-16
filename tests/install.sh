@@ -114,11 +114,17 @@ run_installed_research_boundary() {
   program=$1
   probe_cwd=$(mktemp -d "$test_root/research-boundary.XXXXXX")
   (cd "$probe_cwd" && uv run --project "$program" --frozen --quiet python -c \
-    'import importlib.util as u; assert u.find_spec("tangle_research") is None; assert u.find_spec("tangle.behavioral_benchmark") is None')
+    'import importlib.util as u; assert u.find_spec("tangle_research") is None; assert u.find_spec("tangle.behavioral_benchmark") is None; assert u.find_spec("tangle.verb_benchmark") is None')
   unavailable=$(cd "$probe_cwd" && uv run --project "$program" --frozen --quiet \
     tangle benchmark behavioral 2>&1 || true)
   case "$unavailable" in
     *'unavailable in an ordinary installation'*'make diagnostic-benchmark'*) ;;
+    *) exit 1 ;;
+  esac
+  unavailable=$(cd "$probe_cwd" && uv run --project "$program" --frozen --quiet \
+    tangle benchmark verb 2>&1 || true)
+  case "$unavailable" in
+    *'unavailable in an ordinary installation'*'PYTHONPATH=research uv run python -m tangle_research.verb_benchmark'*) ;;
     *) exit 1 ;;
   esac
   rm -rf "$probe_cwd"
@@ -201,9 +207,11 @@ case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 # Upgrading an installation made before the research split removes the retired
 # in-package implementation instead of leaving it importable indefinitely.
 printf '%s\n' 'stale behavioral implementation' >"$program_dir/src/tangle/behavioral_benchmark.py"
+printf '%s\n' 'stale verb implementation' >"$program_dir/src/tangle/verb_benchmark.py"
 stale_upgrade=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$stale_upgrade" in *'result: "installed"'*) ;; *) exit 1;; esac
 [ ! -e "$program_dir/src/tangle/behavioral_benchmark.py" ]
+[ ! -e "$program_dir/src/tangle/verb_benchmark.py" ]
 run_installed_research_boundary "$program_dir"
 
 # A changed installed revision is detected and restamped, not reported no-op.

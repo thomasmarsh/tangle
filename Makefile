@@ -54,4 +54,4 @@ storage-comparison:
 	uv run tangle benchmark storage --verify
 
 verb-benchmark:
-	uv run tangle benchmark verbs --verify
+	PYTHONPATH=research uv run python -m tangle_research.verb_benchmark --verify

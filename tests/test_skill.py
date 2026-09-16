@@ -1549,6 +1549,18 @@ def test_behavioral_benchmark_help_explains_repository_only_command(
     assert "Does not import or install research code on demand" in out
 
 
+@pytest.mark.parametrize("name", ["verb", "verbs"])
+def test_verb_benchmark_help_explains_repository_only_command(
+    name: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main.main(["benchmark", name, "--help"]) == 0
+    out = capsys.readouterr().out
+    assert "unavailable in an ordinary installation" in out
+    assert "PYTHONPATH=research uv run python -m tangle_research.verb_benchmark" in out
+    assert "make verb-benchmark" in out
+    assert "Does not import or install research code on demand" in out
+
+
 def test_global_help_is_the_command_and_topic_index(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

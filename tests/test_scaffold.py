@@ -42,6 +42,8 @@ def test_default_distribution_has_an_explicit_core_only_package_root() -> None:
     assert backend == {"module-root": "src", "module-name": "tangle"}
     assert not (_ROOT / "src" / "tangle" / "behavioral_benchmark.py").exists()
     assert (_ROOT / "research" / "tangle_research" / "behavioral_benchmark.py").is_file()
+    assert not (_ROOT / "src" / "tangle" / "verb_benchmark.py").exists()
+    assert (_ROOT / "research" / "tangle_research" / "verb_benchmark.py").is_file()
 
 
 def test_tangle_version_flag(capsys: pytest.CaptureFixture[str]) -> None:

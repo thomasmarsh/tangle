@@ -45,7 +45,6 @@ from . import (
     storage_comparison,
     token_benchmark,
     vault,
-    verb_benchmark,
     views,
 )
 from .revision import reported_version
@@ -143,7 +142,7 @@ _COMMANDS: tuple[tuple[str, str], ...] = (
     ("feedback record [OPTIONS]", "record Tangle friction as an FBK node"),
     (
         "benchmark token|behavioral|storage|verbs|staged|embedding|quality|corpus|"
-        "pilot|causal|diagnostics|authority",
+        "pilot|causal|diagnostics|authority|verb",
         "run a development benchmark",
     ),
     ("help [TOPIC]", "print the topic index or one installed workflow reference"),
@@ -223,7 +222,6 @@ def _warn_orphans() -> None:
 _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "token": token_benchmark.main,
     "storage": storage_comparison.main,
-    "verbs": verb_benchmark.main,
     "staged": staged_benchmark.main,
     "embedding": embedding_benchmark.main,
     "quality": quality_benchmark.main,
@@ -353,7 +351,7 @@ def _semantic(args: list[str]) -> int:
 def _benchmark(args: list[str]) -> int:
     if not args:
         return _usage_error(
-            "benchmark requires token, behavioral, storage, verbs, staged, "
+            "benchmark requires token, behavioral, storage, verb, verbs, staged, "
             "embedding, quality, corpus, pilot, causal, or authority",
             "benchmark",
         )
@@ -369,6 +367,21 @@ def _benchmark(args: list[str]) -> int:
             field(
                 "help",
                 "Run `make diagnostic-benchmark` from a Tangle source checkout.",
+            )
+        )
+        return 2
+    if name in {"verb", "verbs"}:
+        print(
+            field(
+                "error",
+                f"benchmark {name} is unavailable in an ordinary installation",
+            )
+        )
+        print(
+            field(
+                "help",
+                "From a Tangle source checkout, run `PYTHONPATH=research uv run "
+                "python -m tangle_research.verb_benchmark` or `make verb-benchmark`.",
             )
         )
         return 2

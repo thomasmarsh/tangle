@@ -779,7 +779,7 @@ VERBS: dict[str, Verb] = {
         "Run a development benchmark.",
         usage=(
             "tangle benchmark "
-            "token|behavioral|storage|verbs|staged|embedding|quality|corpus|pilot"
+            "token|behavioral|storage|verbs|staged|embedding|quality|corpus|pilot|verb"
         ),
         operands=(
             ("NAME", "one of the benchmark names in the usage line"),
@@ -806,7 +806,6 @@ VERBS: dict[str, Verb] = {
 _BENCHMARK_PURPOSES: dict[str, str] = {
     "token": "measure model-token consumption from fresh controlled sessions",
     "storage": "compare storage representations against the committed baseline",
-    "verbs": "verify each direct-answer verb against its exact-value baseline",
     "staged": "compare a recorded pre-thrust and landed token-benchmark sample",
     "embedding": "freeze or verify the retrieval corpus, or run the batch comparison",
     "quality": "measure or verify the embedding and clustering quality gate",
@@ -835,6 +834,23 @@ VERBS["benchmark behavioral"] = _verb(
         "Does not import or install research code on demand; the source checkout owns it.",
     ),
 )
+
+for _name in ("verb", "verbs"):
+    VERBS[f"benchmark {_name}"] = _verb(
+        "Explain how to run the repository-only direct-answer verb gate.",
+        usage=f"tangle benchmark {_name}",
+        outputs=(
+            ("error", "the gate is unavailable in an ordinary installation"),
+            (
+                "help",
+                "from a source checkout, run PYTHONPATH=research uv run python -m "
+                "tangle_research.verb_benchmark or make verb-benchmark",
+            ),
+        ),
+        hazards=(
+            "Does not import or install research code on demand; the source checkout owns it.",
+        ),
+    )
 
 # The corpus validator is the one benchmark-shaped group command with verbs
 # rather than a ``--verify`` flag, so it gets its own bounded help.

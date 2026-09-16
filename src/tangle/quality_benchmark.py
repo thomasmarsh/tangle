@@ -27,19 +27,20 @@ documents. Three quality signals are reported:
   precision is also swept across lower thresholds; false outliers are the flagged
   members that share a route with another node.
 
-The round-trip and token side reuses the existing harnesses rather than a new
-one: ``tangle benchmark verbs --verify`` exact-value-gates every direct-answer
-verb (including ``clusters`` and ``digest``), and the zero-live staged A/B
-compares the committed matched token records. The capability changes no core
-answer, so the absent path is byte-identical; measuring the agent-level
-round-trip delta of the new answers would need a live Codex pair, which is
-recorded as a bounded open item instead of blocking, exactly as ``TAS-080`` is.
+The round-trip and token side reuses the existing evidence rather than a new
+harness: the committed verb baseline records the repository-only exact-value
+gate for every direct-answer verb (including ``clusters`` and ``digest``), and
+the zero-live staged A/B compares the committed matched token records. The
+capability changes no core answer, so the absent path is byte-identical;
+measuring the agent-level round-trip delta of the new answers would need a live
+Codex pair, which is recorded as a bounded open item instead of blocking,
+exactly as ``TAS-080`` is.
 
 The harness imports no heavy module at top level. ``emit`` needs the optional
 extra because the clustering fit does; ``verify`` is fully offline and checks the
 committed corpus digest, the recorded lexical baseline, the route parse, the
-decision shape, and the verb gate, so ``make test`` never loads a model and
-never downloads one.
+decision shape, and the recorded verb-gate result, so ``make test`` never loads
+a model and never downloads one.
 """
 
 from __future__ import annotations
@@ -56,7 +57,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import clustering, embedding_benchmark, provider, reduction, staged_benchmark, verb_benchmark
+from . import clustering, embedding_benchmark, provider, reduction, staged_benchmark
 from .index import _PRIMARY_ROUTE
 from .sidecar import content_hash
 
@@ -102,6 +103,15 @@ _NOISE_KEEP = 0.5
 _OUTLIER_SWEEP = (0.9, 0.8, 0.7, 0.6, 0.5, 0.4)
 _ANSWERS = ("retrieval", "clustering", "digest")
 _VERDICTS = ("keep", "revise", "revert")
+_VERB_GATE_CASES = (
+    ("frontier", 0),
+    ("node", 0),
+    ("impact", 0),
+    ("orient", 0),
+    ("check-toon", 1),
+    ("digest", 0),
+    ("clusters", 0),
+)
 _NOTE = (
     "Cluster, retrieval, and round-trip quality for the optional embedding and "
     "clustering layer, measured on the committed TAS-089 corpus and the committed "
@@ -485,24 +495,45 @@ def _decisions(
     return {decision.answer: decision.as_record() for decision in verdicts}
 
 
-def _verb_gate() -> Json:
-    """Run the existing verb gate and capture every case's exact exit status.
+def _verb_gate(root: Path) -> Json:
+    """Check the committed repository-only verb baseline's complete schema.
 
-    ``tangle benchmark verbs --verify`` is the zero-live correctness gate: it
-    regenerates its fixture, runs each direct-answer verb, and compares exact
-    stdout and exit against the committed baseline. It passes only when every
-    answer -- ``clusters`` and ``digest`` included -- is exactly its baseline.
+    The executable gate lives in ``tangle_research``. The still-installed quality
+    command checks its frozen seven-case result without importing, probing for,
+    or installing the development-only package. ``passed`` means the committed
+    artifact is structurally intact, not that this call executed the verb gate.
     """
-    capture = io.StringIO()
-    with contextlib.redirect_stdout(capture):
-        status = verb_benchmark.main(["--verify"])
+    baseline: Json = json.loads((root / "benchmark" / "verb-baseline.json").read_text("utf-8"))
+    expected = baseline.get("expected")
+    required = dict(_VERB_GATE_CASES)
+    valid = (
+        set(baseline) == {"protocol", "note", "expected"}
+        and baseline.get("protocol") == "direct-answer-verb-v1"
+        and isinstance(baseline.get("note"), str)
+        and bool(baseline.get("note"))
+        and isinstance(expected, dict)
+    )
     cases: list[Json] = []
-    for line in capture.getvalue().splitlines():
-        if not line.startswith("verb_gate{case,exit}: "):
-            continue
-        name, _, exit_code = line.partition(": ")[2].rpartition(",")
-        cases.append({"case": name, "exit": int(exit_code)})
-    return {"harness": "tangle benchmark verbs --verify", "passed": status == 0, "cases": cases}
+    if isinstance(expected, dict):
+        valid = valid and set(expected) == set(required)
+        for name, exit_code in _VERB_GATE_CASES:
+            answer = expected.get(name)
+            answer_valid = (
+                isinstance(answer, dict)
+                and set(answer) == {"exit", "stdout"}
+                and type(answer.get("exit")) is int
+                and answer.get("exit") == exit_code
+                and isinstance(answer.get("stdout"), str)
+                and bool(answer.get("stdout"))
+            )
+            valid = valid and answer_valid
+            if isinstance(answer, dict):
+                cases.append({"case": name, "exit": answer.get("exit")})
+    return {
+        "harness": "committed benchmark/verb-baseline.json integrity",
+        "passed": valid,
+        "cases": cases,
+    }
 
 
 def _staged_pair(root: Path) -> Json:
@@ -551,9 +582,9 @@ def _capability_absent(root: Path) -> Json:
 
 
 def measure_answer_surface(root: Path) -> Json:
-    """Measure the round-trip and token side with the existing zero-live harnesses."""
+    """Measure the round-trip and token side from zero-live evidence and harnesses."""
     return {
-        "verb_gate": _verb_gate(),
+        "verb_gate": _verb_gate(root),
         "staged": _staged_pair(root),
         "capability_absent": _capability_absent(root),
         "open_item": _OPEN_ITEM,
@@ -707,12 +738,15 @@ def verify(root: Path | None = None) -> list[str]:
         elif agreement.get("routed") != routed:
             problems.append("clustering route count differs from the committed corpus")
     answer_surface = evidence.get("answer_surface")
+    expected_gate = _verb_gate(base)
     if not isinstance(answer_surface, dict):
         problems.append("evidence has no answer-surface record")
     else:
         gate = answer_surface.get("verb_gate")
-        if not isinstance(gate, dict) or gate.get("passed") is not True:
-            problems.append("verb gate is not recorded as passed")
+        if gate != expected_gate:
+            problems.append("recorded verb baseline integrity evidence differs")
+    if expected_gate["passed"] is not True:
+        problems.append("committed verb baseline integrity check failed")
     decisions = evidence.get("decisions")
     if not isinstance(decisions, dict):
         problems.append("evidence has no decisions")
