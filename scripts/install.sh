@@ -210,6 +210,16 @@ install_target() {
     copy_file "$program_dir" "src/tangle/$(basename -- "$source")" 0644
   done
 
+  # Removed research implementations must not survive an in-place upgrade from
+  # an older release. This is intentionally an explicit retired path rather than
+  # a broad directory reconciliation: the installer owns no unlisted user files.
+  retired_behavioral="$program_dir/src/tangle/behavioral_benchmark.py"
+  if [ -e "$retired_behavioral" ]; then
+    rm -f -- "$retired_behavioral" 2>/dev/null \
+      || runtime_error "unable to remove retired research module: $retired_behavioral"
+    changed=true
+  fi
+
   # Record the release version and the source revision the shared program was
   # copied from as generated install data. The installed ``tangle`` command
   # reads it back with `--version`, so a consuming project can name the exact

@@ -1539,6 +1539,16 @@ def test_every_public_verb_has_bounded_help(
     assert '"0"' in out and '"1"' in out and '"2"' in out, out
 
 
+def test_behavioral_benchmark_help_explains_repository_only_command(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main.main(["benchmark", "behavioral", "--help"]) == 0
+    out = capsys.readouterr().out
+    assert "unavailable in an ordinary installation" in out
+    assert "make diagnostic-benchmark" in out
+    assert "Does not import or install research code on demand" in out
+
+
 def test_global_help_is_the_command_and_topic_index(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

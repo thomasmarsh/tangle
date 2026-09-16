@@ -48,7 +48,7 @@ benchmark:
 	uv run tangle benchmark token --protocol
 
 diagnostic-benchmark:
-	uv run tangle benchmark behavioral --verify
+	PYTHONPATH=research uv run python -m tangle_research.behavioral_benchmark --verify
 
 storage-comparison:
 	uv run tangle benchmark storage --verify

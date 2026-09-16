@@ -104,6 +104,24 @@ run_installed() {
   [ "$(uv run --project "$program" --frozen --quiet tangle --version)" = "$expected_record" ]
   run_installed_help "$program"
   run_installed_feedback_record "$program"
+  run_installed_research_boundary "$program"
+}
+
+# A default installed program contains only the core package. Its retired
+# behavioral command explains the repository-only path without probing,
+# importing, or installing research implementation on demand.
+run_installed_research_boundary() {
+  program=$1
+  probe_cwd=$(mktemp -d "$test_root/research-boundary.XXXXXX")
+  (cd "$probe_cwd" && uv run --project "$program" --frozen --quiet python -c \
+    'import importlib.util as u; assert u.find_spec("tangle_research") is None; assert u.find_spec("tangle.behavioral_benchmark") is None')
+  unavailable=$(cd "$probe_cwd" && uv run --project "$program" --frozen --quiet \
+    tangle benchmark behavioral 2>&1 || true)
+  case "$unavailable" in
+    *'unavailable in an ordinary installation'*'make diagnostic-benchmark'*) ;;
+    *) exit 1 ;;
+  esac
+  rm -rf "$probe_cwd"
 }
 
 # The shared program's reference tree must be installed and rendered by the
@@ -179,6 +197,14 @@ program_record_path="$program_dir/src/tangle/installed-revision"
 repeat=$($repo_root/scripts/install.sh --codex --project "$project")
 case "$repeat" in *'result: "no-op"'*) ;; *) exit 1;; esac
 [ "$(cat "$program_record_path")" = "$expected_record" ]
+
+# Upgrading an installation made before the research split removes the retired
+# in-package implementation instead of leaving it importable indefinitely.
+printf '%s\n' 'stale behavioral implementation' >"$program_dir/src/tangle/behavioral_benchmark.py"
+stale_upgrade=$($repo_root/scripts/install.sh --codex --project "$project")
+case "$stale_upgrade" in *'result: "installed"'*) ;; *) exit 1;; esac
+[ ! -e "$program_dir/src/tangle/behavioral_benchmark.py" ]
+run_installed_research_boundary "$program_dir"
 
 # A changed installed revision is detected and restamped, not reported no-op.
 printf '%s\n' '0.0.0+gold' >"$program_record_path"

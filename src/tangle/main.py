@@ -16,7 +16,6 @@ from collections.abc import Callable, Sequence
 
 from . import (
     allocation,
-    behavioral_benchmark,
     census,
     cli,
     decompose,
@@ -223,7 +222,6 @@ def _warn_orphans() -> None:
 
 _BENCHMARKS: dict[str, Callable[[Sequence[str] | None], int]] = {
     "token": token_benchmark.main,
-    "behavioral": behavioral_benchmark.main,
     "storage": storage_comparison.main,
     "verbs": verb_benchmark.main,
     "staged": staged_benchmark.main,
@@ -360,6 +358,20 @@ def _benchmark(args: list[str]) -> int:
             "benchmark",
         )
     name = args[0]
+    if name == "behavioral":
+        print(
+            field(
+                "error",
+                "benchmark behavioral is unavailable in an ordinary installation",
+            )
+        )
+        print(
+            field(
+                "help",
+                "Run `make diagnostic-benchmark` from a Tangle source checkout.",
+            )
+        )
+        return 2
     if name not in _BENCHMARKS:
         return _usage_error(f"unknown benchmark: {name}", "benchmark")
     return _BENCHMARKS[name](args[1:])

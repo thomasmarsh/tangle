@@ -391,9 +391,10 @@ tangle benchmark token --record --model MODEL --reasoning-effort low --represent
 
 ## Secondary filesystem diagnostic
 
-`tangle benchmark behavioral` builds disposable 100- and 1,000-node graph
-fixtures using only the Python standard library. Each contains an index route to a
-root hub, a current definition, a superseded and current routing decision,
+The development-only `tangle_research.behavioral_benchmark` module builds
+disposable 100- and 1,000-node graph fixtures using only the Python standard
+library. Each contains an index route to a root hub, a current definition, a
+superseded and current routing decision,
 pinned task dependencies, an active high-priority cold-resumption record, and
 one deliberately disconnected actionable record. It performs four bounded
 workflows: recover the active cold-resume P0 incident and its next action;
@@ -401,7 +402,16 @@ select the current decision structurally while excluding the superseded one;
 find only dependencies pinned to the old definition revision; and discover the
 unfinished disconnected record.
 
-Run `make diagnostic-benchmark`. Output is compact TOON with node reads, bytes
+Run `make diagnostic-benchmark`, or pass compatible options directly from the
+repository root:
+
+```sh
+PYTHONPATH=research uv run python -m tangle_research.behavioral_benchmark --verify
+```
+
+The ordinary installed command does not ship or load this module;
+`tangle benchmark behavioral` exits with guidance to the repository target.
+Output is compact TOON with node reads, bytes
 scanned, matches, and deterministic work units (`reads + bytes`), followed by
 four advisory per-scan milliseconds. These are diagnostics only, not model
 token results. The checked baseline in

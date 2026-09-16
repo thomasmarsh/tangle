@@ -36,6 +36,14 @@ def test_declared_version_is_single_sourced() -> None:
     assert declared["project"]["version"] == __version__
 
 
+def test_default_distribution_has_an_explicit_core_only_package_root() -> None:
+    declared = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    backend = declared["tool"]["uv"]["build-backend"]
+    assert backend == {"module-root": "src", "module-name": "tangle"}
+    assert not (_ROOT / "src" / "tangle" / "behavioral_benchmark.py").exists()
+    assert (_ROOT / "research" / "tangle_research" / "behavioral_benchmark.py").is_file()
+
+
 def test_tangle_version_flag(capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(["--version"]) == 0
     assert capsys.readouterr().out.strip() == __version__

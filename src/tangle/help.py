@@ -805,7 +805,6 @@ VERBS: dict[str, Verb] = {
 # emits or verifies a committed baseline.
 _BENCHMARK_PURPOSES: dict[str, str] = {
     "token": "measure model-token consumption from fresh controlled sessions",
-    "behavioral": "report secondary filesystem diagnostics on temporary fixtures",
     "storage": "compare storage representations against the committed baseline",
     "verbs": "verify each direct-answer verb against its exact-value baseline",
     "staged": "compare a recorded pre-thrust and landed token-benchmark sample",
@@ -824,6 +823,18 @@ for _name, _purpose in _BENCHMARK_PURPOSES.items():
         outputs=(("verification", "a pass line, or a mismatch that exits 1"),),
         hazards=("Development only; offline, with no live model calls.",),
     )
+
+VERBS["benchmark behavioral"] = _verb(
+    "Explain how to run the repository-only behavioral filesystem diagnostic.",
+    usage="tangle benchmark behavioral",
+    outputs=(
+        ("error", "the diagnostic is unavailable in an ordinary installation"),
+        ("help", "run make diagnostic-benchmark from a Tangle source checkout"),
+    ),
+    hazards=(
+        "Does not import or install research code on demand; the source checkout owns it.",
+    ),
+)
 
 # The corpus validator is the one benchmark-shaped group command with verbs
 # rather than a ``--verify`` flag, so it gets its own bounded help.

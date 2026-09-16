@@ -45,10 +45,15 @@ dev = [
 [tool.uv]
 package = true
 
+[tool.uv.build-backend]
+module-root = "src"
+module-name = "tangle"
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src", "tests"]
+files = ["src", "research/tangle_research", "tests"]
+mypy_path = "research"
 
 [tool.ruff]
 line-length = 100
@@ -62,6 +67,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["research"]
 # Benchmark verification recomputes full-corpus results and rebuilds throwaway
 # Git fixtures, so it is opt-in: `make test-benchmarks` runs the marked tests.
 addopts = "-ra -m 'not benchmark'"
