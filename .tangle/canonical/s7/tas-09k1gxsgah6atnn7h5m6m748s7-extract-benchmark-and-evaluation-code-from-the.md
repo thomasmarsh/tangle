@@ -1,9 +1,9 @@
 ---
 context_rev: 2
 status: active
-updated: 2026-09-16T00:26:51Z
+updated: 2026-09-16T02:04:44Z
 summary: Extract benchmark and evaluation code from the core package.
-next: Establish the development-only research package by moving the behavioral benchmark through it.
+next: Move the verb benchmark through the development-only research package and repository entry point.
 ---
 
 Parent [[tas-6rtfr5av742kr8b2n7jvkxyr1c-separate-research-evidence-from-the-runtime]].
@@ -72,3 +72,24 @@ layout and hashes and must remain byte-identical. `behavioral_benchmark.py` is
 the first coherent slice because it has no in-process core imports; its live
 consumer, repository command, installed unavailable-command path, default
 artifact exclusion, stale-install cleanup, and focused tests move together.
+
+Commit `dca8d70` completed that first slice. It moved
+`behavioral_benchmark.py` to `research/tangle_research/` without a forwarding
+module, made `make diagnostic-benchmark` the supported repository execution
+path, removed the core import and dispatch, and made the installed command fail
+explicitly with repository guidance. The default wheel contained zero
+`tangle_research` entries and no `tangle/behavioral_benchmark.py` while retaining
+the core runtime. Installer coverage proved both research imports unavailable
+in an ordinary installation and removed a seeded stale copy on upgrade.
+
+Fresh verification passed Ruff, mypy, 129 scaffold and skill tests, six
+behavioral benchmark tests, `make diagnostic-benchmark`, `make test-install`,
+and `tangle check` over 283 nodes. The final reviewer returned `OK` with no
+findings, and the reviewed and staged patches were byte-identical. Benchmark
+baselines, frozen fixtures, provenance, and the four optional-search-owned
+modules were unchanged.
+
+Remaining scope is the relocation and command/install cutover for the verb,
+token, staged, embedding, and quality benchmarks; storage comparison; all
+seven memory-evaluation modules and their runners; fixture discovery assumptions;
+and the final `make test` and `make test-benchmarks` acceptance gates.
