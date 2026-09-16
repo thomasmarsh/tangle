@@ -1,9 +1,9 @@
 ---
-context_rev: 1
+context_rev: 2
 status: proposed
-updated: 2026-09-15T20:38:27Z
+updated: 2026-09-16T00:15:58Z
 summary: Compose views and opt into concurrency or search only on demand.
-next: Inventory the old runtime's orphaned command paths and the compatibility surface due for retirement.
+next: "[[tas-5cs9e9hpsq3497vdd7wfwzc2vc-extract-optional-search-and-semantic-code-from]]"
 ---
 
 Parent [[tas-10sn2b04x59bkd80j8h5hqp4tk-sequence-the-arch-md-section-7-replacement-in]].
@@ -25,11 +25,17 @@ already owns the composed initiative page, and
 full-census layers; [[DEC-006-semantic-layer-capability-boundary]] bounds the
 optional semantic layer. Reference rather than duplicate.
 
+ARCH.md section 6 gives that optional boundary a physical form under
+`extras/search/`. The existing graph preserved the capability rule but omitted
+the source-package extraction, leaving clustering, provider, reduction, and
+semantic implementation intermingled with the core package.
+
 # Outcome
 
 Composed initiative documents exist, orphaned command paths are removed,
 compatibility is retired on schedule, and optional concurrency, search, and
-semantic layers are opted into only when a requirement justifies them.
+semantic layers are physically and behaviorally outside the core runtime and
+opted into only when a requirement justifies them.
 
 # Done when
 
@@ -39,10 +45,14 @@ semantic layers are opted into only when a requirement justifies them.
   retained with a reason.
 - Compatibility retirement happens on its announced schedule, and no
   experimental verb is required for the simpler product to ship.
+- Search and semantic implementation is moved out of `src/tangle/` behind the
+  optional capability boundary, the default installation excludes its optional
+  dependencies and implementation, and core answers remain identical when it
+  is absent.
 
 # Scoping
 
-Needs finer-grained scoping: yes, and partly demand-gated. The composed view is
-already owned and near session-ready; orphaned-command removal and compatibility
-retirement need an inventory before dispatch; optional concurrency, search, and
-semantic layers stay gated on a stated requirement.
+Decomposed at the independently acceptable package-boundary outcome for optional
+search and semantics. The composed view is already owned and near session-ready;
+orphaned-command removal and compatibility retirement still need an inventory
+before dispatch; optional concurrency stays gated on a stated requirement.
