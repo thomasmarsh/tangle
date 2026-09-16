@@ -1,9 +1,9 @@
 ---
-context_rev: 1
-status: proposed
-updated: 2026-09-16T00:15:58Z
+context_rev: 2
+status: active
+updated: 2026-09-16T00:26:51Z
 summary: Extract benchmark and evaluation code from the core package.
-next: Inventory the benchmark, memory-evaluation, storage-comparison, packaging, and entry-point dependency closure.
+next: Establish the development-only research package by moving the behavioral benchmark through it.
 ---
 
 Parent [[tas-6rtfr5av742kr8b2n7jvkxyr1c-separate-research-evidence-from-the-runtime]].
@@ -32,3 +32,43 @@ Benchmark, memory-evaluation, and storage-comparison implementation lives in a c
 # Scoping
 
 This is one durable distribution-boundary outcome, executed in coherent slices: inventory and destination contract; research package scaffold with one live benchmark consumer; migration of the remaining benchmark and memory modules; entry-point and installer cutover; then deletion and full verification. A file move, worker handoff, or test repair is not a child boundary.
+
+# Result
+
+Inventory completed from the live source, packaging, installer, help, fixture,
+and test closure. The development-only destination is
+`research/tangle_research/`; repository workflows may import and execute it,
+but the default distribution and installer must not include it.
+
+Research-owned modules to move are `behavioral_benchmark.py`,
+`embedding_benchmark.py`, `quality_benchmark.py`, `staged_benchmark.py`,
+`token_benchmark.py`, `verb_benchmark.py`, `storage_comparison.py`, and all
+seven `memory_*` modules: `memory_authority.py`, `memory_causal.py`,
+`memory_contract.py`, `memory_corpus.py`, `memory_diagnostics.py`,
+`memory_pilot.py`, and `memory_scenario.py`. The corresponding benchmark and
+memory tests, repository runners under `scripts/`, benchmark evidence under
+`benchmark/`, and memory-evaluation documents under `research/` are
+research-owned consumers or evidence rather than installed runtime.
+
+Core-owned modules retained in `src/tangle/` are `main.py` and `help.py`
+because the installed command and its explicit unavailable-research behavior
+live there; `graph_check.py`, `index.py`, `vault.py`, `sidecar.py`, `store.py`,
+`migration.py`, and `toon.py` because they are production behavior or storage
+primitives measured by the research harnesses; and `cli.py`, `revision.py`, and
+the remaining runtime modules because frozen evidence evaluates that shipped
+behavior rather than owning it. `pyproject.toml` remains the default
+distribution authority, `scripts/install.sh` remains the core installer, and
+`Makefile` is a deliberately shared repository-only automation surface.
+`clustering.py`, `provider.py`, `reduction.py`, and `semantic.py` stay in place
+under the separately owned optional-search boundary.
+
+Current closure evidence: `src/tangle/main.py` eagerly imports and dispatches
+the research modules; `uv_build` packages all of `src/tangle`; the installer
+copies all of that directory and does not remove stale moved modules; and
+`tests/install.sh` assumes each source file is installed. Frozen
+`research/fixtures/token-install/**` and
+`research/fixtures/memory-eval/checkout/**` copies preserve their historic
+layout and hashes and must remain byte-identical. `behavioral_benchmark.py` is
+the first coherent slice because it has no in-process core imports; its live
+consumer, repository command, installed unavailable-command path, default
+artifact exclusion, stale-install cleanup, and focused tests move together.
